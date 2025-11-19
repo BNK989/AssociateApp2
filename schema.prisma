@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Users {
+  id              String       @id @default(uuid()) @map("id") @db.Uuid
+  createdAt       DateTime     @default(now()) @db.Timestamptz(6)
+  avatar          String
+  userName        String
+  score           Int          @default(100)
+  inActiveGame    Int?
+  isTemp          Boolean      @default(false)
+  email           String       @unique
+  lastLoginAt     DateTime?    @updatedAt @db.Timestamptz(6)
+  preferences     Json?
+  Games           UsersGames[]
+  messages        Messages[]
+  sentInvites     Invites[]    @relation("SentInvites")
+  receivedInvites Invites[]    @relation("ReceivedInvites")
+
+  @@index([email])
+}
+
+model Games {
+  id            Int          @id @default(autoincrement())
+  createdAt     DateTime     @default(now()) @db.Timestamptz(6)
+  title         String       @default("Untitled Game")
+  score         Int          @default(0)
+  updatedAt     DateTime?    @updatedAt @db.Timestamptz(6)
+  nextTurn      String?
+  GameMode      GameMode     @default(INPUT)
+  status        Status       @default(ACTIVE)
+  confirmChange String[]     @default([])
+  totalWords    Int?
+  ticker        Int?
+  // guessesInRow  Int?
+  invites       Invites[]    @relation("GameInvites")
+  Users         UsersGames[]
+  messages      Messages[]
+}
+
+model UsersGames {
+  UserId String @db.Uuid
+  user   Users  @relation(fields: [UserId], references: [id], onDelete: Cascade)
+
+  GameId Int
+  game   Games @relation(fields: [GameId], references: [id], onDelete: Cascade)
+
+  @@id([UserId, GameId])
+}
+
+model Messages {
+  id              Int       @id @default(autoincrement())
+  createdAt       DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime? @updatedAt @db.Timestamptz(6)
+  content         String
+  cipher          String
+  isResolved      Boolean   @default(false)
+  resolveAttempts Int?
+  gameId          Int
+  Game            Games     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  senderId        String    @db.Uuid
+  Sender          Users     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+}
+
+model Invites {
+  id        Int          @id @default(autoincrement())
+  createdAt DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime?    @updatedAt @db.Timestamptz(6)
+  alias     String?
+  status    InviteStatus @default(PENDING)
+
+  inviterId String @db.Uuid
+  inviter   Users  @relation("SentInvites", fields: [inviterId], references: [id], onDelete: Cascade)
+
+  inviteeId String @db.Uuid
+  invitee   Users  @relation("ReceivedInvites", fields: [inviteeId], references: [id], onDelete: Cascade)
+
+  gameId Int
+  game   Games @relation("GameInvites", fields: [gameId], references: [id], onDelete: Cascade)
+}
+
+enum Status {
+  ACTIVE
+  ARCHIVED
+  DELETED
+  FINISHED
+}
+
+enum GameMode {
+  INPUT
+  SOLVE_PENDING
+  SOLVE
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+// pnpx prisma migrate dev --name [migrationName]
+// pnpx prisma generate
+// pnpx prisma studio 
+
+// map a field: nextTurn String? @map("next_turn") 
+// -> in the db it would be next_turn, in the code it would be nextTurn
+
+// researcg seeding for dummy data
