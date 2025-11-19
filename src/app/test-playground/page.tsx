@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthProvider';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 
 export default function TestPlayground() {
@@ -92,11 +91,11 @@ export default function TestPlayground() {
         <div className="p-8 max-w-2xl mx-auto space-y-8">
             <h1 className="text-3xl font-bold text-purple-400">Test Playground 🧪</h1>
 
-            <Card className="bg-gray-900 border-gray-800">
-                <CardHeader>
-                    <CardTitle>Game Management</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+            <div className="bg-gray-900 border border-gray-800 rounded-lg">
+                <div className="p-6 pb-0">
+                    <h3 className="text-lg font-semibold leading-none tracking-tight">Game Management</h3>
+                </div>
+                <div className="p-6 space-y-4">
                     <div className="flex gap-4">
                         <Button onClick={createTestGame} disabled={loading}>
                             {loading ? 'Working...' : 'Create Test Game'}
@@ -107,30 +106,30 @@ export default function TestPlayground() {
                             </div>
                         )}
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
             {gameId && (
                 <div className="grid gap-4 md:grid-cols-2">
-                    <Card className="bg-gray-900 border-gray-800">
-                        <CardHeader>
-                            <CardTitle>Data Injection</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4 flex flex-col">
+                    <div className="bg-gray-900 border border-gray-800 rounded-lg">
+                        <div className="p-6 pb-0">
+                            <h3 className="text-lg font-semibold leading-none tracking-tight">Data Injection</h3>
+                        </div>
+                        <div className="p-6 space-y-4 flex flex-col">
                             <Button onClick={() => addMockMessages(5)} variant="secondary">
                                 Add 5 Mock Messages
                             </Button>
                             <Button onClick={() => addMockMessages(20)} variant="secondary">
                                 Add 20 Mock Messages
                             </Button>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
 
-                    <Card className="bg-gray-900 border-gray-800">
-                        <CardHeader>
-                            <CardTitle>State Control</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4 flex flex-col">
+                    <div className="bg-gray-900 border border-gray-800 rounded-lg">
+                        <div className="p-6 pb-0">
+                            <h3 className="text-lg font-semibold leading-none tracking-tight">State Control</h3>
+                        </div>
+                        <div className="p-6 space-y-4 flex flex-col">
                             <Button onClick={forceSolveMode} className="bg-purple-600 hover:bg-purple-700">
                                 Force Solve Mode
                             </Button>
@@ -144,8 +143,8 @@ export default function TestPlayground() {
                             >
                                 Open Game Room ↗
                             </a>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
