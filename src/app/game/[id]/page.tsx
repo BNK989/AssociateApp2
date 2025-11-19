@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthProvider';
 import { GAME_CONFIG } from '@/lib/gameConfig';
 import { CipherText } from '@/components/CipherText';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ArrowLeft } from 'lucide-react';
 
 type Message = {
     id: string;
@@ -266,11 +267,20 @@ export default function GameRoom() {
         <div className="flex flex-col h-screen max-w-md mx-auto bg-gray-900">
             {/* Header */}
             <header className="p-4 border-b border-gray-800 flex justify-between items-center relative">
-                <div>
-                    <h1 className="font-bold">Game #{game.id.slice(0, 4)}</h1>
-                    <div className="flex items-center gap-2 text-xs">
-                        <span className="bg-blue-900 px-2 py-1 rounded uppercase">{game.status}</span>
-                        <span className={`w-2 h-2 rounded-full ${loading ? 'bg-yellow-500' : 'bg-green-500'}`}></span>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => router.push('/')}
+                        className="p-2 -ml-2 hover:bg-gray-800 rounded-full transition-colors"
+                        aria-label="Back to Lobby"
+                    >
+                        <ArrowLeft className="w-5 h-5" />
+                    </button>
+                    <div>
+                        <h1 className="font-bold">Game #{game.id.slice(0, 4)}</h1>
+                        <div className="flex items-center gap-2 text-xs">
+                            <span className="bg-blue-900 px-2 py-1 rounded uppercase">{game.status}</span>
+                            <span className={`w-2 h-2 rounded-full ${loading ? 'bg-yellow-500' : 'bg-green-500'}`}></span>
+                        </div>
                     </div>
                 </div>
 
