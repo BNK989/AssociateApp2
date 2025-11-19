@@ -21,14 +21,13 @@ export default function Home() {
   return (
     <div className="p-4">
       <nav className="flex justify-between items-center mb-8 border-b border-gray-700 pb-4">
-        <h1 className="text-xl font-bold">Associate Game 2.0</h1>
+        <h1
+          className="text-xl font-bold cursor-pointer hover:text-blue-400 transition-colors"
+          onClick={() => setView('lobby')}
+        >
+          Associate Game 2.0
+        </h1>
         <div className="flex gap-4">
-          <button
-            onClick={() => setView('lobby')}
-            className={`px-3 py-1 rounded ${view === 'lobby' ? 'bg-blue-600' : 'bg-gray-700'}`}
-          >
-            Lobby
-          </button>
           <button
             onClick={() => setView('settings')}
             className={`px-3 py-1 rounded ${view === 'settings' ? 'bg-blue-600' : 'bg-gray-700'}`}
