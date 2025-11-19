@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthProvider';
 import { GAME_CONFIG } from '@/lib/gameConfig';
 import { CipherText } from '@/components/CipherText';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type Message = {
     id: string;
@@ -14,6 +15,10 @@ type Message = {
     is_solved: boolean;
     user_id: string;
     created_at: string;
+    profiles?: {
+        username: string;
+        avatar_url: string;
+    };
 };
 
 type GameState = {
@@ -51,17 +56,23 @@ export default function GameRoom() {
         }
         setGame(gameData);
 
-        // Fetch Messages
+        // Fetch Messages with Profiles
         const { data: msgs, error: msgError } = await supabase
             .from('messages')
-            .select('*')
+            .select(`
+                *,
+                profiles:user_id (
+                    username,
+                    avatar_url
+                )
+            `)
             .eq('game_id', id)
             .order('created_at', { ascending: true });
 
         if (msgError) {
             console.error('Error fetching messages:', msgError);
         } else {
-            setMessages(msgs || []);
+            setMessages(msgs as unknown as Message[] || []);
         }
         setLoading(false);
     };
@@ -69,11 +80,19 @@ export default function GameRoom() {
     const subscribeToGame = () => {
         const channel = supabase
             .channel(`game:${id}`)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, (payload) => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, async (payload) => {
                 if (payload.eventType === 'INSERT') {
-                    setMessages(prev => [...prev, payload.new as Message]);
+                    // Fetch profile for the new message
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('username, avatar_url')
+                        .eq('id', payload.new.user_id)
+                        .single();
+
+                    const newMessage = { ...payload.new, profiles: profile } as unknown as Message;
+                    setMessages(prev => [...prev, newMessage]);
                 } else if (payload.eventType === 'UPDATE') {
-                    setMessages(prev => prev.map(m => m.id === payload.new.id ? payload.new as Message : m));
+                    setMessages(prev => prev.map(m => m.id === payload.new.id ? { ...m, ...payload.new } : m));
                 }
             })
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'games', filter: `id=eq.${id}` }, (payload) => {
@@ -214,6 +233,30 @@ export default function GameRoom() {
         if (error) console.error("Error confirming mode:", error);
     };
 
+    const getInitials = (name: string) => {
+        return name
+            ?.split(' ')
+            .map((n) => n[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2) || '??';
+    };
+
+    const getAvatarColor = (name: string) => {
+        const colors = [
+            'bg-red-500', 'bg-orange-500', 'bg-amber-500',
+            'bg-green-500', 'bg-emerald-500', 'bg-teal-500',
+            'bg-cyan-500', 'bg-blue-500', 'bg-indigo-500',
+            'bg-violet-500', 'bg-purple-500', 'bg-fuchsia-500',
+            'bg-pink-500', 'bg-rose-500'
+        ];
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) {
+            hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        return colors[Math.abs(hash) % colors.length];
+    };
+
     if (loading) return <div className="flex items-center justify-center h-screen">Loading Game...</div>;
     if (!game) return <div className="flex items-center justify-center h-screen">Game not found</div>;
 
@@ -268,10 +311,17 @@ export default function GameRoom() {
 
                     const isVisible = msg.is_solved || (game.status !== 'solving' && isActuallyLast);
                     const isMe = msg.user_id === user?.id;
+                    const username = msg.profiles?.username || 'User';
 
                     return (
-                        <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-[80%] p-3 rounded-lg ${isMe ? 'bg-blue-600' : 'bg-gray-700'}`}>
+                        <div key={msg.id} className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                            <Avatar className="w-8 h-8">
+                                <AvatarImage src={msg.profiles?.avatar_url} />
+                                <AvatarFallback className={`${getAvatarColor(username)} text-white text-xs`}>
+                                    {getInitials(username)}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className={`max-w-[70%] p-3 rounded-lg ${isMe ? 'bg-blue-600' : 'bg-gray-700'}`}>
                                 <CipherText
                                     text={msg.content}
                                     visible={isVisible}
