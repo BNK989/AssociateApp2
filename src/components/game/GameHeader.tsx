@@ -12,6 +12,7 @@ type GameHeaderProps = {
     proposalTimeLeft: number | null;
     solvingTimeLeft: number | null;
     targetMessage?: Message;
+    messageCount: number;
     onBack: () => void;
     onRefresh: () => void;
     onProposeSolving: () => void;
@@ -26,6 +27,7 @@ export function GameHeader({
     proposalTimeLeft,
     solvingTimeLeft,
     targetMessage,
+    messageCount,
     onBack,
     onRefresh,
     onProposeSolving,
@@ -91,34 +93,23 @@ export function GameHeader({
                         </Avatar>
                     ))}
                 </div>
-
-                <div>
-                    <h1 className="font-bold">Game #{game.id.slice(0, 4)}</h1>
-                    <div className="flex items-center gap-2 text-xs">
-                        <span className="bg-blue-900 px-2 py-1 rounded uppercase">{game.status}</span>
-                        <span className={`w-2 h-2 rounded-full ${loading ? 'bg-yellow-500' : 'bg-green-500'}`}></span>
-                    </div>
-                </div>
             </div>
 
             <div className="flex items-center gap-2">
                 {game.status !== 'solving' && (
                     <>
-                        <InvitePlayer gameId={game.id} />
-                        <button
-                            onClick={onProposeSolving}
-                            className="px-3 py-1 bg-purple-600 hover:bg-purple-700 rounded text-xs font-bold"
-                        >
-                            Solve
-                        </button>
+                        {messageCount < 5 ? (
+                            <InvitePlayer gameId={game.id} />
+                        ) : (
+                            <button
+                                onClick={onProposeSolving}
+                                className="px-3 py-1 bg-purple-600 hover:bg-purple-700 rounded text-xs font-bold"
+                            >
+                                Solve
+                            </button>
+                        )}
                     </>
                 )}
-                <button
-                    onClick={onRefresh}
-                    className="p-2 text-sm bg-gray-800 hover:bg-gray-700 rounded border border-gray-700"
-                >
-                    ↻
-                </button>
             </div>
 
             {/* Proposal Popup */}

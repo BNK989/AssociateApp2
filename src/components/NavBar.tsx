@@ -16,14 +16,18 @@ import { Button } from "@/components/ui/button";
 import { LogOut } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
+import { usePathname } from 'next/navigation';
+
 export function NavBar() {
     const { user, profile } = useAuth();
+    const pathname = usePathname();
 
     const handleSignOut = async () => {
         await supabase.auth.signOut();
     };
 
     if (!user) return null;
+    if (pathname?.startsWith('/game/')) return null;
 
     const getInitials = (name: string) => {
         return name?.slice(0, 2).toUpperCase() || '??';

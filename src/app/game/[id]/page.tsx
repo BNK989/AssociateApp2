@@ -32,10 +32,10 @@ export default function GameRoom() {
     } = useGameLogic(gameId!);
 
     if (loading) return <div className="flex items-center justify-center h-screen">Loading Game...</div>;
-    if (!game) return <div className="flex items-center justify-center h-screen">Game not found</div>;
+    if (!game) return <div className="flex items-center justify-center h-[100dvh]">Game not found</div>;
 
     return (
-        <div className="flex flex-col h-screen max-w-md mx-auto bg-gray-900">
+        <div className="flex flex-col h-[100dvh] max-w-md mx-auto bg-gray-900 overflow-hidden">
             <GameHeader
                 game={game}
                 user={user}
@@ -44,6 +44,7 @@ export default function GameRoom() {
                 proposalTimeLeft={proposalTimeLeft}
                 solvingTimeLeft={solvingTimeLeft}
                 targetMessage={getTargetMessage()}
+                messageCount={messages.length}
                 onBack={() => router.push('/')}
                 onRefresh={fetchGameData}
                 onProposeSolving={proposeSolvingMode}
