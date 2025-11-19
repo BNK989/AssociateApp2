@@ -84,7 +84,7 @@ export function useGameLogic(gameId: string) {
         if (playersError) {
             console.error('Error fetching players:', playersError);
         } else {
-            setPlayers(playersData || []);
+            setPlayers((playersData as unknown as Player[]) || []);
         }
 
         // Fetch Messages with Profiles
@@ -153,7 +153,7 @@ export function useGameLogic(gameId: string) {
                         `)
                         .eq('game_id', gameId)
                         .order('joined_at', { ascending: true });
-                    if (newPlayers) setPlayers(newPlayers);
+                    if (newPlayers) setPlayers(newPlayers as unknown as Player[]);
                 }
             })
             .subscribe();

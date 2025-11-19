@@ -33,7 +33,12 @@ export default function Login() {
             <h1 className="text-2xl font-bold mb-8">Associate Game 2.0</h1>
 
             <button
-                onClick={() => supabase.auth.signInWithOAuth({ provider: 'google' })}
+                onClick={() => supabase.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: `${window.location.origin}/auth/callback`
+                    }
+                })}
                 className="flex items-center gap-3 px-6 py-3 bg-white text-gray-900 rounded-lg font-medium hover:bg-gray-100 transition-colors"
             >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
