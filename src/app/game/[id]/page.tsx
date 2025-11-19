@@ -8,6 +8,8 @@ import { GAME_CONFIG } from '@/lib/gameConfig';
 import { CipherText } from '@/components/CipherText';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowLeft } from 'lucide-react';
+import { InvitePlayer } from '@/components/InvitePlayer';
+import { toast } from "sonner";
 
 type Message = {
     id: string;
@@ -98,6 +100,18 @@ export default function GameRoom() {
             })
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'games', filter: `id=eq.${id}` }, (payload) => {
                 setGame(payload.new as GameState);
+            })
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'game_players', filter: `game_id=eq.${id}` }, async (payload) => {
+                // Fetch profile of the new player
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('username')
+                    .eq('id', payload.new.user_id)
+                    .single();
+
+                if (profile) {
+                    toast.info(`${profile.username} has joined the chat!`);
+                }
             })
             .subscribe();
 
@@ -284,20 +298,25 @@ export default function GameRoom() {
                     </div>
                 </div>
 
-                {game.status !== 'solving' && (
+                <div className="flex items-center gap-2">
+                    {game.status !== 'solving' && (
+                        <>
+                            <InvitePlayer gameId={game.id} />
+                            <button
+                                onClick={proposeSolvingMode}
+                                className="px-3 py-1 bg-purple-600 hover:bg-purple-700 rounded text-xs font-bold"
+                            >
+                                Solve
+                            </button>
+                        </>
+                    )}
                     <button
-                        onClick={proposeSolvingMode}
-                        className="px-3 py-1 bg-purple-600 hover:bg-purple-700 rounded text-xs font-bold"
+                        onClick={fetchGameData}
+                        className="p-2 text-sm bg-gray-800 hover:bg-gray-700 rounded border border-gray-700"
                     >
-                        Start Solving
+                        ↻
                     </button>
-                )}
-                <button
-                    onClick={fetchGameData}
-                    className="ml-2 p-2 text-sm bg-gray-800 hover:bg-gray-700 rounded border border-gray-700"
-                >
-                    ↻
-                </button>
+                </div>
 
                 {/* Proposal Popup */}
                 {game.solving_proposal_created_at && (
