@@ -1,0 +1,138 @@
+import { ArrowLeft } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { InvitePlayer } from '@/components/InvitePlayer';
+import { GameState, Player, Message } from '@/hooks/useGameLogic';
+
+type GameHeaderProps = {
+    game: GameState;
+    user: any;
+    players: Player[];
+    loading: boolean;
+    proposalTimeLeft: number | null;
+    solvingTimeLeft: number | null;
+    targetMessage?: Message;
+    onBack: () => void;
+    onRefresh: () => void;
+    onProposeSolving: () => void;
+    onDenySolving: () => void;
+};
+
+export function GameHeader({
+    game,
+    user,
+    players,
+    loading,
+    proposalTimeLeft,
+    solvingTimeLeft,
+    targetMessage,
+    onBack,
+    onRefresh,
+    onProposeSolving,
+    onDenySolving
+}: GameHeaderProps) {
+
+    const getInitials = (name: string) => {
+        return name
+            ?.split(' ')
+            .map((n) => n[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2) || '??';
+    };
+
+    const getAvatarColor = (name: string) => {
+        const colors = [
+            'bg-red-500', 'bg-orange-500', 'bg-amber-500',
+            'bg-green-500', 'bg-emerald-500', 'bg-teal-500',
+            'bg-cyan-500', 'bg-blue-500', 'bg-indigo-500',
+            'bg-violet-500', 'bg-purple-500', 'bg-fuchsia-500',
+            'bg-pink-500', 'bg-rose-500'
+        ];
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) {
+            hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        return colors[Math.abs(hash) % colors.length];
+    };
+
+    // Determine active player ID for highlighting
+    let activePlayerId = game.current_turn_user_id;
+    if (game.status === 'solving' && targetMessage) {
+        activePlayerId = targetMessage.user_id;
+    }
+
+    // Sort players for avatar stack: Active player last (on top)
+    const sortedPlayers = [...players].sort((a, b) => {
+        if (a.user_id === activePlayerId) return 1;
+        if (b.user_id === activePlayerId) return -1;
+        return 0;
+    });
+
+    return (
+        <header className="p-4 border-b border-gray-800 flex justify-between items-center relative">
+            <div className="flex items-center gap-3">
+                <button
+                    onClick={onBack}
+                    className="p-2 -ml-2 hover:bg-gray-800 rounded-full transition-colors"
+                    aria-label="Back to Lobby"
+                >
+                    <ArrowLeft className="w-5 h-5" />
+                </button>
+
+                {/* Avatar Stack */}
+                <div className="flex items-center -space-x-2 mr-2">
+                    {sortedPlayers.map((player) => (
+                        <Avatar key={player.user_id} className={`w-8 h-8 border-2 border-gray-900 ${player.user_id === activePlayerId ? 'z-10 ring-2 ring-green-500' : ''}`}>
+                            <AvatarImage src={player.profiles?.avatar_url} />
+                            <AvatarFallback className={`${getAvatarColor(player.profiles?.username || '')} text-white text-xs`}>
+                                {getInitials(player.profiles?.username || '')}
+                            </AvatarFallback>
+                        </Avatar>
+                    ))}
+                </div>
+
+                <div>
+                    <h1 className="font-bold">Game #{game.id.slice(0, 4)}</h1>
+                    <div className="flex items-center gap-2 text-xs">
+                        <span className="bg-blue-900 px-2 py-1 rounded uppercase">{game.status}</span>
+                        <span className={`w-2 h-2 rounded-full ${loading ? 'bg-yellow-500' : 'bg-green-500'}`}></span>
+                    </div>
+                </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+                {game.status !== 'solving' && (
+                    <>
+                        <InvitePlayer gameId={game.id} />
+                        <button
+                            onClick={onProposeSolving}
+                            className="px-3 py-1 bg-purple-600 hover:bg-purple-700 rounded text-xs font-bold"
+                        >
+                            Solve
+                        </button>
+                    </>
+                )}
+                <button
+                    onClick={onRefresh}
+                    className="p-2 text-sm bg-gray-800 hover:bg-gray-700 rounded border border-gray-700"
+                >
+                    ↻
+                </button>
+            </div>
+
+            {/* Proposal Popup */}
+            {game.solving_proposal_created_at && (
+                <div className="absolute top-full left-0 w-full bg-gray-800 border-b border-gray-700 p-2 flex justify-between items-center z-10 shadow-lg">
+                    <span className="text-sm">Switching to Solving in {proposalTimeLeft}s...</span>
+                    <button
+                        onClick={onDenySolving}
+                        className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-xs font-bold"
+                    >
+                        Deny
+                    </button>
+                </div>
+            )}
+        </header>
+    );
+}
