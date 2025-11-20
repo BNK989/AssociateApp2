@@ -22,13 +22,23 @@
 - [x] Turn Management
 - [x] Realtime Updates (Supabase)
 
+## Phase 4.5: imrove for mobile
+- [x] Game Room UI deal with mobile layout and keyboard open/close
+
 ## Phase 5: Game Loop - Solving (Phase 2)
+- [ ] Add an arrow to indicate the target message to be solved
+- [ ] Only allow hints to the player whos turn it is
 - [ ] Reverse Scroll View
 - [ ] Solving Interaction
 - [ ] Score Calculation & Streaks
 
-## Phase 6: AI & Polish
-- [ ] Gemini AI Hint Integration
+## Phase 6: Score & Streaks
+- [ ] confirm points logic 
+- [ ] ui for points and streaks
+- [ ] add points to the game
+- [ ] add streaks to the game
+- [ ] add leaderboard to the game
+
+## Phase 7: AI & Polish
 - [ ] PWA Configuration (Manifest, Service Worker)
-- [ ] Mobile Responsiveness & Keyboard Handling
 - [ ] `/test-playground` Implementation

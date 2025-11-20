@@ -72,7 +72,7 @@ export function GameHeader({
     });
 
     return (
-        <header className="p-4 border-b border-gray-800 flex justify-between items-center relative">
+        <header className="fixed top-0 left-0 right-0 z-20 max-w-md mx-auto bg-gray-900 p-4 border-b border-gray-800 flex justify-between items-center">
             <div className="flex items-center gap-3">
                 <button
                     onClick={onBack}

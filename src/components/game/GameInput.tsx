@@ -54,15 +54,18 @@ export function GameInput({
         }
     }
 
-    // Determine if Input is Disabled
-    const isInputDisabled = sending || (
+    // Determine if Input is Disabled (Never disabled during active game to keep keyboard open)
+    const isInputDisabled = false;
+
+    // Determine if Submit is Disabled (sending or not my turn)
+    const isSubmitDisabled = sending || (
         game.status === 'solving'
             ? (!isFreeForAll && !isMyTurn)
             : !isMyTurn
     );
 
     return (
-        <div className="p-4 border-t border-gray-800 bg-gray-900">
+        <div className="fixed bottom-0 left-0 right-0 z-20 max-w-md mx-auto p-4 border-t border-gray-800 bg-gray-900">
             <form onSubmit={onSendMessage} className="flex gap-2">
                 {game.status === 'solving' && (
                     <button
@@ -84,8 +87,9 @@ export function GameInput({
                 />
                 <button
                     type="submit"
-                    disabled={isInputDisabled}
-                    className={`p-3 rounded text-white font-bold ${game.status === 'solving' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'} ${isInputDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    disabled={isSubmitDisabled}
+                    onMouseDown={(e) => e.preventDefault()}
+                    className={`p-3 rounded text-white font-bold ${game.status === 'solving' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'} ${isSubmitDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                     {sending ? '...' : (game.status === 'solving' ? 'Guess' : 'Send')}
                 </button>

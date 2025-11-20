@@ -35,7 +35,7 @@ export default function GameRoom() {
     if (!game) return <div className="flex items-center justify-center h-[100dvh]">Game not found</div>;
 
     return (
-        <div className="flex flex-col h-[100dvh] max-w-md mx-auto bg-gray-900 overflow-hidden">
+        <div className="min-h-screen max-w-md mx-auto bg-gray-900 relative">
             <GameHeader
                 game={game}
                 user={user}
@@ -56,6 +56,7 @@ export default function GameRoom() {
                 user={user}
                 game={game}
                 messagesEndRef={messagesEndRef}
+                targetMessage={getTargetMessage()}
             />
 
             <GameInput
