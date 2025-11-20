@@ -25,19 +25,19 @@
 ## Phase 4.5: imrove for mobile
 - [x] Game Room UI deal with mobile layout and keyboard open/close
 
-## Phase 5: Game Loop - Solving (Phase 2)
-- [ ] Add an arrow to indicate the target message to be solved
-- [ ] Only allow hints to the player whos turn it is
-- [ ] Reverse Scroll View
-- [ ] Solving Interaction
-- [ ] Score Calculation & Streaks
-
-## Phase 6: Score & Streaks
+## Phase 5: Score & Streaks
 - [ ] confirm points logic 
 - [ ] ui for points and streaks
 - [ ] add points to the game
 - [ ] add streaks to the game
 - [ ] add leaderboard to the game
+
+## Phase 6: Game Loop - Solving UI improvements (Phase 2)
+- [ ] Add an arrow to indicate the target message to be solved
+- [ ] Only allow hints to the player whos turn it is (once were in free for all mode anyone can get a hint)
+- [ ] Solving Interaction
+- [ ] Score Calculation & Streaks
+
 
 ## Phase 7: AI & Polish
 - [ ] PWA Configuration (Manifest, Service Worker)

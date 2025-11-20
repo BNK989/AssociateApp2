@@ -38,20 +38,36 @@ export function ChatArea({ messages, user, game, messagesEndRef, targetMessage }
         return colors[Math.abs(hash) % colors.length];
     };
 
-    const displayMessages = game.status === 'solving' ? [...messages].reverse() : messages;
+    const displayMessages = messages;
 
     const scrollToSmart = () => {
         if (!containerRef.current) return;
 
-        if (game.status === 'solving' && targetMessage) {
-            const targetEl = containerRef.current.querySelector(`[data-message-id="${targetMessage.id}"]`);
-            if (targetEl) {
-                targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Small timeout to ensure DOM is ready
+        setTimeout(() => {
+            if (game.status === 'solving' && targetMessage) {
+                const targetEl = document.getElementById(`msg-${targetMessage.id}`);
+                if (targetEl && containerRef.current) {
+                    // Calculate position to show message at bottom of visible area (above input)
+                    // Input area + padding is roughly 120px + 20px gap
+                    const bottomPadding = 140;
+                    const elementBottom = targetEl.offsetTop + targetEl.offsetHeight;
+                    const containerHeight = containerRef.current.clientHeight;
+
+                    const scrollTo = elementBottom - containerHeight + bottomPadding;
+
+                    containerRef.current.scrollTo({
+                        top: scrollTo,
+                        behavior: 'smooth'
+                    });
+                }
+            } else {
+                // Normal mode: scroll to bottom
+                if (containerRef.current) {
+                    containerRef.current.scrollTop = containerRef.current.scrollHeight;
+                }
             }
-        } else {
-            // Normal mode: scroll to bottom
-            containerRef.current.scrollTop = containerRef.current.scrollHeight;
-        }
+        }, 100);
     };
 
     // Scroll on messages change
@@ -64,8 +80,7 @@ export function ChatArea({ messages, user, game, messagesEndRef, targetMessage }
         if (!window.visualViewport) return;
 
         const handleResize = () => {
-            // Small delay to allow layout to update
-            setTimeout(scrollToSmart, 100);
+            scrollToSmart();
         };
 
         window.visualViewport.addEventListener('resize', handleResize);
@@ -75,7 +90,7 @@ export function ChatArea({ messages, user, game, messagesEndRef, targetMessage }
     return (
         <div
             ref={containerRef}
-            className={`h-screen overflow-y-auto pt-20 pb-28 px-4 space-y-4 ${game.status === 'solving' ? 'flex flex-col-reverse' : ''}`}
+            className="relative h-screen overflow-y-auto pt-16 pb-24 px-4 space-y-4"
         >
             {displayMessages.map((msg) => {
                 const originalIndex = messages.findIndex(m => m.id === msg.id);
@@ -88,6 +103,7 @@ export function ChatArea({ messages, user, game, messagesEndRef, targetMessage }
                 return (
                     <div
                         key={msg.id}
+                        id={`msg-${msg.id}`}
                         data-message-id={msg.id}
                         className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}
                     >

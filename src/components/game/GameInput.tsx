@@ -65,13 +65,13 @@ export function GameInput({
     );
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-20 max-w-md mx-auto p-4 border-t border-gray-800 bg-gray-900">
-            <form onSubmit={onSendMessage} className="flex gap-2">
+        <div className="fixed bottom-0 left-0 right-0 z-20 max-w-md mx-auto p-2 border-t border-gray-800 bg-gray-900">
+            <form onSubmit={onSendMessage} className="flex gap-2 items-center">
                 {game.status === 'solving' && (
                     <button
                         type="button"
                         onClick={onGetHint}
-                        className="p-3 rounded bg-yellow-600 hover:bg-yellow-700 text-white"
+                        className="p-2 rounded bg-yellow-600 hover:bg-yellow-700 text-white shrink-0"
                         title="Get Hint"
                     >
                         💡
@@ -83,13 +83,13 @@ export function GameInput({
                     onChange={(e) => setInput(e.target.value)}
                     disabled={isInputDisabled}
                     placeholder={placeholderText}
-                    className={`flex-1 p-3 rounded bg-gray-800 border border-gray-700 focus:border-blue-500 outline-none ${game.status === 'solving' ? 'border-purple-500' : ''} ${isInputDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`flex-1 p-2 rounded bg-gray-800 border border-gray-700 focus:border-blue-500 outline-none ${game.status === 'solving' ? 'border-purple-500' : ''} ${isInputDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                 />
                 <button
                     type="submit"
                     disabled={isSubmitDisabled}
                     onMouseDown={(e) => e.preventDefault()}
-                    className={`p-3 rounded text-white font-bold ${game.status === 'solving' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'} ${isSubmitDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`p-2 rounded text-white font-bold shrink-0 ${game.status === 'solving' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'} ${isSubmitDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                     {sending ? '...' : (game.status === 'solving' ? 'Guess' : 'Send')}
                 </button>
