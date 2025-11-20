@@ -116,7 +116,31 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .target-message-glow {
+    position: relative;
+    border: 2px solid transparent;
+    background-clip: padding-box, border-box;
+    background-origin: padding-box, border-box;
+    background-image: linear-gradient(#374151, #374151), linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #589142, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+    background-size: 100% 100%, 400% 400%;
+    animation: glowing-border 16s linear infinite;
+    box-shadow: 0 0 15px rgba(120, 0, 255, 0.3);
+  }
+}
+
+@keyframes glowing-border {
+  0% {
+    background-position: 0 0, 0 0;
+  }
+
+  100% {
+    background-position: 0 0, 400% 0;
   }
 }

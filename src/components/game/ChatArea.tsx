@@ -113,7 +113,7 @@ export function ChatArea({ messages, user, game, messagesEndRef, targetMessage }
                                 {getInitials(username)}
                             </AvatarFallback>
                         </Avatar>
-                        <div className={`max-w-[70%] p-3 rounded-lg ${isMe ? 'bg-blue-600' : 'bg-gray-700'}`}>
+                        <div className={`max-w-[70%] p-3 rounded-lg ${isMe ? 'bg-blue-600' : 'bg-gray-700'} ${game.status === 'solving' && targetMessage?.id === msg.id ? 'target-message-glow' : ''}`}>
                             <CipherText
                                 text={msg.content}
                                 visible={isVisible}
