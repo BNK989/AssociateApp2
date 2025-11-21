@@ -28,7 +28,8 @@ export default function GameRoom() {
         proposeSolvingMode,
         denySolvingMode,
         handleGetHint,
-        getTargetMessage
+        getTargetMessage,
+        shakeMessageId
     } = useGameLogic(gameId!);
 
     if (loading) return <div className="flex items-center justify-center h-screen">Loading Game...</div>;
@@ -57,6 +58,7 @@ export default function GameRoom() {
                 game={game}
                 messagesEndRef={messagesEndRef}
                 targetMessage={getTargetMessage()}
+                shakeMessageId={shakeMessageId}
             />
 
             <GameInput

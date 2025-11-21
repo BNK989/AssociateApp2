@@ -2,16 +2,18 @@ import { useEffect, useRef } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CipherText } from '@/components/CipherText';
 import { Message, GameState } from '@/hooks/useGameLogic';
+import { User } from '@supabase/supabase-js';
 
 type ChatAreaProps = {
     messages: Message[];
-    user: any;
+    user: User | null;
     game: GameState;
     messagesEndRef: React.RefObject<HTMLDivElement | null>;
     targetMessage?: Message;
+    shakeMessageId?: string | null;
 };
 
-export function ChatArea({ messages, user, game, messagesEndRef, targetMessage }: ChatAreaProps) {
+export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, shakeMessageId }: ChatAreaProps) {
     const containerRef = useRef<HTMLDivElement>(null);
 
     const getInitials = (name: string) => {
@@ -99,13 +101,14 @@ export function ChatArea({ messages, user, game, messagesEndRef, targetMessage }
                 const isVisible = msg.is_solved || (game.status !== 'solving' && isActuallyLast);
                 const isMe = msg.user_id === user?.id;
                 const username = msg.profiles?.username || 'User';
+                const isShaking = shakeMessageId === msg.id;
 
                 return (
                     <div
                         key={msg.id}
                         id={`msg-${msg.id}`}
                         data-message-id={msg.id}
-                        className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}
+                        className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : 'flex-row'} ${isShaking ? 'animate-shake' : ''}`}
                     >
                         <Avatar className="w-8 h-8">
                             <AvatarImage src={msg.profiles?.avatar_url} />

@@ -45,6 +45,7 @@ export default function Lobby() {
     const [myGames, setMyGames] = useState<Game[]>([]);
     const [creating, setCreating] = useState(false);
     const [gameToLeave, setGameToLeave] = useState<string | null>(null);
+    const [leaving, setLeaving] = useState(false);
 
     useEffect(() => {
         const fetchGames = async () => {
@@ -137,6 +138,7 @@ export default function Lobby() {
 
     const confirmLeave = async () => {
         if (!gameToLeave || !user) return;
+        setLeaving(true);
 
         try {
             const gameId = gameToLeave;
@@ -197,6 +199,8 @@ export default function Lobby() {
         } catch (error) {
             console.error('Error leaving game:', error);
             toast.error("Failed to leave game");
+        } finally {
+            setLeaving(false);
         }
     };
 
@@ -300,8 +304,10 @@ export default function Lobby() {
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
-                        <Button variant="ghost" onClick={() => setGameToLeave(null)}>Cancel</Button>
-                        <Button variant="destructive" onClick={confirmLeave}>Leave Game</Button>
+                        <Button variant="ghost" onClick={() => setGameToLeave(null)} disabled={leaving}>Cancel</Button>
+                        <Button variant="destructive" onClick={confirmLeave} disabled={leaving}>
+                            {leaving ? 'Leaving...' : 'Leave Game'}
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

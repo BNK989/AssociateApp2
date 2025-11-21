@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthProvider';
@@ -49,6 +49,7 @@ export function useGameLogic(gameId: string) {
     const [proposalTimeLeft, setProposalTimeLeft] = useState<number | null>(null);
     const [solvingTimeLeft, setSolvingTimeLeft] = useState<number | null>(null);
     const [sending, setSending] = useState(false);
+    const [shakeMessageId, setShakeMessageId] = useState<string | null>(null);
 
     const fetchGameData = async () => {
         if (!gameId) return;
@@ -176,6 +177,19 @@ export function useGameLogic(gameId: string) {
         scrollToBottom();
     }, [messages]);
 
+    const confirmSolvingMode = useCallback(async () => {
+        if (!game) return;
+        const { error } = await supabase
+            .from('games')
+            .update({
+                status: 'solving',
+                solving_proposal_created_at: null,
+                solving_started_at: new Date().toISOString()
+            })
+            .eq('id', game.id);
+        if (error) console.error("Error confirming mode:", error);
+    }, [game]);
+
     // Timer for Proposal
     useEffect(() => {
         if (!game?.solving_proposal_created_at) {
@@ -200,7 +214,7 @@ export function useGameLogic(gameId: string) {
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [game?.solving_proposal_created_at, game?.status]);
+    }, [game?.solving_proposal_created_at, game?.status, confirmSolvingMode]);
 
     // Timer for Solving Mode (20s rule)
     useEffect(() => {
@@ -270,6 +284,8 @@ export function useGameLogic(gameId: string) {
             setInput('');
         } else {
             toast.error("Incorrect guess!");
+            setShakeMessageId(target.id);
+            setTimeout(() => setShakeMessageId(null), 500);
             setInput('');
         }
     };
@@ -361,18 +377,7 @@ export function useGameLogic(gameId: string) {
         if (error) console.error("Error denying:", error);
     };
 
-    const confirmSolvingMode = async () => {
-        if (!game) return;
-        const { error } = await supabase
-            .from('games')
-            .update({
-                status: 'solving',
-                solving_proposal_created_at: null,
-                solving_started_at: new Date().toISOString()
-            })
-            .eq('id', game.id);
-        if (error) console.error("Error confirming mode:", error);
-    };
+
 
     const handleGetHint = async () => {
         if (!game || game.status !== 'solving') return;
@@ -431,6 +436,7 @@ export function useGameLogic(gameId: string) {
         proposeSolvingMode,
         denySolvingMode,
         handleGetHint,
-        getTargetMessage
+        getTargetMessage,
+        shakeMessageId
     };
 }
