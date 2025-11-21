@@ -20,7 +20,7 @@ export type Message = {
 
 export type GameState = {
     id: string;
-    status: 'lobby' | 'active' | 'solving' | 'completed';
+    status: 'lobby' | 'texting' | 'active' | 'solving' | 'completed';
     mode: 'free' | '100_text';
     current_turn_user_id: string;
     solving_proposal_created_at?: string | null;
@@ -276,10 +276,24 @@ export function useGameLogic(gameId: string) {
                 .update({ is_solved: true })
                 .eq('id', target.id);
 
-            await supabase
-                .from('games')
-                .update({ solving_started_at: new Date().toISOString() })
-                .eq('id', game.id);
+            // Check if this was the last message
+            const remainingUnsolved = messages.filter(m => !m.is_solved && m.id !== target.id);
+
+            if (remainingUnsolved.length === 0) {
+                // Game Over!
+                await supabase
+                    .from('games')
+                    .update({ status: 'completed' })
+                    .eq('id', game.id);
+
+                setGame(prev => prev ? ({ ...prev, status: 'completed' }) : null);
+            } else {
+                // Reset timer for next message
+                await supabase
+                    .from('games')
+                    .update({ solving_started_at: new Date().toISOString() })
+                    .eq('id', game.id);
+            }
 
             setInput('');
         } else {
@@ -376,8 +390,6 @@ export function useGameLogic(gameId: string) {
             .eq('id', game.id);
         if (error) console.error("Error denying:", error);
     };
-
-
 
     const handleGetHint = async () => {
         if (!game || game.status !== 'solving') return;

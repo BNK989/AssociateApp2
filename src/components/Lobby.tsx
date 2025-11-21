@@ -42,17 +42,17 @@ export default function Lobby() {
     const { user } = useAuth();
     const router = useRouter();
 
-    const [myGames, setMyGames] = useState<Game[]>([]);
+    const [activeGames, setActiveGames] = useState<Game[]>([]);
+    const [completedGames, setCompletedGames] = useState<Game[]>([]);
     const [creating, setCreating] = useState(false);
     const [gameToLeave, setGameToLeave] = useState<string | null>(null);
     const [leaving, setLeaving] = useState(false);
 
     useEffect(() => {
-        const fetchGames = async () => {
-            if (!user) return;
+        if (!user) return;
 
-            // 1. Fetch My Games (Active/Lobby/Solving where I am a player)
-            const { data: myGamesData, error: myGamesError } = await supabase
+        const fetchActiveGames = async () => {
+            const { data: gamesData, error } = await supabase
                 .from('games')
                 .select(`
                     *,
@@ -66,35 +66,77 @@ export default function Lobby() {
                 .neq('status', 'completed')
                 .order('created_at', { ascending: false });
 
-            if (myGamesError) console.error('Error fetching my games:', myGamesError);
-            else {
-                // Filter out archived games and games the user has left
-                const activeGames = myGamesData.filter((g: Game & { game_players: { user_id: string; is_archived: boolean; has_left: boolean }[] }) => {
-                    const playerInfo = g.game_players.find((p) => p.user_id === user.id);
-                    return playerInfo && playerInfo.is_archived !== true && playerInfo.has_left !== true;
-                });
-
-                setMyGames(activeGames.map((g: Game & { players: { has_left: boolean }[] }) => ({
-                    ...g,
-                    // We don't need player_count anymore if we show avatars, but keeping it for safety or fallback
-                    player_count: g.players.filter((p) => !p.has_left).length
-                })));
+            if (error) {
+                console.error('Error fetching active games:', error);
+                return;
             }
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const filtered = (gamesData as any[]).filter((g) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const playerInfo = g.game_players.find((p: any) => p.user_id === user.id);
+                return playerInfo && !playerInfo.is_archived && !playerInfo.has_left;
+            });
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setActiveGames(filtered.map((g: any) => ({
+                ...g,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                player_count: g.players.filter((p: any) => !p.has_left).length
+            })));
         };
 
-        if (user) {
-            fetchGames();
+        const fetchCompletedGames = async () => {
+            const { data: gamesData, error } = await supabase
+                .from('games')
+                .select(`
+                    *,
+                    game_players!inner (user_id, is_archived, has_left),
+                    players:game_players (
+                        has_left,
+                        user:profiles (username, avatar_url)
+                    )
+                `)
+                .eq('game_players.user_id', user.id)
+                .eq('status', 'completed')
+                .order('created_at', { ascending: false });
 
-            const channel = supabase
-                .channel('lobby_updates')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'games' }, () => fetchGames())
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'game_players' }, () => fetchGames())
-                .subscribe();
+            if (error) {
+                console.error('Error fetching completed games:', error);
+                return;
+            }
 
-            return () => {
-                supabase.removeChannel(channel);
-            };
-        }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const filtered = (gamesData as any[]).filter((g) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const playerInfo = g.game_players.find((p: any) => p.user_id === user.id);
+                return playerInfo && !playerInfo.is_archived && !playerInfo.has_left;
+            });
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setCompletedGames(filtered.map((g: any) => ({
+                ...g,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                player_count: g.players.filter((p: any) => !p.has_left).length
+            })));
+        };
+
+        const fetchAll = () => {
+            fetchActiveGames();
+            fetchCompletedGames();
+        };
+
+        fetchAll();
+
+        const channel = supabase
+            .channel('lobby_updates')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'games' }, () => fetchAll())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'game_players' }, () => fetchAll())
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, [user]);
 
     const createGame = async () => {
@@ -106,7 +148,7 @@ export default function Lobby() {
             const { data: game, error: gameError } = await supabase
                 .from('games')
                 .insert({
-                    status: 'lobby',
+                    status: 'texting',
                     mode: 'free',
                     current_turn_user_id: user.id,
                 })
@@ -192,7 +234,8 @@ export default function Lobby() {
             if (error) throw error;
 
             // Optimistic update
-            setMyGames(prev => prev.filter(g => g.id !== gameId));
+            setActiveGames(prev => prev.filter(g => g.id !== gameId));
+            setCompletedGames(prev => prev.filter(g => g.id !== gameId));
             toast.success("Left game successfully");
             setGameToLeave(null);
 
@@ -215,7 +258,8 @@ export default function Lobby() {
             console.error('Error archiving game:', error);
             alert('Failed to archive game');
         } else {
-            setMyGames(prev => prev.filter(g => g.id !== gameId));
+            setActiveGames(prev => prev.filter(g => g.id !== gameId));
+            setCompletedGames(prev => prev.filter(g => g.id !== gameId));
         }
     };
 
@@ -223,76 +267,100 @@ export default function Lobby() {
         return name?.slice(0, 2).toUpperCase() || '??';
     };
 
-    return (
-        <div className="max-w-4xl mx-auto space-y-8">
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-purple-400">Your Games</h2>
-                <button
-                    onClick={createGame}
-                    disabled={creating}
-                    className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50"
-                >
-                    {creating ? 'Creating...' : 'Create New Game'}
-                </button>
-            </div>
+    const GameCard = ({ game }: { game: Game }) => (
+        <ContextMenu key={game.id}>
+            <ContextMenuTrigger>
+                <div className="bg-gray-800 p-4 rounded-lg border border-purple-500/50 hover:border-purple-400 transition-colors cursor-pointer relative" onClick={() => router.push(`/game/${game.id}`)}>
+                    {game.current_turn_user_id === user?.id && game.status !== 'completed' && (
+                        <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg animate-pulse z-10">
+                            YOUR TURN
+                        </span>
+                    )}
+                    <div className="flex justify-between items-start mb-4">
+                        <span className={`text-xs px-2 py-1 rounded uppercase ${game.status === 'solving' ? 'bg-purple-900 text-purple-200' :
+                            game.status === 'completed' ? 'bg-green-900 text-green-200' :
+                                'bg-blue-900 text-blue-200'
+                            }`}>
+                            {game.status}
+                        </span>
+                        <span className="text-sm text-gray-400">{new Date(game.created_at).toLocaleTimeString()}</span>
+                    </div>
+                    <h3 className="text-lg font-semibold mb-4">Game #{game.id.slice(0, 4)}</h3>
 
-            {myGames.length > 0 ? (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {myGames.map((game) => (
-                        <ContextMenu key={game.id}>
-                            <ContextMenuTrigger>
-                                <div className="bg-gray-800 p-4 rounded-lg border border-purple-500/50 hover:border-purple-400 transition-colors cursor-pointer relative" onClick={() => router.push(`/game/${game.id}`)}>
-                                    {game.current_turn_user_id === user?.id && (
-                                        <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg animate-pulse z-10">
-                                            YOUR TURN
-                                        </span>
-                                    )}
-                                    <div className="flex justify-between items-start mb-4">
-                                        <span className={`text-xs px-2 py-1 rounded uppercase ${game.status === 'solving' ? 'bg-purple-900 text-purple-200' : 'bg-blue-900 text-blue-200'}`}>
-                                            {game.status}
-                                        </span>
-                                        <span className="text-sm text-gray-400">{new Date(game.created_at).toLocaleTimeString()}</span>
-                                    </div>
-                                    <h3 className="text-lg font-semibold mb-4">Game #{game.id.slice(0, 4)}</h3>
-
-                                    {/* Player Avatars Stack */}
-                                    <div className="flex items-center pl-2">
-                                        {game.players?.map((player, index) => (
-                                            <div
-                                                key={index}
-                                                className={`relative -ml-2 transition-opacity ${player.has_left ? 'opacity-40 grayscale' : 'opacity-100'}`}
-                                                title={player.user?.username + (player.has_left ? ' (Left)' : '')}
-                                            >
-                                                <Avatar className="w-8 h-8 border-2 border-gray-800 ring-2 ring-purple-500/20">
-                                                    <AvatarImage src={player.user?.avatar_url} />
-                                                    <AvatarFallback className="bg-purple-900 text-purple-200 text-[10px]">
-                                                        {getInitials(player.user?.username)}
-                                                    </AvatarFallback>
-                                                </Avatar>
-                                            </div>
-                                        ))}
-                                        {(!game.players || game.players.length === 0) && (
-                                            <span className="text-gray-500 text-sm italic ml-2">No players</span>
-                                        )}
-                                    </div>
-                                </div>
-                            </ContextMenuTrigger>
-                            <ContextMenuContent className="bg-gray-900 border-gray-800 text-white">
-                                <ContextMenuItem onClick={() => handleArchive(game.id)} className="focus:bg-gray-800 cursor-pointer">
-                                    Archive Game
-                                </ContextMenuItem>
-                                <ContextMenuItem
-                                    onClick={() => setGameToLeave(game.id)}
-                                    className="text-red-500 focus:bg-gray-800 focus:text-red-400 cursor-pointer"
-                                >
-                                    Leave Game
-                                </ContextMenuItem>
-                            </ContextMenuContent>
-                        </ContextMenu>
-                    ))}
+                    {/* Player Avatars Stack */}
+                    <div className="flex items-center pl-2">
+                        {game.players?.map((player, index) => (
+                            <div
+                                key={index}
+                                className={`relative -ml-2 transition-opacity ${player.has_left ? 'opacity-40 grayscale' : 'opacity-100'}`}
+                                title={player.user?.username + (player.has_left ? ' (Left)' : '')}
+                            >
+                                <Avatar className="w-8 h-8 border-2 border-gray-800 ring-2 ring-purple-500/20">
+                                    <AvatarImage src={player.user?.avatar_url} />
+                                    <AvatarFallback className="bg-purple-900 text-purple-200 text-[10px]">
+                                        {getInitials(player.user?.username)}
+                                    </AvatarFallback>
+                                </Avatar>
+                            </div>
+                        ))}
+                        {(!game.players || game.players.length === 0) && (
+                            <span className="text-gray-500 text-sm italic ml-2">No players</span>
+                        )}
+                    </div>
                 </div>
-            ) : (
-                <p className="text-gray-400 text-center py-10">You are not in any active games. Create one to get started!</p>
+            </ContextMenuTrigger>
+            <ContextMenuContent className="bg-gray-900 border-gray-800 text-white">
+                <ContextMenuItem onClick={() => handleArchive(game.id)} className="focus:bg-gray-800 cursor-pointer">
+                    Archive Game
+                </ContextMenuItem>
+                <ContextMenuItem
+                    onClick={() => setGameToLeave(game.id)}
+                    className="text-red-500 focus:bg-gray-800 focus:text-red-400 cursor-pointer"
+                >
+                    Leave Game
+                </ContextMenuItem>
+            </ContextMenuContent>
+        </ContextMenu>
+    );
+
+    return (
+        <div className="max-w-4xl mx-auto space-y-12">
+            {/* Active Games Section */}
+            <section>
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold text-purple-400">Your Games</h2>
+                    <button
+                        onClick={createGame}
+                        disabled={creating}
+                        className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50"
+                    >
+                        {creating ? 'Creating...' : 'Create New Game'}
+                    </button>
+                </div>
+
+                {activeGames.length > 0 ? (
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {activeGames.map((game) => (
+                            <GameCard key={game.id} game={game} />
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-gray-400 text-center py-10 bg-gray-800/30 rounded-lg border border-gray-800 border-dashed">
+                        You are not in any active games. Create one to get started!
+                    </p>
+                )}
+            </section>
+
+            {/* Completed Games Section */}
+            {completedGames.length > 0 && (
+                <section>
+                    <h2 className="text-2xl font-bold text-green-400 mb-6">Past Games</h2>
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {completedGames.map((game) => (
+                            <GameCard key={game.id} game={game} />
+                        ))}
+                    </div>
+                </section>
             )}
 
             <Dialog open={!!gameToLeave} onOpenChange={(open) => !open && setGameToLeave(null)}>

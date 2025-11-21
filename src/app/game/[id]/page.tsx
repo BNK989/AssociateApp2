@@ -5,6 +5,7 @@ import { useGameLogic } from '@/hooks/useGameLogic';
 import { GameHeader } from '@/components/game/GameHeader';
 import { ChatArea } from '@/components/game/ChatArea';
 import { GameInput } from '@/components/game/GameInput';
+import { EndGamePopover } from '@/components/game/EndGamePopover';
 
 export default function GameRoom() {
     const { id } = useParams();
@@ -72,6 +73,13 @@ export default function GameRoom() {
                 targetMessage={getTargetMessage()}
                 onSendMessage={handleSendMessage}
                 onGetHint={handleGetHint}
+            />
+
+            <EndGamePopover
+                open={game.status === 'completed'}
+                onClose={() => router.push('/')}
+                players={players}
+                messages={messages}
             />
         </div>
     );

@@ -16,9 +16,9 @@
 - [x] when a message was guessed incorrectly add a shake effect to the message to indicate the guess was wrong
 
 ## Phase 5: end game popover
-- [ ] update the database to support game status played also change 'LOBBY' status to 'TEXTING'
-- [ ] at the end of a game (i.e. when all the messages have been guessed) show a popover with statistics about the game 
-- [ ] add to the end of the game some effects like confetti to indicate the game was successfully played
+- [x] update the database to support game status played also change 'LOBBY' status to 'TEXTING'
+- [x] at the end of a game (i.e. when all the messages have been guessed) show a popover with statistics about the game 
+- [x] add to the end of the game some effects like confetti to indicate the game was successfully played
 
 ## Phase 5.5: fix dark and light mode support
 - [ ] from the settings panale make sure the dark and light mode is saved and applied
