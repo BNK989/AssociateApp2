@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthProvider';
 import { useRouter } from 'next/navigation';
@@ -31,13 +31,26 @@ type Invite = {
     };
 };
 
+type Notification = {
+    id: string;
+    type: string;
+    content: string;
+    is_read: boolean;
+    created_at: string;
+    metadata?: Record<string, unknown>;
+};
+
 export function NotificationCenter() {
     const { user } = useAuth();
     const router = useRouter();
     const [invites, setInvites] = useState<Invite[]>([]);
+    const [notifications, setNotifications] = useState<Notification[]>([]);
 
-    const fetchInvites = async () => {
-        const { data, error } = await supabase
+    const fetchData = useCallback(async () => {
+        if (!user) return;
+
+        // Fetch Invites
+        const { data: inviteData } = await supabase
             .from('invites')
             .select(`
                 id,
@@ -47,16 +60,22 @@ export function NotificationCenter() {
                 sender:sender_id (username),
                 game:game_id (id, mode)
             `)
-            .eq('receiver_id', user?.id)
+            .eq('receiver_id', user.id)
             .eq('status', 'pending')
             .order('created_at', { ascending: false });
 
-        if (error) {
-            console.error('Error fetching invites:', error);
-        } else {
-            setInvites(data as unknown as Invite[]);
-        }
-    };
+        if (inviteData) setInvites(inviteData as unknown as Invite[]);
+
+        // Fetch Notifications
+        const { data: notifData } = await supabase
+            .from('notifications')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('is_read', false)
+            .order('created_at', { ascending: false });
+
+        if (notifData) setNotifications(notifData as Notification[]);
+    }, [user]);
 
     const handleAccept = async (inviteId: string, gameId: string) => {
         // 1. Update invite status
@@ -94,12 +113,21 @@ export function NotificationCenter() {
         toast.info("Invite declined");
     };
 
+    const markAsRead = async (notificationId: string) => {
+        await supabase
+            .from('notifications')
+            .update({ is_read: true })
+            .eq('id', notificationId);
+
+        setNotifications(prev => prev.filter(n => n.id !== notificationId));
+    };
+
     useEffect(() => {
         if (user) {
-            fetchInvites();
+            fetchData();
 
-            console.log("Subscribing to invites for user:", user.id);
-            const channel = supabase
+            // Subscribe to Invites
+            const inviteChannel = supabase
                 .channel(`invites:${user.id}`)
                 .on('postgres_changes', {
                     event: 'INSERT',
@@ -107,8 +135,6 @@ export function NotificationCenter() {
                     table: 'invites',
                     filter: `receiver_id=eq.${user.id}`
                 }, async (payload) => {
-                    console.log("Invite received!", payload);
-
                     // Fetch sender name for the toast
                     const { data: senderData } = await supabase
                         .from('profiles')
@@ -155,69 +181,109 @@ export function NotificationCenter() {
                         </div>
                     ), { duration: 10000 });
 
-                    fetchInvites();
+                    fetchData();
                 })
-                .subscribe((status) => {
-                    console.log("Subscription status:", status);
-                });
+                .subscribe();
+
+            // Subscribe to Notifications
+            const notifChannel = supabase
+                .channel(`notifications:${user.id}`)
+                .on('postgres_changes', {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'notifications',
+                    filter: `user_id=eq.${user.id}`
+                }, (payload) => {
+                    toast.info(payload.new.content);
+                    setNotifications(prev => [payload.new as Notification, ...prev]);
+                })
+                .subscribe();
 
             return () => {
-                console.log("Unsubscribing from invites");
-                supabase.removeChannel(channel);
+                supabase.removeChannel(inviteChannel);
+                supabase.removeChannel(notifChannel);
             };
         }
-    }, [user]);
+    }, [user, fetchData]);
+
+    const totalCount = invites.length + notifications.length;
 
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
                     <Bell className="w-5 h-5" />
-                    {invites.length > 0 && (
+                    {totalCount > 0 && (
                         <Badge className="absolute -top-1 -right-1 px-1.5 py-0.5 min-w-[18px] h-[18px] text-[10px] flex items-center justify-center bg-red-500 hover:bg-red-600 border-none">
-                            {invites.length}
+                            {totalCount}
                         </Badge>
                     )}
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80 bg-gray-900 border-gray-800 text-white">
+            <DropdownMenuContent align="end" className="w-80 bg-gray-900 border-gray-800 text-white max-h-[400px] overflow-y-auto">
                 <DropdownMenuLabel>Notifications</DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-gray-800" />
-                {invites.length === 0 ? (
+
+                {totalCount === 0 ? (
                     <div className="p-4 text-center text-sm text-gray-400">
-                        No pending invites
+                        No new notifications
                     </div>
                 ) : (
-                    invites.map((invite) => (
-                        <DropdownMenuItem key={invite.id} className="flex flex-col items-start gap-2 p-3 focus:bg-gray-800 cursor-default">
-                            <div className="text-sm">
-                                <span className="font-bold text-purple-400">{invite.sender.username}</span> invited you to play <span className="font-bold">Game #{invite.game.id.slice(0, 4)}</span>
-                            </div>
-                            <div className="flex gap-2 w-full mt-1">
-                                <Button
-                                    size="sm"
-                                    className="flex-1 bg-green-600 hover:bg-green-700 h-7 text-xs"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleAccept(invite.id, invite.game_id);
-                                    }}
-                                >
-                                    <Check className="w-3 h-3 mr-1" /> Accept
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="flex-1 h-7 text-xs border-gray-700 hover:bg-gray-800 text-gray-300"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDecline(invite.id);
-                                    }}
-                                >
-                                    <X className="w-3 h-3 mr-1" /> Decline
-                                </Button>
-                            </div>
-                        </DropdownMenuItem>
-                    ))
+                    <>
+                        {/* Invites Section */}
+                        {invites.map((invite) => (
+                            <DropdownMenuItem key={invite.id} className="flex flex-col items-start gap-2 p-3 focus:bg-gray-800 cursor-default border-b border-gray-800 last:border-0">
+                                <div className="text-sm">
+                                    <span className="font-bold text-purple-400">{invite.sender.username}</span> invited you to play <span className="font-bold">Game #{invite.game.id.slice(0, 4)}</span>
+                                </div>
+                                <div className="flex gap-2 w-full mt-1">
+                                    <Button
+                                        size="sm"
+                                        className="flex-1 bg-green-600 hover:bg-green-700 h-7 text-xs"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleAccept(invite.id, invite.game_id);
+                                        }}
+                                    >
+                                        <Check className="w-3 h-3 mr-1" /> Accept
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="flex-1 h-7 text-xs border-gray-700 hover:bg-gray-800 text-gray-300"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDecline(invite.id);
+                                        }}
+                                    >
+                                        <X className="w-3 h-3 mr-1" /> Decline
+                                    </Button>
+                                </div>
+                            </DropdownMenuItem>
+                        ))}
+
+                        {/* General Notifications Section */}
+                        {notifications.map((notif) => (
+                            <DropdownMenuItem key={notif.id} className="flex flex-col items-start gap-2 p-3 focus:bg-gray-800 cursor-default border-b border-gray-800 last:border-0">
+                                <div className="text-sm text-gray-200">
+                                    {notif.content}
+                                </div>
+                                <div className="flex justify-end w-full">
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-6 text-xs text-gray-400 hover:text-white"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            markAsRead(notif.id);
+                                        }}
+                                    >
+                                        Dismiss
+                                    </Button>
+                                </div>
+                            </DropdownMenuItem>
+                        ))}
+                    </>
                 )}
             </DropdownMenuContent>
         </DropdownMenu>
