@@ -61,12 +61,12 @@ export function CipherText({ text, visible, className = '' }: CipherTextProps) {
     if (visible) {
         // If fully revealed
         if (display === text) {
-            return <span className={`text-white ${className}`}>{display}</span>;
+            return <span className={`${className}`}>{display}</span>;
         }
         // Animating Reveal (Green Matrix style?)
         return <span className={`text-green-400 font-mono ${className}`}>::{display}::</span>;
     } else {
         // Ciphered
-        return <span className={`text-gray-300 font-mono tracking-widest ${className}`}>::{display}::</span>;
+        return <span className={`text-gray-500 dark:text-gray-400 font-mono tracking-widest ${className}`}>::{display}::</span>;
     }
 }

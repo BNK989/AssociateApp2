@@ -4,12 +4,15 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
+
+
 type AuthContextType = {
     user: User | null;
     session: Session | null;
     loading: boolean;
     profile: any | null;
     signOut: () => Promise<void>;
+    refreshProfile: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -18,6 +21,7 @@ const AuthContext = createContext<AuthContextType>({
     loading: true,
     profile: null,
     signOut: async () => { },
+    refreshProfile: async () => { },
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -65,6 +69,24 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         initializeAuth();
     }, []);
 
+    // Apply theme based on profile settings or system preference
+    useEffect(() => {
+        const applyTheme = () => {
+            const userTheme = profile?.settings?.theme;
+            const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+            const shouldBeDark = userTheme === 'dark' || (!userTheme && systemDark);
+
+            if (shouldBeDark) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        };
+
+        applyTheme();
+    }, [profile]);
+
     const fetchProfile = async (userId: string) => {
         try {
             const { data, error } = await supabase
@@ -83,12 +105,18 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         }
     };
 
+    const refreshProfile = async () => {
+        if (user) {
+            await fetchProfile(user.id);
+        }
+    };
+
     const signOut = async () => {
         await supabase.auth.signOut();
     };
 
     return (
-        <AuthContext.Provider value={{ user, session, loading, profile, signOut }}>
+        <AuthContext.Provider value={{ user, session, loading, profile, signOut, refreshProfile }}>
             {children}
         </AuthContext.Provider>
     );

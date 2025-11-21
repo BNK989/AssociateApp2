@@ -72,11 +72,11 @@ export function GameHeader({
     });
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-20 max-w-md mx-auto bg-gray-900 p-2 border-b border-gray-800 flex justify-between items-center">
+        <header className="fixed top-0 left-0 right-0 z-20 max-w-md mx-auto bg-white dark:bg-gray-900 p-2 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center">
             <div className="flex items-center gap-3">
                 <button
                     onClick={onBack}
-                    className="p-2 -ml-2 hover:bg-gray-800 rounded-full transition-colors"
+                    className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-900 dark:text-white"
                     aria-label="Back to Lobby"
                 >
                     <ArrowLeft className="w-5 h-5" />
@@ -85,7 +85,7 @@ export function GameHeader({
                 {/* Avatar Stack */}
                 <div className="flex items-center -space-x-2 mr-2">
                     {sortedPlayers.map((player) => (
-                        <Avatar key={player.user_id} className={`w-8 h-8 border-2 border-gray-900 ${player.user_id === activePlayerId ? 'z-10 ring-2 ring-green-500' : ''}`}>
+                        <Avatar key={player.user_id} className={`w-8 h-8 border-2 border-white dark:border-gray-900 ${player.user_id === activePlayerId ? 'z-10 ring-2 ring-green-500' : ''}`}>
                             <AvatarImage src={player.profiles?.avatar_url} />
                             <AvatarFallback className={`${getAvatarColor(player.profiles?.username || '')} text-white text-xs`}>
                                 {getInitials(player.profiles?.username || '')}
@@ -114,7 +114,7 @@ export function GameHeader({
 
             {/* Proposal Popup */}
             {game.solving_proposal_created_at && (
-                <div className="absolute top-full left-0 w-full bg-gray-800 border-b border-gray-700 p-2 flex justify-between items-center z-10 shadow-lg">
+                <div className="absolute top-full left-0 w-full bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-2 flex justify-between items-center z-10 shadow-lg text-gray-900 dark:text-white">
                     <span className="text-sm">Switching to Solving in {proposalTimeLeft}s...</span>
                     <button
                         onClick={onDenySolving}

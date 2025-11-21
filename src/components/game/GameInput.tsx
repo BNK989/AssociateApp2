@@ -65,7 +65,7 @@ export function GameInput({
     );
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-20 max-w-md mx-auto p-2 border-t border-gray-800 bg-gray-900">
+        <div className="fixed bottom-0 left-0 right-0 z-20 max-w-md mx-auto p-2 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
             <form onSubmit={onSendMessage} className="flex gap-2 items-center">
                 {game.status === 'solving' && (
                     <button
@@ -83,7 +83,7 @@ export function GameInput({
                     onChange={(e) => setInput(e.target.value)}
                     disabled={isInputDisabled}
                     placeholder={placeholderText}
-                    className={`flex-1 p-2 rounded bg-gray-800 border border-gray-700 focus:border-blue-500 outline-none ${game.status === 'solving' ? 'border-purple-500' : ''} ${isInputDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`flex-1 p-2 rounded bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none ${game.status === 'solving' ? 'border-purple-500' : ''} ${isInputDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                 />
                 <button
                     type="submit"

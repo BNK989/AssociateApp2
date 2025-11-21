@@ -23,7 +23,6 @@
 ## Phase 5.5: fix dark and light mode support
 - [ ] from the settings panale make sure the dark and light mode is saved and applied
 - [ ] make sure the dark and light mode is applied to the game page and the homepage
-- [ ] change favicon to show (it currently shows the nextJS favicon)
 
 ## Phase 6: Score & Streaks & Hints
 - [ ] confirm points logic 

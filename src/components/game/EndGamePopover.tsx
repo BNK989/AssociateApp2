@@ -77,7 +77,7 @@ export function EndGamePopover({ open, onClose, players, messages }: EndGamePopo
 
     return (
         <Dialog open={open} onOpenChange={() => { }}>
-            <DialogContent className="bg-gray-900 border-gray-800 text-white sm:max-w-md">
+            <DialogContent className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle className="text-center text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
                         Well Played!
@@ -89,11 +89,11 @@ export function EndGamePopover({ open, onClose, players, messages }: EndGamePopo
 
                 <div className="py-6 space-y-6">
                     {/* Total Messages */}
-                    <div className="flex flex-col items-center justify-center p-4 bg-gray-800/50 rounded-xl border border-gray-700">
+                    <div className="flex flex-col items-center justify-center p-4 bg-gray-100 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
                         <span className="text-gray-400 text-sm uppercase tracking-wider">Total Messages</span>
                         <div className="flex items-center gap-2 mt-1">
                             <MessageSquare className="w-6 h-6 text-blue-400" />
-                            <span className="text-4xl font-bold text-white">{totalMessages}</span>
+                            <span className="text-4xl font-bold text-gray-900 dark:text-white">{totalMessages}</span>
                         </div>
                     </div>
 
@@ -104,12 +104,12 @@ export function EndGamePopover({ open, onClose, players, messages }: EndGamePopo
                             {sortedPlayers.slice(0, 3).map((player, index) => {
                                 const msgCount = messageCounts[player.user_id] || 0;
                                 return (
-                                    <div key={player.user_id} className="flex items-center justify-between p-3 bg-gray-800 rounded-lg border border-gray-700">
+                                    <div key={player.user_id} className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                                         <div className="flex items-center gap-3">
                                             <div className="relative">
                                                 <Avatar className="w-10 h-10 border-2 border-gray-700">
                                                     <AvatarImage src={player.profiles?.avatar_url} />
-                                                    <AvatarFallback>{getInitials(player.profiles?.username || '')}</AvatarFallback>
+                                                    <AvatarFallback className="bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200">{getInitials(player.profiles?.username || '')}</AvatarFallback>
                                                 </Avatar>
                                                 {index === 0 && (
                                                     <div className="absolute -top-2 -right-2 bg-yellow-500 text-black p-1 rounded-full">
@@ -117,9 +117,9 @@ export function EndGamePopover({ open, onClose, players, messages }: EndGamePopo
                                                     </div>
                                                 )}
                                             </div>
-                                            <span className="font-medium text-white">{player.profiles?.username}</span>
+                                            <span className="font-medium text-gray-900 dark:text-white">{player.profiles?.username}</span>
                                         </div>
-                                        <span className="text-xl font-bold text-gray-300">{msgCount}</span>
+                                        <span className="text-xl font-bold text-gray-700 dark:text-gray-300">{msgCount}</span>
                                     </div>
                                 );
                             })}

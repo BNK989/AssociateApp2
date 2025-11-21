@@ -37,7 +37,7 @@ export default function GameRoom() {
     if (!game) return <div className="flex items-center justify-center h-[100dvh]">Game not found</div>;
 
     return (
-        <div className="min-h-screen max-w-md mx-auto bg-gray-900 relative">
+        <div className="min-h-screen max-w-md mx-auto bg-white dark:bg-gray-900 relative">
             <GameHeader
                 game={game}
                 user={user}

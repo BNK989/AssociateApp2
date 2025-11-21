@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthProvider';
 import { supabase } from '@/lib/supabase';
 
 export default function Settings() {
-    const { user, profile } = useAuth();
+    const { user, profile, refreshProfile } = useAuth();
     const [username, setUsername] = useState('');
     const [avatarUrl, setAvatarUrl] = useState('');
     const [theme, setTheme] = useState('dark');
@@ -44,6 +44,7 @@ export default function Settings() {
             console.error(error);
         } else {
             setMessage('Profile updated!');
+            await refreshProfile();
         }
         setSaving(false);
     };
@@ -59,7 +60,7 @@ export default function Settings() {
                         type="text"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
-                        className="p-2 border rounded bg-gray-800 border-gray-700"
+                        className="p-2 border rounded bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white"
                     />
                 </div>
 
@@ -69,7 +70,7 @@ export default function Settings() {
                         type="text"
                         value={avatarUrl}
                         onChange={(e) => setAvatarUrl(e.target.value)}
-                        className="p-2 border rounded bg-gray-800 border-gray-700"
+                        className="p-2 border rounded bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white"
                     />
                 </div>
 
@@ -78,7 +79,7 @@ export default function Settings() {
                     <select
                         value={theme}
                         onChange={(e) => setTheme(e.target.value)}
-                        className="p-2 border rounded bg-gray-800 border-gray-700"
+                        className="p-2 border rounded bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white"
                     >
                         <option value="dark">Dark</option>
                         <option value="light">Light</option>

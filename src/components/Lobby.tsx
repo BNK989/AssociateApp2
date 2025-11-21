@@ -270,7 +270,7 @@ export default function Lobby() {
     const GameCard = ({ game }: { game: Game }) => (
         <ContextMenu key={game.id}>
             <ContextMenuTrigger>
-                <div className="bg-gray-800 p-4 rounded-lg border border-purple-500/50 hover:border-purple-400 transition-colors cursor-pointer relative" onClick={() => router.push(`/game/${game.id}`)}>
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-purple-200 dark:border-purple-500/50 hover:border-purple-400 transition-colors cursor-pointer relative shadow-sm dark:shadow-none" onClick={() => router.push(`/game/${game.id}`)}>
                     {game.current_turn_user_id === user?.id && game.status !== 'completed' && (
                         <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg animate-pulse z-10">
                             YOUR TURN
@@ -285,7 +285,7 @@ export default function Lobby() {
                         </span>
                         <span className="text-sm text-gray-400">{new Date(game.created_at).toLocaleTimeString()}</span>
                     </div>
-                    <h3 className="text-lg font-semibold mb-4">Game #{game.id.slice(0, 4)}</h3>
+                    <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Game #{game.id.slice(0, 4)}</h3>
 
                     {/* Player Avatars Stack */}
                     <div className="flex items-center pl-2">
@@ -297,7 +297,7 @@ export default function Lobby() {
                             >
                                 <Avatar className="w-8 h-8 border-2 border-gray-800 ring-2 ring-purple-500/20">
                                     <AvatarImage src={player.user?.avatar_url} />
-                                    <AvatarFallback className="bg-purple-900 text-purple-200 text-[10px]">
+                                    <AvatarFallback className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-200 text-[10px]">
                                         {getInitials(player.user?.username)}
                                     </AvatarFallback>
                                 </Avatar>
@@ -309,7 +309,7 @@ export default function Lobby() {
                     </div>
                 </div>
             </ContextMenuTrigger>
-            <ContextMenuContent className="bg-gray-900 border-gray-800 text-white">
+            <ContextMenuContent className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white">
                 <ContextMenuItem onClick={() => handleArchive(game.id)} className="focus:bg-gray-800 cursor-pointer">
                     Archive Game
                 </ContextMenuItem>
@@ -364,7 +364,7 @@ export default function Lobby() {
             )}
 
             <Dialog open={!!gameToLeave} onOpenChange={(open) => !open && setGameToLeave(null)}>
-                <DialogContent className="bg-gray-900 border-gray-800 text-white">
+                <DialogContent className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white">
                     <DialogHeader>
                         <DialogTitle>Leave Game</DialogTitle>
                         <DialogDescription className="text-gray-400">

@@ -145,13 +145,13 @@ export function NotificationCenter() {
                     const senderName = senderData?.username || 'Someone';
 
                     toast.custom((t) => (
-                        <div className="bg-gray-900 border border-gray-800 text-white rounded-lg p-4 shadow-lg w-full flex flex-col gap-3 pointer-events-auto">
+                        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-lg p-4 shadow-lg w-full flex flex-col gap-3 pointer-events-auto">
                             <div className="flex justify-between items-start">
                                 <div>
                                     <p className="font-bold text-sm">{senderName}</p>
-                                    <p className="text-xs text-gray-400">invited you to play!</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">invited you to play!</p>
                                 </div>
-                                <button onClick={() => toast.dismiss(t)} className="text-gray-400 hover:text-white">
+                                <button onClick={() => toast.dismiss(t)} className="text-gray-400 hover:text-gray-900 dark:hover:text-white">
                                     <X className="w-4 h-4" />
                                 </button>
                             </div>
@@ -169,7 +169,7 @@ export function NotificationCenter() {
                                 <Button
                                     size="sm"
                                     variant="outline"
-                                    className="flex-1 h-8 text-xs border-gray-700 hover:bg-gray-800 text-gray-300"
+                                    className="flex-1 h-8 text-xs border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
                                     onClick={() => {
                                         handleDecline(payload.new.id);
                                         toast.dismiss(t);
@@ -220,21 +220,21 @@ export function NotificationCenter() {
                     )}
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80 bg-gray-900 border-gray-800 text-white max-h-[400px] overflow-y-auto">
+            <DropdownMenuContent align="end" className="w-80 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white max-h-[400px] overflow-y-auto">
                 <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-gray-800" />
+                <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-800" />
 
                 {totalCount === 0 ? (
-                    <div className="p-4 text-center text-sm text-gray-400">
+                    <div className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
                         No new notifications
                     </div>
                 ) : (
                     <>
                         {/* Invites Section */}
                         {invites.map((invite) => (
-                            <DropdownMenuItem key={invite.id} className="flex flex-col items-start gap-2 p-3 focus:bg-gray-800 cursor-default border-b border-gray-800 last:border-0">
+                            <DropdownMenuItem key={invite.id} className="flex flex-col items-start gap-2 p-3 focus:bg-gray-100 dark:focus:bg-gray-800 cursor-default border-b border-gray-200 dark:border-gray-800 last:border-0">
                                 <div className="text-sm">
-                                    <span className="font-bold text-purple-400">{invite.sender.username}</span> invited you to play <span className="font-bold">Game #{invite.game.id.slice(0, 4)}</span>
+                                    <span className="font-bold text-purple-600 dark:text-purple-400">{invite.sender.username}</span> invited you to play <span className="font-bold">Game #{invite.game.id.slice(0, 4)}</span>
                                 </div>
                                 <div className="flex gap-2 w-full mt-1">
                                     <Button
@@ -250,7 +250,7 @@ export function NotificationCenter() {
                                     <Button
                                         size="sm"
                                         variant="outline"
-                                        className="flex-1 h-7 text-xs border-gray-700 hover:bg-gray-800 text-gray-300"
+                                        className="flex-1 h-7 text-xs border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             handleDecline(invite.id);
@@ -264,15 +264,15 @@ export function NotificationCenter() {
 
                         {/* General Notifications Section */}
                         {notifications.map((notif) => (
-                            <DropdownMenuItem key={notif.id} className="flex flex-col items-start gap-2 p-3 focus:bg-gray-800 cursor-default border-b border-gray-800 last:border-0">
-                                <div className="text-sm text-gray-200">
+                            <DropdownMenuItem key={notif.id} className="flex flex-col items-start gap-2 p-3 focus:bg-gray-100 dark:focus:bg-gray-800 cursor-default border-b border-gray-200 dark:border-gray-800 last:border-0">
+                                <div className="text-sm text-gray-600 dark:text-gray-200">
                                     {notif.content}
                                 </div>
                                 <div className="flex justify-end w-full">
                                     <Button
                                         size="sm"
                                         variant="ghost"
-                                        className="h-6 text-xs text-gray-400 hover:text-white"
+                                        className="h-6 text-xs text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             markAsRead(notif.id);

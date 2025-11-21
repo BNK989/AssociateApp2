@@ -116,10 +116,11 @@ export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, 
                                 {getInitials(username)}
                             </AvatarFallback>
                         </Avatar>
-                        <div className={`max-w-[70%] p-3 rounded-lg ${isMe ? 'bg-blue-600' : 'bg-gray-700'} ${game.status === 'solving' && targetMessage?.id === msg.id ? 'target-message-glow' : ''}`}>
+                        <div className={`max-w-[70%] p-3 rounded-lg ${isMe ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white'} ${game.status === 'solving' && targetMessage?.id === msg.id ? 'target-message-glow' : ''}`}>
                             <CipherText
                                 text={msg.content}
                                 visible={isVisible}
+                                className={isMe ? 'text-white' : 'text-gray-900 dark:text-white'}
                             />
                         </div>
                     </div>
