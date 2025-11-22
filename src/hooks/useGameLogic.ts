@@ -51,6 +51,8 @@ export function useGameLogic(gameId: string) {
     const [sending, setSending] = useState(false);
     const [shakeMessageId, setShakeMessageId] = useState<string | null>(null);
 
+    const [justSolvedMessageId, setJustSolvedMessageId] = useState<string | null>(null);
+
     const fetchGameData = async () => {
         if (!gameId) return;
 
@@ -63,6 +65,8 @@ export function useGameLogic(gameId: string) {
 
         if (gameError) {
             console.error('Error fetching game:', gameError);
+            toast.error("Game not found");
+            router.push('/');
             return;
         }
         setGame(gameData);
@@ -107,6 +111,15 @@ export function useGameLogic(gameId: string) {
             setMessages(msgs as unknown as Message[] || []);
         }
         setLoading(false);
+
+        // Access Control: Check if current user is a player
+        if (user && playersData) {
+            const isPlayer = (playersData as unknown as Player[]).some(p => p.user_id === user.id);
+            if (!isPlayer) {
+                toast.error("You are not part of this game!");
+                router.push('/');
+            }
+        }
     };
 
     const subscribeToGame = () => {
@@ -269,7 +282,9 @@ export function useGameLogic(gameId: string) {
         const actual = target.content.toLowerCase();
 
         if (guess === actual) {
-            toast.success("Correct! You solved the message!");
+            // toast.success("Correct! You solved the message!");
+            setJustSolvedMessageId(target.id);
+            setTimeout(() => setJustSolvedMessageId(null), 2000);
 
             await supabase
                 .from('messages')
@@ -347,7 +362,7 @@ export function useGameLogic(gameId: string) {
 
             setInput('');
 
-            // Calculate Next Turn
+            // Calculate Next Turn (Optimistic UI only)
             if (players.length > 0) {
                 const currentIndex = players.findIndex(p => p.user_id === user.id);
                 if (currentIndex !== -1) {
@@ -357,15 +372,7 @@ export function useGameLogic(gameId: string) {
                     // Optimistic Update - immediately update local state
                     setGame(prev => prev ? ({ ...prev, current_turn_user_id: nextPlayerId }) : null);
 
-                    const { error: updateError } = await supabase
-                        .from('games')
-                        .update({ current_turn_user_id: nextPlayerId })
-                        .eq('id', game.id);
-
-                    if (updateError) {
-                        console.error("Error updating turn:", updateError);
-                        toast.error("Failed to update turn");
-                    }
+                    // DB Trigger handles the actual update
                 }
             }
         } finally {
@@ -449,6 +456,7 @@ export function useGameLogic(gameId: string) {
         denySolvingMode,
         handleGetHint,
         getTargetMessage,
-        shakeMessageId
+        shakeMessageId,
+        justSolvedMessageId
     };
 }

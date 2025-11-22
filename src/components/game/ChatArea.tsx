@@ -11,9 +11,10 @@ type ChatAreaProps = {
     messagesEndRef: React.RefObject<HTMLDivElement | null>;
     targetMessage?: Message;
     shakeMessageId?: string | null;
+    justSolvedMessageId?: string | null;
 };
 
-export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, shakeMessageId }: ChatAreaProps) {
+export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, shakeMessageId, justSolvedMessageId }: ChatAreaProps) {
     const containerRef = useRef<HTMLDivElement>(null);
 
     const getInitials = (name: string) => {
@@ -92,7 +93,7 @@ export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, 
     return (
         <div
             ref={containerRef}
-            className="relative h-screen overflow-y-auto pt-16 pb-24 px-4 space-y-4"
+            className="relative h-screen overflow-y-auto pt-16 pb-24 px-4 space-y-4 bg-gray-200 dark:bg-neutral-900"
         >
             {displayMessages.map((msg) => {
                 const originalIndex = messages.findIndex(m => m.id === msg.id);
@@ -102,6 +103,7 @@ export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, 
                 const isMe = msg.user_id === user?.id;
                 const username = msg.profiles?.username || 'User';
                 const isShaking = shakeMessageId === msg.id;
+                const isJustSolved = justSolvedMessageId === msg.id;
 
                 return (
                     <div
@@ -116,12 +118,17 @@ export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, 
                                 {getInitials(username)}
                             </AvatarFallback>
                         </Avatar>
-                        <div className={`max-w-[70%] p-3 rounded-lg ${isMe ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white'} ${game.status === 'solving' && targetMessage?.id === msg.id ? 'target-message-glow' : ''}`}>
+                        <div className={`relative max-w-[70%] p-3 rounded-lg transition-all duration-300 ${isMe ? 'bg-indigo-600 text-white glow-me' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white glow-gray'} ${game.status === 'solving' && targetMessage?.id === msg.id ? 'target-message-glow' : ''} ${isJustSolved ? 'scale-110 bg-green-500 text-white ring-4 ring-green-300 dark:ring-green-900' : ''}`}>
                             <CipherText
                                 text={msg.content}
                                 visible={isVisible}
-                                className={isMe ? 'text-white' : 'text-gray-900 dark:text-white'}
+                                className={isMe || isJustSolved ? 'text-white' : 'text-gray-900 dark:text-white'}
                             />
+                            {isJustSolved && (
+                                <div className="absolute -top-6 -right-6 text-4xl animate-thumbs-up z-10 drop-shadow-lg">
+                                    👍
+                                </div>
+                            )}
                         </div>
                     </div>
                 );

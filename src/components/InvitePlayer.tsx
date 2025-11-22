@@ -82,16 +82,16 @@ export function InvitePlayer({ gameId }: { gameId: string }) {
                     Invite
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] bg-gray-900 border-gray-800 text-white">
+            <DialogContent className="sm:max-w-[425px] bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white">
                 <DialogHeader>
                     <DialogTitle>Invite Players</DialogTitle>
                 </DialogHeader>
-                <Command shouldFilter={false} className="bg-transparent border border-gray-700 rounded-md">
+                <Command shouldFilter={false} className="bg-transparent border border-gray-200 dark:border-gray-700 rounded-md">
                     <CommandInput
                         placeholder="Search username..."
                         value={query}
                         onValueChange={setQuery}
-                        className="text-white"
+                        className="text-gray-900 dark:text-white"
                     />
                     <CommandList>
                         <CommandEmpty>No users found.</CommandEmpty>
@@ -100,13 +100,13 @@ export function InvitePlayer({ gameId }: { gameId: string }) {
                                 <CommandItem
                                     key={profile.id}
                                     value={profile.username}
-                                    className="flex items-center justify-between p-2 cursor-pointer aria-selected:bg-gray-800"
+                                    className="flex items-center justify-between p-2 cursor-pointer aria-selected:bg-gray-100 dark:aria-selected:bg-gray-800"
                                     onSelect={() => !invited.has(profile.id) && sendInvite(profile.id)}
                                 >
                                     <div className="flex items-center gap-2">
                                         <Avatar className="w-8 h-8">
                                             <AvatarImage src={profile.avatar_url} />
-                                            <AvatarFallback className="text-black text-xs">
+                                            <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs">
                                                 {getInitials(profile.username)}
                                             </AvatarFallback>
                                         </Avatar>
