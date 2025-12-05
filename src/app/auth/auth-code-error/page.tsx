@@ -1,9 +1,14 @@
 'use client';
 
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { AlertTriangle } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 
-export default function AuthCodeError() {
+function ErrorContent() {
+    const searchParams = useSearchParams();
+    const error = searchParams.get('error');
+
     return (
         <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-900 text-white">
             <div className="bg-gray-800 p-8 rounded-lg shadow-lg max-w-md w-full text-center border border-gray-700">
@@ -16,7 +21,7 @@ export default function AuthCodeError() {
                 <h1 className="text-2xl font-bold mb-2">Authentication Failed</h1>
 
                 <p className="text-gray-400 mb-8">
-                    We couldn't sign you in. The login link may have expired or was already used. Please try signing in again.
+                    {error || "We couldn't sign you in. The login link may have expired or was already used. Please try signing in again."}
                 </p>
 
                 <Link
@@ -27,5 +32,13 @@ export default function AuthCodeError() {
                 </Link>
             </div>
         </div>
+    );
+}
+
+export default function AuthCodeError() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-gray-900" />}>
+            <ErrorContent />
+        </Suspense>
     );
 }

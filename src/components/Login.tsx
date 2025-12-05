@@ -7,6 +7,7 @@ export default function Login() {
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
+    const origin = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -16,7 +17,7 @@ export default function Login() {
         const { error } = await supabase.auth.signInWithOtp({
             email,
             options: {
-                emailRedirectTo: `${window.location.origin}/auth/callback`,
+                emailRedirectTo: `${origin}/auth/callback`,
             },
         });
 
@@ -36,7 +37,7 @@ export default function Login() {
                 onClick={() => supabase.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
-                        redirectTo: `${window.location.origin}/auth/callback`
+                        redirectTo: `${origin}/auth/callback`
                     }
                 })}
                 className="flex items-center gap-3 px-6 py-3 bg-white text-gray-900 rounded-lg font-medium hover:bg-gray-100 transition-colors"
