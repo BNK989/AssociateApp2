@@ -172,7 +172,7 @@ export default function Lobby() {
 
             if (playerError) throw playerError;
 
-            router.push(`/game/${game.id}`);
+            router.push(`/game/${game.id}?action=invite`);
 
         } catch (error) {
             console.error('Error creating game:', error);

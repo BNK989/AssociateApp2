@@ -24,27 +24,28 @@
 - [x] from the settings panale make sure the dark and light mode is saved and applied
 - [x] make sure the dark and light mode is applied to the game page and the homepage
 
-## Phase 6
-- [ ] improve invetation system to allow inviting people who are not yet registered
-- [ ] when a game is just created the user should be encouraged to invite people to the game
+## Phase 6 - invite improvements
+- [ ] improve invitation system to allow inviting people who are not yet registered (share an invitation link to the game - the invitee will be added to the game when they register or login)
+- [ ] when a game is created the user should be encouraged to invite people to the game
 
 ## Phase 7: Score & Streaks & Hints
-- [ ] create a file with all score logic for easy reference and adjustments (include multiplier logic and points logic)
-- [ ] confirm points logic 
-- [ ] ui for points and streaks
-- [ ] add points to the game
-- [ ] add streaks to the game
+- [x] create a file with all score logic for easy reference and adjustments (include multiplier logic and points logic)
+- [x] confirm points logic 
+- [x] ui for points and streaks
+- [x] add points to the game
+- [x] add streaks to the game
+- [x] implement hint1 show first letter, hint2 randomly expose 50% of the messages, hin3 get an AI hint
+- [x] implement hint3 via AI API (gemini flash-light - cheapest model)
 - [ ] add leaderboard to the game
-- [ ] implement hint1 show first letter, hint2 randomly expose 50% of the messages, hin3 get an AI hint
+- [ ] implement end game screen - show relevant statistics about the game to include plays scores 
 
 ## Phase 8: Game Loop - Solving UI improvements (Phase 2)
 - [ ] Only allow hints to the player whos turn it is (once were in free for all mode anyone can get a hint)
 - [ ] Solving Interaction
-- [ ] Score Calculation & Streaks
 
 ## fixes
-- [ ] add to .ignore all the sql files 
 - [ ] when a guess is correct there should not be a toast alert
+- [ ] add notifications to the game - so that players are notified when its their turn and keeps them engaged 
 
 ## additions and do later
 - [ ] add admin powers to delete a game

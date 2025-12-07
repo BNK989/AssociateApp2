@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthProvider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { UserPlus, Check } from 'lucide-react';
+import { UserPlus, Check, Link, Share2 } from 'lucide-react';
 import { toast } from "sonner";
 
 type Profile = {
@@ -22,6 +23,20 @@ export function InvitePlayer({ gameId }: { gameId: string }) {
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<Profile[]>([]);
     const [invited, setInvited] = useState<Set<string>>(new Set());
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const pathname = usePathname();
+
+    useEffect(() => {
+        const action = searchParams.get('action');
+        if (action === 'invite') {
+            setOpen(true);
+            // Clean up URL
+            const params = new URLSearchParams(searchParams.toString());
+            params.delete('action');
+            router.replace(`${pathname}?${params.toString()}`);
+        }
+    }, [searchParams, pathname, router]);
 
     useEffect(() => {
         if (open) {
@@ -86,7 +101,8 @@ export function InvitePlayer({ gameId }: { gameId: string }) {
                 <DialogHeader>
                     <DialogTitle>Invite Players</DialogTitle>
                 </DialogHeader>
-                <Command shouldFilter={false} className="bg-transparent border border-gray-200 dark:border-gray-700 rounded-md">
+
+                <Command shouldFilter={false} className="bg-transparent border border-gray-200 dark:border-gray-700 rounded-md mb-4 h-64">
                     <CommandInput
                         placeholder="Search username..."
                         value={query}
@@ -126,6 +142,56 @@ export function InvitePlayer({ gameId }: { gameId: string }) {
                         </CommandGroup>
                     </CommandList>
                 </Command>
+
+                <div className="flex flex-col gap-4">
+                    <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                            <span className="w-full border-t border-gray-200 dark:border-gray-700" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-white dark:bg-gray-900 px-2 text-gray-500">Or invite via link</span>
+                        </div>
+                    </div>
+
+                    <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2">
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                className="flex-1 gap-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-purple-500 hover:text-purple-500 dark:hover:text-purple-400"
+                                onClick={() => {
+                                    const link = `${window.location.origin}/join/${gameId}`;
+                                    navigator.clipboard.writeText(link);
+                                    toast.success("Link copied to clipboard!");
+                                }}
+                            >
+                                <Link className="w-4 h-4" />
+                                <span className="text-xs">Copy Link</span>
+                            </Button>
+
+                            {typeof navigator !== 'undefined' && navigator.share && (
+                                <Button
+                                    variant="secondary"
+                                    className="flex-1 gap-2"
+                                    onClick={() => {
+                                        const link = `${window.location.origin}/join/${gameId}`;
+                                        navigator.share({
+                                            title: 'Join my game!',
+                                            text: 'Come play with me!',
+                                            url: link
+                                        }).catch((err) => console.log('Error sharing:', err));
+                                    }}
+                                >
+                                    <Share2 className="w-4 h-4" />
+                                    <span className="text-xs">Share</span>
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+
+                    <Button onClick={() => setOpen(false)} className="w-full">
+                        Done
+                    </Button>
+                </div>
             </DialogContent>
         </Dialog>
     );

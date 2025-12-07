@@ -1,13 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useSearchParams } from 'next/navigation';
 
 export default function Login() {
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
+    const searchParams = useSearchParams();
     const origin = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+    const next = searchParams.get('next');
+
+    // Construct the callback URL
+    let callbackUrl = `${origin}/auth/callback`;
+    if (next) {
+        callbackUrl += `?next=${encodeURIComponent(next)}`;
+    }
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -17,7 +26,7 @@ export default function Login() {
         const { error } = await supabase.auth.signInWithOtp({
             email,
             options: {
-                emailRedirectTo: `${origin}/auth/callback`,
+                emailRedirectTo: callbackUrl,
             },
         });
 
@@ -37,7 +46,7 @@ export default function Login() {
                 onClick={() => supabase.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
-                        redirectTo: `${origin}/auth/callback`
+                        redirectTo: callbackUrl
                     }
                 })}
                 className="flex items-center gap-3 px-6 py-3 bg-white text-gray-900 rounded-lg font-medium hover:bg-gray-100 transition-colors"
