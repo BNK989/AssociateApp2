@@ -3,6 +3,13 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthProvider';
 import { GAME_CONFIG } from '@/lib/gameConfig';
+import {
+    calculateMessageValue,
+    calculateSimilarity,
+    calculatePointDistribution,
+    generateCipherString,
+    HINT_COSTS
+} from '@/lib/gameLogic';
 import { toast } from "sonner";
 
 export type Message = {
@@ -12,6 +19,10 @@ export type Message = {
     is_solved: boolean;
     user_id: string;
     created_at: string;
+    strikes: number;
+    hint_level: number;
+    cipher_text?: string;
+    solved_by?: string;
     profiles?: {
         username: string;
         avatar_url: string;
@@ -25,12 +36,17 @@ export type GameState = {
     current_turn_user_id: string;
     solving_proposal_created_at?: string | null;
     solving_started_at?: string | null;
+    team_pot: number;
+    team_consecutive_correct: number;
+    fever_mode_remaining: number;
+    solve_proposal_confirmations: string[];
 };
 
 export type Player = {
     user_id: string;
     score: number;
     joined_at: string;
+    consecutive_correct_guesses: number;
     profiles?: {
         username: string;
         avatar_url: string;
@@ -51,7 +67,7 @@ export function useGameLogic(gameId: string) {
     const [sending, setSending] = useState(false);
     const [shakeMessageId, setShakeMessageId] = useState<string | null>(null);
 
-    const [justSolvedMessageId, setJustSolvedMessageId] = useState<string | null>(null);
+    const [justSolvedData, setJustSolvedMessageId] = useState<{ id: string; points: number } | null>(null);
 
     const fetchGameData = async () => {
         if (!gameId) return;
@@ -78,6 +94,7 @@ export function useGameLogic(gameId: string) {
                 user_id,
                 score,
                 joined_at,
+                consecutive_correct_guesses,
                 profiles:user_id (
                     username,
                     avatar_url
@@ -127,7 +144,6 @@ export function useGameLogic(gameId: string) {
             .channel(`game:${gameId}`)
             .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, async (payload) => {
                 if (payload.eventType === 'INSERT') {
-                    // Fetch profile for the new message
                     const { data: profile } = await supabase
                         .from('profiles')
                         .select('username, avatar_url')
@@ -137,38 +153,46 @@ export function useGameLogic(gameId: string) {
                     const newMessage = { ...payload.new, profiles: profile } as unknown as Message;
                     setMessages(prev => [...prev, newMessage]);
                 } else if (payload.eventType === 'UPDATE') {
-                    setMessages(prev => prev.map(m => m.id === payload.new.id ? { ...m, ...payload.new } : m));
+                    const updatedMessage = payload.new as any;
+                    setMessages(prev => prev.map(m => m.id === updatedMessage.id ? { ...m, ...updatedMessage } : m));
+
+                    // Trigger Animation for Realtime Updates (e.g. for the Author, or if Guesser's local update missed)
+                    // We only trigger if it just became solved
+                    if (updatedMessage.is_solved && user) {
+                        // Check if I am the winner
+                        if (updatedMessage.solved_by === user.id) {
+                            // Guesser already handled locally, but we can ensure sync or ignore.
+                            // Local update typically covers this.
+                        }
+                        // Check if I am the author
+                        if (updatedMessage.user_id === user.id && updatedMessage.author_points > 0) {
+                            setJustSolvedMessageId({ id: updatedMessage.id, points: updatedMessage.author_points });
+                            setTimeout(() => setJustSolvedMessageId(null), 3000);
+                            toast.success(`Your message was solved! +${updatedMessage.author_points} pts`);
+                        }
+                    }
                 }
             })
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'games', filter: `id=eq.${gameId}` }, (payload) => {
                 setGame(payload.new as GameState);
             })
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'game_players', filter: `game_id=eq.${gameId}` }, async (payload) => {
-                // Fetch profile of the new player
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('username')
-                    .eq('id', payload.new.user_id)
-                    .single();
-
-                if (profile) {
-                    toast.info(`${profile.username} has joined the chat!`);
-                    // Refresh players list
-                    const { data: newPlayers } = await supabase
-                        .from('game_players')
-                        .select(`
-                            user_id,
-                            score,
-                            joined_at,
-                            profiles:user_id (
-                                username,
-                                avatar_url
-                            )
-                        `)
-                        .eq('game_id', gameId)
-                        .order('joined_at', { ascending: true });
-                    if (newPlayers) setPlayers(newPlayers as unknown as Player[]);
-                }
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'game_players', filter: `game_id=eq.${gameId}` }, async (payload) => {
+                // Refresh players list on any player update (score changes etc)
+                const { data: newPlayers } = await supabase
+                    .from('game_players')
+                    .select(`
+                        user_id,
+                        score,
+                        joined_at,
+                        consecutive_correct_guesses,
+                        profiles:user_id (
+                            username,
+                            avatar_url
+                        )
+                    `)
+                    .eq('game_id', gameId)
+                    .order('joined_at', { ascending: true });
+                if (newPlayers) setPlayers(newPlayers as unknown as Player[]);
             })
             .subscribe();
 
@@ -190,7 +214,7 @@ export function useGameLogic(gameId: string) {
         scrollToBottom();
     }, [messages]);
 
-    const confirmSolvingMode = useCallback(async () => {
+    const finalizeSolvingMode = useCallback(async () => {
         if (!game) return;
         const { error } = await supabase
             .from('games')
@@ -200,7 +224,7 @@ export function useGameLogic(gameId: string) {
                 solving_started_at: new Date().toISOString()
             })
             .eq('id', game.id);
-        if (error) console.error("Error confirming mode:", error);
+        if (error) console.error("Error finalizing mode:", error);
     }, [game]);
 
     // Timer for Proposal
@@ -219,7 +243,7 @@ export function useGameLogic(gameId: string) {
                 setProposalTimeLeft(0);
                 clearInterval(interval);
                 if (game.status !== 'solving') {
-                    confirmSolvingMode();
+                    finalizeSolvingMode();
                 }
             } else {
                 setProposalTimeLeft(Math.ceil(diff / 1000));
@@ -227,7 +251,7 @@ export function useGameLogic(gameId: string) {
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [game?.solving_proposal_created_at, game?.status, confirmSolvingMode]);
+    }, [game?.solving_proposal_created_at, game?.status, finalizeSolvingMode]);
 
     // Timer for Solving Mode (20s rule)
     useEffect(() => {
@@ -258,7 +282,8 @@ export function useGameLogic(gameId: string) {
 
     const getTargetMessage = () => {
         const reversed = [...messages].reverse();
-        return reversed.find(m => !m.is_solved);
+        // Skip messages with 3 strikes as they are "lost"
+        return reversed.find(m => !m.is_solved && (m.strikes || 0) < 3);
     };
 
     const handleSolveAttempt = async () => {
@@ -266,7 +291,7 @@ export function useGameLogic(gameId: string) {
 
         const target = getTargetMessage();
         if (!target) {
-            toast.info("All messages solved!");
+            toast.info("All active messages solved or lost!");
             return;
         }
 
@@ -278,43 +303,114 @@ export function useGameLogic(gameId: string) {
             return;
         }
 
-        const guess = input.trim().toLowerCase();
-        const actual = target.content.toLowerCase();
+        // Fuzzy Match Check
+        const similarity = calculateSimilarity(input, target.content);
+        const isMatch = similarity >= 0.8;
 
-        if (guess === actual) {
-            // toast.success("Correct! You solved the message!");
-            setJustSolvedMessageId(target.id);
-            setTimeout(() => setJustSolvedMessageId(null), 2000);
+        if (isMatch) {
+            // Calculate Message Value
+            const baseValue = calculateMessageValue(target.content);
+            let deductionMultiplier = 0;
+            if (target.hint_level === 1) deductionMultiplier = HINT_COSTS.TIER_1;
+            else if (target.hint_level === 2) deductionMultiplier = HINT_COSTS.TIER_1 + HINT_COSTS.TIER_2;
+            else if (target.hint_level === 3) deductionMultiplier = HINT_COSTS.TIER_1 + HINT_COSTS.TIER_2 + HINT_COSTS.TIER_3;
 
-            await supabase
-                .from('messages')
-                .update({ is_solved: true })
-                .eq('id', target.id);
+            // Apply minor penalty for imperfect match
+            const accuracyPenalty = similarity < 1.0 ? 0.1 : 0;
 
-            // Check if this was the last message
-            const remainingUnsolved = messages.filter(m => !m.is_solved && m.id !== target.id);
+            const finalValue = Math.floor(baseValue * (1 - deductionMultiplier - accuracyPenalty));
 
-            if (remainingUnsolved.length === 0) {
-                // Game Over!
-                await supabase
-                    .from('games')
-                    .update({ status: 'completed' })
-                    .eq('id', game.id);
+            // Multiplier Logic (Hot Hand + Fever Mode)
+            const currentPlayer = players.find(p => p.user_id === user.id);
+            const consecutive = (currentPlayer?.consecutive_correct_guesses || 0) + 1;
 
-                setGame(prev => prev ? ({ ...prev, status: 'completed' }) : null);
-            } else {
-                // Reset timer for next message
-                await supabase
-                    .from('games')
-                    .update({ solving_started_at: new Date().toISOString() })
-                    .eq('id', game.id);
+            let multiplier = 1;
+            if (consecutive >= 4) multiplier = 2;
+            else if (consecutive === 3) multiplier = 1.5;
+            else if (consecutive === 2) multiplier = 1.2;
+
+            if (game.fever_mode_remaining > 0) {
+                multiplier *= 2;
             }
 
+            // Distribute Points
+            const distribution = calculatePointDistribution(finalValue, user.id, target.user_id, multiplier);
+
+            // 1. Mark Message Solved with Point Data
+            await supabase.from('messages').update({
+                is_solved: true,
+                solved_by: user.id,
+                winner_points: distribution.winnerPoints,
+                author_points: distribution.type === 'STEAL' ? distribution.authorPoints : 0
+            }).eq('id', target.id);
+
+            // 2. Award Points
+            await supabase.rpc('distribute_game_points', {
+                game_id_param: game.id,
+                winner_id: user.id,
+                winner_amount: distribution.winnerPoints,
+                author_id: distribution.type === 'STEAL' ? target.user_id : null,
+                author_amount: distribution.type === 'STEAL' ? distribution.authorPoints : 0
+            });
+
+            // 3. Update Player Stats & Team Flow
+            await supabase.from('game_players').update({
+                consecutive_correct_guesses: consecutive
+            }).eq('game_id', game.id).eq('user_id', user.id);
+
+            await supabase.from('games').update({
+                team_consecutive_correct: game.team_consecutive_correct + 1,
+                fever_mode_remaining: Math.max(0, game.fever_mode_remaining - 1)
+            }).eq('id', game.id);
+
+            // Check fever mode trigger
+            if (game.team_consecutive_correct + 1 >= 5 && game.fever_mode_remaining === 0) {
+                await supabase.from('games').update({ fever_mode_remaining: 3 }).eq('id', game.id);
+                toast.success("🔥 FEVER MODE ACTIVATED! Double points for next 3 words! 🔥");
+            }
+
+            // Set Just Solved for Animation (Local)
+            setJustSolvedMessageId({ id: target.id, points: distribution.winnerPoints });
+            setTimeout(() => setJustSolvedMessageId(null), 3000);
+
+            toast.success(`Solved! +${distribution.winnerPoints} pts ${distribution.type === 'STEAL' ? '(Steal!)' : ''}`);
+
+            const remainingUnsolved = messages.filter(m => !m.is_solved && m.id !== target.id && (m.strikes || 0) < 3);
+
+            if (remainingUnsolved.length === 0) {
+                await supabase.from('games').update({ status: 'completed' }).eq('id', game.id);
+                setGame(prev => prev ? ({ ...prev, status: 'completed' }) : null);
+            } else {
+                await supabase.from('games').update({ solving_started_at: new Date().toISOString() }).eq('id', game.id);
+            }
             setInput('');
+
         } else {
-            toast.error("Incorrect guess!");
+            // Wrong Guess logic
+            const currentStrikes = target.strikes || 0;
+            const newStrikes = currentStrikes + 1;
+
+            // Optimistic Update
+            setMessages(prev => prev.map(m => m.id === target.id ? { ...m, strikes: newStrikes, is_solved: newStrikes >= 3 ? true : m.is_solved } : m));
+
             setShakeMessageId(target.id);
             setTimeout(() => setShakeMessageId(null), 500);
+
+            if (newStrikes >= 3) {
+                toast.error(`💥 WORD LOST! The word was "${target.content}"`);
+                await supabase.from('messages').update({ strikes: 3, is_solved: true }).eq('id', target.id);
+            } else {
+                toast.error(`Incorrect! Strike ${newStrikes}/3`);
+                await supabase.from('messages').update({ strikes: newStrikes }).eq('id', target.id);
+            }
+
+            // Reset Multipliers
+            await supabase.from('game_players').update({ consecutive_correct_guesses: 0 }).eq('game_id', game.id).eq('user_id', user.id);
+            await supabase.from('games').update({
+                team_consecutive_correct: 0,
+                fever_mode_remaining: 0
+            }).eq('id', game.id);
+
             setInput('');
         }
     };
@@ -328,13 +424,11 @@ export function useGameLogic(gameId: string) {
             return;
         }
 
-        // Turn Logic Check - user can only send if it's their turn
         if (game.current_turn_user_id && game.current_turn_user_id !== user.id) {
             toast.warning("It's not your turn!");
             return;
         }
 
-        // Validation (Word count)
         const wordCount = input.trim().split(/\s+/).length;
         if (wordCount < GAME_CONFIG.MESSAGE_WORD_LIMIT_MIN || wordCount > GAME_CONFIG.MESSAGE_WORD_LIMIT_MAX) {
             alert(`Message must be between ${GAME_CONFIG.MESSAGE_WORD_LIMIT_MIN} and ${GAME_CONFIG.MESSAGE_WORD_LIMIT_MAX} words.`);
@@ -344,6 +438,9 @@ export function useGameLogic(gameId: string) {
         setSending(true);
 
         try {
+            // Calculate Potential Value
+            const potentialValue = calculateMessageValue(input.trim());
+
             const { error } = await supabase
                 .from('messages')
                 .insert({
@@ -351,7 +448,11 @@ export function useGameLogic(gameId: string) {
                     user_id: user.id,
                     content: input.trim(),
                     cipher_length: input.trim().length,
-                    is_solved: false
+                    is_solved: false,
+                    strikes: 0,
+                    hint_level: 0,
+                    winner_points: 0,
+                    author_points: 0
                 });
 
             if (error) {
@@ -360,19 +461,17 @@ export function useGameLogic(gameId: string) {
                 return;
             }
 
+            // Update Team Pot
+            await supabase.rpc('increment_team_pot', { game_id_param: game.id, amount: potentialValue });
+
             setInput('');
 
-            // Calculate Next Turn (Optimistic UI only)
             if (players.length > 0) {
                 const currentIndex = players.findIndex(p => p.user_id === user.id);
                 if (currentIndex !== -1) {
                     const nextIndex = (currentIndex + 1) % players.length;
                     const nextPlayerId = players[nextIndex].user_id;
-
-                    // Optimistic Update - immediately update local state
                     setGame(prev => prev ? ({ ...prev, current_turn_user_id: nextPlayerId }) : null);
-
-                    // DB Trigger handles the actual update
                 }
             }
         } finally {
@@ -381,10 +480,13 @@ export function useGameLogic(gameId: string) {
     };
 
     const proposeSolvingMode = async () => {
-        if (!game) return;
+        if (!game || !user) return;
         const { error } = await supabase
             .from('games')
-            .update({ solving_proposal_created_at: new Date().toISOString() })
+            .update({
+                solving_proposal_created_at: new Date().toISOString(),
+                solve_proposal_confirmations: [user.id]
+            })
             .eq('id', game.id);
         if (error) console.error("Error proposing:", error);
     };
@@ -393,48 +495,76 @@ export function useGameLogic(gameId: string) {
         if (!game) return;
         const { error } = await supabase
             .from('games')
-            .update({ solving_proposal_created_at: null })
+            .update({
+                solving_proposal_created_at: null,
+                solve_proposal_confirmations: []
+            })
             .eq('id', game.id);
         if (error) console.error("Error denying:", error);
+    };
+
+    const confirmSolvingMode = async () => {
+        if (!game || !user) return;
+
+        // Prevent double confirmation locally
+        if (game.solve_proposal_confirmations?.includes(user.id)) return;
+
+        const newConfirmations = [...(game.solve_proposal_confirmations || []), user.id];
+
+        // Optimistic check: if everyone confirmed, switch immediately
+        const allConfirmed = players.every(p => newConfirmations.includes(p.user_id));
+
+        if (allConfirmed) {
+            const { error } = await supabase
+                .from('games')
+                .update({
+                    status: 'solving',
+                    solving_proposal_created_at: null,
+                    solve_proposal_confirmations: [],
+                    solving_started_at: new Date().toISOString()
+                })
+                .eq('id', game.id);
+            if (error) console.error("Error completing confirmation:", error);
+        } else {
+            const { error } = await supabase
+                .from('games')
+                .update({
+                    solve_proposal_confirmations: newConfirmations
+                })
+                .eq('id', game.id);
+            if (error) console.error("Error confirming:", error);
+        }
     };
 
     const handleGetHint = async () => {
         if (!game || game.status !== 'solving') return;
 
-        const reversed = [...messages].reverse();
-        const target = reversed.find(m => !m.is_solved);
-
+        const target = getTargetMessage();
         if (!target) {
-            toast.info("All messages solved!");
+            toast.info("No active message to hint!");
             return;
         }
 
-        const toastId = toast.loading("Asking Gemini for a hint...");
+        const nextLevel = (target.hint_level || 0) + 1;
+        if (nextLevel > 3) {
+            toast.info("Max hints used!");
+            return;
+        }
+
+        const toastId = toast.loading("Revealing hint...");
 
         try {
-            const response = await fetch('/api/hint', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    gameId: game.id,
-                    targetMessageId: target.id
-                })
-            });
+            const newCipherText = generateCipherString(target.content, nextLevel);
+            await supabase.from('messages').update({
+                hint_level: nextLevel,
+                cipher_text: newCipherText
+            }).eq('id', target.id);
 
-            const data = await response.json();
+            toast.success(`Hint Level ${nextLevel} purchased!`, { id: toastId });
 
-            if (data.error) {
-                toast.error(`Error: ${data.error}`, { id: toastId });
-            } else {
-                toast.success(data.hint, {
-                    duration: 5000,
-                    id: toastId,
-                    icon: '💡'
-                });
-            }
         } catch (error) {
             console.error("Hint error:", error);
-            toast.error("Failed to get hint", { id: toastId });
+            toast.error("Failed to buy hint", { id: toastId });
         }
     };
 
@@ -454,9 +584,10 @@ export function useGameLogic(gameId: string) {
         handleSendMessage,
         proposeSolvingMode,
         denySolvingMode,
+        confirmSolvingMode,
         handleGetHint,
         getTargetMessage,
         shakeMessageId,
-        justSolvedMessageId
+        justSolvedData
     };
 }

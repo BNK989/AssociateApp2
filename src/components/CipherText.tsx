@@ -5,20 +5,38 @@ const CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#
 
 interface CipherTextProps {
     text: string;
+    cipherText?: string;
     visible: boolean;
     className?: string;
 }
 
-export function CipherText({ text, visible, className = '' }: CipherTextProps) {
+export function CipherText({ text, cipherText, visible, className = '' }: CipherTextProps) {
     const cipherRef = useRef<string>('');
 
     // Initialize cipher string lazily
     if (!cipherRef.current) {
-        cipherRef.current = text.split('').map(() => CHARS[Math.floor(Math.random() * CHARS.length)]).join('');
+        cipherRef.current = text.split('').map((originalChar) => {
+            if (originalChar === ' ') return ' ';
+            let randomChar;
+            do {
+                randomChar = CHARS[Math.floor(Math.random() * CHARS.length)];
+            } while (randomChar === originalChar);
+            return randomChar;
+        }).join('');
     }
 
     const [display, setDisplay] = useState(visible ? text : cipherRef.current);
     const isFirstRender = useRef(true);
+
+    useEffect(() => {
+        // Update local cipher ref if prop changes (e.g. new hint bought)
+        if (cipherText) {
+            cipherRef.current = cipherText;
+            if (!visible) {
+                setDisplay(cipherText);
+            }
+        }
+    }, [cipherText, visible]);
 
     useEffect(() => {
         if (isFirstRender.current) {
@@ -28,25 +46,26 @@ export function CipherText({ text, visible, className = '' }: CipherTextProps) {
 
         let isCancelled = false;
         const animate = async () => {
+            // Target is what we want to end up at
             const target = visible ? text : cipherRef.current;
             const start = display;
 
-            // Determine direction
-            // If visible=true, we go Cipher -> Text
-            // If visible=false, we go Text -> Cipher
+            // If already at target, skip
+            if (display === target) return;
 
             const steps = text.length;
-            const delay = Math.max(30, Math.min(100, 1000 / steps)); // Adjust speed based on length
+            const delay = Math.max(30, Math.min(100, 1000 / steps));
 
             for (let i = 0; i <= steps; i++) {
                 if (isCancelled) return;
 
+                // Simple interpolation logic for "Reveal"
                 if (visible) {
-                    // Reveal: i chars from text, rest from cipher
                     setDisplay(text.slice(0, i) + cipherRef.current.slice(i));
                 } else {
-                    // Scramble: i chars from cipher, rest from text
-                    setDisplay(cipherRef.current.slice(0, i) + text.slice(i));
+                    // Fallback: just set to target if not revealing logic
+                    setDisplay(target);
+                    break;
                 }
 
                 await new Promise(r => setTimeout(r, delay));
@@ -55,18 +74,40 @@ export function CipherText({ text, visible, className = '' }: CipherTextProps) {
 
         animate();
         return () => { isCancelled = true; };
-    }, [visible, text]);
+    }, [visible, text, cipherText]);
 
     // Render logic
-    if (visible) {
-        // If fully revealed
-        if (display === text) {
-            return <span className={`${className}`}>{display}</span>;
-        }
-        // Animating Reveal (Green Matrix style?)
-        return <span className={`text-green-400 font-mono ${className}`}>::{display}::</span>;
-    } else {
-        // Ciphered
-        return <span className={`text-gray-500 dark:text-gray-400 font-mono tracking-widest ${className}`}>::{display}::</span>;
-    }
+    const showColons = !visible && !cipherText;
+    const COLON = '\u2237';
+
+    return (
+        <span className={`${className} breaking-words`}>
+            {showColons && <span className="mr-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
+            {display.split('').map((char, i) => {
+                const isMatch = char === text[i];
+                if (visible) {
+                    return (
+                        <span key={i} className={isMatch ? '' : 'text-green-500 opacity-70'}>
+                            {char}
+                        </span>
+                    );
+                }
+
+                // In Cipher Mode (Hinting)
+                return (
+                    <span
+                        key={i}
+                        className={
+                            isMatch
+                                ? 'font-bold text-inherit drop-shadow-[0_0_2px_rgba(255,255,255,0.5)]'
+                                : 'font-mono opacity-75' // Inherit color (White/Black) but dim it.
+                        }
+                    >
+                        {char}
+                    </span>
+                );
+            })}
+            {showColons && <span className="ml-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
+        </span>
+    );
 }

@@ -28,10 +28,11 @@ export default function GameRoom() {
         handleSendMessage,
         proposeSolvingMode,
         denySolvingMode,
+        confirmSolvingMode,
         handleGetHint,
         getTargetMessage,
         shakeMessageId,
-        justSolvedMessageId
+        justSolvedData
     } = useGameLogic(gameId!);
 
     if (loading) return <div className="flex items-center justify-center h-screen">Loading Game...</div>;
@@ -51,6 +52,7 @@ export default function GameRoom() {
                 onBack={() => router.push('/')}
                 onRefresh={fetchGameData}
                 onProposeSolving={proposeSolvingMode}
+                onConfirmSolving={confirmSolvingMode}
                 onDenySolving={denySolvingMode}
             />
 
@@ -61,7 +63,7 @@ export default function GameRoom() {
                 messagesEndRef={messagesEndRef}
                 targetMessage={getTargetMessage()}
                 shakeMessageId={shakeMessageId}
-                justSolvedMessageId={justSolvedMessageId}
+                justSolvedData={justSolvedData}
             />
 
             <GameInput

@@ -27,10 +27,14 @@ type Game = {
     status: string;
     mode: string;
     created_at: string;
+    team_pot: number;
+    team_consecutive_correct: number;
+    fever_mode_remaining: number;
     player_count?: number;
     current_turn_user_id?: string;
     players?: {
         has_left: boolean;
+        is_archived: boolean;
         user: {
             username: string;
             avatar_url: string;

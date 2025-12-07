@@ -37,8 +37,6 @@
 - [ ] add leaderboard to the game
 - [ ] implement hint1 show first letter, hint2 randomly expose 50% of the messages, hin3 get an AI hint
 
-
-
 ## Phase 8: Game Loop - Solving UI improvements (Phase 2)
 - [ ] Only allow hints to the player whos turn it is (once were in free for all mode anyone can get a hint)
 - [ ] Solving Interaction
@@ -56,6 +54,10 @@
 - [ ] add skeltons to the homepage 
 - [ ] add NextStep.js to the project to aid onboarding 
 - [ ] using supabase mcp - when a game is archived or complited keep it for 72 hours and then delete it 
+
+## Phase 9: Cloud Functions & storage management
+- [ ] add cloude functions via supabase to archive a game after 72 hours of no play (using mcp)
+- [ ] add cloude functions via supabase to delete a game after 7 days of it being archived (using mcp)
 
 ## Hits
 
