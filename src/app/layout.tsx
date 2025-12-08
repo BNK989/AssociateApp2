@@ -4,6 +4,7 @@ import "./globals.css";
 import AuthProvider from "@/context/AuthProvider";
 import { NavBar } from "@/components/NavBar";
 import { DynamicToaster } from '@/components/DynamicToaster';
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -45,6 +46,7 @@ export default function RootLayout({
             {children}
           </main>
           <DynamicToaster />
+          <ServiceWorkerRegister />
         </AuthProvider>
       </body>
     </html>

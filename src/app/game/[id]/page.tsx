@@ -39,7 +39,11 @@ export default function GameRoom() {
 
     // Notification Logic
     const isMyTurn = game?.current_turn_user_id === user?.id;
-    useTurnNotifications(!!isMyTurn);
+    const targetMessage = getTargetMessage();
+    // Guessing mode = solving status. Notification triggers when *my* message is the one being guessed.
+    const isMyMessageBeingGuessed = game?.status === 'solving' && targetMessage?.user_id === user?.id;
+
+    useTurnNotifications(!!isMyTurn, !!isMyMessageBeingGuessed);
 
 
     if (loading) return <div className="flex items-center justify-center h-screen">Loading Game...</div>;
