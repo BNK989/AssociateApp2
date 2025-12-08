@@ -25,8 +25,14 @@
 - [x] make sure the dark and light mode is applied to the game page and the homepage
 
 ## Phase 6 - invite improvements
-- [ ] improve invitation system to allow inviting people who are not yet registered (share an invitation link to the game - the invitee will be added to the game when they register or login)
-- [ ] when a game is created the user should be encouraged to invite people to the game
+- [x] improve invitation system to allow inviting people who are not yet registered (share an invitation link to the game - the invitee will be added to the game when they register or login)
+- [x] when a game is created the user should be encouraged to invite people to the game
+
+## Phase 6.5: notifications improvement
+### to better handle normal user behavior (i.e. users swiching tabs or windows, looking away from the screen etc.) we need to better handle notifications
+- [ ] add a system notification to notify the player when its their turn even if they are not in the game (i.e. they are in another tab or window) handle this gracfully as user preferences may not allow notifications also allow the user to disable this feature in the preferences page
+- [ ] add a chime to notify the player when its their turn even if they are not in the game (i.e. they are in another tab or window) the file `chime1.mp3` is provided
+- [ ] change the tab's title back and forth to notify the player when its their turn even if they are not in the game
 
 ## Phase 7: Score & Streaks & Hints
 - [x] create a file with all score logic for easy reference and adjustments (include multiplier logic and points logic)
@@ -65,3 +71,4 @@
 ## Phase 8: AI & Polish
 - [ ] PWA Configuration (Manifest, Service Worker)
 - [ ] `/test-playground` Implementation
+- [ ] allow users to connect their whatsapp account to recive notifications when via the game such as 'its your turn to play + link to the game' or 'game started + link to the game' etc.

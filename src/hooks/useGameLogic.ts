@@ -23,6 +23,9 @@ export type Message = {
     hint_level: number;
     cipher_text?: string;
     solved_by?: string;
+    winner_points?: number;
+    author_points?: number;
+    game_id?: string;
     profiles?: {
         username: string;
         avatar_url: string;
@@ -72,70 +75,36 @@ export function useGameLogic(gameId: string) {
     const fetchGameData = async () => {
         if (!gameId) return;
 
-        // Fetch Game
-        const { data: gameData, error: gameError } = await supabase
-            .from('games')
-            .select('*')
-            .eq('id', gameId)
-            .single();
-
-        if (gameError) {
-            console.error('Error fetching game:', gameError);
-            toast.error("Game not found");
-            router.push('/');
-            return;
-        }
-        setGame(gameData);
-
-        // Fetch Players
-        const { data: playersData, error: playersError } = await supabase
-            .from('game_players')
-            .select(`
-                user_id,
-                score,
-                joined_at,
-                consecutive_correct_guesses,
-                profiles:user_id (
-                    username,
-                    avatar_url
-                )
-            `)
-            .eq('game_id', gameId)
-            .order('joined_at', { ascending: true });
-
-        if (playersError) {
-            console.error('Error fetching players:', playersError);
-        } else {
-            setPlayers((playersData as unknown as Player[]) || []);
-        }
-
-        // Fetch Messages with Profiles
-        const { data: msgs, error: msgError } = await supabase
-            .from('messages')
-            .select(`
-                *,
-                profiles:user_id (
-                    username,
-                    avatar_url
-                )
-            `)
-            .eq('game_id', gameId)
-            .order('created_at', { ascending: true });
-
-        if (msgError) {
-            console.error('Error fetching messages:', msgError);
-        } else {
-            setMessages(msgs as unknown as Message[] || []);
-        }
-        setLoading(false);
-
-        // Access Control: Check if current user is a player
-        if (user && playersData) {
-            const isPlayer = (playersData as unknown as Player[]).some(p => p.user_id === user.id);
-            if (!isPlayer) {
-                toast.error("You are not part of this game!");
-                router.push('/');
+        try {
+            const response = await fetch(`/api/game/${gameId}/state`);
+            if (!response.ok) {
+                if (response.status === 401) {
+                    console.error("Unauthorized fetch");
+                    // Optionally redirect or handle session
+                    return;
+                }
+                throw new Error(`Fetch failed: ${response.status}`);
             }
+
+            const data = await response.json();
+
+            setGame(data.game);
+            setPlayers(data.players || []);
+            setMessages(data.messages || []);
+            setLoading(false);
+
+            // Access Control
+            if (user && data.players) {
+                const isPlayer = data.players.some((p: any) => p.user_id === user.id);
+                if (!isPlayer) {
+                    toast.error("You are not part of this game!");
+                    router.push('/');
+                }
+            }
+
+        } catch (error) {
+            console.error('Error fetching game data:', error);
+            // toast.error("Failed to sync game data"); // Silent fail on polling is better
         }
     };
 
@@ -201,17 +170,41 @@ export function useGameLogic(gameId: string) {
         };
     };
 
+    // Track previous length to prevent auto-scrolling on unchanged polling
+    const prevMessagesLength = useRef(0);
+    // Track last action time to pause polling during mutations to prevent flickering
+    const lastActionTime = useRef(0);
+
     useEffect(() => {
         if (!user || !gameId) return;
         fetchGameData();
-        const cleanup = subscribeToGame();
+        const cleanupSubscription = subscribeToGame();
+
+        // Polling Strategy: Fetch full game data every 5 seconds to ensure consistency
+        const pollInterval = setInterval(() => {
+            const timeSinceLastAction = Date.now() - lastActionTime.current;
+            // Only poll if tab is visible AND we haven't performed an action recently
+            if (document.visibilityState === 'visible' && timeSinceLastAction > 4000) {
+                fetchGameData();
+            }
+        }, 5000);
+
         return () => {
-            cleanup();
+            cleanupSubscription();
+            clearInterval(pollInterval);
         };
     }, [user, gameId]);
 
+
+
     useEffect(() => {
-        scrollToBottom();
+        if (messages.length > prevMessagesLength.current) {
+            scrollToBottom();
+            prevMessagesLength.current = messages.length;
+        } else if (messages.length === 0 && prevMessagesLength.current > 0) {
+            // Reset if messages cleared (unlikely but safe)
+            prevMessagesLength.current = 0;
+        }
     }, [messages]);
 
     const finalizeSolvingMode = useCallback(async () => {
@@ -303,6 +296,9 @@ export function useGameLogic(gameId: string) {
             return;
         }
 
+        lastActionTime.current = Date.now();
+
+
         // Fuzzy Match Check
         const similarity = calculateSimilarity(input, target.content);
         const isMatch = similarity >= 0.8;
@@ -336,54 +332,40 @@ export function useGameLogic(gameId: string) {
             // Distribute Points
             const distribution = calculatePointDistribution(finalValue, user.id, target.user_id, multiplier);
 
-            // 1. Mark Message Solved with Point Data
-            await supabase.from('messages').update({
+            // OPTIMISTIC UPDATE LOCAL STATE
+            // 1. Mark Message Solved
+            setMessages(prev => prev.map(m => m.id === target.id ? {
+                ...m,
                 is_solved: true,
                 solved_by: user.id,
                 winner_points: distribution.winnerPoints,
                 author_points: distribution.type === 'STEAL' ? distribution.authorPoints : 0
-            }).eq('id', target.id);
+            } : m));
 
-            // 2. Award Points
-            await supabase.rpc('distribute_game_points', {
-                game_id_param: game.id,
-                winner_id: user.id,
-                winner_amount: distribution.winnerPoints,
-                author_id: distribution.type === 'STEAL' ? target.user_id : null,
-                author_amount: distribution.type === 'STEAL' ? distribution.authorPoints : 0
-            });
-
-            // 3. Update Player Stats & Team Flow
-            await supabase.from('game_players').update({
-                consecutive_correct_guesses: consecutive
-            }).eq('game_id', game.id).eq('user_id', user.id);
-
-            await supabase.from('games').update({
-                team_consecutive_correct: game.team_consecutive_correct + 1,
-                fever_mode_remaining: Math.max(0, game.fever_mode_remaining - 1)
-            }).eq('id', game.id);
-
-            // Check fever mode trigger
-            if (game.team_consecutive_correct + 1 >= 5 && game.fever_mode_remaining === 0) {
-                await supabase.from('games').update({ fever_mode_remaining: 3 }).eq('id', game.id);
-                toast.success("🔥 FEVER MODE ACTIVATED! Double points for next 3 words! 🔥");
-            }
-
-            // Set Just Solved for Animation (Local)
+            // 2. Set Just Solved Animation
             setJustSolvedMessageId({ id: target.id, points: distribution.winnerPoints });
             setTimeout(() => setJustSolvedMessageId(null), 3000);
-
             toast.success(`Solved! +${distribution.winnerPoints} pts ${distribution.type === 'STEAL' ? '(Steal!)' : ''}`);
 
-            const remainingUnsolved = messages.filter(m => !m.is_solved && m.id !== target.id && (m.strikes || 0) < 3);
-
-            if (remainingUnsolved.length === 0) {
-                await supabase.from('games').update({ status: 'completed' }).eq('id', game.id);
-                setGame(prev => prev ? ({ ...prev, status: 'completed' }) : null);
-            } else {
-                await supabase.from('games').update({ solving_started_at: new Date().toISOString() }).eq('id', game.id);
-            }
             setInput('');
+
+            // SERVER ACTION call
+            fetch(`/api/game/${game.id}/action`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'solve_attempt',
+                    payload: {
+                        targetId: target.id,
+                        isMatch: true,
+                        winnerPoints: distribution.winnerPoints,
+                        authorPoints: distribution.type === 'STEAL' ? distribution.authorPoints : 0,
+                        type: distribution.type,
+                        targetUserId: target.user_id,
+                        consecutive: consecutive
+                    }
+                })
+            }).then(() => fetchGameData()); // Sync after action
 
         } else {
             // Wrong Guess logic
@@ -398,20 +380,25 @@ export function useGameLogic(gameId: string) {
 
             if (newStrikes >= 3) {
                 toast.error(`💥 WORD LOST! The word was "${target.content}"`);
-                await supabase.from('messages').update({ strikes: 3, is_solved: true }).eq('id', target.id);
             } else {
                 toast.error(`Incorrect! Strike ${newStrikes}/3`);
-                await supabase.from('messages').update({ strikes: newStrikes }).eq('id', target.id);
             }
 
-            // Reset Multipliers
-            await supabase.from('game_players').update({ consecutive_correct_guesses: 0 }).eq('game_id', game.id).eq('user_id', user.id);
-            await supabase.from('games').update({
-                team_consecutive_correct: 0,
-                fever_mode_remaining: 0
-            }).eq('id', game.id);
-
             setInput('');
+
+            // SERVER ACTION call
+            fetch(`/api/game/${game.id}/action`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'solve_attempt',
+                    payload: {
+                        targetId: target.id,
+                        isMatch: false,
+                        strikes: currentStrikes
+                    }
+                })
+            }).then(() => fetchGameData());
         }
     };
 
@@ -440,29 +427,112 @@ export function useGameLogic(gameId: string) {
         try {
             // Calculate Potential Value
             const potentialValue = calculateMessageValue(input.trim());
+            lastActionTime.current = Date.now(); // Pause polling while we send
 
-            const { error } = await supabase
-                .from('messages')
-                .insert({
-                    game_id: game.id,
-                    user_id: user.id,
-                    content: input.trim(),
-                    cipher_length: input.trim().length,
-                    is_solved: false,
-                    strikes: 0,
-                    hint_level: 0,
-                    winner_points: 0,
-                    author_points: 0
-                });
+            // Generate Cipher Locally
+            const cipher = generateCipherString(input.trim(), 0);
 
-            if (error) {
-                console.error('Error sending message:', error);
-                toast.error("Failed to send message");
-                return;
+            // OPTIMISTIC UPDATE: Show message immediately
+            const tempId = `temp-${Date.now()}`;
+            const optimisticMessage: Message = {
+                id: tempId,
+                // game_id is not in local Message type, so skip it
+                user_id: user.id,
+                content: input.trim(),
+                cipher_length: input.trim().length,
+                is_solved: false,
+                strikes: 0,
+                hint_level: 0,
+                winner_points: 0,
+                author_points: 0,
+                created_at: new Date().toISOString(),
+                cipher_text: cipher, // Use local cipher
+                profiles: {
+                    username: user.email?.split('@')[0] || 'You', // Fallback
+                    avatar_url: '' // Fallback or fetch from user metadata if available
+                }
+            };
+
+            // Try to find better profile info from existing players list
+            const myPlayerProfile = players.find(p => p.user_id === user.id)?.profiles;
+            if (myPlayerProfile) {
+                optimisticMessage.profiles = myPlayerProfile;
             }
 
-            // Update Team Pot
-            await supabase.rpc('increment_team_pot', { game_id_param: game.id, amount: potentialValue });
+            setMessages(prev => [...prev, optimisticMessage]);
+            setInput(''); // Clear input immediately for better UX
+            scrollToBottom();
+
+            // Helper function to send via API with retry
+            const sendSafe = async (attempt = 0): Promise<boolean> => {
+                const MAX_RETRIES = 3;
+                try {
+                    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+                        throw new Error("Browser is offline");
+                    }
+
+                    // Strict fetch with timeout
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+                    console.log(`Sending message via Server API (Attempt ${attempt + 1})...`);
+
+                    try {
+                        const response = await fetch('/api/messages/send', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                game_id: game.id,
+                                content: input.trim(),
+                                cipher_length: input.trim().length,
+                                cipher_text: cipher, // Send generated cipher
+                                is_solved: false,
+                                strikes: 0,
+                                hint_level: 0,
+                                winner_points: 0,
+                                author_points: 0,
+                                potentialValue: potentialValue
+                            }),
+                            signal: controller.signal
+                        });
+
+                        clearTimeout(timeoutId);
+
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            throw new Error(errorData.error || `Server error: ${response.status}`);
+                        }
+
+                        console.log("Message sent successfully via API!");
+
+                        // Force a refresh immediately so the sender sees the message 
+                        // even if the Realtime socket is lagging/disconnected
+                        fetchGameData();
+
+                        return true;
+
+                    } catch (fetchErr: any) {
+                        clearTimeout(timeoutId);
+                        if (fetchErr.name === 'AbortError') {
+                            throw new Error('Request timed out');
+                        }
+                        throw fetchErr;
+                    }
+
+                } catch (err: any) {
+                    console.error("Attempt failed:", err.message || err);
+                    if (attempt < MAX_RETRIES) {
+                        console.log(`Retry attempt ${attempt + 1}/${MAX_RETRIES}`);
+                        await new Promise(r => setTimeout(r, 500 * Math.pow(2, attempt))); // Exponential backoff
+                        return await sendSafe(attempt + 1);
+                    }
+                    throw err;
+                }
+            };
+
+            await sendSafe();
 
             setInput('');
 
@@ -474,6 +544,9 @@ export function useGameLogic(gameId: string) {
                     setGame(prev => prev ? ({ ...prev, current_turn_user_id: nextPlayerId }) : null);
                 }
             }
+        } catch (err) {
+            console.error("Message sending error:", err);
+            toast.error("Failed to send message. Please check your connection and try again.");
         } finally {
             setSending(false);
         }
@@ -481,58 +554,48 @@ export function useGameLogic(gameId: string) {
 
     const proposeSolvingMode = async () => {
         if (!game || !user) return;
-        const { error } = await supabase
-            .from('games')
-            .update({
-                solving_proposal_created_at: new Date().toISOString(),
-                solve_proposal_confirmations: [user.id]
-            })
-            .eq('id', game.id);
-        if (error) console.error("Error proposing:", error);
+        lastActionTime.current = Date.now();
+        try {
+            await fetch(`/api/game/${game.id}/action`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'propose_solve' })
+            });
+            fetchGameData();
+        } catch (e) {
+            console.error("Error proposing:", e);
+        }
     };
 
     const denySolvingMode = async () => {
         if (!game) return;
-        const { error } = await supabase
-            .from('games')
-            .update({
-                solving_proposal_created_at: null,
-                solve_proposal_confirmations: []
-            })
-            .eq('id', game.id);
-        if (error) console.error("Error denying:", error);
+        lastActionTime.current = Date.now();
+        try {
+            await fetch(`/api/game/${game.id}/action`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'deny_solve' })
+            });
+            fetchGameData();
+        } catch (e) {
+            console.error("Error denying:", e);
+        }
     };
 
     const confirmSolvingMode = async () => {
         if (!game || !user) return;
-
-        // Prevent double confirmation locally
         if (game.solve_proposal_confirmations?.includes(user.id)) return;
+        lastActionTime.current = Date.now();
 
-        const newConfirmations = [...(game.solve_proposal_confirmations || []), user.id];
-
-        // Optimistic check: if everyone confirmed, switch immediately
-        const allConfirmed = players.every(p => newConfirmations.includes(p.user_id));
-
-        if (allConfirmed) {
-            const { error } = await supabase
-                .from('games')
-                .update({
-                    status: 'solving',
-                    solving_proposal_created_at: null,
-                    solve_proposal_confirmations: [],
-                    solving_started_at: new Date().toISOString()
-                })
-                .eq('id', game.id);
-            if (error) console.error("Error completing confirmation:", error);
-        } else {
-            const { error } = await supabase
-                .from('games')
-                .update({
-                    solve_proposal_confirmations: newConfirmations
-                })
-                .eq('id', game.id);
-            if (error) console.error("Error confirming:", error);
+        try {
+            await fetch(`/api/game/${game.id}/action`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'confirm_solve' })
+            });
+            fetchGameData();
+        } catch (e) {
+            console.error("Error confirming:", e);
         }
     };
 
@@ -551,14 +614,34 @@ export function useGameLogic(gameId: string) {
             return;
         }
 
+        lastActionTime.current = Date.now();
         const toastId = toast.loading("Revealing hint...");
 
         try {
             const newCipherText = generateCipherString(target.content, nextLevel);
-            await supabase.from('messages').update({
+
+            // OPTIMISTIC UPDATE
+            setMessages(prev => prev.map(m => m.id === target.id ? {
+                ...m,
                 hint_level: nextLevel,
                 cipher_text: newCipherText
-            }).eq('id', target.id);
+            } : m));
+
+            await fetch(`/api/game/${game.id}/action`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'get_hint',
+                    payload: {
+                        targetId: target.id,
+                        nextLevel: nextLevel,
+                        newCipherText: newCipherText
+                    }
+                })
+            });
+
+            // Sync immediately after
+            fetchGameData();
 
             toast.success(`Hint Level ${nextLevel} purchased!`, { id: toastId });
 

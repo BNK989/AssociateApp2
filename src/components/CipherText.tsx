@@ -13,19 +13,23 @@ interface CipherTextProps {
 export function CipherText({ text, cipherText, visible, className = '' }: CipherTextProps) {
     const cipherRef = useRef<string>('');
 
-    // Initialize cipher string lazily
+    // Initialize cipher string lazily, but PREFER cipherText if available
     if (!cipherRef.current) {
-        cipherRef.current = text.split('').map((originalChar) => {
-            if (originalChar === ' ') return ' ';
-            let randomChar;
-            do {
-                randomChar = CHARS[Math.floor(Math.random() * CHARS.length)];
-            } while (randomChar === originalChar);
-            return randomChar;
-        }).join('');
+        if (cipherText) {
+            cipherRef.current = cipherText;
+        } else {
+            cipherRef.current = text.split('').map((originalChar) => {
+                if (originalChar === ' ') return ' ';
+                let randomChar;
+                do {
+                    randomChar = CHARS[Math.floor(Math.random() * CHARS.length)];
+                } while (randomChar === originalChar);
+                return randomChar;
+            }).join('');
+        }
     }
 
-    const [display, setDisplay] = useState(visible ? text : cipherRef.current);
+    const [display, setDisplay] = useState(visible ? text : (cipherText || cipherRef.current));
     const isFirstRender = useRef(true);
 
     useEffect(() => {

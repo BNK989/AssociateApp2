@@ -277,7 +277,7 @@ export default function Lobby() {
                 <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-purple-200 dark:border-purple-500/50 hover:border-purple-400 transition-colors cursor-pointer relative shadow-sm dark:shadow-none" onClick={() => router.push(`/game/${game.id}`)}>
                     {game.current_turn_user_id === user?.id && game.status !== 'completed' && (
                         <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg animate-pulse z-10">
-                            YOUR TURN
+                            Your Turn
                         </span>
                     )}
                     <div className="flex justify-between items-start mb-4">

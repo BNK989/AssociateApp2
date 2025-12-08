@@ -32,6 +32,25 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const [profile, setProfile] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
 
+    // Proactive session check on tab resume
+    // Proactive session check on tab resume
+    useEffect(() => {
+        const handleVisibilityChange = async () => {
+            if (document.visibilityState === 'visible') {
+                const { data, error } = await supabase.auth.getUser();
+                if (error) {
+                    console.log("Session invalid on resume, attempting refresh...");
+                    await supabase.auth.refreshSession();
+                } else {
+                    console.log("Session verified on resume.");
+                }
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, []);
+
     useEffect(() => {
         const initializeAuth = async () => {
             // 1. Get initial session

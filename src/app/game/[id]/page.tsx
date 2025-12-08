@@ -6,6 +6,8 @@ import { GameHeader } from '@/components/game/GameHeader';
 import { ChatArea } from '@/components/game/ChatArea';
 import { GameInput } from '@/components/game/GameInput';
 import { EndGamePopover } from '@/components/game/EndGamePopover';
+import { useTurnNotifications } from '@/hooks/useTurnNotifications';
+
 
 export default function GameRoom() {
     const { id } = useParams();
@@ -34,6 +36,11 @@ export default function GameRoom() {
         shakeMessageId,
         justSolvedData
     } = useGameLogic(gameId!);
+
+    // Notification Logic
+    const isMyTurn = game?.current_turn_user_id === user?.id;
+    useTurnNotifications(!!isMyTurn);
+
 
     if (loading) return <div className="flex items-center justify-center h-screen">Loading Game...</div>;
     if (!game) return <div className="flex items-center justify-center h-[100dvh]">Game not found</div>;
