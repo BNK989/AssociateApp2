@@ -13,6 +13,9 @@
 # testing
 /coverage
 
+# todo
+todo.md
+
 # next.js
 /.next/
 /out/

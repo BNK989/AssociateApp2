@@ -60,22 +60,12 @@ export function EndGamePopover({ open, onClose, players, messages }: EndGamePopo
     // Calculate stats
     const totalMessages = messages.length;
 
-    // Calculate solvers
-    const solverCounts = messages.reduce((acc, msg) => {
-        // Placeholder for solver tracking if we had it
-        return acc;
-    }, {} as Record<string, number>);
+    // Sort players by Score
+    const sortedPlayers = [...players].sort((a, b) => (b.score || 0) - (a.score || 0));
 
-    const messageCounts = messages.reduce((acc, msg) => {
-        acc[msg.user_id] = (acc[msg.user_id] || 0) + 1;
-        return acc;
-    }, {} as Record<string, number>);
-
-    const sortedPlayers = [...players].sort((a, b) => {
-        const countA = messageCounts[a.user_id] || 0;
-        const countB = messageCounts[b.user_id] || 0;
-        return countB - countA;
-    });
+    // Get Top Streak
+    const maxStreak = Math.max(...players.map(p => p.consecutive_correct_guesses || 0));
+    const streakPlayer = players.find(p => p.consecutive_correct_guesses === maxStreak && maxStreak > 1);
 
     const getInitials = (name: string) => {
         return name?.slice(0, 2).toUpperCase() || '??';
@@ -89,43 +79,66 @@ export function EndGamePopover({ open, onClose, players, messages }: EndGamePopo
                         Well Played!
                     </DialogTitle>
                     <DialogDescription className="text-center text-gray-400 text-lg">
-                        All messages have been decoded.
+                        Game Over
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="py-6 space-y-6">
-                    {/* Total Messages */}
-                    <div className="flex flex-col items-center justify-center p-4 bg-gray-100 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
-                        <span className="text-gray-400 text-sm uppercase tracking-wider">Total Messages</span>
-                        <div className="flex items-center gap-2 mt-1">
-                            <MessageSquare className="w-6 h-6 text-blue-400" />
-                            <span className="text-4xl font-bold text-gray-900 dark:text-white">{totalMessages}</span>
+                    {/* Top Stats Row */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="flex flex-col items-center justify-center p-3 bg-gray-100 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
+                            <span className="text-gray-400 text-xs uppercase tracking-wider">Total Messages</span>
+                            <div className="flex items-center gap-2 mt-1">
+                                <MessageSquare className="w-5 h-5 text-blue-400" />
+                                <span className="text-2xl font-bold text-gray-900 dark:text-white">{totalMessages}</span>
+                            </div>
+                        </div>
+                        <div className="flex flex-col items-center justify-center p-3 bg-gray-100 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
+                            <span className="text-gray-400 text-xs uppercase tracking-wider">Best Streak</span>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className="text-2xl">🔥</span>
+                                <span className="text-2xl font-bold text-gray-900 dark:text-white">{maxStreak > 1 ? maxStreak : '-'}</span>
+                            </div>
+                            {streakPlayer && (
+                                <span className="text-[10px] text-gray-500 truncate max-w-full px-2">by {streakPlayer.profiles?.username}</span>
+                            )}
                         </div>
                     </div>
 
-                    {/* Leaderboard (Most Active) */}
+                    {/* Leaderboard (Score) */}
                     <div className="space-y-3">
-                        <h4 className="text-sm font-medium text-gray-400 uppercase tracking-wider text-center">Most Active Chatters</h4>
+                        <h4 className="text-sm font-medium text-gray-400 uppercase tracking-wider text-center">Final Scoreboard</h4>
                         <div className="space-y-2">
-                            {sortedPlayers.slice(0, 3).map((player, index) => {
-                                const msgCount = messageCounts[player.user_id] || 0;
+                            {sortedPlayers.map((player, index) => {
                                 return (
-                                    <div key={player.user_id} className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                                    <div key={player.user_id} className={`flex items-center justify-between p-3 rounded-lg border ${index === 0 ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-700/50' : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'}`}>
                                         <div className="flex items-center gap-3">
+                                            <span className={`text-lg font-bold w-6 text-center ${index === 0 ? 'text-yellow-600 dark:text-yellow-500' : 'text-gray-400'}`}>
+                                                #{index + 1}
+                                            </span>
                                             <div className="relative">
-                                                <Avatar className="w-10 h-10 border-2 border-gray-700">
+                                                <Avatar className={`w-10 h-10 border-2 ${index === 0 ? 'border-yellow-400' : 'border-gray-200 dark:border-gray-700'}`}>
                                                     <AvatarImage src={player.profiles?.avatar_url} />
                                                     <AvatarFallback className="bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200">{getInitials(player.profiles?.username || '')}</AvatarFallback>
                                                 </Avatar>
                                                 {index === 0 && (
-                                                    <div className="absolute -top-2 -right-2 bg-yellow-500 text-black p-1 rounded-full">
+                                                    <div className="absolute -top-2 -right-2 bg-yellow-500 text-white p-1 rounded-full shadow-sm">
                                                         <Trophy className="w-3 h-3" />
                                                     </div>
                                                 )}
                                             </div>
-                                            <span className="font-medium text-gray-900 dark:text-white">{player.profiles?.username}</span>
+                                            <div className="flex flex-col">
+                                                <span className={`font-bold ${index === 0 ? 'text-yellow-700 dark:text-yellow-400' : 'text-gray-900 dark:text-white'}`}>
+                                                    {player.profiles?.username}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <span className="text-xl font-bold text-gray-700 dark:text-gray-300">{msgCount}</span>
+                                        <div className="flex flex-col items-end">
+                                            <span className={`text-xl font-bold ${index === 0 ? 'text-yellow-600 dark:text-yellow-500' : 'text-gray-700 dark:text-gray-300'}`}>
+                                                {player.score}
+                                            </span>
+                                            <span className="text-[10px] text-gray-400">pts</span>
+                                        </div>
                                     </div>
                                 );
                             })}

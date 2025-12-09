@@ -42,7 +42,7 @@
 - [x] add streaks to the game
 - [x] implement hint1 show first letter, hint2 randomly expose 50% of the messages, hin3 get an AI hint
 - [x] implement hint3 via AI API (gemini flash-light - cheapest model)
-- [ ] implement end game screen - show relevant statistics about the game to include plays scores 
+- [x] implement end game screen - show relevant statistics from game score and streaks about the game and include plays scores 
 
 ## Phase 8: Solving UI improvements and admin control 
 - [ ] Only allow hints to the player whos turn it is (once were in free for all mode anyone can get a hint)
