@@ -93,7 +93,7 @@ export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, 
     return (
         <div
             ref={containerRef}
-            className="relative h-screen overflow-y-auto pt-16 pb-24 px-4 space-y-4 bg-gray-200 dark:bg-neutral-900"
+            className="relative h-[100dvh] overflow-y-auto pt-16 pb-24 px-4 space-y-4 bg-gray-200 dark:bg-neutral-900"
         >
             {displayMessages.map((msg) => {
                 const originalIndex = messages.findIndex(m => m.id === msg.id);

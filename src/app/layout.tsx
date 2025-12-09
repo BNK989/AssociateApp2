@@ -5,6 +5,7 @@ import AuthProvider from "@/context/AuthProvider";
 import { NavBar } from "@/components/NavBar";
 import { DynamicToaster } from '@/components/DynamicToaster';
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,18 +37,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
-        <AuthProvider>
-          <NavBar />
-          <main className="min-h-screen">
-            {children}
-          </main>
-          <DynamicToaster />
-          <ServiceWorkerRegister />
-        </AuthProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AuthProvider>
+            <NavBar />
+            <main className="min-h-screen">
+              {children}
+            </main>
+            <DynamicToaster />
+            <ServiceWorkerRegister />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

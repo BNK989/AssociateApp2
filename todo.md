@@ -42,7 +42,6 @@
 - [x] add streaks to the game
 - [x] implement hint1 show first letter, hint2 randomly expose 50% of the messages, hin3 get an AI hint
 - [x] implement hint3 via AI API (gemini flash-light - cheapest model)
-- [ ] add leaderboard to the game
 - [ ] implement end game screen - show relevant statistics about the game to include plays scores 
 
 ## Phase 8: Solving UI improvements and admin control 
@@ -60,6 +59,7 @@
 ## additions and do later
 - [ ] add a way for the user to upload their own avatars - supabase storage (scale the image down to 256x256 on the client side before uploading)
 - [ ] in the notification center (bell icon)add dismiss all option 
+- [ ] add leaderboard to the game
 - [ ] add skeltons to the homepage 
 - [ ] add skeltons or a game loader for when a game is loading 
 - [ ] add NextStep.js to the project to aid in onboarding 

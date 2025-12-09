@@ -1,23 +1,31 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTheme } from 'next-themes';
 import { useAuth } from '@/context/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
 export default function Settings() {
     const { user, profile, refreshProfile } = useAuth();
+    const { theme, setTheme } = useTheme();
+    // Start with a local state to avoid hydration mismatch initialized to theme
+    const [mounted, setMounted] = useState(false);
+
+    // ... existing state ...
     const [username, setUsername] = useState('');
     const [avatarUrl, setAvatarUrl] = useState('');
-    const [theme, setTheme] = useState('dark');
+    // Removed local theme state, using hook directly
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState('');
 
     useEffect(() => {
+        setMounted(true);
         if (profile) {
             setUsername(profile.username || '');
             setAvatarUrl(profile.avatar_url || '');
-            setTheme(profile.settings?.theme || 'dark');
+            // We don't overwrite local theme preference with profile theme on load anymore
+            // to respect the device/browser local storage preference.
         }
     }, [profile]);
 
@@ -31,7 +39,7 @@ export default function Settings() {
             username,
             avatar_url: avatarUrl,
             settings: {
-                theme,
+                theme, // Save current theme to profile for consistency/backup
                 language: profile?.settings?.language || 'en',
                 audio_volume: profile?.settings?.audio_volume || 1.0,
             },
@@ -49,6 +57,8 @@ export default function Settings() {
         }
         setSaving(false);
     };
+
+    if (!mounted) return null;
 
     return (
         <div className="p-6 max-w-2xl mx-auto">
@@ -82,6 +92,7 @@ export default function Settings() {
                         onChange={(e) => setTheme(e.target.value)}
                         className="p-2 border rounded bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white"
                     >
+                        <option value="system">System</option>
                         <option value="dark">Dark</option>
                         <option value="light">Light</option>
                     </select>

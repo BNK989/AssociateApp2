@@ -13,7 +13,7 @@ import { Player, Message } from "@/hooks/useGameLogic";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Trophy, MessageSquare } from "lucide-react";
 import confetti from 'canvas-confetti';
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 type EndGamePopoverProps = {
     open: boolean;
@@ -24,8 +24,14 @@ type EndGamePopoverProps = {
 
 export function EndGamePopover({ open, onClose, players, messages }: EndGamePopoverProps) {
 
+    const [internalOpen, setInternalOpen] = useState(open);
+
     useEffect(() => {
-        if (open) {
+        setInternalOpen(open);
+    }, [open]);
+
+    useEffect(() => {
+        if (internalOpen && open) {
             const duration = 3 * 1000;
             const animationEnd = Date.now() + duration;
             const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
@@ -49,7 +55,7 @@ export function EndGamePopover({ open, onClose, players, messages }: EndGamePopo
 
             return () => clearInterval(interval);
         }
-    }, [open]);
+    }, [internalOpen, open]);
 
     // Calculate stats
     const totalMessages = messages.length;
@@ -76,7 +82,7 @@ export function EndGamePopover({ open, onClose, players, messages }: EndGamePopo
     };
 
     return (
-        <Dialog open={open} onOpenChange={() => { }}>
+        <Dialog open={internalOpen} onOpenChange={setInternalOpen}>
             <DialogContent className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle className="text-center text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
