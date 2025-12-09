@@ -62,6 +62,12 @@ export function useGameLogic(gameId: string) {
     const [game, setGame] = useState<GameState | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [players, setPlayers] = useState<Player[]>([]);
+    // Ref to access latest players in callbacks without re-subscribing
+    const playersRef = useRef<Player[]>([]);
+
+    useEffect(() => {
+        playersRef.current = players;
+    }, [players]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(true);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -113,27 +119,47 @@ export function useGameLogic(gameId: string) {
             .channel(`game:${gameId}`)
             .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, async (payload) => {
                 if (payload.eventType === 'INSERT') {
-                    const { data: profile } = await supabase
-                        .from('profiles')
-                        .select('username, avatar_url')
-                        .eq('id', payload.new.user_id)
-                        .single();
+                    // OPTIMIZATION: Try to find profile from local players cache first to avoid blocking DB call
+                    const localPlayer = playersRef.current.find(p => p.user_id === payload.new.user_id);
+
+                    let profile = localPlayer?.profiles;
+
+                    // Fallback: only fetch if we don't have it locally (e.g. brand new player not yet synced)
+                    if (!profile) {
+                        const { data } = await supabase
+                            .from('profiles')
+                            .select('username, avatar_url')
+                            .eq('id', payload.new.user_id)
+                            .single();
+                        if (data) profile = data;
+                    }
 
                     const newMessage = { ...payload.new, profiles: profile } as unknown as Message;
-                    setMessages(prev => [...prev, newMessage]);
+
+                    setMessages(prev => {
+                        // Check if we have an optimistic temporary message that matches this real one
+                        const optimisticIndex = prev.findIndex(m =>
+                            m.id.startsWith('temp-') &&
+                            m.content === newMessage.content &&
+                            m.user_id === newMessage.user_id
+                        );
+
+                        if (optimisticIndex !== -1) {
+                            // Replace the optimistic message with the real one in place
+                            const newMessages = [...prev];
+                            newMessages[optimisticIndex] = newMessage;
+                            return newMessages;
+                        }
+
+                        // Otherwise just append (it's a message from someone else)
+                        return [...prev, newMessage];
+                    });
                 } else if (payload.eventType === 'UPDATE') {
                     const updatedMessage = payload.new as any;
                     setMessages(prev => prev.map(m => m.id === updatedMessage.id ? { ...m, ...updatedMessage } : m));
 
-                    // Trigger Animation for Realtime Updates (e.g. for the Author, or if Guesser's local update missed)
-                    // We only trigger if it just became solved
+                    // Trigger Animation for Realtime Updates
                     if (updatedMessage.is_solved && user) {
-                        // Check if I am the winner
-                        if (updatedMessage.solved_by === user.id) {
-                            // Guesser already handled locally, but we can ensure sync or ignore.
-                            // Local update typically covers this.
-                        }
-                        // Check if I am the author
                         if (updatedMessage.user_id === user.id && updatedMessage.author_points > 0) {
                             setJustSolvedMessageId({ id: updatedMessage.id, points: updatedMessage.author_points });
                             setTimeout(() => setJustSolvedMessageId(null), 3000);

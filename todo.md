@@ -30,9 +30,9 @@
 
 ## Phase 6.5: notifications improvement
 ### to better handle normal user behavior (i.e. users swiching tabs or windows, looking away from the screen etc.) we need to better handle notifications
-- [ ] add a system notification to notify the player when its their turn even if they are not in the game (i.e. they are in another tab or window) handle this gracfully as user preferences may not allow notifications also allow the user to disable this feature in the preferences page
-- [ ] add a chime to notify the player when its their turn even if they are not in the game (i.e. they are in another tab or window) the file `chime1.mp3` is provided
-- [ ] change the tab's title back and forth to notify the player when its their turn even if they are not in the game
+- [x] add a system notification to notify the player when its their turn even if they are not in the game (i.e. they are in another tab or window) handle this gracfully as user preferences may not allow notifications also allow the user to disable this feature in the preferences page
+- [x] add a chime to notify the player when its their turn even if they are not in the game (i.e. they are in another tab or window) the file `chime1.mp3` is provided
+- [x] change the tab's title back and forth to notify the player when its their turn even if they are not in the game
 
 ## Phase 7: Score & Streaks & Hints
 - [x] create a file with all score logic for easy reference and adjustments (include multiplier logic and points logic)
@@ -45,22 +45,27 @@
 - [ ] add leaderboard to the game
 - [ ] implement end game screen - show relevant statistics about the game to include plays scores 
 
-## Phase 8: Game Loop - Solving UI improvements (Phase 2)
+## Phase 8: Solving UI improvements and admin control 
 - [ ] Only allow hints to the player whos turn it is (once were in free for all mode anyone can get a hint)
 - [ ] Solving Interaction
+- [ ] create a file within the code to document all the variables used in the game such as time to confirm solve, time before free for all etc.
+- [ ] add to the schema at supabase an option to mark a player as an admin (this should be done via supabase by manually manipulating the database)
+- [ ] add admin powers so admins can inspect any game and any player
 
 ## fixes
 - [ ] when a guess is correct there should not be a toast alert
-- [ ] add notifications to the game - so that players are notified when its their turn and keeps them engaged 
+- [ ] re-add the ::[cipher]:: (dubble colon format) for the cipher appears in the chat (no hints given) to better indicate that the user is viewing the cipher and not the message
+- [x] add notifications to the game - so that players are notified when its their turn and keeps them engaged 
 
 ## additions and do later
-- [ ] add admin powers to delete a game
-- [ ] create a file with all the variables in the game such as time to confirm solve etc.
-- [ ] add dismiss all for notifications 
-- [ ] add a chime for when its the players turn (use one chime for when the player is in the game and another when they're not in the gameroom i.e. in the lobby or in another tab)
+- [ ] add a way for the user to upload their own avatars - supabase storage (scale the image down to 256x256 on the client side before uploading)
+- [ ] in the notification center (bell icon)add dismiss all option 
 - [ ] add skeltons to the homepage 
-- [ ] add NextStep.js to the project to aid onboarding 
+- [ ] add skeltons or a game loader for when a game is loading 
+- [ ] add NextStep.js to the project to aid in onboarding 
 - [ ] using supabase mcp - when a game is archived or complited keep it for 72 hours and then delete it 
+- [ ] improve the pre-login screen create a better login experience by intreducing the game for unregistered users
+- [ ] create a demo mode where a user can play the game without logging in 
 
 ## Phase 9: Cloud Functions & storage management
 - [ ] add cloude functions via supabase to archive a game after 72 hours of no play (using mcp)
@@ -69,6 +74,6 @@
 ## Hits
 
 ## Phase 8: AI & Polish
-- [ ] PWA Configuration (Manifest, Service Worker)
+- [x] PWA Configuration (Manifest, Service Worker)
 - [ ] `/test-playground` Implementation
 - [ ] allow users to connect their whatsapp account to recive notifications when via the game such as 'its your turn to play + link to the game' or 'game started + link to the game' etc.
