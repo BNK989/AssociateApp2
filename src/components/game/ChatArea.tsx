@@ -126,6 +126,11 @@ export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, 
                                 visible={isVisible}
                                 className={isMe || isJustSolved ? 'text-white' : 'text-gray-900 dark:text-white'}
                             />
+                            {msg.ai_hint && (
+                                <div className="mt-2 text-xs font-medium text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/40 p-2 rounded border border-yellow-200 dark:border-yellow-800 animate-in fade-in slide-in-from-top-1">
+                                    💡 Hint: {msg.ai_hint}
+                                </div>
+                            )}
                             {isJustSolved && justSolvedData && (
                                 <div className="absolute -top-10 -right-4 text-3xl font-black text-green-500 dark:text-green-400 animate-float-up z-20 drop-shadow-xl whitespace-nowrap pointer-events-none">
                                     +{justSolvedData.points}

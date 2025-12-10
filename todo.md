@@ -41,15 +41,28 @@
 - [x] add points to the game
 - [x] add streaks to the game
 - [x] implement hint1 show first letter, hint2 randomly expose 50% of the messages, hin3 get an AI hint
-- [x] implement hint3 via AI API (gemini flash-light - cheapest model)
 - [x] implement end game screen - show relevant statistics from game score and streaks about the game and include plays scores 
+- [x] implement hint3 via AI API (Gemini 2.5 Flash-Lite see the key in the use key from env file under GEMINI_KEY) include
 
-## Phase 8: Solving UI improvements and admin control 
+## Phase 8: versitilty of gmaemaster  
+- [ ] create a file within the code to document and control all the variables used in the game such as time to confirm solve, time before free for all etc. you can start with just these and as we'll carry on developing we'll add additional variable
+-   [ ] to protect the gemini API from abuse lets create a limitation of 5 hints per game per player and no more than 100 per IP per day  - keep these variables in the variable file include logs and alarts for when abused.
+
+
+## Phase 8.5: reliability and improvements for QA  
+- [ ] Interduce test for core functionallity - create an md file to help new developers understand how and when to run them
+- [ ] add to the schema at supabase an option to mark a player as an admin (this should be done via supabase by manually manipulating the database)
+- [ ] add admin powers so admins can inspect any game and anymessage
+- [ ] to each created game create a handle, used like similar to an id later on we'll use this handle in the url instead of the id to navigate and show it on the gmae name 
+
+## Phase 9: Solving UI improvements
 - [ ] Only allow hints to the player whos turn it is (once were in free for all mode anyone can get a hint)
 - [ ] Solving Interaction
-- [ ] create a file within the code to document all the variables used in the game such as time to confirm solve, time before free for all etc.
-- [ ] add to the schema at supabase an option to mark a player as an admin (this should be done via supabase by manually manipulating the database)
-- [ ] add admin powers so admins can inspect any game and any player
+- [ ] improve the homepage 
+-   [ ] add skeltons (from shadcn) to the homepage 
+-   [ ] improve game gamecards in the hompage to include total messages sent, last activity e.g. "last move 3 hourse ago" remove the timestamp
+-   [ ]  add to the gamecards CTA of play now / continue solving 
+-   [ ]
 
 ## fixes
 - [ ] when a guess is correct there should not be a toast alert
@@ -60,7 +73,6 @@
 - [ ] add a way for the user to upload their own avatars - supabase storage (scale the image down to 256x256 on the client side before uploading)
 - [ ] in the notification center (bell icon)add dismiss all option 
 - [ ] add leaderboard to the game
-- [ ] add skeltons to the homepage 
 - [ ] add skeltons or a game loader for when a game is loading 
 - [ ] add NextStep.js to the project to aid in onboarding 
 - [ ] using supabase mcp - when a game is archived or complited keep it for 72 hours and then delete it 

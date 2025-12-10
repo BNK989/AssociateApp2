@@ -9,5 +9,10 @@ export const GAME_CONFIG = {
   STREAK_BONUS_MULTIPLIER: 1.5,
   GUESS_TIMEOUT_SECONDS: 10, // Time before specific turn becomes free-for-all
   GAME_MODE_100_LIMIT: 100,
-  AI_HINT_MODEL: "gemini-1.5-flash", // or current cheapest
+  AI_HINT_MODEL: "gemini-2.5-flash-lite",
+  SOLVE_PROPOSAL_TIMEOUT_SECONDS: 10, // Time to confirm solve
+  SOLVING_MODE_DURATION_SECONDS: 10,  // Time for solving phase
+  // Rate Limits
+  AI_HINT_LIMIT_PER_GAME_PLAYER: 5,
+  AI_HINT_LIMIT_PER_IP_DAY: 100,
 };

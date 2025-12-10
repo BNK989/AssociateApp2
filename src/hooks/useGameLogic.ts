@@ -22,6 +22,7 @@ export type Message = {
     strikes: number;
     hint_level: number;
     cipher_text?: string;
+    ai_hint?: string;
     solved_by?: string;
     winner_points?: number;
     author_points?: number;
@@ -282,7 +283,7 @@ export function useGameLogic(gameId: string) {
         const interval = setInterval(() => {
             const started = new Date(game.solving_started_at!).getTime();
             const now = Date.now();
-            const diff = 20000 - (now - started); // 20 seconds
+            const diff = GAME_CONFIG.SOLVING_MODE_DURATION_SECONDS * 1000 - (now - started); // 20 seconds
 
             if (diff <= 0) {
                 setSolvingTimeLeft(0);
