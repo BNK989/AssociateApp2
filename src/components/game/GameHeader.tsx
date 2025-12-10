@@ -139,7 +139,7 @@ export function GameHeader({
     }, [teamPot, displayPot]);
 
     return (
-        <header className={`fixed top-0 left-0 right-0 z-20 max-w-md mx-auto bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 transition-colors duration-500 ${isFeverMode ? 'dark:bg-orange-950/30' : ''}`}>
+        <header className={`shrink-0 z-20 w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 transition-colors duration-500 ${isFeverMode ? 'dark:bg-orange-950/30' : ''}`}>
             {/* Main Header Row */}
             <div className="p-2 flex justify-between items-center">
                 <div className="flex items-center gap-3">

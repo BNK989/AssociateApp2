@@ -5,7 +5,7 @@ import { cookies } from 'next/headers'
 export async function GET(request: NextRequest) {
     const { searchParams, origin } = new URL(request.url)
     // Use NEXT_PUBLIC_SITE_URL if available (for handling 0.0.0.0 host), otherwise fall back to request origin
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || origin
+    const siteUrl = origin || process.env.NEXT_PUBLIC_SITE_URL
     const code = searchParams.get('code')
     // if "next" is in param, use it as the redirect URL
     const next = searchParams.get('next') ?? '/'

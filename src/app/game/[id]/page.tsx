@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useGameLogic } from '@/hooks/useGameLogic';
+// Header and Input fixed positioning removed in favor of Flexbox
 import { GameHeader } from '@/components/game/GameHeader';
 import { ChatArea } from '@/components/game/ChatArea';
 import { GameInput } from '@/components/game/GameInput';
@@ -50,7 +51,7 @@ export default function GameRoom() {
     if (!game) return <div className="flex items-center justify-center h-[100dvh]">Game not found</div>;
 
     return (
-        <div className="min-h-screen max-w-md mx-auto bg-white dark:bg-gray-900 relative">
+        <div className="flex flex-col h-[100dvh] overflow-hidden bg-white dark:bg-gray-900 relative max-w-md mx-auto">
             <GameHeader
                 game={game}
                 user={user}

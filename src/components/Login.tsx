@@ -9,7 +9,7 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
     const searchParams = useSearchParams();
-    const origin = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+    const origin = (typeof window !== 'undefined' && window.location.origin) ? window.location.origin : process.env.NEXT_PUBLIC_SITE_URL || '';
     const next = searchParams.get('next');
 
     // Construct the callback URL

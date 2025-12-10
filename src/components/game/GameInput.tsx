@@ -92,7 +92,7 @@ export function GameInput({
     }
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-20 max-w-md mx-auto p-2 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+        <div className="shrink-0 z-20 w-full p-2 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
             <form onSubmit={onSendMessage} className="flex gap-2 items-center">
                 {game.status === 'solving' && targetMessage && (
                     <div className="relative group">

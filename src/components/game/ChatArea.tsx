@@ -53,7 +53,8 @@ export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, 
                 if (targetEl && containerRef.current) {
                     // Calculate position to show message at bottom of visible area (above input)
                     // Input area + padding is roughly 120px + 20px gap
-                    const bottomPadding = 140;
+                    // Input area is roughly 60px, but now we are just scrolling relative to this container
+                    const bottomPadding = 20;
                     const elementBottom = targetEl.offsetTop + targetEl.offsetHeight;
                     const containerHeight = containerRef.current.clientHeight;
 
@@ -93,7 +94,7 @@ export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, 
     return (
         <div
             ref={containerRef}
-            className="relative h-[100dvh] overflow-y-auto pt-16 pb-24 px-4 space-y-4 bg-gray-200 dark:bg-neutral-900"
+            className="flex-1 overflow-y-auto px-4 space-y-4 bg-gray-200 dark:bg-neutral-900"
         >
             {displayMessages.map((msg) => {
                 const originalIndex = messages.findIndex(m => m.id === msg.id);
