@@ -45,18 +45,19 @@
 - [x] implement hint3 via AI API (Gemini 2.5 Flash-Lite see the key in the use key from env file under GEMINI_KEY) include
 
 ## Phase 8: versitilty of gmaemaster  
-- [ ] create a file within the code to document and control all the variables used in the game such as time to confirm solve, time before free for all etc. you can start with just these and as we'll carry on developing we'll add additional variable
--   [ ] to protect the gemini API from abuse lets create a limitation of 5 hints per game per player and no more than 100 per IP per day  - keep these variables in the variable file include logs and alarts for when abused.
+- [x] create a file within the code to document and control all the variables used in the game such as time to confirm solve, time before free for all etc. you can start with just these and as we'll carry on developing we'll add additional variable
+-   [x] to protect the gemini API from abuse lets create a limitation of 5 hints per game per player and no more than 100 per IP per day  - keep these variables in the variable file include logs and alarts for when abused.
 
 
 ## Phase 8.5: reliability and improvements for QA  
-- [ ] Interduce tests for core functionallity - create an md file to help new developers understand how and when to run them
-- [ ] add to the schema at supabase an option to mark a player as an admin (this should be done via supabase by manually manipulating the database)
--   [ ] add admin powers so admins can inspect any game and anymessage
--   [ ] add admin powers so that admins can get a context menu (shadcn) to perform actions on any game or message
-- [ ] to each created game create a handle, used like similar to an id later on we'll use this handle in the url instead of the id to navigate and show it on the gmae name 
+- [x] add to the schema at supabase an option to mark a user as an admin (this should be done via supabase by manually manipulating the database)
+-   [x] add admin powers so admins can inspect any game and anymessage
+-   [x] add admin powers so that admins can get a context menu (shadcn) to perform actions on any game or message like get hint1/2/3 or delete a message or a game, view it when cipher is showing etc.
+-  [x] add an option to reset game - so that all the messages are ciphered and the game is reset to the initial state (i.e. the messages have been sent and the game is in texting mode)
+- [x] Interduce tests for core functionallity - create an md file to help new developers understand how and when to run them
 
 ## Phase 9: Solving UI improvements
+- [ ] to each created game create a handle, used like similar to an id later on we'll use this handle in the url instead of the id to navigate and show it on the gmae name 
 - [ ] Only allow hints to the player whos turn it is (once were in free for all mode anyone can get a hint)
 - [ ] Solving Interaction
 - [ ] improve the homepage 
@@ -69,8 +70,10 @@
 - [ ] when a guess is correct there should not be a toast alert
 - [ ] re-add the ::[cipher]:: (dubble colon format) for the cipher appears in the chat (no hints given) to better indicate that the user is viewing the cipher and not the message
 - [x] add notifications to the game - so that players are notified when its their turn and keeps them engaged 
+- [ ] fix the admin get hints option to work 
 
 ## additions and do later
+- [ ] after exosting the hints change the hint button to a giveup button to allow users to just get the word for no points (reset the streak counter)
 - [ ] add a way for the user to upload their own avatars - supabase storage (scale the image down to 256x256 on the client side before uploading)
 - [ ] in the notification center (bell icon)add dismiss all option 
 - [ ] add leaderboard to the game

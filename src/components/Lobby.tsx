@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthProvider';
 import { useRouter } from 'next/navigation';
+import { useAdmin } from '@/hooks/useAdmin';
 import {
     ContextMenu,
     ContextMenuContent,
@@ -44,6 +45,7 @@ type Game = {
 
 export default function Lobby() {
     const { user } = useAuth();
+    const { isAdmin } = useAdmin();
     const router = useRouter();
 
     const [activeGames, setActiveGames] = useState<Game[]>([]);
@@ -269,6 +271,41 @@ export default function Lobby() {
         }
     };
 
+    const handleDeleteGame = async (gameId: string) => {
+        if (!confirm('Are you sure you want to delete this game? This cannot be undone.')) return;
+
+        const { error } = await supabase
+            .from('games')
+            .delete()
+            .eq('id', gameId);
+
+        if (error) {
+            console.error('Error deleting game:', error);
+            toast.error('Failed to delete game');
+        } else {
+            toast.success('Game deleted');
+            setActiveGames(prev => prev.filter(g => g.id !== gameId));
+            setCompletedGames(prev => prev.filter(g => g.id !== gameId));
+        }
+    };
+
+    const handleResetGame = async (gameId: string) => {
+        if (!confirm('Are you sure you want to RESET this game? This will clear all scores and return to texting mode.')) return;
+
+        try {
+            await fetch(`/api/game/${gameId}/action`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'reset_game' })
+            });
+            toast.success('Game reset successfully');
+            // Refresh logic is already handled by realtime subscription
+        } catch (error) {
+            console.error('Error resetting game:', error);
+            toast.error('Failed to reset game');
+        }
+    };
+
     const getInitials = (name: string) => {
         return name?.slice(0, 2).toUpperCase() || '??';
     };
@@ -325,6 +362,23 @@ export default function Lobby() {
                 >
                     Leave Game
                 </ContextMenuItem>
+                {isAdmin && (
+                    <>
+                        <div className="h-px bg-gray-200 dark:bg-gray-800 my-1" />
+                        <ContextMenuItem
+                            onClick={() => handleDeleteGame(game.id)}
+                            className="text-red-600 focus:bg-gray-800 focus:text-red-500 cursor-pointer font-bold"
+                        >
+                            Admin: Delete Game
+                        </ContextMenuItem>
+                        <ContextMenuItem
+                            onClick={() => handleResetGame(game.id)}
+                            className="text-orange-600 focus:bg-gray-800 focus:text-orange-500 cursor-pointer font-bold"
+                        >
+                            Admin: Reset Game
+                        </ContextMenuItem>
+                    </>
+                )}
             </ContextMenuContent>
         </ContextMenu>
     );

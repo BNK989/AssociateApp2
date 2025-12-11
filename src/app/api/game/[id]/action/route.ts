@@ -38,6 +38,8 @@ export async function POST(
         const body = await request.json();
         const { action, payload } = body;
 
+        console.log(`[API] Action received: ${action}`, JSON.stringify(payload || {}));
+
         if (action === 'propose_solve') {
             const { error } = await supabase
                 .from('games')
@@ -57,6 +59,46 @@ export async function POST(
                 })
                 .eq('id', gameId);
             if (error) throw error;
+
+        } else if (action === 'reset_game') {
+            // 1. Reset Game State
+            const { error: gameError } = await supabase
+                .from('games')
+                .update({
+                    status: 'texting',
+                    solving_started_at: null,
+                    solving_proposal_created_at: null,
+                    solve_proposal_confirmations: [],
+                    team_consecutive_correct: 0,
+                    fever_mode_remaining: 0
+                })
+                .eq('id', gameId);
+            if (gameError) throw gameError;
+
+            // 2. Reset Messages
+            const { error: msgError } = await supabase
+                .from('messages')
+                .update({
+                    is_solved: false,
+                    hint_level: 0,
+                    ai_hint: null,
+                    strikes: 0,
+                    winner_points: 0,
+                    author_points: 0,
+                    solved_by: null
+                })
+                .eq('game_id', gameId);
+            if (msgError) throw msgError;
+
+            // 3. Reset Player Stats
+            const { error: playerError } = await supabase
+                .from('game_players')
+                .update({
+                    score: 0,
+                    consecutive_correct_guesses: 0
+                })
+                .eq('game_id', gameId);
+            if (playerError) throw playerError;
 
         } else if (action === 'confirm_solve') {
             // Logic repeated from client
@@ -169,6 +211,7 @@ export async function POST(
                 }).eq('id', gameId);
             }
         } else if (action === 'get_hint') {
+            console.log(`[API] Processing get_hint action for matchId: ${gameId}`);
             const { targetId, nextLevel, newCipherText } = payload;
             let aiHint = null;
 
