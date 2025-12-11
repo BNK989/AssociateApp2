@@ -56,12 +56,17 @@
 -  [x] add an option to reset game - so that all the messages are ciphered and the game is reset to the initial state (i.e. the messages have been sent and the game is in texting mode)
 - [x] Interduce tests for core functionallity - create an md file to help new developers understand how and when to run them
 
+## Phase 8.6: UI improvements
+- [x] add skeltons (shadcn) for when the homepage is loading 
+- [x] add a loading screen for when a game is loading (use animations especially if its a new game)
+- [x] add the app icon to the left of the app name in the header
+- [x] add an animation for when the game is switched to solve mode - this should be short and celebratory
+
 ## Phase 9: Solving UI improvements
 - [ ] to each created game create a handle, used like similar to an id later on we'll use this handle in the url instead of the id to navigate and show it on the gmae name 
 - [ ] Only allow hints to the player whos turn it is (once were in free for all mode anyone can get a hint)
 - [ ] Solving Interaction
 - [ ] improve the homepage 
--   [ ] add skeltons (from shadcn) to the homepage 
 -   [ ] improve game gamecards in the hompage to include total messages sent, last activity e.g. "last move 3 hourse ago" remove the timestamp
 -   [ ]  add to the gamecards CTA of play now / continue solving 
 -   [ ]
@@ -73,15 +78,17 @@
 - [ ] fix the admin get hints option to work 
 
 ## additions and do later
-- [ ] after exosting the hints change the hint button to a giveup button to allow users to just get the word for no points (reset the streak counter)
+- [ ] when no messages have been sent allow any users to send a message and therby start the game
+- [ ] if no initial message is sent prompt the user to start the message with an AI message, the AI message should be generated via the Gemini API and should be one word that is common 
 - [ ] add a way for the user to upload their own avatars - supabase storage (scale the image down to 256x256 on the client side before uploading)
+- [ ] after exosting the hints change the hint button to a giveup button to allow users to just get the word for no points (reset the streak counter)
 - [ ] in the notification center (bell icon)add dismiss all option 
 - [ ] add leaderboard to the game
-- [ ] add skeltons or a game loader for when a game is loading 
 - [ ] add NextStep.js to the project to aid in onboarding 
 - [ ] using supabase mcp - when a game is archived or complited keep it for 72 hours and then delete it 
 - [ ] improve the pre-login screen create a better login experience by intreducing the game for unregistered users
 - [ ] create a demo mode where a user can play the game without logging in 
+- [ ] add i18n to the game (support hebrew, english, german and spanish) - make sure all the game UI is RTL and LTR compatible by the users language
 
 ## Phase 9: Cloud Functions & storage management
 - [ ] add cloude functions via supabase to archive a game after 72 hours of no play (using mcp)

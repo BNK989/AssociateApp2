@@ -21,6 +21,10 @@ export const metadata: Metadata = {
   title: "Associate Game",
   description: "A real-time word association game",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export const viewport: Viewport = {

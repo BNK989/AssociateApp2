@@ -141,6 +141,41 @@ export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, 
         return () => window.visualViewport?.removeEventListener('resize', handleResize);
     }, [game.status, targetMessage]);
 
+    // Celebrate when switching to solving mode
+    const prevStatusRef = useRef(game.status);
+
+    useEffect(() => {
+        // Only trigger if we TRANSITION to solving (not if we load in solving)
+        if (game.status === 'solving' && prevStatusRef.current !== 'solving') {
+            import('canvas-confetti').then((confetti) => {
+                const duration = 1000; // Halved from 2000ms
+                const end = Date.now() + duration;
+
+                (function frame() {
+                    confetti.default({
+                        particleCount: 5,
+                        angle: 60,
+                        spread: 55,
+                        origin: { x: 0 },
+                        colors: ['#bb0000', '#ffffff', '#0000ff']
+                    });
+                    confetti.default({
+                        particleCount: 5,
+                        angle: 120,
+                        spread: 55,
+                        origin: { x: 1 },
+                        colors: ['#bb0000', '#ffffff', '#0000ff']
+                    });
+
+                    if (Date.now() < end) {
+                        requestAnimationFrame(frame);
+                    }
+                })();
+            });
+        }
+        prevStatusRef.current = game.status;
+    }, [game.status]);
+
     return (
         <div
             ref={containerRef}
@@ -155,6 +190,7 @@ export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, 
                 const username = msg.profiles?.username || 'User';
                 const isShaking = shakeMessageId === msg.id;
                 const isJustSolved = justSolvedData?.id === msg.id;
+                const hasHint = !!msg.ai_hint;
 
                 return (
                     <ContextMenu key={msg.id}>
@@ -162,7 +198,7 @@ export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, 
                             <div
                                 id={`msg-${msg.id}`}
                                 data-message-id={msg.id}
-                                className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : 'flex-row'} ${isShaking ? 'animate-shake' : ''}`}
+                                className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : 'flex-row'} ${isShaking ? 'animate-shake' : ''} ${hasHint ? 'my-6' : ''}`}
                             >
                                 <Avatar className="w-8 h-8">
                                     <AvatarImage src={msg.profiles?.avatar_url} />

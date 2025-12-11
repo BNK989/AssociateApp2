@@ -55,7 +55,7 @@ export function useTurnNotifications(isMyTurn: boolean, isMyMessageBeingGuessed:
             toast("Enable Notifications?", {
                 description: "Get notified when it's your turn even if you're away.",
                 // Fix: Ensure text is readable in light mode (often descriptions are too light)
-                descriptionClassName: "text-zinc-600 dark:text-zinc-400 font-medium",
+                descriptionClassName: "!text-zinc-800 dark:!text-zinc-400 font-medium",
                 action: {
                     label: "Enable",
                     onClick: () => {

@@ -7,6 +7,7 @@ import { GameHeader } from '@/components/game/GameHeader';
 import { ChatArea } from '@/components/game/ChatArea';
 import { GameInput } from '@/components/game/GameInput';
 import { EndGamePopover } from '@/components/game/EndGamePopover';
+import { GameLoading } from '@/components/game/GameLoading';
 import { useTurnNotifications } from '@/hooks/useTurnNotifications';
 
 
@@ -47,7 +48,7 @@ export default function GameRoom() {
     useTurnNotifications(!!isMyTurn, !!isMyMessageBeingGuessed);
 
 
-    if (loading) return <div className="flex items-center justify-center h-screen">Loading Game...</div>;
+    if (loading) return <GameLoading />;
     if (!game) return <div className="flex items-center justify-center h-[100dvh]">Game not found</div>;
 
     return (
