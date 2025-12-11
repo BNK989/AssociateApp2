@@ -138,8 +138,19 @@ export function GameHeader({
         return () => clearInterval(timer);
     }, [teamPot, displayPot]);
 
+    const [isProposing, setIsProposing] = React.useState(false);
+
+    const handlePropose = async () => {
+        setIsProposing(true);
+        try {
+            await onProposeSolving();
+        } finally {
+            setIsProposing(false);
+        }
+    };
+
     return (
-        <header className={`shrink-0 z-20 w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 transition-colors duration-500 ${isFeverMode ? 'dark:bg-orange-950/30' : ''}`}>
+        <header className={`relative shrink-0 z-20 w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 transition-colors duration-500 ${isFeverMode ? 'dark:bg-orange-950/30' : ''}`}>
             {/* Main Header Row */}
             <div className="p-2 flex justify-between items-center">
                 <div className="flex items-center gap-3">
@@ -194,10 +205,11 @@ export function GameHeader({
                                 <InvitePlayer gameId={game.id} />
                             ) : (
                                 <button
-                                    onClick={onProposeSolving}
-                                    className="px-3 py-1 bg-purple-600 hover:bg-purple-700 rounded text-xs font-bold text-white transition-colors"
+                                    onClick={handlePropose}
+                                    disabled={isProposing}
+                                    className="px-3 py-1 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-wait rounded text-xs font-bold text-white transition-colors"
                                 >
-                                    Solve
+                                    {isProposing ? '...' : 'Solve'}
                                 </button>
                             )}
                         </>

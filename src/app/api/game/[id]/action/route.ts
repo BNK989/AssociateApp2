@@ -214,12 +214,15 @@ export async function POST(
                 if (msg?.content) {
                     try {
                         const apiKey = process.env.GEMINI_KEY;
+                        console.log(`[Hint Debug] Key exists: ${!!apiKey}, Model: ${GAME_CONFIG.AI_HINT_MODEL}`);
                         if (apiKey) {
                             const prompt = `Give a short, cryptic but helpful single-sentence hint for the word or phrase: "${msg.content}". Do not use the word itself. Max 12 words.`;
 
-                            // User suggested 'gemini-flash-lite-latest', but search confirms 'gemini-2.5-flash-lite' is the stable ID.
                             const modelId = GAME_CONFIG.AI_HINT_MODEL;
                             const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`;
+
+                            console.log(`[Hint Debug] Sending request to: ${url.split('?')[0]}...`);
+                            console.log(`[Hint Debug] Payload:`, JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }));
 
                             const geminiResponse = await fetch(url, {
                                 method: 'POST',
@@ -229,9 +232,13 @@ export async function POST(
                                 })
                             });
 
+                            console.log(`[Hint Debug] Response Status: ${geminiResponse.status}`);
+
                             if (geminiResponse.ok) {
                                 const data = await geminiResponse.json();
+                                console.log(`[Hint Debug] Response Data:`, JSON.stringify(data).slice(0, 200));
                                 aiHint = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+                                console.log(`[Hint Debug] Extracted Hint: ${aiHint}`);
 
                                 // Track Usage (using admin client to ensure insert works even if RLS somehow restricts)
                                 await adminSupabase.from('api_usage').insert({
@@ -242,11 +249,14 @@ export async function POST(
                                 });
 
                             } else {
-                                console.error('Gemini API Error:', await geminiResponse.text());
+                                const errorText = await geminiResponse.text();
+                                console.error('[Hint Debug] Gemini API Error:', errorText);
                             }
+                        } else {
+                            console.error('[Hint Debug] Missing GEMINI_KEY env var');
                         }
                     } catch (e) {
-                        console.error('Gemini Hint Gen Error:', e);
+                        console.error('[Hint Debug] Gemini Hint Gen Exception:', e);
                     }
                 }
             }

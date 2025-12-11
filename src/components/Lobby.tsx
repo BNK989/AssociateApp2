@@ -174,9 +174,11 @@ export default function Lobby() {
 
             router.push(`/game/${game.id}?action=invite`);
 
-        } catch (error) {
-            console.error('Error creating game:', error);
-            alert('Failed to create game');
+        } catch (error: any) {
+            console.error('Error creating game:', JSON.stringify(error, null, 2));
+            console.error('Full error object:', error);
+            if (error.message) alert(`Failed to create game: ${error.message}`);
+            else alert('Failed to create game (Unknown error)');
         } finally {
             setCreating(false);
         }

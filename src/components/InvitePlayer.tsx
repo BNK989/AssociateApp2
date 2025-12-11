@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthProvider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
+import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { UserPlus, Check, Link, Share2 } from 'lucide-react';
@@ -102,46 +102,49 @@ export function InvitePlayer({ gameId }: { gameId: string }) {
                     <DialogTitle>Invite Players</DialogTitle>
                 </DialogHeader>
 
-                <Command shouldFilter={false} className="bg-transparent border border-gray-200 dark:border-gray-700 rounded-md mb-4 h-64">
-                    <CommandInput
+                <div className="mb-4">
+                    <Input
                         placeholder="Search username..."
                         value={query}
-                        onValueChange={setQuery}
-                        className="text-gray-900 dark:text-white"
+                        onChange={(e) => setQuery(e.target.value)}
+                        className="mb-2"
                     />
-                    <CommandList>
-                        <CommandEmpty>No users found.</CommandEmpty>
-                        <CommandGroup heading="Suggestions">
-                            {results.map((profile) => (
-                                <CommandItem
-                                    key={profile.id}
-                                    value={profile.username}
-                                    className="flex items-center justify-between p-2 cursor-pointer aria-selected:bg-gray-100 dark:aria-selected:bg-gray-800"
-                                    onSelect={() => !invited.has(profile.id) && sendInvite(profile.id)}
-                                >
-                                    <div className="flex items-center gap-2">
-                                        <Avatar className="w-8 h-8">
-                                            <AvatarImage src={profile.avatar_url} />
-                                            <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs">
-                                                {getInitials(profile.username)}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <span>{profile.username}</span>
+                    <div className="h-64 border border-gray-200 dark:border-gray-700 rounded-md overflow-y-auto p-1">
+                        {results.length === 0 ? (
+                            <div className="py-6 text-center text-sm text-gray-500">No users found.</div>
+                        ) : (
+                            <div className="space-y-1">
+                                <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">Suggestions</div>
+                                {results.map((profile) => (
+                                    <div
+                                        key={profile.id}
+                                        className="flex items-center justify-between p-2 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                                        onClick={() => !invited.has(profile.id) && sendInvite(profile.id)}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <Avatar className="w-8 h-8">
+                                                <AvatarImage src={profile.avatar_url} />
+                                                <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs">
+                                                    {getInitials(profile.username)}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <span>{profile.username}</span>
+                                        </div>
+                                        {invited.has(profile.id) ? (
+                                            <span className="text-green-500 flex items-center gap-1 text-xs">
+                                                <Check className="w-3 h-3" /> Sent
+                                            </span>
+                                        ) : (
+                                            <Button size="sm" variant="ghost" className="h-6 text-xs">
+                                                Invite
+                                            </Button>
+                                        )}
                                     </div>
-                                    {invited.has(profile.id) ? (
-                                        <span className="text-green-500 flex items-center gap-1 text-xs">
-                                            <Check className="w-3 h-3" /> Sent
-                                        </span>
-                                    ) : (
-                                        <Button size="sm" variant="ghost" className="h-6 text-xs">
-                                            Invite
-                                        </Button>
-                                    )}
-                                </CommandItem>
-                            ))}
-                        </CommandGroup>
-                    </CommandList>
-                </Command>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
 
                 <div className="flex flex-col gap-4">
                     <div className="relative">

@@ -50,9 +50,10 @@
 
 
 ## Phase 8.5: reliability and improvements for QA  
-- [ ] Interduce test for core functionallity - create an md file to help new developers understand how and when to run them
+- [ ] Interduce tests for core functionallity - create an md file to help new developers understand how and when to run them
 - [ ] add to the schema at supabase an option to mark a player as an admin (this should be done via supabase by manually manipulating the database)
-- [ ] add admin powers so admins can inspect any game and anymessage
+-   [ ] add admin powers so admins can inspect any game and anymessage
+-   [ ] add admin powers so that admins can get a context menu (shadcn) to perform actions on any game or message
 - [ ] to each created game create a handle, used like similar to an id later on we'll use this handle in the url instead of the id to navigate and show it on the gmae name 
 
 ## Phase 9: Solving UI improvements
