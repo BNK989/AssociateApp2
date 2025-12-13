@@ -36,7 +36,8 @@ export default function GameRoom() {
         handleGetHint,
         getTargetMessage,
         shakeMessageId,
-        justSolvedData
+        justSolvedData,
+        startRandomGame
     } = useGameLogic(gameId!);
 
     // Notification Logic
@@ -61,12 +62,13 @@ export default function GameRoom() {
                 proposalTimeLeft={proposalTimeLeft}
                 solvingTimeLeft={solvingTimeLeft}
                 targetMessage={getTargetMessage()}
-                messageCount={messages.length}
                 onBack={() => router.push('/')}
                 onRefresh={fetchGameData}
                 onProposeSolving={proposeSolvingMode}
                 onConfirmSolving={confirmSolvingMode}
                 onDenySolving={denySolvingMode}
+                messageCount={messages.length}
+                maxMessages={game.max_messages}
             />
 
             <ChatArea
@@ -77,6 +79,7 @@ export default function GameRoom() {
                 targetMessage={getTargetMessage()}
                 shakeMessageId={shakeMessageId}
                 justSolvedData={justSolvedData}
+                onStartRandom={startRandomGame}
             />
 
             <GameInput
@@ -90,6 +93,7 @@ export default function GameRoom() {
                 targetMessage={getTargetMessage()}
                 onSendMessage={handleSendMessage}
                 onGetHint={handleGetHint}
+                isEmpty={messages.length === 0}
             />
 
             <EndGamePopover

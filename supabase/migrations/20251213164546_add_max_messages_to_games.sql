@@ -1,0 +1,1 @@
+ALTER TABLE "games" ADD COLUMN "max_messages" INTEGER DEFAULT NULL;

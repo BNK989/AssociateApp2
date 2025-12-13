@@ -22,6 +22,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { GAME_MODES } from '@/lib/gameConfig';
+import { Label } from '@/components/ui/label';
 
 type Game = {
     id: string;
@@ -53,6 +55,10 @@ export default function Lobby() {
     const [creating, setCreating] = useState(false);
     const [gameToLeave, setGameToLeave] = useState<string | null>(null);
     const [leaving, setLeaving] = useState(false);
+
+    // Create Game State
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [selectedModeId, setSelectedModeId] = useState<string>(GAME_MODES[0].id);
 
     useEffect(() => {
         if (!user) return;
@@ -150,6 +156,9 @@ export default function Lobby() {
         setCreating(true);
 
         try {
+            const selectedMode = GAME_MODES.find(m => m.id === selectedModeId);
+            const maxMessages = selectedMode ? selectedMode.limit : 25;
+
             // 1. Create Game
             const { data: game, error: gameError } = await supabase
                 .from('games')
@@ -157,6 +166,7 @@ export default function Lobby() {
                     status: 'texting',
                     mode: 'free',
                     current_turn_user_id: user.id,
+                    max_messages: maxMessages
                 })
                 .select()
                 .single();
@@ -174,6 +184,7 @@ export default function Lobby() {
 
             if (playerError) throw playerError;
 
+            setIsCreateOpen(false);
             router.push(`/game/${game.id}?action=invite`);
 
         } catch (error: any) {
@@ -390,11 +401,11 @@ export default function Lobby() {
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold text-purple-400">Your Games</h2>
                     <button
-                        onClick={createGame}
+                        onClick={() => setIsCreateOpen(true)}
                         disabled={creating}
                         className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50"
                     >
-                        {creating ? 'Creating...' : 'Create New Game'}
+                        Create New Game
                     </button>
                 </div>
 
@@ -435,6 +446,53 @@ export default function Lobby() {
                         <Button variant="ghost" onClick={() => setGameToLeave(null)} disabled={leaving}>Cancel</Button>
                         <Button variant="destructive" onClick={confirmLeave} disabled={leaving}>
                             {leaving ? 'Leaving...' : 'Leave Game'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Create Game Dialog */}
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                <DialogContent className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Create New Game</DialogTitle>
+                        <DialogDescription className="text-gray-400">
+                            Configure game settings before starting.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="py-4">
+                        <Label className="text-base font-semibold mb-3 block">Game Length (Total Messages)</Label>
+                        <div className="grid grid-cols-2 gap-3">
+                            {GAME_MODES.map((mode) => (
+                                <button
+                                    key={mode.id}
+                                    onClick={() => setSelectedModeId(mode.id)}
+                                    className={`
+                                        p-3 rounded-lg border text-left transition-all
+                                        ${selectedModeId === mode.id
+                                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 ring-1 ring-purple-500'
+                                            : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700'}
+                                    `}
+                                >
+                                    <div className={`font-bold ${selectedModeId === mode.id ? 'text-purple-700 dark:text-purple-300' : 'text-gray-900 dark:text-white'}`}>
+                                        {mode.name}
+                                    </div>
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                        Max {mode.limit} messages
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                        <div className="mt-4 text-xs text-gray-400 bg-gray-50 dark:bg-gray-800/50 p-3 rounded">
+                            * Once the limit is reached, the game will automatically switch to Solving Mode.
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <Button variant="ghost" onClick={() => setIsCreateOpen(false)} disabled={creating}>Cancel</Button>
+                        <Button onClick={createGame} disabled={creating} className="bg-purple-600 hover:bg-purple-700 text-white">
+                            {creating ? 'Creating...' : 'Start Game'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

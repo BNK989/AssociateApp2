@@ -15,6 +15,7 @@ type GameHeaderProps = {
     solvingTimeLeft: number | null;
     targetMessage?: Message;
     messageCount: number;
+    maxMessages?: number; // Add this prop
     onBack: () => void;
     onRefresh: () => void;
     onProposeSolving: () => void;
@@ -31,6 +32,7 @@ export function GameHeader({
     solvingTimeLeft,
     targetMessage,
     messageCount,
+    maxMessages,
     onBack,
     onRefresh,
     onProposeSolving,
@@ -181,6 +183,13 @@ export function GameHeader({
                     <div className="flex items-center gap-1.5 text-purple-600 dark:text-purple-400 font-bold opacity-80 scale-90">
                         <Landmark className="w-3.5 h-3.5" />
                         <span className="text-sm">{displayPot}</span>
+
+                        {/* Message Counter */}
+                        {game.status !== 'solving' && maxMessages && (
+                            <div className="ml-2 flex items-center bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full text-[10px] text-gray-500 font-mono">
+                                {messageCount}/{maxMessages}
+                            </div>
+                        )}
                     </div>
 
                     {/* Vertical Divider */}

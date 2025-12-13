@@ -26,9 +26,10 @@ type ChatAreaProps = {
     targetMessage?: Message;
     shakeMessageId?: string | null;
     justSolvedData?: { id: string; points: number } | null;
+    onStartRandom?: () => void;
 };
 
-export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, shakeMessageId, justSolvedData }: ChatAreaProps) {
+export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, shakeMessageId, justSolvedData, onStartRandom }: ChatAreaProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const { isAdmin } = useAdmin();
     const [revealedMessages, setRevealedMessages] = useState<Record<string, boolean>>({});
@@ -179,8 +180,29 @@ export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, 
     return (
         <div
             ref={containerRef}
-            className="flex-1 overflow-y-auto px-4 space-y-4 bg-gray-200 dark:bg-neutral-900"
+            className="flex-1 overflow-y-auto px-4 space-y-4 bg-gray-200 dark:bg-neutral-900 flex flex-col"
         >
+            {messages.length === 0 && onStartRandom && (
+                <div className="flex-1 flex flex-col items-center justify-center gap-4 min-h-[50vh] animate-in fade-in zoom-in duration-500">
+                    <div className="text-center space-y-2 opacity-80">
+                        <p className="text-xl font-bold text-gray-700 dark:text-gray-300">Start the Game!</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Be the first to send a message or start with a random word.</p>
+                    </div>
+                    <button
+                        onClick={onStartRandom}
+                        className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-full shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
+                    >
+                        <span>🎲</span> Start with Random Word
+                    </button>
+                    {/* Or Separator */}
+                    <div className="flex items-center gap-3 w-1/2 opacity-50">
+                        <div className="h-px bg-gray-400 flex-1" />
+                        <span className="text-xs font-mono text-gray-500">OR TYPE BELOW</span>
+                        <div className="h-px bg-gray-400 flex-1" />
+                    </div>
+                </div>
+            )}
+
             {displayMessages.map((msg) => {
                 const originalIndex = messages.findIndex(m => m.id === msg.id);
                 const isActuallyLast = originalIndex === messages.length - 1;
@@ -192,65 +214,90 @@ export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, 
                 const isJustSolved = justSolvedData?.id === msg.id;
                 const hasHint = !!msg.ai_hint;
 
+                // Message Count Logic for System Notification
+                let showMessageWarning = false;
+                let messagesLeft = -1;
+
+                if (game.status !== 'solving' && game.max_messages) {
+                    const messageIndex = messages.findIndex(m => m.id === msg.id); // Get true index (0-based)
+                    const countSoFar = messageIndex + 1;
+                    messagesLeft = game.max_messages - countSoFar;
+
+                    // Show bubble if 3, 2, or 1 messages left
+                    if (messagesLeft < 3 && messagesLeft >= 0) {
+                        showMessageWarning = true;
+                    }
+                }
+
                 return (
-                    <ContextMenu key={msg.id}>
-                        <ContextMenuTrigger>
-                            <div
-                                id={`msg-${msg.id}`}
-                                data-message-id={msg.id}
-                                className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : 'flex-row'} ${isShaking ? 'animate-shake' : ''} ${hasHint ? 'my-6' : ''}`}
-                            >
-                                <Avatar className="w-8 h-8">
-                                    <AvatarImage src={msg.profiles?.avatar_url} />
-                                    <AvatarFallback className={`${getAvatarColor(username)} text-white text-xs`}>
-                                        {getInitials(username)}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <div className={`relative max-w-[70%] p-3 rounded-lg transition-all duration-300 ${isMe ? 'bg-indigo-600 text-white glow-me' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white glow-gray'} ${game.status === 'solving' && targetMessage?.id === msg.id ? 'target-message-glow' : ''} ${isJustSolved ? 'scale-110 bg-green-500 text-white ring-4 ring-green-300 dark:ring-green-900' : ''}`}>
-                                    <CipherText
-                                        text={msg.content}
-                                        cipherText={msg.cipher_text}
-                                        visible={isVisible || !!revealedMessages[msg.id]}
-                                        className={isMe || isJustSolved ? 'text-white' : 'text-gray-900 dark:text-white'}
-                                    />
-                                    {msg.ai_hint && (
-                                        <div className="mt-2 text-xs font-medium text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/40 p-2 rounded border border-yellow-200 dark:border-yellow-800 animate-in fade-in slide-in-from-top-1">
-                                            💡 Hint: {msg.ai_hint}
-                                        </div>
-                                    )}
-                                    {isJustSolved && justSolvedData && (
-                                        <div className="absolute -top-10 -right-4 text-3xl font-black text-green-500 dark:text-green-400 animate-float-up z-20 drop-shadow-xl whitespace-nowrap pointer-events-none">
-                                            +{justSolvedData.points}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </ContextMenuTrigger>
-                        {isAdmin && (
-                            <ContextMenuContent className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white">
-                                <ContextMenuItem onClick={() => handleAdminAction('show_content', msg.id)} className="cursor-pointer">
-                                    {revealedMessages[msg.id] ? 'Hide Content' : 'Reveal Content'}
-                                </ContextMenuItem>
-                                <ContextMenuSub>
-                                    <ContextMenuSubTrigger disabled className="cursor-not-allowed text-gray-400">Trigger Hint (Disabled)</ContextMenuSubTrigger>
-                                    <ContextMenuSubContent className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
-                                        <ContextMenuItem disabled className="cursor-not-allowed">Hint 1</ContextMenuItem>
-                                    </ContextMenuSubContent>
-                                </ContextMenuSub>
-                                <div className="h-px bg-gray-200 dark:bg-gray-800 my-1" />
-                                <ContextMenuItem
-                                    onClick={() => handleAdminAction('delete', msg.id)}
-                                    className="text-red-600 focus:bg-gray-800 focus:text-red-500 cursor-pointer font-bold"
+                    <div key={msg.id}>
+                        <ContextMenu>
+                            <ContextMenuTrigger>
+                                <div
+                                    id={`msg-${msg.id}`}
+                                    data-message-id={msg.id}
+                                    className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : 'flex-row'} ${isShaking ? 'animate-shake' : ''} ${hasHint ? 'my-6' : ''}`}
                                 >
-                                    Delete Message
-                                </ContextMenuItem>
-                            </ContextMenuContent>
+                                    <Avatar className="w-8 h-8">
+                                        <AvatarImage src={msg.profiles?.avatar_url} />
+                                        <AvatarFallback className={`${getAvatarColor(username)} text-white text-xs`}>
+                                            {getInitials(username)}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div className={`relative max-w-[70%] p-3 rounded-lg transition-all duration-300 ${isMe ? 'bg-indigo-600 text-white glow-me' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white glow-gray'} ${game.status === 'solving' && targetMessage?.id === msg.id ? 'target-message-glow' : ''} ${isJustSolved ? 'scale-110 bg-green-500 text-white ring-4 ring-green-300 dark:ring-green-900' : ''}`}>
+                                        <CipherText
+                                            text={msg.content}
+                                            cipherText={msg.cipher_text}
+                                            visible={isVisible || !!revealedMessages[msg.id]}
+                                            className={isMe || isJustSolved ? 'text-white' : 'text-gray-900 dark:text-white'}
+                                        />
+                                        {msg.ai_hint && (
+                                            <div className="mt-2 text-xs font-medium text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/40 p-2 rounded border border-yellow-200 dark:border-yellow-800 animate-in fade-in slide-in-from-top-1">
+                                                💡 Hint: {msg.ai_hint}
+                                            </div>
+                                        )}
+                                        {isJustSolved && justSolvedData && (
+                                            <div className="absolute -top-10 -right-4 text-3xl font-black text-green-500 dark:text-green-400 animate-float-up z-20 drop-shadow-xl whitespace-nowrap pointer-events-none">
+                                                +{justSolvedData.points}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </ContextMenuTrigger>
+                            {isAdmin && (
+                                <ContextMenuContent className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white">
+                                    <ContextMenuItem onClick={() => handleAdminAction('show_content', msg.id)} className="cursor-pointer">
+                                        {revealedMessages[msg.id] ? 'Hide Content' : 'Reveal Content'}
+                                    </ContextMenuItem>
+                                    <ContextMenuSub>
+                                        <ContextMenuSubTrigger disabled className="cursor-not-allowed text-gray-400">Trigger Hint (Disabled)</ContextMenuSubTrigger>
+                                        <ContextMenuSubContent className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+                                            <ContextMenuItem disabled className="cursor-not-allowed">Hint 1</ContextMenuItem>
+                                        </ContextMenuSubContent>
+                                    </ContextMenuSub>
+                                    <div className="h-px bg-gray-200 dark:bg-gray-800 my-1" />
+                                    <ContextMenuItem
+                                        onClick={() => handleAdminAction('delete', msg.id)}
+                                        className="text-red-600 focus:bg-gray-800 focus:text-red-500 cursor-pointer font-bold"
+                                    >
+                                        Delete Message
+                                    </ContextMenuItem>
+                                </ContextMenuContent>
+                            )}
+                        </ContextMenu>
+
+                        {showMessageWarning && (
+                            <div className="flex justify-center my-4 animate-in fade-in slide-in-from-bottom-2">
+                                <span className="bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-xs px-3 py-1 rounded-full shadow-sm font-medium border border-gray-200 dark:border-gray-700">
+                                    {messagesLeft === 0 ? 'Last message!' : `${messagesLeft + 1} message${messagesLeft + 1 === 1 ? '' : 's'} until switching to solve`}
+                                </span>
+                            </div>
                         )}
-                    </ContextMenu>
+                    </div>
                 );
             })}
             {/* We keep this ref but don't rely on it for scrolling anymore, or we could remove it if useGameLogic doesn't error */}
             <div ref={messagesEndRef} />
-        </div>
+        </div >
     );
 }

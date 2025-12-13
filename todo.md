@@ -62,7 +62,15 @@
 - [x] add the app icon to the left of the app name in the header
 - [x] add an animation for when the game is switched to solve mode - this should be short and celebratory
 
-## Phase 9: Solving UI improvements
+## Phase 9: game logic and game modes
+- [x] Disallow same message in a specific game (i.e. the same message cannot be sent twice) this is so that players don't send the same assosication over and over again. make sure to handle this gracefully and show a toast alert to the player
+- [x] limits on message length to max 25 characters (set in the gameConfig file) handle gracefully
+- [x] create a game mode popup at game creation to allow the game creator to limit the total messages in a game (e.g. 25, 50, 100 messages, set options as array in the gameConfig file also naming each option, e.g. short, medium, long, very long), once the game hit this limit it should switch to solving mode, players can still be able to manually switch to solving mode 
+- [ ] add "start random button" in initial empty game - this should start with a random message if no messages have been sent (from top 250 most common words in english)
+- [ ] when no messages have yet been sent (new game) allow any user to send a message and therby start the game
+--- create backup for the supabase data structures and functions
+
+## Phase 10: Solving UI improvements
 - [ ] to each created game create a handle, used like similar to an id later on we'll use this handle in the url instead of the id to navigate and show it on the gmae name 
 - [ ] Only allow hints to the player whos turn it is (once were in free for all mode anyone can get a hint)
 - [ ] Solving Interaction
@@ -71,11 +79,19 @@
 -   [ ]  add to the gamecards CTA of play now / continue solving 
 -   [ ]
 
+# pre-launch
+- [ ] add analytics to the game, KPIs
+- [ ] review code to ensure it is secure and follows best practices pre-launch
+- [ ] 
+
 ## fixes
 - [ ] when a guess is correct there should not be a toast alert
 - [ ] re-add the ::[cipher]:: (dubble colon format) for the cipher appears in the chat (no hints given) to better indicate that the user is viewing the cipher and not the message
 - [x] add notifications to the game - so that players are notified when its their turn and keeps them engaged 
 - [ ] fix the admin get hints option to work 
+- [ ] bug: the placeholder text in the input field does not update as quickly (to indicate that the turns have switched)
+- [ ] when game is generated sometimes the create game button does not work, the create button is stuck, after selecting game type (i.e short, medium etc.) - fix this
+- [ ] the encription/decreption effect is not working - fix this when a message is encrypted or decrypted is should change mode letter by letter 
 
 ## additions and do later
 - [ ] when no messages have been sent allow any users to send a message and therby start the game
@@ -89,6 +105,7 @@
 - [ ] improve the pre-login screen create a better login experience by intreducing the game for unregistered users
 - [ ] create a demo mode where a user can play the game without logging in 
 - [ ] add i18n to the game (support hebrew, english, german and spanish) - make sure all the game UI is RTL and LTR compatible by the users language
+- [ ] three dots while other user is typing (peer to peer)
 
 ## Phase 9: Cloud Functions & storage management
 - [ ] add cloude functions via supabase to archive a game after 72 hours of no play (using mcp)

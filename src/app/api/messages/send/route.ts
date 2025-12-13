@@ -38,29 +38,22 @@ export async function POST(request: Request) {
         const body = await request.json();
         const { potentialValue, ...messageData } = body;
 
-        // Perform the insert (using the authenticated user's ID for security)
-        const { error } = await supabase
-            .from('messages')
-            .insert({
-                ...messageData,
-                user_id: user.id // Enforce authorship
-            });
+        // Call RPC for atomic insert and logic
+        const { error } = await supabase.rpc('send_game_message', {
+            p_game_id: messageData.game_id,
+            p_content: messageData.content,
+            p_cipher_length: messageData.cipher_length,
+            p_cipher_text: messageData.cipher_text,
+            p_potential_value: typeof potentialValue === 'number' ? potentialValue : 0
+        });
 
         if (error) {
-            console.error("Server-side insert error:", error);
-            return NextResponse.json({ error: error.message }, { status: 500 });
-        }
-
-        // Call increment_team_pot if potentialValue is provided
-        if (typeof body.potentialValue === 'number') {
-            const { error: rpcError } = await supabase.rpc('increment_team_pot', {
-                game_id_param: body.game_id,
-                amount: body.potentialValue
-            });
-            if (rpcError) {
-                console.error("Server-side RPC error:", rpcError);
-                // We don't fail the whole request since message send succeeded, but we should log it
+            console.error("Server-side send error:", error);
+            // Check for custom exception message
+            if (error.message.includes('already exists')) {
+                return NextResponse.json({ error: error.message }, { status: 400 });
             }
+            return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
         return NextResponse.json({ success: true });

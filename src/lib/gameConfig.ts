@@ -15,4 +15,12 @@ export const GAME_CONFIG = {
   // Rate Limits
   AI_HINT_LIMIT_PER_GAME_PLAYER: 5,
   AI_HINT_LIMIT_PER_IP_DAY: 100,
+  MESSAGE_MAX_LENGTH: 25,
 };
+
+export const GAME_MODES = [
+  { id: 'short', name: 'Short', limit: 25 },
+  { id: 'medium', name: 'Medium', limit: 50 },
+  { id: 'long', name: 'Long', limit: 100 },
+  { id: 'very_long', name: 'Marathon', limit: 200 },
+];

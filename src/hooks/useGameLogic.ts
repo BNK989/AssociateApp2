@@ -11,6 +11,7 @@ import {
     HINT_COSTS
 } from '@/lib/gameLogic';
 import { toast } from "sonner";
+import { COMMON_WORDS } from '@/lib/commonWords';
 
 export type Message = {
     id: string;
@@ -44,6 +45,7 @@ export type GameState = {
     team_consecutive_correct: number;
     fever_mode_remaining: number;
     solve_proposal_confirmations: string[];
+    max_messages?: number;
 };
 
 export type Player = {
@@ -76,6 +78,7 @@ export function useGameLogic(gameId: string) {
     const [solvingTimeLeft, setSolvingTimeLeft] = useState<number | null>(null);
     const [sending, setSending] = useState(false);
     const [shakeMessageId, setShakeMessageId] = useState<string | null>(null);
+    const gameRef = useRef<GameState | null>(null); // To track previous state for toast
 
     const [justSolvedData, setJustSolvedMessageId] = useState<{ id: string; points: number } | null>(null);
 
@@ -171,6 +174,13 @@ export function useGameLogic(gameId: string) {
             })
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'games', filter: `id=eq.${gameId}` }, (payload) => {
                 setGame(payload.new as GameState);
+
+                // Toast on Switch to Solving
+                const newGame = payload.new as GameState;
+                if (newGame.status === 'solving' && gameRef.current?.status !== 'solving') {
+                    toast.info("Game limit reached! Switching to Solving Mode!");
+                }
+                gameRef.current = newGame; // Keep track for comparison
             })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'game_players', filter: `game_id=eq.${gameId}` }, async (payload) => {
                 // Refresh players list on any player update (score changes etc)
@@ -438,7 +448,7 @@ export function useGameLogic(gameId: string) {
             return;
         }
 
-        if (game.current_turn_user_id && game.current_turn_user_id !== user.id) {
+        if (messages.length > 0 && game.current_turn_user_id && game.current_turn_user_id !== user.id) {
             toast.warning("It's not your turn!");
             return;
         }
@@ -446,6 +456,18 @@ export function useGameLogic(gameId: string) {
         const wordCount = input.trim().split(/\s+/).length;
         if (wordCount < GAME_CONFIG.MESSAGE_WORD_LIMIT_MIN || wordCount > GAME_CONFIG.MESSAGE_WORD_LIMIT_MAX) {
             alert(`Message must be between ${GAME_CONFIG.MESSAGE_WORD_LIMIT_MIN} and ${GAME_CONFIG.MESSAGE_WORD_LIMIT_MAX} words.`);
+            return;
+        }
+
+        if (input.length > GAME_CONFIG.MESSAGE_MAX_LENGTH) {
+            toast.error(`Message too long! Max ${GAME_CONFIG.MESSAGE_MAX_LENGTH} characters.`);
+            return;
+        }
+
+        // DUPLICATE CHECK (Frontend)
+        const isDuplicate = messages.some(m => m.content.toLowerCase() === input.trim().toLowerCase());
+        if (isDuplicate) {
+            toast.error("Message already exists in this game!");
             return;
         }
 
@@ -579,6 +601,76 @@ export function useGameLogic(gameId: string) {
         }
     };
 
+    const startRandomGame = async () => {
+        if (!game || !user || messages.length > 0 || sending) return;
+
+        const randomWord = COMMON_WORDS[Math.floor(Math.random() * COMMON_WORDS.length)];
+
+        // Reuse logic from handleSendMessage but for this specific word
+        setSending(true);
+
+        try {
+            const potentialValue = calculateMessageValue(randomWord);
+            lastActionTime.current = Date.now();
+            const cipher = generateCipherString(randomWord, 0);
+
+            // Optimistic Update
+            const tempId = `temp-${Date.now()}`;
+            const optimisticMessage: Message = {
+                id: tempId,
+                user_id: user.id,
+                content: randomWord,
+                cipher_length: randomWord.length,
+                is_solved: false,
+                strikes: 0,
+                hint_level: 0,
+                winner_points: 0,
+                author_points: 0,
+                created_at: new Date().toISOString(),
+                cipher_text: cipher,
+                profiles: {
+                    username: user.email?.split('@')[0] || 'You',
+                    avatar_url: ''
+                }
+            };
+
+            // Try to find better profile info
+            const myPlayerProfile = players.find(p => p.user_id === user.id)?.profiles;
+            if (myPlayerProfile) {
+                optimisticMessage.profiles = myPlayerProfile;
+            }
+
+            setMessages(prev => [...prev, optimisticMessage]);
+            scrollToBottom();
+
+            await fetch('/api/messages/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    game_id: game.id,
+                    content: randomWord,
+                    cipher_length: randomWord.length,
+                    cipher_text: cipher,
+                    is_solved: false,
+                    strikes: 0,
+                    hint_level: 0,
+                    winner_points: 0,
+                    author_points: 0,
+                    potentialValue: potentialValue
+                })
+            });
+
+            fetchGameData();
+
+        } catch (err: any) {
+            console.error("Failed to start random game:", err);
+            toast.error(err.message || "Failed to start random game");
+            // Revert optimistic update? For now just let it be or filter it out if we had a real ID system
+        } finally {
+            setSending(false);
+        }
+    };
+
     const proposeSolvingMode = async () => {
         if (!game || !user) return;
         lastActionTime.current = Date.now();
@@ -698,6 +790,7 @@ export function useGameLogic(gameId: string) {
         handleGetHint,
         getTargetMessage,
         shakeMessageId,
-        justSolvedData
+        justSolvedData,
+        startRandomGame
     };
 }
