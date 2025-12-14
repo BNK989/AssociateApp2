@@ -195,7 +195,7 @@ export async function POST(
                 const newTeamConsec = (gameData.team_consecutive_correct || 0) + 1;
                 const newFever = Math.max(0, (gameData.fever_mode_remaining || 0) - 1);
 
-                let updatePayload: any = {
+                let updatePayload = {
                     team_consecutive_correct: newTeamConsec,
                     fever_mode_remaining: newFever
                 };
@@ -328,7 +328,7 @@ export async function POST(
                 }
             }
 
-            const updatePayload: any = {
+            const updatePayload: { hint_level: number; cipher_text: string; ai_hint?: string } = {
                 hint_level: nextLevel,
                 cipher_text: newCipherText
             };
@@ -344,8 +344,9 @@ export async function POST(
 
         return NextResponse.json({ success: true });
 
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error("Action API Error:", err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }

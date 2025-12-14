@@ -1,4 +1,5 @@
 import { GameState, Player, Message } from '@/hooks/useGameLogic';
+import { User } from '@supabase/supabase-js';
 import { calculateMessageValue, HINT_COSTS } from '@/lib/gameLogic';
 import { Send, Loader2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -8,7 +9,7 @@ import { toast } from "sonner";
 
 type GameInputProps = {
     game: GameState;
-    user: any;
+    user: User | null;
     players: Player[];
     input: string;
     setInput: (value: string) => void;
@@ -86,20 +87,20 @@ export function GameInput({
 
     let nextCost = 0;
     let nextLabel = "";
-    let buttonParams = { text: "1ˢᵗ" };
+    let buttonText = "1ˢᵗ";
 
     if (currentLevel === 0) {
         nextCost = Math.ceil(wordValue * HINT_COSTS.TIER_1); // 10%
         nextLabel = "Reveal First Letter";
-        buttonParams.text = "1ˢᵗ";
+        buttonText = "1ˢᵗ";
     } else if (currentLevel === 1) {
         nextCost = Math.ceil(wordValue * HINT_COSTS.TIER_2); // 10%
         nextLabel = "Reveal 40% Letters";
-        buttonParams.text = "2ⁿᵈ";
+        buttonText = "2ⁿᵈ";
     } else if (currentLevel === 2) {
         nextCost = Math.ceil(wordValue * HINT_COSTS.TIER_3); // 40%
         nextLabel = "AI Hint";
-        buttonParams.text = "3ʳᵈ";
+        buttonText = "3ʳᵈ";
     }
 
     // Auto-show tooltip logic
@@ -157,7 +158,7 @@ export function GameInput({
                                     className="h-10 w-10 flex flex-col items-center justify-center rounded-lg transition-colors bg-secondary text-secondary-foreground hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <span className="text-sm leading-none mb-0.5">💡</span>
-                                    <span className="text-[10px] font-bold leading-none">{buttonParams.text}</span>
+                                    <span className="text-[10px] font-bold leading-none">{buttonText}</span>
                                 </button>
                             </TooltipTrigger>
                             <TooltipContent side="top" align="start">

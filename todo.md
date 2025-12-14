@@ -105,7 +105,7 @@
 
 ## additions and do later
 
-- [ ] add a way for the user to upload their own avatars - supabase storage (scale the image down to 256x256 on the client side before uploading)
+- [x] add a way for the user to upload their own avatars - supabase storage (scale the image down to 256x256 on the client side before uploading)
 - [ ] after exosting the hints change the hint button to a giveup button to allow users to just get the word for no points (reset the streak counter)
 - [ ] in the notification center (bell icon) add dismiss all option 
 - [ ] add leaderboard to the game
