@@ -104,14 +104,12 @@
 - [x] bug: the placeholder text in the input field does not update as quickly (to indicate that the turns have switched)
 
 ## additions and do later
-- [ ] when no messages have been sent allow any users to send a message and therby start the game
-- [ ] if no initial message is sent prompt the user to start the message with an AI message, the AI message should be generated via the Gemini API and should be one word that is common 
+
 - [ ] add a way for the user to upload their own avatars - supabase storage (scale the image down to 256x256 on the client side before uploading)
 - [ ] after exosting the hints change the hint button to a giveup button to allow users to just get the word for no points (reset the streak counter)
-- [ ] in the notification center (bell icon)add dismiss all option 
+- [ ] in the notification center (bell icon) add dismiss all option 
 - [ ] add leaderboard to the game
 - [ ] add NextStep.js to the project to aid in onboarding 
-- [ ] using supabase mcp - when a game is archived or complited keep it for 72 hours and then delete it 
 - [ ] improve the pre-login screen create a better login experience by intreducing the game for unregistered users
 - [ ] create a demo mode where a user can play the game without logging in 
 - [ ] add i18n to the game (support hebrew, english, german and spanish) - make sure all the game UI is RTL and LTR compatible by the users language

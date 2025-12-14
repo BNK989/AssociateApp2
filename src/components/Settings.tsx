@@ -17,7 +17,92 @@ export default function Settings() {
     const [avatarUrl, setAvatarUrl] = useState('');
     // Removed local theme state, using hook directly
     const [saving, setSaving] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const [message, setMessage] = useState('');
+
+    const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        try {
+            setUploading(true);
+            setMessage('');
+
+            if (!event.target.files || event.target.files.length === 0) {
+                setUploading(false);
+                return;
+            }
+
+            const file = event.target.files[0];
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${user?.id}-${Math.random()}.${fileExt}`;
+            const filePath = `${fileName}`;
+
+            // Resize image to 256x256
+            const resizedBlob = await new Promise<Blob>((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 256;
+                    canvas.height = 256;
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) {
+                        reject(new Error('Could not get canvas context'));
+                        return;
+                    }
+                    // Draw image with object-cover like behavior or simple resize?
+                    // User asked to scale down. Let's do simple drawImage for now to fit, or maybe cover?
+                    // Let's preserve aspect ratio and center crop (object-cover) for better avatars
+
+                    const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
+                    const x = (canvas.width / scale - img.width) / 2;
+                    const y = (canvas.height / scale - img.height) / 2;
+
+                    ctx.save();
+                    ctx.scale(scale, scale);
+                    ctx.drawImage(img, x, y);
+                    ctx.restore();
+
+                    canvas.toBlob((blob) => {
+                        if (blob) resolve(blob);
+                        else reject(new Error('Canvas to Blob failed'));
+                    }, file.type);
+                };
+                img.onerror = (e) => reject(e);
+                img.src = URL.createObjectURL(file);
+            });
+
+            const { error: uploadError } = await supabase.storage
+                .from('avatars')
+                .upload(filePath, resizedBlob);
+
+            if (uploadError) {
+                throw uploadError;
+            }
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('avatars')
+                .getPublicUrl(filePath);
+
+            setAvatarUrl(publicUrl);
+            setMessage('Avatar uploaded successfully! Don\'t forget to save.');
+
+        } catch (error: any) {
+            console.error('Upload error details:', error);
+            let errorMessage = 'An error occurred during upload';
+
+            if (error instanceof Error) {
+                errorMessage = error.message;
+            } else if (typeof error === 'object' && error !== null && 'message' in error) {
+                errorMessage = (error as any).message;
+            } else if (typeof error === 'string') {
+                errorMessage = error;
+            } else {
+                errorMessage = JSON.stringify(error);
+            }
+
+            setMessage(`Error uploading avatar: ${errorMessage}`);
+        } finally {
+            setUploading(false);
+        }
+    };
 
     useEffect(() => {
         setMounted(true);
@@ -75,14 +160,37 @@ export default function Settings() {
                     />
                 </div>
 
-                <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium">Avatar URL</label>
-                    <input
-                        type="text"
-                        value={avatarUrl}
-                        onChange={(e) => setAvatarUrl(e.target.value)}
-                        className="p-2 border rounded bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white"
-                    />
+                <label className="text-sm font-medium">Avatar</label>
+                <div className="flex items-center gap-4">
+                    <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                        {avatarUrl ? (
+                            <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                <span className="text-xs">No Img</span>
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <input
+                            type="file"
+                            id="avatar-upload"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleAvatarUpload}
+                            disabled={uploading || saving}
+                        />
+                        <button
+                            onClick={() => document.getElementById('avatar-upload')?.click()}
+                            disabled={uploading || saving}
+                            className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                        >
+                            {uploading ? 'Uploading...' : 'Upload Avatar'}
+                        </button>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Max 2MB. Auto-resized to 256x256.
+                        </p>
+                    </div>
                 </div>
 
                 <div className="flex flex-col gap-2">
