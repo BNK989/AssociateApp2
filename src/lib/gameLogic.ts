@@ -175,3 +175,13 @@ export const getRevealedCount = (content: string, level: number): number => {
 
     return count;
 };
+
+export const calculateNextTurnUserId = (players: { user_id: string }[], currentUserId: string): string | null => {
+    if (!players || players.length === 0) return null;
+
+    const currentIndex = players.findIndex(p => p.user_id === currentUserId);
+    if (currentIndex === -1) return null;
+
+    const nextIndex = (currentIndex + 1) % players.length;
+    return players[nextIndex].user_id;
+};

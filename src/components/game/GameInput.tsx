@@ -133,7 +133,7 @@ export function GameInput({
 
     return (
         <div
-            className="shrink-0 z-20 w-full p-2 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900"
+            className="shrink-0 z-20 w-full px-2 pt-2 pb-1 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900"
             onClick={handleInteraction}
             onTouchStart={handleInteraction}
         >

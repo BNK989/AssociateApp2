@@ -193,18 +193,22 @@ export function GameHeader({
                     </div>
 
                     {/* Vertical Divider */}
-                    <div className="w-[1px] h-4 bg-gray-300 dark:bg-gray-700 mx-1" />
+                    {game.status === 'solving' && (
+                        <>
+                            <div className="w-[1px] h-4 bg-gray-300 dark:bg-gray-700 mx-1" />
 
-                    {/* User Score (Main) */}
-                    <div className={`flex items-center gap-1.5 font-bold transition-all duration-300 ${isLeader ? 'text-amber-500 dark:text-amber-400' : 'text-blue-600 dark:text-blue-400'}`}>
-                        <div className="relative">
-                            <Star className={`w-4 h-4 ${isLeader ? 'fill-current' : ''}`} />
-                            {isLeader && <Crown className="absolute -top-3 -right-2 w-3 h-3 text-amber-500 animate-bounce" />}
-                        </div>
-                        <span className={`text-lg transition-all duration-300 ${displayScore !== myScore ? 'scale-125 text-green-500' : ''}`}>
-                            {displayScore}
-                        </span>
-                    </div>
+                            {/* User Score (Main) */}
+                            <div className={`flex items-center gap-1.5 font-bold transition-all duration-300 ${isLeader ? 'text-amber-500 dark:text-amber-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                                <div className="relative">
+                                    <Star className={`w-4 h-4 ${isLeader ? 'fill-current' : ''}`} />
+                                    {isLeader && <Crown className="absolute -top-3 -right-2 w-3 h-3 text-amber-500 animate-bounce" />}
+                                </div>
+                                <span className={`text-lg transition-all duration-300 ${displayScore !== myScore ? 'scale-125 text-green-500' : ''}`}>
+                                    {displayScore}
+                                </span>
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 <div className="flex items-center gap-2">

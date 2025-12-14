@@ -8,7 +8,8 @@ import {
     calculateSimilarity,
     calculatePointDistribution,
     generateCipherString,
-    HINT_COSTS
+    HINT_COSTS,
+    calculateNextTurnUserId
 } from '@/lib/gameLogic';
 import { toast } from "sonner";
 import { COMMON_WORDS } from '@/lib/commonWords';
@@ -157,6 +158,25 @@ export function useGameLogic(gameId: string) {
 
                         // Otherwise just append (it's a message from someone else)
                         return [...prev, newMessage];
+                    });
+
+                    // OPTIMISTIC TURN UPDATE: Rotate turn locally ensuring placeholder updates immediately
+                    setGame(prev => {
+                        if (!prev || prev.status === 'solving' || prev.status === 'completed') return prev;
+
+                        const currentPlayers = playersRef.current;
+                        const senderId = (payload.new as any).user_id;
+
+                        // Use shared logic
+                        const nextPlayerId = calculateNextTurnUserId(currentPlayers, senderId);
+
+                        if (nextPlayerId && prev.current_turn_user_id !== nextPlayerId) {
+                            return {
+                                ...prev,
+                                current_turn_user_id: nextPlayerId
+                            };
+                        }
+                        return prev;
                     });
                 } else if (payload.eventType === 'UPDATE') {
                     const updatedMessage = payload.new as any;
@@ -586,10 +606,8 @@ export function useGameLogic(gameId: string) {
             setInput('');
 
             if (players.length > 0) {
-                const currentIndex = players.findIndex(p => p.user_id === user.id);
-                if (currentIndex !== -1) {
-                    const nextIndex = (currentIndex + 1) % players.length;
-                    const nextPlayerId = players[nextIndex].user_id;
+                const nextPlayerId = calculateNextTurnUserId(players, user.id);
+                if (nextPlayerId) {
                     setGame(prev => prev ? ({ ...prev, current_turn_user_id: nextPlayerId }) : null);
                 }
             }

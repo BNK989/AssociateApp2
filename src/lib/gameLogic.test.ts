@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
     calculateMessageValue,
     calculateSimilarity,
-    generateCipherString
+    generateCipherString,
+    calculateNextTurnUserId
 } from '@/lib/gameLogic';
 
 describe('Game Logic', () => {
@@ -70,6 +71,33 @@ describe('Game Logic', () => {
             const cipher = generateCipherString("a b c", 0);
             expect(cipher[1]).toBe(' ');
             expect(cipher[3]).toBe(' ');
+        });
+    });
+
+    describe('calculateNextTurnUserId', () => {
+        const players = [
+            { user_id: 'u1' },
+            { user_id: 'u2' },
+            { user_id: 'u3' }
+        ];
+
+        it('should return next player in cyclic order', () => {
+            expect(calculateNextTurnUserId(players, 'u1')).toBe('u2');
+            expect(calculateNextTurnUserId(players, 'u2')).toBe('u3');
+            expect(calculateNextTurnUserId(players, 'u3')).toBe('u1');
+        });
+
+        it('should handle single player', () => {
+            const singlePlayer = [{ user_id: 'u1' }];
+            expect(calculateNextTurnUserId(singlePlayer, 'u1')).toBe('u1');
+        });
+
+        it('should return null if player not found', () => {
+            expect(calculateNextTurnUserId(players, 'u99')).toBeNull();
+        });
+
+        it('should return null if empty players', () => {
+            expect(calculateNextTurnUserId([], 'u1')).toBeNull();
         });
     });
 });
