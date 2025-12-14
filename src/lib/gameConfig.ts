@@ -16,6 +16,9 @@ export const GAME_CONFIG = {
   AI_HINT_LIMIT_PER_GAME_PLAYER: 5,
   AI_HINT_LIMIT_PER_IP_DAY: 100,
   MESSAGE_MAX_LENGTH: 25,
+  // Cleanup Timers
+  GAME_ARCHIVE_HOURS: 72,
+  GAME_DELETE_DAYS: 7,
 };
 
 export const GAME_MODES = [
@@ -24,3 +27,12 @@ export const GAME_MODES = [
   { id: 'long', name: 'Long', limit: 100 },
   { id: 'very_long', name: 'Marathon', limit: 200 },
 ];
+
+
+/* supabase query 
+   to view corn jobs:
+   select * from cron.job;
+
+   to view executions:
+   select * from cron.job_run_details order by start_time desc;
+*/

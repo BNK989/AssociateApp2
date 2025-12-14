@@ -6,12 +6,6 @@ import { useAuth } from '@/context/AuthProvider';
 import { useRouter } from 'next/navigation';
 import { useAdmin } from '@/hooks/useAdmin';
 import {
-    ContextMenu,
-    ContextMenuContent,
-    ContextMenuItem,
-    ContextMenuTrigger,
-} from "@/components/ui/context-menu";
-import {
     Dialog,
     DialogContent,
     DialogDescription,
@@ -19,21 +13,22 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { GAME_MODES } from '@/lib/gameConfig';
 import { Label } from '@/components/ui/label';
+import GameCard from './GameCard';
 
+// Match the type in GameCard.tsx
 type Game = {
     id: string;
+    handle: number;
     status: string;
     mode: string;
     created_at: string;
-    team_pot: number;
-    team_consecutive_correct: number;
-    fever_mode_remaining: number;
-    player_count?: number;
+    last_activity_at?: string;
+    max_messages: number;
+    message_count: number;
     current_turn_user_id?: string;
     players?: {
         has_left: boolean;
@@ -43,6 +38,10 @@ type Game = {
             avatar_url: string;
         };
     }[];
+    // Extra fields for logic
+    team_pot: number;
+    team_consecutive_correct: number;
+    fever_mode_remaining: number;
 };
 
 export default function Lobby() {
@@ -63,11 +62,15 @@ export default function Lobby() {
     useEffect(() => {
         if (!user) return;
 
-        const fetchActiveGames = async () => {
+        const fetchGames = async () => {
+            console.log('Fetching games for user:', user.id);
+            // Fetch both active and completed in one go or separate if needed complexity
+            // We'll fetch all relevant games for the user
             const { data: gamesData, error } = await supabase
                 .from('games')
                 .select(`
                     *,
+                    messages(count),
                     game_players!inner (user_id, is_archived, has_left),
                     players:game_players (
                         has_left,
@@ -75,70 +78,67 @@ export default function Lobby() {
                     )
                 `)
                 .eq('game_players.user_id', user.id)
-                .neq('status', 'completed')
-                .order('created_at', { ascending: false });
+                .order('last_activity_at', { ascending: false, nullsFirst: false }); // Sort by activity
 
             if (error) {
-                console.error('Error fetching active games:', error);
+                console.error('Error fetching games:', error);
                 return;
             }
 
+            console.log('Games fetched:', gamesData?.length);
+
+            // Transform data to match Game type
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const filtered = (gamesData as any[]).filter((g) => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const playerInfo = g.game_players.find((p: any) => p.user_id === user.id);
-                return playerInfo && !playerInfo.is_archived && !playerInfo.has_left;
+            const formattedGames: Game[] = (gamesData as any[]).map((g) => {
+                // Determine message count
+                // supabase returns [{ count: N }] for messages(count) usually, or just count if using strict count?
+                // Actually with select('*, messages(count)') it returns messages: [{ count: 123 }] usually.
+                // Let's inspect safely.
+                const msgCount = g.messages?.[0]?.count ?? 0;
+
+                return {
+                    ...g,
+                    message_count: msgCount,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    player_count: g.players.filter((p: any) => !p.has_left).length
+                };
             });
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            setActiveGames(filtered.map((g: any) => ({
-                ...g,
+            // Filter and split
+            const active: Game[] = [];
+            const completed: Game[] = [];
+
+            formattedGames.forEach(g => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                player_count: g.players.filter((p: any) => !p.has_left).length
-            })));
-        };
+                const playerInfo = (g as any).game_players.find((p: any) => p.user_id === user.id);
 
-        const fetchCompletedGames = async () => {
-            const { data: gamesData, error } = await supabase
-                .from('games')
-                .select(`
-                    *,
-                    game_players!inner (user_id, is_archived, has_left),
-                    players:game_players (
-                        has_left,
-                        user:profiles (username, avatar_url)
-                    )
-                `)
-                .eq('game_players.user_id', user.id)
-                .eq('status', 'completed')
-                .order('created_at', { ascending: false });
+                // If archived or left, don't show (unless we want to show archived separately?)
+                // Current logic implies checking is_archived/has_left
+                if (playerInfo?.is_archived || playerInfo?.has_left) return;
 
-            if (error) {
-                console.error('Error fetching completed games:', error);
-                return;
-            }
-
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const filtered = (gamesData as any[]).filter((g) => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const playerInfo = g.game_players.find((p: any) => p.user_id === user.id);
-                return playerInfo && !playerInfo.is_archived && !playerInfo.has_left;
+                if (g.status === 'completed') {
+                    completed.push(g);
+                } else {
+                    active.push(g);
+                }
             });
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            setCompletedGames(filtered.map((g: any) => ({
-                ...g,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                player_count: g.players.filter((p: any) => !p.has_left).length
-            })));
+            setActiveGames(active);
+            setCompletedGames(completed);
         };
 
         const fetchAll = () => {
-            fetchActiveGames();
-            fetchCompletedGames();
+            fetchGames();
         };
 
         fetchAll();
+
+        // Refetch when window gains focus (fixes back navigation stale state)
+        const handleFocus = () => {
+            console.log("Window focused, refreshing lobby...");
+            fetchAll();
+        };
+        window.addEventListener('focus', handleFocus);
 
         const channel = supabase
             .channel('lobby_updates')
@@ -148,6 +148,7 @@ export default function Lobby() {
 
         return () => {
             supabase.removeChannel(channel);
+            window.removeEventListener('focus', handleFocus);
         };
     }, [user]);
 
@@ -189,7 +190,6 @@ export default function Lobby() {
 
         } catch (error: any) {
             console.error('Error creating game:', JSON.stringify(error, null, 2));
-            console.error('Full error object:', error);
             if (error.message) alert(`Failed to create game: ${error.message}`);
             else alert('Failed to create game (Unknown error)');
         } finally {
@@ -310,89 +310,11 @@ export default function Lobby() {
                 body: JSON.stringify({ action: 'reset_game' })
             });
             toast.success('Game reset successfully');
-            // Refresh logic is already handled by realtime subscription
         } catch (error) {
             console.error('Error resetting game:', error);
             toast.error('Failed to reset game');
         }
     };
-
-    const getInitials = (name: string) => {
-        return name?.slice(0, 2).toUpperCase() || '??';
-    };
-
-    const GameCard = ({ game }: { game: Game }) => (
-        <ContextMenu key={game.id}>
-            <ContextMenuTrigger>
-                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-purple-200 dark:border-purple-500/50 hover:border-purple-400 transition-colors cursor-pointer relative shadow-sm dark:shadow-none" onClick={() => router.push(`/game/${game.id}`)}>
-                    {game.current_turn_user_id === user?.id && game.status !== 'completed' && (
-                        <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg animate-pulse z-10">
-                            Your Turn
-                        </span>
-                    )}
-                    <div className="flex justify-between items-start mb-4">
-                        <span className={`text-xs px-2 py-1 rounded uppercase ${game.status === 'solving' ? 'bg-purple-900 text-purple-200' :
-                            game.status === 'completed' ? 'bg-green-900 text-green-200' :
-                                'bg-blue-900 text-blue-200'
-                            }`}>
-                            {game.status}
-                        </span>
-                        <span className="text-sm text-gray-400">{new Date(game.created_at).toLocaleTimeString()}</span>
-                    </div>
-                    <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Game #{game.id.slice(0, 4)}</h3>
-
-                    {/* Player Avatars Stack */}
-                    <div className="flex items-center pl-2">
-                        {game.players?.map((player, index) => (
-                            <div
-                                key={index}
-                                className={`relative -ml-2 transition-opacity ${player.has_left ? 'opacity-40 grayscale' : 'opacity-100'}`}
-                                title={player.user?.username + (player.has_left ? ' (Left)' : '')}
-                            >
-                                <Avatar className="w-8 h-8 border-2 border-gray-800 ring-2 ring-purple-500/20">
-                                    <AvatarImage src={player.user?.avatar_url} />
-                                    <AvatarFallback className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-200 text-[10px]">
-                                        {getInitials(player.user?.username)}
-                                    </AvatarFallback>
-                                </Avatar>
-                            </div>
-                        ))}
-                        {(!game.players || game.players.length === 0) && (
-                            <span className="text-gray-500 text-sm italic ml-2">No players</span>
-                        )}
-                    </div>
-                </div>
-            </ContextMenuTrigger>
-            <ContextMenuContent className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white">
-                <ContextMenuItem onClick={() => handleArchive(game.id)} className="focus:bg-gray-800 cursor-pointer">
-                    Archive Game
-                </ContextMenuItem>
-                <ContextMenuItem
-                    onClick={() => setGameToLeave(game.id)}
-                    className="text-red-500 focus:bg-gray-800 focus:text-red-400 cursor-pointer"
-                >
-                    Leave Game
-                </ContextMenuItem>
-                {isAdmin && (
-                    <>
-                        <div className="h-px bg-gray-200 dark:bg-gray-800 my-1" />
-                        <ContextMenuItem
-                            onClick={() => handleDeleteGame(game.id)}
-                            className="text-red-600 focus:bg-gray-800 focus:text-red-500 cursor-pointer font-bold"
-                        >
-                            Admin: Delete Game
-                        </ContextMenuItem>
-                        <ContextMenuItem
-                            onClick={() => handleResetGame(game.id)}
-                            className="text-orange-600 focus:bg-gray-800 focus:text-orange-500 cursor-pointer font-bold"
-                        >
-                            Admin: Reset Game
-                        </ContextMenuItem>
-                    </>
-                )}
-            </ContextMenuContent>
-        </ContextMenu>
-    );
 
     return (
         <div className="max-w-4xl mx-auto space-y-12">
@@ -412,7 +334,15 @@ export default function Lobby() {
                 {activeGames.length > 0 ? (
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {activeGames.map((game) => (
-                            <GameCard key={game.id} game={game} />
+                            <GameCard
+                                key={game.id}
+                                game={game}
+                                onArchive={handleArchive}
+                                onLeave={() => setGameToLeave(game.id)}
+                                onDelete={handleDeleteGame}
+                                onReset={handleResetGame}
+                                isAdmin={isAdmin}
+                            />
                         ))}
                     </div>
                 ) : (
@@ -428,7 +358,15 @@ export default function Lobby() {
                     <h2 className="text-2xl font-bold text-green-400 mb-6">Past Games</h2>
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {completedGames.map((game) => (
-                            <GameCard key={game.id} game={game} />
+                            <GameCard
+                                key={game.id}
+                                game={game}
+                                onArchive={handleArchive}
+                                onLeave={() => setGameToLeave(game.id)}
+                                onDelete={handleDeleteGame}
+                                onReset={handleResetGame}
+                                isAdmin={isAdmin}
+                            />
                         ))}
                     </div>
                 </section>

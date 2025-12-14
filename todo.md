@@ -70,17 +70,20 @@
 - [x] when no messages have yet been sent (new game) allow any user to send a message and therby start the game
 - [x] Only allow hints to the player whos turn it is (once were in free for all mode anyone can get a hint)
 
-- [ ] create backup for the supabase data structures and functions
+- [x] create backup for the supabase data structures and functions
 
-## Phase 10: Solving UI improvements
-- [ ] improve the homepage gamecards
--   [ ] include total messages sent of total messages limit (by game mode e.g short 25, medium 50, long 100)
--   [ ] include last activity indicator e.g. "last move 3 hourse ago" . the timestamp should be removed and only visible on hover
--   [ ] keep the game status indicator (e.g. "texting", "solving", "completed")
--   [ ] keep the players avatars (make sure to properly handle the case where there are too many players the ui should handle this gracefully)
--   [ ] keep the turn indicator (e.g. "your turn")
--   [ ] change the game id to a handle (e.g. "shortgame-1" or "longgame-1")
--   [ ] add to the gamecards CTA like resume texting / continue solving (if completed show view game)
+## Phase 10: improve the homepage gamecards
+-   [x] include total messages sent of total messages limit (by game mode e.g short 25, medium 50, long 100)
+-   [x] include last activity indicator e.g. "last move 3 hourse ago" . the timestamp should be removed and only visible on hover
+-   [x] keep the game status indicator (e.g. "texting", "solving", "completed")
+-   [x] keep the players avatars (make sure to properly handle the case where there are too many players the ui should handle this gracefully)
+-   [x] keep the turn indicator (e.g. "your turn")
+-   [x] change the game id to a handle (e.g. "shortgame-1" or "longgame-1"), later on we'll use this handle in the url instead of the id to navigate and show it on the gmae name 
+-   [x] add to the gamecards CTA like resume texting / continue solving (if completed show view game)
+
+## Phase 11: Cloud Functions & storage management
+- [x] add cloude functions via supabase to archive a game after 72 hours (set in gameConfig.ts) of no play (using mcp)
+- [x] add cloude functions via supabase to delete a game after 7 days (set in gameConfig.ts) of it being archived (using mcp)
 
 # pre-launch
 - [ ] add analytics to the game, KPIs
@@ -88,7 +91,6 @@
 - [ ] 
 
 ## post-launch
-- [ ] to each created game create a handle, used like similar to an id later on we'll use this handle in the url instead of the id to navigate and show it on the gmae name 
 - [ ] 
 
 ## fixes
@@ -115,9 +117,6 @@
 - [ ] add i18n to the game (support hebrew, english, german and spanish) - make sure all the game UI is RTL and LTR compatible by the users language
 - [ ] three dots while other user is typing (peer to peer)
 
-## Phase 9: Cloud Functions & storage management
-- [ ] add cloude functions via supabase to archive a game after 72 hours of no play (using mcp)
-- [ ] add cloude functions via supabase to delete a game after 7 days of it being archived (using mcp)
 
 ## Hits
 
