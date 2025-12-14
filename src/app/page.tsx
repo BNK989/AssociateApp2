@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from "@/context/AuthProvider";
-import Login from "@/components/Login";
+import LandingPage from '@/components/home/LandingPage';
 import Lobby from "@/components/Lobby";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -22,7 +22,7 @@ export default function Home() {
   }
 
   if (!session) {
-    return <Login />;
+    return <LandingPage />;
   }
 
   return (

@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { LogOut } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { deleteGuestAccount } from '@/app/actions/auth';
 
 import { usePathname } from 'next/navigation';
 
@@ -23,6 +24,13 @@ export function NavBar() {
     const pathname = usePathname();
 
     const handleSignOut = async () => {
+        if (user?.is_anonymous) {
+            try {
+                await deleteGuestAccount();
+            } catch (e) {
+                console.error("Error calling deleteGuestAccount:", e);
+            }
+        }
         await supabase.auth.signOut();
     };
 
@@ -53,7 +61,7 @@ export function NavBar() {
                                     <Avatar className="h-8 w-8 border border-gray-200 dark:border-gray-700">
                                         <AvatarImage src={profile?.avatar_url} alt={profile?.username} />
                                         <AvatarFallback className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-white text-xs">
-                                            {getInitials(profile?.username || '')}
+                                            {getInitials(profile?.username || user?.user_metadata?.username || 'Guest')}
                                         </AvatarFallback>
                                     </Avatar>
                                 </Button>
@@ -61,9 +69,16 @@ export function NavBar() {
                             <DropdownMenuContent className="w-56 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white" align="end" forceMount>
                                 <DropdownMenuLabel className="font-normal">
                                     <div className="flex flex-col space-y-1">
-                                        <p className="text-sm font-medium leading-none">{profile?.username}</p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-sm font-medium leading-none">{profile?.username || user?.user_metadata?.username || 'Guest'}</p>
+                                            {user.is_anonymous && (
+                                                <span className="text-[10px] bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/20 px-1.5 py-0.5 rounded uppercase font-bold tracking-wide">
+                                                    Guest
+                                                </span>
+                                            )}
+                                        </div>
                                         <p className="text-xs leading-none text-gray-500 dark:text-gray-400">
-                                            {user.email}
+                                            {user.is_anonymous ? 'Sign up to save progress' : user.email}
                                         </p>
                                     </div>
                                 </DropdownMenuLabel>

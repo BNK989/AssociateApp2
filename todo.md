@@ -110,10 +110,14 @@
 - [ ] in the notification center (bell icon) add dismiss all option 
 - [ ] add leaderboard to the game
 - [ ] add NextStep.js to the project to aid in onboarding 
-- [ ] improve the pre-login screen create a better login experience by intreducing the game for unregistered users
-- [ ] create a demo mode where a user can play the game without logging in 
+- [x] improve the pre-login screen create a better login experience by intreducing the game for unregistered users
+- [x] create a demo mode where a user can play the game without logging in 
 - [ ] add i18n to the game (support hebrew, english, german and spanish) - make sure all the game UI is RTL and LTR compatible by the users language
 - [ ] three dots while other user is typing (peer to peer)
+
+guestmode
+- [x] when a guest logs out or after 24 hours remove them from the database (cascade delete)
+- [ ] for guest sign up we'll need to add captcha to the sign up form
 
 
 ## Hits
