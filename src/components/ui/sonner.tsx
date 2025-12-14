@@ -41,6 +41,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
             "group-[.toaster]:bg-primary group-[.toaster]:text-primary-foreground",
           cancelButton:
             "group-[.toaster]:bg-muted group-[.toaster]:text-muted-foreground",
+          closeButton:
+            "group-[.toaster]:bg-background group-[.toaster]:text-muted-foreground group-[.toaster]:hover:bg-muted group-[.toaster]:hover:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-none",
         },
       }}
       {...props}

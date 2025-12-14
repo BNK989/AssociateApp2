@@ -219,23 +219,41 @@
     opacity: 0;
     transform: translateY(0) scale(0.5);
   }
+
   15% {
     opacity: 1;
     transform: translateY(-10px) scale(1.2);
   }
+
   30% {
     transform: translateY(-15px) scale(1);
   }
+
   70% {
     opacity: 1;
     transform: translateY(-25px);
   }
+
   100% {
     opacity: 0;
     transform: translateY(-40px);
   }
 }
 
-.animate-float-up {
-  animation: float-up 3s ease-out forwards;
+
+/* Sonner Toast Close Button Override (Fixes black hover issue) */
+/* Sonner Toast Close Button Override (Fixes black hover issue) */
+html body [data-sonner-toaster][data-sonner-toaster] [data-sonner-toast][data-sonner-toast] [data-close-button] {
+  background-color: var(--background);
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+html body [data-sonner-toaster][data-sonner-toaster] [data-sonner-toast][data-sonner-toast] [data-close-button]:hover {
+  background-color: var(--muted);
+  border-color: var(--border);
+  color: var(--foreground);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }

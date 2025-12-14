@@ -198,7 +198,11 @@ export function useGameLogic(gameId: string) {
                 // Toast on Switch to Solving
                 const newGame = payload.new as GameState;
                 if (newGame.status === 'solving' && gameRef.current?.status !== 'solving') {
-                    toast.info("Game limit reached! Switching to Solving Mode!");
+                    if (gameRef.current?.solving_proposal_created_at) {
+                        toast.info("Switching to Solving Mode!");
+                    } else {
+                        toast.info("Game limit reached! Switching to Solving Mode!");
+                    }
                 }
                 gameRef.current = newGame; // Keep track for comparison
             })
@@ -390,6 +394,14 @@ export function useGameLogic(gameId: string) {
             const distribution = calculatePointDistribution(finalValue, user.id, target.user_id, multiplier);
 
             // OPTIMISTIC UPDATE LOCAL STATE
+            // 0. Update Game Timer Logic to prevent Free-for-all race condition
+            if (game) {
+                setGame({
+                    ...game,
+                    solving_started_at: new Date().toISOString()
+                });
+            }
+
             // 1. Mark Message Solved
             setMessages(prev => prev.map(m => m.id === target.id ? {
                 ...m,
@@ -739,6 +751,9 @@ export function useGameLogic(gameId: string) {
     const handleGetHint = async () => {
         if (!game || game.status !== 'solving') return;
 
+        // SAFEGUARD: Global Lock to prevent race conditions (guess + hint)
+        if (sending) return;
+
         const target = getTargetMessage();
         if (!target) {
             toast.info("No active message to hint!");
@@ -751,6 +766,16 @@ export function useGameLogic(gameId: string) {
             return;
         }
 
+        // TURN VALIDATION
+        const isMyTurn = target.user_id === user?.id;
+        const isFreeForAll = solvingTimeLeft === 0;
+
+        if (!isMyTurn && !isFreeForAll) {
+            toast.warning("Wait for the author or the free-for-all!");
+            return;
+        }
+
+        setSending(true);
         lastActionTime.current = Date.now();
         const toastId = toast.loading("Revealing hint...");
 
@@ -785,6 +810,8 @@ export function useGameLogic(gameId: string) {
         } catch (error) {
             console.error("Hint error:", error);
             toast.error("Failed to buy hint", { id: toastId });
+        } finally {
+            setSending(false);
         }
     };
 

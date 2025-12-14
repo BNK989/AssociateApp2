@@ -68,30 +68,38 @@
 - [x] create a game mode popup at game creation to allow the game creator to limit the total messages in a game (e.g. 25, 50, 100 messages, set options as array in the gameConfig file also naming each option, e.g. short, medium, long, very long), once the game hit this limit it should switch to solving mode, players can still be able to manually switch to solving mode 
 - [x] add "start random button" in initial empty game - this should start with a random message if no messages have been sent (from top 250 most common words in english)
 - [x] when no messages have yet been sent (new game) allow any user to send a message and therby start the game
---- create backup for the supabase data structures and functions
+- [x] Only allow hints to the player whos turn it is (once were in free for all mode anyone can get a hint)
+
+- [ ] create backup for the supabase data structures and functions
 
 ## Phase 10: Solving UI improvements
-- [ ] to each created game create a handle, used like similar to an id later on we'll use this handle in the url instead of the id to navigate and show it on the gmae name 
-- [ ] Only allow hints to the player whos turn it is (once were in free for all mode anyone can get a hint)
-- [ ] Solving Interaction
-- [ ] improve the homepage 
--   [ ] improve game gamecards in the hompage to include total messages sent, last activity e.g. "last move 3 hourse ago" remove the timestamp
--   [ ]  add to the gamecards CTA of play now / continue solving 
--   [ ]
+- [ ] improve the homepage gamecards
+-   [ ] include total messages sent of total messages limit (by game mode e.g short 25, medium 50, long 100)
+-   [ ] include last activity indicator e.g. "last move 3 hourse ago" . the timestamp should be removed and only visible on hover
+-   [ ] keep the game status indicator (e.g. "texting", "solving", "completed")
+-   [ ] keep the players avatars (make sure to properly handle the case where there are too many players the ui should handle this gracefully)
+-   [ ] keep the turn indicator (e.g. "your turn")
+-   [ ] change the game id to a handle (e.g. "shortgame-1" or "longgame-1")
+-   [ ] add to the gamecards CTA like resume texting / continue solving (if completed show view game)
 
 # pre-launch
 - [ ] add analytics to the game, KPIs
 - [ ] review code to ensure it is secure and follows best practices pre-launch
 - [ ] 
 
+## post-launch
+- [ ] to each created game create a handle, used like similar to an id later on we'll use this handle in the url instead of the id to navigate and show it on the gmae name 
+- [ ] 
+
 ## fixes
 - [ ] when a guess is correct there should not be a toast alert
 - [ ] re-add the ::[cipher]:: (dubble colon format) for the cipher appears in the chat (no hints given) to better indicate that the user is viewing the cipher and not the message
-- [x] add notifications to the game - so that players are notified when its their turn and keeps them engaged 
 - [ ] fix the admin get hints option to work 
-- [x] bug: the placeholder text in the input field does not update as quickly (to indicate that the turns have switched)
 - [ ] when game is generated sometimes the create game button does not work, the create button is stuck, after selecting game type (i.e short, medium etc.) - fix this
 - [ ] the encription/decreption effect is not working - fix this when a message is encrypted or decrypted is should change mode letter by letter 
+- [x] add notifications to the game - so that players are notified when its their turn and keeps them engaged 
+- [x] UI: the x button on toast notifications appear complitly black in hover mode, fix this
+- [x] bug: the placeholder text in the input field does not update as quickly (to indicate that the turns have switched)
 
 ## additions and do later
 - [ ] when no messages have been sent allow any users to send a message and therby start the game

@@ -134,7 +134,37 @@ export async function POST(
 
         } else if (action === 'solve_attempt') {
             // Complex Solve Logic
-            const { targetId, isMatch, winnerPoints, authorPoints, type, consecutive, strikes } = payload;
+            const { targetId, isMatch, winnerPoints, authorPoints, type, consecutive, strikes, targetUserId } = payload;
+
+            // 1. Fetch Target Message to Validate
+            const { data: targetMessage, error: targetError } = await supabase
+                .from('messages')
+                .select('*')
+                .eq('id', targetId)
+                .single();
+
+            if (targetError || !targetMessage) {
+                return NextResponse.json({ error: 'Target message not found' }, { status: 404 });
+            }
+
+            // 2. Fetch Game State for Timing
+            const { data: gameData } = await supabase.from('games').select('*').eq('id', gameId).single();
+            if (!gameData) return NextResponse.json({ error: 'Game not found' }, { status: 404 });
+
+            // 3. STRICT TURN VALIDATION
+            // Calculate if it's Free For All
+            const solvingStartedAt = gameData.solving_started_at ? new Date(gameData.solving_started_at).getTime() : 0;
+            const now = Date.now();
+            const durationMs = (GAME_CONFIG.SOLVING_MODE_DURATION_SECONDS || 20) * 1000;
+            const isFreeForAll = (now - solvingStartedAt) > durationMs;
+
+            const isAuthor = targetMessage.user_id === user.id;
+
+            // Rule: Must be Author OR Free For All
+            if (!isAuthor && !isFreeForAll) {
+                console.warn(`[Security] User ${user.id} attempted to solve out of turn. Target Author: ${targetMessage.user_id}`);
+                return NextResponse.json({ error: 'Not your turn! Wait for Free-for-all.' }, { status: 403 });
+            }
 
             if (isMatch) {
                 // 1. Update Message
@@ -151,7 +181,7 @@ export async function POST(
                     game_id_param: gameId,
                     winner_id: user.id,
                     winner_amount: winnerPoints,
-                    author_id: type === 'STEAL' ? payload.targetUserId : null,
+                    author_id: type === 'STEAL' ? targetUserId : null,
                     author_amount: type === 'STEAL' ? authorPoints : 0
                 });
                 if (rpcError) throw rpcError;
@@ -162,26 +192,19 @@ export async function POST(
                 }).eq('game_id', gameId).eq('user_id', user.id);
 
                 // 4. Game Team Stats
-                // Need to fetch current game stats to increment safely? Or use rpc? 
-                // For speed, strict increment via rpc is better but simple update works if low concurrency
-                // We will trust the payload for now or do a quick fetch
-                const { data: gameData } = await supabase.from('games').select('team_consecutive_correct, fever_mode_remaining').eq('id', gameId).single();
+                const newTeamConsec = (gameData.team_consecutive_correct || 0) + 1;
+                const newFever = Math.max(0, (gameData.fever_mode_remaining || 0) - 1);
 
-                if (gameData) {
-                    const newTeamConsec = (gameData.team_consecutive_correct || 0) + 1;
-                    const newFever = Math.max(0, (gameData.fever_mode_remaining || 0) - 1);
+                let updatePayload: any = {
+                    team_consecutive_correct: newTeamConsec,
+                    fever_mode_remaining: newFever
+                };
 
-                    let updatePayload: any = {
-                        team_consecutive_correct: newTeamConsec,
-                        fever_mode_remaining: newFever
-                    };
-
-                    if (newTeamConsec >= 5 && newFever === 0) {
-                        updatePayload.fever_mode_remaining = 3;
-                    }
-
-                    await supabase.from('games').update(updatePayload).eq('id', gameId);
+                if (newTeamConsec >= 5 && newFever === 0) {
+                    updatePayload.fever_mode_remaining = 3;
                 }
+
+                await supabase.from('games').update(updatePayload).eq('id', gameId);
 
                 // Check Completion
                 const { count: unsolvedCount } = await supabase.from('messages')
@@ -193,6 +216,7 @@ export async function POST(
                 if (unsolvedCount === 0) {
                     await supabase.from('games').update({ status: 'completed' }).eq('id', gameId);
                 } else {
+                    // CRITICAL: Reset solving timer for NEXT turn
                     await supabase.from('games').update({ solving_started_at: new Date().toISOString() }).eq('id', gameId);
                 }
 

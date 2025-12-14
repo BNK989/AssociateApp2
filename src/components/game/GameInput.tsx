@@ -144,6 +144,7 @@ export function GameInput({
                             <TooltipTrigger asChild>
                                 <button
                                     type="button"
+                                    disabled={(!isMyTurn && !isFreeForAll) || sending}
                                     onClick={(e) => {
                                         e.preventDefault();
                                         handleInteraction();
@@ -153,7 +154,7 @@ export function GameInput({
                                         // Mobile long press simulation (though native Tooltip usually handles touch long press nicely or click)
                                         // For now relying on default trigger behaviors + our auto show
                                     }}
-                                    className="h-10 w-10 flex flex-col items-center justify-center rounded-lg transition-colors bg-secondary text-secondary-foreground hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-ring"
+                                    className="h-10 w-10 flex flex-col items-center justify-center rounded-lg transition-colors bg-secondary text-secondary-foreground hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <span className="text-sm leading-none mb-0.5">💡</span>
                                     <span className="text-[10px] font-bold leading-none">{buttonParams.text}</span>
