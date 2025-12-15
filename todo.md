@@ -102,6 +102,7 @@
 - [x] add notifications to the game - so that players are notified when its their turn and keeps them engaged 
 - [x] UI: the x button on toast notifications appear complitly black in hover mode, fix this
 - [x] bug: the placeholder text in the input field does not update as quickly (to indicate that the turns have switched)
+- [ ] when an invetation is sent via share link the exepting user (checked for logged in guest user) get stuck on "Checking credentials ... Please wait while we connect you to the game ..." - fix this
 
 ## additions and do later
 - [x] add a way for the user to upload their own avatars - supabase storage (scale the image down to 256x256 on the client side before uploading)
@@ -112,8 +113,9 @@
 - [x] improve the pre-login screen create a better login experience by intreducing the game for unregistered users
 - [x] create a demo mode where a user can play the game without logging in 
 - [ ] add i18n to the game (support hebrew, english, german and spanish) - make sure all the game UI is RTL and LTR compatible by the users language
-- [ ] three dots while other user is typing (peer to peer)
+- [x] three dots while other user is typing (peer to peer)
 - [ ] improve time before free-for-all ui with a countdown bar (like a progress bar that shows the time left)
+- [ ] improve "encryption" so that the message length is not visible to the user
 
 ## guestmode
 - [x] when a guest logs out or after 24 hours remove them from the database (cascade delete)

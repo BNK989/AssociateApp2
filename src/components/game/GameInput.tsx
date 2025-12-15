@@ -19,6 +19,7 @@ type GameInputProps = {
     onSendMessage: (e: React.FormEvent) => void;
     onGetHint: () => void;
     isEmpty?: boolean;
+    onTyping?: () => void; // New prop for triggering broadcast
 };
 
 export function GameInput({
@@ -32,7 +33,8 @@ export function GameInput({
     targetMessage,
     onSendMessage,
     onGetHint,
-    isEmpty = false
+    isEmpty = false,
+    onTyping
 }: GameInputProps) {
 
     // Determine who has the "turn"
@@ -182,6 +184,9 @@ export function GameInput({
                             }
                             setInput(val);
                             handleInteraction();
+                            if (onTyping && val.length > 0) {
+                                onTyping();
+                            }
                         }}
                         onFocus={handleInteraction}
                         disabled={isInputDisabled}

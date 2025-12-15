@@ -19,6 +19,7 @@ export const GAME_CONFIG = {
   // Cleanup Timers
   GAME_ARCHIVE_HOURS: 72,
   GAME_DELETE_DAYS: 7,
+  ENABLE_TYPING_INDICATORS: true,
 };
 
 export const GAME_MODES = [

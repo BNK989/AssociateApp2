@@ -17,6 +17,7 @@ import {
     ContextMenuSubTrigger,
     ContextMenuSubContent,
 } from "@/components/ui/context-menu";
+import { TypingIndicator } from '../ui/TypingIndicator';
 
 type ChatAreaProps = {
     messages: Message[];
@@ -27,9 +28,11 @@ type ChatAreaProps = {
     shakeMessageId?: string | null;
     justSolvedData?: { id: string; points: number } | null;
     onStartRandom?: () => void;
+    typingUsers?: Set<string>;
+    players?: any[];
 };
 
-export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, shakeMessageId, justSolvedData, onStartRandom }: ChatAreaProps) {
+export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, shakeMessageId, justSolvedData, onStartRandom, typingUsers, players }: ChatAreaProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const { isAdmin } = useAdmin();
     const [revealedMessages, setRevealedMessages] = useState<Record<string, boolean>>({});
@@ -129,6 +132,13 @@ export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, 
     useEffect(() => {
         scrollToSmart();
     }, [messages, game.status, targetMessage]);
+
+    // Scroll on typing
+    useEffect(() => {
+        if (typingUsers && typingUsers.size > 0) {
+            scrollToSmart();
+        }
+    }, [typingUsers]);
 
     // Scroll on resize (keyboard open)
     useEffect(() => {
@@ -250,6 +260,7 @@ export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, 
                                             cipherText={msg.cipher_text}
                                             visible={isVisible || !!revealedMessages[msg.id]}
                                             className={isMe || isJustSolved ? 'text-white' : 'text-gray-900 dark:text-white'}
+                                            isSolving={game.status === 'solving' && targetMessage?.id === msg.id && (typingUsers?.size ?? 0) > 0}
                                         />
                                         {msg.ai_hint && (
                                             <div className="mt-2 text-xs font-medium text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/40 p-2 rounded border border-yellow-200 dark:border-yellow-800 animate-in fade-in slide-in-from-top-1">
@@ -298,6 +309,29 @@ export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, 
             })}
             {/* We keep this ref but don't rely on it for scrolling anymore, or we could remove it if useGameLogic doesn't error */}
             <div ref={messagesEndRef} />
+
+            {/* Typing Indicators (only show if NOT in solving mode) */}
+            {game.status !== 'solving' && typingUsers && typingUsers.size > 0 && (
+                <div className="flex flex-col gap-2 pt-2 animate-in fade-in duration-300">
+                    {Array.from(typingUsers).map(typingUserId => {
+                        const player = players?.find(p => p.user_id === typingUserId);
+                        // Fallback username if player data missing or just 'Someone'
+                        const username = player?.profiles?.username || 'Player';
+
+                        return (
+                            <div key={typingUserId} className="flex items-center gap-2">
+                                <Avatar className="w-6 h-6 opacity-70">
+                                    <AvatarImage src={player?.profiles?.avatar_url} />
+                                    <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">{getInitials(username)}</AvatarFallback>
+                                </Avatar>
+                                <div className="bg-gray-100 dark:bg-neutral-800 rounded-2xl rounded-tl-none px-3 py-2 shadow-sm">
+                                    <TypingIndicator />
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
         </div >
     );
 }

@@ -37,7 +37,9 @@ export default function GameRoom() {
         getTargetMessage,
         shakeMessageId,
         justSolvedData,
-        startRandomGame
+        startRandomGame,
+        broadcastTyping,
+        typingUsers
     } = useGameLogic(gameId!);
 
     // Notification Logic
@@ -80,6 +82,8 @@ export default function GameRoom() {
                 shakeMessageId={shakeMessageId}
                 justSolvedData={justSolvedData}
                 onStartRandom={startRandomGame}
+                typingUsers={typingUsers}
+                players={players}
             />
 
             <GameInput
@@ -94,6 +98,7 @@ export default function GameRoom() {
                 onSendMessage={handleSendMessage}
                 onGetHint={handleGetHint}
                 isEmpty={messages.length === 0}
+                onTyping={broadcastTyping}
             />
 
             <EndGamePopover

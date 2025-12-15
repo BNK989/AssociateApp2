@@ -82,6 +82,9 @@ export function useGameLogic(gameId: string) {
     const gameRef = useRef<GameState | null>(null); // To track previous state for toast
 
     const [justSolvedData, setJustSolvedMessageId] = useState<{ id: string; points: number } | null>(null);
+    const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
+    const typingTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map());
+    const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
     const fetchGameData = async () => {
         if (!gameId) return;
@@ -119,11 +122,63 @@ export function useGameLogic(gameId: string) {
         }
     };
 
+    const broadcastTyping = () => {
+        if (!GAME_CONFIG.ENABLE_TYPING_INDICATORS || !channelRef.current || !user) {
+            return;
+        }
+
+        channelRef.current.send({
+            type: 'broadcast',
+            event: 'typing',
+            payload: { user_id: user.id }
+        });
+    };
     const subscribeToGame = () => {
         const channel = supabase
             .channel(`game:${gameId}`)
+            .on('broadcast', { event: 'typing' }, (payload) => {
+                if (!GAME_CONFIG.ENABLE_TYPING_INDICATORS) return;
+                const userId = payload.payload.user_id;
+                if (userId === user?.id) return; // Ignore self
+
+                setTypingUsers(prev => {
+                    const newSet = new Set(prev);
+                    newSet.add(userId);
+                    return newSet;
+                });
+
+                // Clear existing timeout for this user
+                if (typingTimeouts.current.has(userId)) {
+                    const timeout = typingTimeouts.current.get(userId);
+                    if (timeout) clearTimeout(timeout); // Fix strict null check
+                }
+
+                // Set new timeout to clear typing status
+                const timeout = setTimeout(() => {
+                    setTypingUsers(prev => {
+                        const newSet = new Set(prev);
+                        newSet.delete(userId);
+                        return newSet;
+                    });
+                    typingTimeouts.current.delete(userId);
+                }, 3000);
+
+                typingTimeouts.current.set(userId, timeout);
+            })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, async (payload) => {
                 if (payload.eventType === 'INSERT') {
+                    // Clear typing status for the message sender immediately
+                    const senderId = payload.new.user_id;
+                    setTypingUsers(prev => {
+                        const newSet = new Set(prev);
+                        newSet.delete(senderId);
+                        return newSet;
+                    });
+                    if (typingTimeouts.current.has(senderId)) {
+                        clearTimeout(typingTimeouts.current.get(senderId));
+                        typingTimeouts.current.delete(senderId);
+                    }
+
                     // OPTIMIZATION: Try to find profile from local players cache first to avoid blocking DB call
                     const localPlayer = playersRef.current.find(p => p.user_id === payload.new.user_id);
 
@@ -154,6 +209,11 @@ export function useGameLogic(gameId: string) {
                             const newMessages = [...prev];
                             newMessages[optimisticIndex] = newMessage;
                             return newMessages;
+                        }
+
+                        // De-duplication check: if message (by exact ID) already exists, don't add it.
+                        if (prev.some(m => m.id === newMessage.id)) {
+                            return prev;
                         }
 
                         // Otherwise just append (it's a message from someone else)
@@ -226,8 +286,11 @@ export function useGameLogic(gameId: string) {
             })
             .subscribe();
 
+        channelRef.current = channel;
+
         return () => {
             supabase.removeChannel(channel);
+            channelRef.current = null;
         };
     };
 
@@ -836,6 +899,8 @@ export function useGameLogic(gameId: string) {
         getTargetMessage,
         shakeMessageId,
         justSolvedData,
-        startRandomGame
+        startRandomGame,
+        broadcastTyping,
+        typingUsers
     };
 }

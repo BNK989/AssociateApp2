@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
+import { motion } from "framer-motion";
 
 const CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
 
@@ -8,9 +9,10 @@ interface CipherTextProps {
     cipherText?: string;
     visible: boolean;
     className?: string;
+    isSolving?: boolean;
 }
 
-export function CipherText({ text, cipherText, visible, className = '' }: CipherTextProps) {
+export function CipherText({ text, cipherText, visible, className = '', isSolving = false }: CipherTextProps) {
     const cipherRef = useRef<string>('');
 
     // Initialize cipher string lazily, but PREFER cipherText if available
@@ -84,6 +86,19 @@ export function CipherText({ text, cipherText, visible, className = '' }: Cipher
     const showColons = !visible && !cipherText;
     const COLON = '\u2237';
 
+    // Animation variants for bouncing
+    const bounceVariant = {
+        bounce: (i: number) => ({
+            y: [0, -3, 0],
+            transition: {
+                delay: i * 0.05, // Stagger effect
+                duration: 0.6,
+                repeat: Infinity,
+                repeatDelay: 1 // Pause between waves
+            }
+        })
+    };
+
     return (
         <span className={`${className} breaking-words`}>
             {showColons && <span className="mr-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
@@ -99,16 +114,18 @@ export function CipherText({ text, cipherText, visible, className = '' }: Cipher
 
                 // In Cipher Mode (Hinting)
                 return (
-                    <span
+                    <motion.span
                         key={i}
-                        className={
-                            isMatch
-                                ? 'font-bold text-inherit drop-shadow-[0_0_2px_rgba(255,255,255,0.5)]'
-                                : 'font-mono opacity-75' // Inherit color (White/Black) but dim it.
-                        }
+                        custom={i % 5} // Limit stagger index to avoid massive delays on long msgs
+                        variants={isSolving ? bounceVariant : undefined}
+                        animate={isSolving ? "bounce" : undefined}
+                        className={`inline-block ${isMatch
+                            ? 'font-bold text-inherit drop-shadow-[0_0_2px_rgba(255,255,255,0.5)]'
+                            : 'font-mono opacity-75' // Inherit color (White/Black) but dim it.
+                            }`}
                     >
                         {char}
-                    </span>
+                    </motion.span>
                 );
             })}
             {showColons && <span className="ml-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
