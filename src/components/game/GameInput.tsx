@@ -93,11 +93,11 @@ export function GameInput({
 
     if (currentLevel === 0) {
         nextCost = Math.ceil(wordValue * HINT_COSTS.TIER_1); // 10%
-        nextLabel = "Reveal First Letter";
+        nextLabel = "Reveal Length";
         buttonText = "1ˢᵗ";
     } else if (currentLevel === 1) {
         nextCost = Math.ceil(wordValue * HINT_COSTS.TIER_2); // 10%
-        nextLabel = "Reveal 40% Letters";
+        nextLabel = "Reveal 1st + 25%";
         buttonText = "2ⁿᵈ";
     } else if (currentLevel === 2) {
         nextCost = Math.ceil(wordValue * HINT_COSTS.TIER_3); // 40%

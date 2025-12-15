@@ -95,10 +95,9 @@ export const HINT_COSTS = {
 const CIPHER_CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
 
 export const generateCipherString = (content: string, level: number): string => {
-    let result = '';
     const length = content.length;
 
-    // Create indices array for non-space characters
+    // Calculate indices for non-space characters (candidates for hints)
     const indices: number[] = [];
     for (let i = 0; i < length; i++) {
         if (content[i] !== ' ') {
@@ -108,49 +107,58 @@ export const generateCipherString = (content: string, level: number): string => 
 
     const revealedIndices = new Set<number>();
 
-    // Level 1+: Reveal First Letter
-    if (level >= 1 && indices.length > 0) {
+    // Level 2+: Reveal First Letter + 25%
+    if (level >= 2 && indices.length > 0) {
+        // Always reveal first char
         revealedIndices.add(indices[0]);
+
+        if (indices.length >= 4) {
+            const countToReveal = Math.floor(indices.length * 0.25);
+            const remainingIndices = indices.filter(idx => !revealedIndices.has(idx));
+
+            // Shuffle (Fisher-Yates)
+            for (let i = remainingIndices.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [remainingIndices[i], remainingIndices[j]] = [remainingIndices[j], remainingIndices[i]];
+            }
+
+            const needed = Math.max(0, countToReveal);
+            for (let i = 0; i < needed && i < remainingIndices.length; i++) {
+                revealedIndices.add(remainingIndices[i]);
+            }
+        }
+        // If < 4 chars, we only revealed the first one (indices[0]), which is correct per requirements.
     }
 
-    // Level 2+: Reveal 40% of letters
-    if (level >= 2) {
-        // Calculate how many to reveal (40% of total non-space chars)
-        const countToReveal = Math.floor(indices.length * 0.4);
+    // Determine Cipher Length
+    // Level 0: Random length (0.5x - 2x, min 4, max 25)
+    // Level 1+: Exact length
 
-        // We already have index 0 revealed (if applicable). 
-        // We should ensure we reveal 40% TOTAL (including the first one) or Additional?
-        // Usually "Reveal 40%" means total visibility.
-        // Let's shuffle indices (excluding the first one if it's already in) and pick needed count.
+    let targetLen = length; // Default for Level 1+
 
-        const remainingIndices = indices.filter(idx => !revealedIndices.has(idx));
+    if (level === 0) {
+        const minLen = Math.max(4, Math.floor(length / 2));
+        const maxLen = Math.min(25, length * 2);
+        targetLen = Math.floor(Math.random() * (maxLen - minLen + 1)) + minLen;
+    }
 
-        // Shuffle (Fisher-Yates)
-        for (let i = remainingIndices.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [remainingIndices[i], remainingIndices[j]] = [remainingIndices[j], remainingIndices[i]];
-        }
-
-        // Add to set
-        // Note: countToReveal might safely exceed remaining if text is short, loop handles it.
-        const needed = Math.max(0, countToReveal - revealedIndices.size);
-        for (let i = 0; i < needed && i < remainingIndices.length; i++) {
-            revealedIndices.add(remainingIndices[i]);
+    // Ensure cipher is long enough (mostly for Level 0)
+    if (revealedIndices.size > 0) {
+        const maxRevealedIndex = Math.max(...Array.from(revealedIndices));
+        if (targetLen <= maxRevealedIndex) {
+            targetLen = maxRevealedIndex + 1;
         }
     }
 
-    // Build the string
-    for (let i = 0; i < length; i++) {
-        const char = content[i];
-        if (char === ' ') {
-            result += ' ';
-        } else if (revealedIndices.has(i)) {
-            result += char;
+    let result = '';
+    for (let i = 0; i < targetLen; i++) {
+        if (i < length && revealedIndices.has(i)) {
+            result += content[i];
         } else {
             let randomChar;
             do {
                 randomChar = CIPHER_CHARS[Math.floor(Math.random() * CIPHER_CHARS.length)];
-            } while (randomChar === char); // Ensure we don't accidentally match the real char
+            } while (i < length && randomChar === content[i]);
             result += randomChar;
         }
     }
