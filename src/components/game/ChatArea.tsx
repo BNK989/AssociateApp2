@@ -180,7 +180,7 @@ export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, 
     return (
         <div
             ref={containerRef}
-            className="flex-1 overflow-y-auto px-4 space-y-4 bg-gray-200 dark:bg-neutral-900 flex flex-col"
+            className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-200 dark:bg-neutral-900 flex flex-col"
         >
             {messages.length === 0 && onStartRandom && (
                 <div className="flex-1 flex flex-col items-center justify-center gap-4 min-h-[50vh] animate-in fade-in zoom-in duration-500">
@@ -232,7 +232,7 @@ export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, 
                 return (
                     <div key={msg.id}>
                         <ContextMenu>
-                            <ContextMenuTrigger>
+                            <ContextMenuTrigger asChild>
                                 <div
                                     id={`msg-${msg.id}`}
                                     data-message-id={msg.id}

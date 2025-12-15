@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthProvider';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -43,8 +43,10 @@ type Notification = {
 export function NotificationCenter() {
     const { user } = useAuth();
     const router = useRouter();
+    const pathname = usePathname();
     const [invites, setInvites] = useState<Invite[]>([]);
     const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [isOpen, setIsOpen] = useState(false);
 
     const fetchData = useCallback(async () => {
         if (!user) return;
@@ -100,6 +102,7 @@ export function NotificationCenter() {
             toast.success("Joined game!");
             router.push(`/game/${gameId}`);
             setInvites(prev => prev.filter(i => i.id !== inviteId));
+            setIsOpen(false);
         }
     };
 
@@ -120,6 +123,23 @@ export function NotificationCenter() {
             .eq('id', notificationId);
 
         setNotifications(prev => prev.filter(n => n.id !== notificationId));
+    };
+
+    const handleDismissAll = async () => {
+        if (notifications.length === 0) return;
+
+        const { error } = await supabase
+            .from('notifications')
+            .update({ is_read: true })
+            .eq('user_id', user?.id)
+            .eq('is_read', false);
+
+        if (!error) {
+            setNotifications([]);
+            toast.success("All notifications dismissed");
+        } else {
+            toast.error("Failed to dismiss notifications");
+        }
     };
 
     useEffect(() => {
@@ -144,42 +164,47 @@ export function NotificationCenter() {
 
                     const senderName = senderData?.username || 'Someone';
 
-                    toast.custom((t) => (
-                        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-lg p-4 shadow-lg w-full flex flex-col gap-3 pointer-events-auto">
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <p className="font-bold text-sm">{senderName}</p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">invited you to play!</p>
+                    // If on homepage, open notification center instead of toast
+                    if (window.location.pathname === '/') {
+                        setIsOpen(true);
+                    } else {
+                        toast.custom((t) => (
+                            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-lg p-4 shadow-lg w-full flex flex-col gap-3 pointer-events-auto">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <p className="font-bold text-sm">{senderName}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">invited you to play!</p>
+                                    </div>
+                                    <button onClick={() => toast.dismiss(t)} className="text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                                        <X className="w-4 h-4" />
+                                    </button>
                                 </div>
-                                <button onClick={() => toast.dismiss(t)} className="text-gray-400 hover:text-gray-900 dark:hover:text-white">
-                                    <X className="w-4 h-4" />
-                                </button>
+                                <div className="flex gap-2">
+                                    <Button
+                                        size="sm"
+                                        className="flex-1 bg-green-600 hover:bg-green-700 h-8 text-xs"
+                                        onClick={() => {
+                                            handleAccept(payload.new.id, payload.new.game_id);
+                                            toast.dismiss(t);
+                                        }}
+                                    >
+                                        Accept
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="flex-1 h-8 text-xs border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
+                                        onClick={() => {
+                                            handleDecline(payload.new.id);
+                                            toast.dismiss(t);
+                                        }}
+                                    >
+                                        Decline
+                                    </Button>
+                                </div>
                             </div>
-                            <div className="flex gap-2">
-                                <Button
-                                    size="sm"
-                                    className="flex-1 bg-green-600 hover:bg-green-700 h-8 text-xs"
-                                    onClick={() => {
-                                        handleAccept(payload.new.id, payload.new.game_id);
-                                        toast.dismiss(t);
-                                    }}
-                                >
-                                    Accept
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="flex-1 h-8 text-xs border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
-                                    onClick={() => {
-                                        handleDecline(payload.new.id);
-                                        toast.dismiss(t);
-                                    }}
-                                >
-                                    Decline
-                                </Button>
-                            </div>
-                        </div>
-                    ), { duration: 10000 });
+                        ), { duration: 10000 });
+                    }
 
                     fetchData();
                 })
@@ -194,7 +219,12 @@ export function NotificationCenter() {
                     table: 'notifications',
                     filter: `user_id=eq.${user.id}`
                 }, (payload) => {
-                    toast.info(payload.new.content);
+                    // If on homepage, open notification center instead of toast
+                    if (window.location.pathname === '/') {
+                        setIsOpen(true);
+                    } else {
+                        toast.info(payload.new.content);
+                    }
                     setNotifications(prev => [payload.new as Notification, ...prev]);
                 })
                 .subscribe();
@@ -209,7 +239,7 @@ export function NotificationCenter() {
     const totalCount = invites.length + notifications.length;
 
     return (
-        <DropdownMenu>
+        <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
                     <Bell className="w-5 h-5" />
@@ -221,7 +251,22 @@ export function NotificationCenter() {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white max-h-[400px] overflow-y-auto">
-                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                <div className="flex items-center justify-between px-2 py-1.5">
+                    <DropdownMenuLabel className="p-0">Notifications</DropdownMenuLabel>
+                    {notifications.length > 0 && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 text-[10px] px-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleDismissAll();
+                            }}
+                        >
+                            Dismiss All
+                        </Button>
+                    )}
+                </div>
                 <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-800" />
 
                 {totalCount === 0 ? (

@@ -86,9 +86,9 @@
 - [x] add cloude functions via supabase to delete a game after 7 days (set in gameConfig.ts) of it being archived (using mcp)
 
 # pre-launch
+- [ ] proffesional code reviewer to check site reliability and security
+- [ ] add a way for users to provide feedback and logs on the game
 - [ ] add analytics to the game, KPIs
-- [ ] review code to ensure it is secure and follows best practices pre-launch
-- [ ] 
 
 ## post-launch
 - [ ] 
@@ -104,10 +104,9 @@
 - [x] bug: the placeholder text in the input field does not update as quickly (to indicate that the turns have switched)
 
 ## additions and do later
-
 - [x] add a way for the user to upload their own avatars - supabase storage (scale the image down to 256x256 on the client side before uploading)
 - [ ] after exosting the hints change the hint button to a giveup button to allow users to just get the word for no points (reset the streak counter)
-- [ ] in the notification center (bell icon) add dismiss all option 
+- [x] in the notification center (bell icon) add dismiss all option 
 - [ ] add leaderboard to the game
 - [ ] add NextStep.js to the project to aid in onboarding 
 - [x] improve the pre-login screen create a better login experience by intreducing the game for unregistered users
@@ -115,10 +114,9 @@
 - [ ] add i18n to the game (support hebrew, english, german and spanish) - make sure all the game UI is RTL and LTR compatible by the users language
 - [ ] three dots while other user is typing (peer to peer)
 
-guestmode
+## guestmode
 - [x] when a guest logs out or after 24 hours remove them from the database (cascade delete)
 - [ ] for guest sign up we'll need to add captcha to the sign up form
-
 
 ## Hits
 
