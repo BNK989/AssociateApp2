@@ -247,7 +247,6 @@ export function useGameLogic(gameId: string) {
                         if (updatedMessage.user_id === user.id && updatedMessage.author_points > 0) {
                             setJustSolvedMessageId({ id: updatedMessage.id, points: updatedMessage.author_points });
                             setTimeout(() => setJustSolvedMessageId(null), 3000);
-                            toast.success(`Your message was solved! +${updatedMessage.author_points} pts`);
                         }
                     }
                 }
@@ -840,7 +839,7 @@ export function useGameLogic(gameId: string) {
 
         setSending(true);
         lastActionTime.current = Date.now();
-        const toastId = toast.loading("Revealing hint...");
+
 
         try {
             const newCipherText = generateCipherString(target.content, nextLevel);
@@ -868,11 +867,9 @@ export function useGameLogic(gameId: string) {
             // Sync immediately after
             fetchGameData();
 
-            toast.success(`Hint Level ${nextLevel} purchased!`, { id: toastId });
-
         } catch (error) {
             console.error("Hint error:", error);
-            toast.error("Failed to buy hint", { id: toastId });
+            toast.error("Failed to buy hint");
         } finally {
             setSending(false);
         }
