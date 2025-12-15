@@ -113,6 +113,7 @@
 - [x] create a demo mode where a user can play the game without logging in 
 - [ ] add i18n to the game (support hebrew, english, german and spanish) - make sure all the game UI is RTL and LTR compatible by the users language
 - [ ] three dots while other user is typing (peer to peer)
+- [ ] improve time before free-for-all ui with a countdown bar (like a progress bar that shows the time left)
 
 ## guestmode
 - [x] when a guest logs out or after 24 hours remove them from the database (cascade delete)

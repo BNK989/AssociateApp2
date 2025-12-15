@@ -15,4 +15,13 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+import { withPostHogConfig } from "@posthog/nextjs-config";
+
+export default withPostHogConfig(nextConfig, {
+  personalApiKey: process.env.SOURCE_MAP_UPLOAD || 'skipped',
+  envId: '266458',
+  host: 'https://us.i.posthog.com',
+  sourcemaps: {
+    enabled: true,
+  },
+});
