@@ -1,5 +1,8 @@
 'use client';
 
+
+
+
 import { useParams, useRouter } from 'next/navigation';
 import { useGameLogic } from '@/hooks/useGameLogic';
 // Header and Input fixed positioning removed in favor of Flexbox
@@ -9,12 +12,14 @@ import { GameInput } from '@/components/game/GameInput';
 import { EndGamePopover } from '@/components/game/EndGamePopover';
 import { GameLoading } from '@/components/game/GameLoading';
 import { useTurnNotifications } from '@/hooks/useTurnNotifications';
+import { useVisualViewport } from '@/hooks/useVisualViewport';
 
 
 export default function GameRoom() {
     const { id } = useParams();
     const router = useRouter();
     const gameId = Array.isArray(id) ? id[0] : id;
+    const viewportHeight = useVisualViewport();
 
     const {
         user,
@@ -55,7 +60,10 @@ export default function GameRoom() {
     if (!game) return <div className="flex items-center justify-center h-[100dvh]">Game not found</div>;
 
     return (
-        <div className="flex flex-col h-[100dvh] overflow-hidden bg-white dark:bg-gray-900 relative max-w-md mx-auto">
+        <div
+            className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-white dark:bg-gray-900 max-w-md mx-auto"
+            style={{ height: viewportHeight }}
+        >
             <GameHeader
                 game={game}
                 user={user}
