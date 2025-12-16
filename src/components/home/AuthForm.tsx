@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Loader2, User, Mail, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,7 @@ export default function AuthForm() {
     const [guestUsername, setGuestUsername] = useState('');
     const [email, setEmail] = useState('');
     const searchParams = useSearchParams();
+    const router = useRouter();
     const { refreshProfile } = useAuth();
 
     // Construct the callback URL
@@ -96,6 +97,10 @@ export default function AuthForm() {
 
             // Success - refresh profile to ensure the app knows who we are
             await refreshProfile();
+
+            if (next) {
+                router.push(next);
+            }
 
             // AuthProvider should detect the session change and we should be good to go
         } catch (err: any) {

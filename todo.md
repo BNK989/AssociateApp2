@@ -1,7 +1,7 @@
 # Project Todo List
 
 ## Phase 1: Setup & Config
-- [ ] Initialize Next.js + Tailwind CSS + TypeScript
+- [x] Initialize Next.js + Tailwind CSS + TypeScript
 - [x] Setup Supabase Client & Environment Variables
 ## Phase 4: Game Loop - Creation (Phase 1)
 - [x] Chat Interface
@@ -94,12 +94,12 @@
 - [ ] 
 
 ## fixes
-- [ ] when an invetation is sent via share link the exepting user (checked for logged in guest user) get stuck on "Checking credentials ... Please wait while we connect you to the game ..." - fix this
-- [ ] when a guess is correct there should not be a toast alert
 - [ ] re-add the ::[cipher]:: (dubble colon format) for the cipher appears in the chat (no hints given) to better indicate that the user is viewing the cipher and not the message
 - [ ] fix the admin get hints option to work 
 - [ ] when game is generated sometimes the create game button does not work, the create button is stuck, after selecting game type (i.e short, medium etc.) - fix this
-- [ ] the encription/decreption effect is not working - fix this when a message is encrypted or decrypted is should change mode letter by letter 
+- [x] when an invitation is sent via share link the exepting user (checked for logged in guest user) get stuck on "Checking credentials ... Please wait while we connect you to the game ..." - fix this
+- [x] when a guess is correct there should not be a toast alert
+- [x] the encription/decreption effect is not working - fix this when a message is encrypted or decrypted is should change mode letter by letter 
 - [x] add notifications to the game - so that players are notified when its their turn and keeps them engaged 
 - [x] UI: the x button on toast notifications appear complitly black in hover mode, fix this
 - [x] bug: the placeholder text in the input field does not update as quickly (to indicate that the turns have switched)
