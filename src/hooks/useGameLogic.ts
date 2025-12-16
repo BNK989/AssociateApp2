@@ -260,7 +260,7 @@ export function useGameLogic(gameId: string) {
                     if (gameRef.current?.solving_proposal_created_at) {
                         toast.info("Switching to Solving Mode!");
                     } else {
-                        toast.info("Game limit reached! Switching to Solving Mode!");
+                        toast.info("You started solve mode🥳 try to decipher the past messages");
                     }
                 }
                 gameRef.current = newGame; // Keep track for comparison
@@ -476,7 +476,7 @@ export function useGameLogic(gameId: string) {
             // 2. Set Just Solved Animation
             setJustSolvedMessageId({ id: target.id, points: distribution.winnerPoints });
             setTimeout(() => setJustSolvedMessageId(null), 3000);
-            toast.success(`Solved! +${distribution.winnerPoints} pts ${distribution.type === 'STEAL' ? '(Steal!)' : ''}`);
+
 
             setInput('');
 

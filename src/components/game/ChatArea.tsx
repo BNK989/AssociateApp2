@@ -234,7 +234,7 @@ export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, 
                     messagesLeft = game.max_messages - countSoFar;
 
                     // Show bubble if 3, 2, or 1 messages left
-                    if (messagesLeft < 3 && messagesLeft >= 0) {
+                    if (messagesLeft < 4 && messagesLeft > 0) {
                         showMessageWarning = true;
                     }
                 }
@@ -300,7 +300,7 @@ export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, 
                         {showMessageWarning && (
                             <div className="flex justify-center my-4 animate-in fade-in slide-in-from-bottom-2">
                                 <span className="bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-xs px-3 py-1 rounded-full shadow-sm font-medium border border-gray-200 dark:border-gray-700">
-                                    {messagesLeft === 0 ? 'Last message!' : `${messagesLeft + 1} message${messagesLeft + 1 === 1 ? '' : 's'} until switching to solve`}
+                                    {messagesLeft === 1 ? 'Last message!' : `${messagesLeft} messages until switching to solve`}
                                 </span>
                             </div>
                         )}

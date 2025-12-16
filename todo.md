@@ -96,12 +96,36 @@
 
 # Pre-launch
 
-## Phase 13: review and KPIs
+
+### user feed back (Gerrit)
+- [x] remove solved toast
+- [x] when starting to solve provide instructions: "You started solve mode, try to guess the messages"
+- [x] change countdown at the end of the game i.e. last 3 messages to send 3 2 and last message, now it start to count 2 messages before the end but it should 3 messages before the end i.e. the "last message" should allow the last player to send the last message
+- [ ] improve layout on mobile - messages scroll out of view
+
+## phase 13: define player leaving the game
+- [x] player can leave the game by using the context menu (existing functionality).
+- [ ] when a player leaves the game show a system notification in the chat "player [player-name] left the game" and remove their turn and avatar from the game top bar (keeping messages they've sent)
+- [ ] player can be removed from the game by other active players: once a player is not responding a long time (set in gameConfig.ts), allow other active players to remove a non-responding player e.g., "[player-name] has not responded for [xx], you can remove them from the game to continue texting" then similar to how we confirm to switch to solve mode we should confirm the player removal by promting all the users to confirm the action (counting 10 seconds then auto confirming) once confirmed add a system notification in the chat "player [player-name] was removed"
+
+## phase 13.5: once a player left the game
+- [ ] in texting mode let remininlg players carry on texting
+- [ ] in solve mode the author of the message is not in the game allow free for all imidiatly
+
+
+## Phase 14: review and KPIs
 - [ ] proffesional code reviewer to check site reliability and security
 - [ ] add a way for users to provide feedback and logs on the game
 - [ ] add analytics to the game, KPIs
+- [ ] get domain name
+- [ ] get ssl certificate
 
-## Phase 14: SEO
+## Phase 15: marketing
+- [ ] add subscibe for email updates
+- [ ] add social media links
+- [ ] add social media sharing
+
+## Phase 16: SEO
 - [ ] add SEO to the game
 - [ ] add meta tags to the game
 - [ ] add title to the game
@@ -109,6 +133,11 @@
 - [ ] add keywords to the game
 - [ ] add Open Graph tags to the game
 - [ ] add Twitter Card tags to the game
+
+## Phase 17: 
+- [ ] limit number of active games a user can have set limit in gameConfig.ts to 5 if a player has reached this limit show popup alert letting them archive games and prevent them from creating a new game. this needs to be handled gracefully to prevent the user from being stuck
+- [ ] rename the current homepage to lobby (i.e. /lobby) and add a new homepage that show the current active games and a CTA to create a new game (i.e. /) after a user log in move them to the lobby page
+- [ ] create an option for free chatroom, where a player can create a game and invite anyone to join, the game is then published to the lobby where anyone can join it (up to 5 players set in gameConfig.ts)
 
 ## fixes
 - [ ] re-add the ::[cipher]:: (dubble colon format) for the cipher appears in the chat (no hints given) to better indicate that the user is viewing the cipher and not the message
