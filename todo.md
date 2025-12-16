@@ -85,14 +85,30 @@
 - [x] add cloude functions via supabase to archive a game after 72 hours (set in gameConfig.ts) of no play (using mcp)
 - [x] add cloude functions via supabase to delete a game after 7 days (set in gameConfig.ts) of it being archived (using mcp)
 
-# pre-launch
+## Phase 12: Site Footer
+- [x] add site footer in all pages (except game page). the footer should include,
+    - [x] our all rights reserved
+    - [x] privacy policy
+    - [x] terms of service
+    - [x] feedback form shadcn (use supabase to store feedback & cloud function to send email to admin)
+    - [x] special thank you page
+    **all pages should have a simple HTML structure to allow our webmaster to update the content easily**
+
+# Pre-launch
+
+## Phase 13: review and KPIs
 - [ ] proffesional code reviewer to check site reliability and security
 - [ ] add a way for users to provide feedback and logs on the game
 - [ ] add analytics to the game, KPIs
-- [ ] add site footer in all pages (except game page) the footer should include 
 
-## post-launch
-- [ ] 
+## Phase 14: SEO
+- [ ] add SEO to the game
+- [ ] add meta tags to the game
+- [ ] add title to the game
+- [ ] add description to the game
+- [ ] add keywords to the game
+- [ ] add Open Graph tags to the game
+- [ ] add Twitter Card tags to the game
 
 ## fixes
 - [ ] re-add the ::[cipher]:: (dubble colon format) for the cipher appears in the chat (no hints given) to better indicate that the user is viewing the cipher and not the message

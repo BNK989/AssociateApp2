@@ -4,6 +4,7 @@ import "./globals.css";
 import AuthProvider from "@/context/AuthProvider";
 import { NavBar } from "@/components/NavBar";
 import { DynamicToaster } from '@/components/DynamicToaster';
+import { SiteFooter } from '@/components/SiteFooter';
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
@@ -56,6 +57,7 @@ export default function RootLayout({
             <main className="flex-1 w-full">
               {children}
             </main>
+            <SiteFooter />
             <DynamicToaster />
             <ServiceWorkerRegister />
           </AuthProvider>
