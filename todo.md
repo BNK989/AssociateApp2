@@ -89,6 +89,7 @@
 - [ ] proffesional code reviewer to check site reliability and security
 - [ ] add a way for users to provide feedback and logs on the game
 - [ ] add analytics to the game, KPIs
+- [ ] add site footer in all pages (except game page) the footer should include 
 
 ## post-launch
 - [ ] 

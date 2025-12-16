@@ -43,7 +43,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground flex flex-col min-h-screen`}
       >
         <ThemeProvider
           attribute="class"
@@ -53,7 +53,7 @@ export default function RootLayout({
         >
           <AuthProvider>
             <NavBar />
-            <main className="min-h-screen">
+            <main className="flex-1 w-full">
               {children}
             </main>
             <DynamicToaster />
