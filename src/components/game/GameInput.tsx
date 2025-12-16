@@ -44,29 +44,37 @@ export function GameInput({
     }
 
     const isMyTurn = activePlayerId === user?.id;
-    const currentTurnPlayer = players.find(p => p.user_id === activePlayerId);
-    const isFreeForAll = solvingTimeLeft === 0;
+    const targetPlayer = players.find(p => p.user_id === activePlayerId);
+
+    // If the target player has left, force Free For All mode immediately
+    const targetPlayerHasLeft = targetPlayer?.has_left || false;
+    const isFreeForAll = solvingTimeLeft === 0 || targetPlayerHasLeft;
 
     // Determine Placeholder Text
     let placeholderText = "Type a message...";
     if (game.status === 'solving') {
         if (isFreeForAll) {
             if (isMyTurn) {
+                // Should technically be impossible if I left, but handle gracefully
                 placeholderText = "Free for all! Anyone can guess your text";
             } else {
-                const authorName = currentTurnPlayer?.profiles?.username || 'Author';
-                placeholderText = `Free for all! Guess ${authorName}'s text!`;
+                const authorName = targetPlayer?.profiles?.username || 'Author';
+                if (targetPlayerHasLeft) {
+                    placeholderText = `${authorName} left! Free for all to guess!`;
+                } else {
+                    placeholderText = `Free for all! Guess ${authorName}'s text!`;
+                }
             }
         } else if (isMyTurn) {
             placeholderText = `It's your word! You have ${solvingTimeLeft}s to reveal it!`;
         } else {
-            placeholderText = `${currentTurnPlayer?.profiles?.username || 'Author'} is revealing their word... (${solvingTimeLeft}s)`;
+            placeholderText = `${targetPlayer?.profiles?.username || 'Author'} is revealing their word... (${solvingTimeLeft}s)`;
         }
     } else {
         if (isMyTurn) {
             placeholderText = "It's your turn!";
         } else {
-            placeholderText = `It is ${currentTurnPlayer?.profiles?.username || 'someone else'}'s turn`;
+            placeholderText = `It is ${targetPlayer?.profiles?.username || 'someone else'}'s turn`;
         }
     }
 

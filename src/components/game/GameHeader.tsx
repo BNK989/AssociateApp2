@@ -21,6 +21,7 @@ type GameHeaderProps = {
     onProposeSolving: () => void;
     onConfirmSolving: () => void;
     onDenySolving: () => void;
+    onLeave?: () => void; // New Prop
 };
 
 export function GameHeader({
@@ -37,7 +38,8 @@ export function GameHeader({
     onRefresh,
     onProposeSolving,
     onConfirmSolving,
-    onDenySolving
+    onDenySolving,
+    onLeave
 }: GameHeaderProps) {
     const router = useRouter();
 
@@ -141,6 +143,43 @@ export function GameHeader({
     }, [teamPot, displayPot]);
 
     const [isProposing, setIsProposing] = React.useState(false);
+    const [showLeaveConfirm, setShowLeaveConfirm] = React.useState(false); // New State
+
+    const handleBackClick = () => {
+        // Simple confirm if game is active
+        if (game.status !== 'completed' && game.status !== 'lobby') {
+            setShowLeaveConfirm(true);
+        } else {
+            onBack();
+        }
+    };
+
+    // Explicit Leave Handler passed to dialog
+    const handleConfirmLeave = () => {
+        // User confirmed they want to leave.
+        // We just call onBack() and let the parent/Lobby handle the rest? 
+        // Wait, the parent (GameRoom) calls router.push('/'). 
+        // The user wants to TRIGGER the "leave game" logic effectively? 
+        // Or just leave the *room*?
+        // The requirement says: "leave the game? you will not be able to return".
+        // This implies triggering the actual LEAVE action.
+        // But the GameHeader prop `onBack` currently only navigates away.
+        // We probably need a new prop `onLeaveGame` or we need to modify what onBack does if confirmed.
+        // If we just navigate away, the user is still in the game.
+        // The user requirement implies "Leaving the game PERMANENTLY".
+        // So we should call the leave logic.
+        // UseGameLogic doesn't expose `leaveGame` directly yet, but Lobby has it.
+        // GameRoom handles rendering.
+        // We should add `onLeave` prop to GameHeader and wire it up to `leave_game` action in useGameLogic/GameRoom.
+        // FOR NOW: Let's assume onBack just navigates, but the user requested "Leave Game".
+        // I will add a `onLeave` prop to GameHeader in the next step or modify this step to assume it exists?
+        // Let's modify the props interface first.
+        // ACTUALLY: The user said "when a player leaves the game ... show notification".
+        // This dialog is for that.
+        // So `onLeave` is needed.
+        onLeave?.();
+        setShowLeaveConfirm(false);
+    };
 
     const handlePropose = async () => {
         setIsProposing(true);
@@ -157,7 +196,7 @@ export function GameHeader({
             <div className="p-2 flex justify-between items-center">
                 <div className="flex items-center gap-3">
                     <button
-                        onClick={onBack}
+                        onClick={handleBackClick}
                         className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-900 dark:text-white"
                         aria-label="Back to Lobby"
                     >
@@ -167,7 +206,7 @@ export function GameHeader({
                     {/* Avatar Stack */}
                     <div className="flex items-center -space-x-2 mr-2">
                         {sortedPlayers.map((player) => (
-                            <Avatar key={player.user_id} className={`w-8 h-8 border-2 border-white dark:border-gray-900 ${player.user_id === activePlayerId ? 'z-10 ring-2 ring-green-500' : ''}`}>
+                            <Avatar key={player.user_id} className={`w-8 h-8 border-2 border-white dark:border-gray-900 ${player.user_id === activePlayerId ? 'z-10 ring-2 ring-green-500' : ''} ${player.has_left ? 'opacity-40 grayscale' : ''}`}>
                                 <AvatarImage src={player.profiles?.avatar_url} />
                                 <AvatarFallback className={`${getAvatarColor(player.profiles?.username || '')} text-white text-xs`}>
                                     {getInitials(player.profiles?.username || '')}
@@ -215,7 +254,7 @@ export function GameHeader({
                     {game.status !== 'solving' && (
                         <>
                             {messageCount < 5 ? (
-                                <InvitePlayer gameId={game.id} />
+                                <InvitePlayer gameId={game.id} players={players} />
                             ) : (
                                 <button
                                     onClick={handlePropose}
@@ -257,7 +296,7 @@ export function GameHeader({
                     <div className="flex flex-col">
                         <span className="text-sm font-bold">Switch to Solving?</span>
                         <span className="text-xs opacity-70">
-                            {game.solve_proposal_confirmations?.length || 0}/{players.length} Agreed ({proposalTimeLeft}s)
+                            {game.solve_proposal_confirmations?.length || 0}/{players.filter(p => !p.has_left).length} Agreed ({proposalTimeLeft}s)
                         </span>
                     </div>
                     <div className="flex gap-2">
@@ -284,7 +323,45 @@ export function GameHeader({
                         </button>
                     </div>
                 </div>
-            )}
-        </header>
+            )
+            }
+
+            {/* Leave Confirmation Dialog */}
+            {
+                showLeaveConfirm && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                        <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-xl max-w-xs w-full border border-gray-200 dark:border-gray-800">
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Leave Game?</h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                You will not be able to return to this game.
+                            </p>
+                            <div className="flex flex-col gap-2 w-full">
+                                <button
+                                    onClick={handleConfirmLeave}
+                                    className="w-full px-4 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded"
+                                >
+                                    Leave Game (Permanent)
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        onBack();
+                                        setShowLeaveConfirm(false);
+                                    }}
+                                    className="w-full px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                                >
+                                    Go Home (Keep Game Open)
+                                </button>
+                                <button
+                                    onClick={() => setShowLeaveConfirm(false)}
+                                    className="w-full px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+        </header >
     );
 }

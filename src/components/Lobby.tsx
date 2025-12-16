@@ -204,53 +204,20 @@ export default function Lobby() {
         try {
             const gameId = gameToLeave;
 
-            // 1. Get username for notification
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('username')
-                .eq('id', user.id)
-                .single();
+            // Call API action to handle leave logic (system message, turn rotation, etc.)
+            const response = await fetch(`/api/game/${gameId}/action`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'leave_game' })
+            });
 
-            const username = profile?.username || 'A player';
-
-            // 2. Send notification message to chat
-            await supabase
-                .from('messages')
-                .insert({
-                    game_id: gameId,
-                    user_id: user.id,
-                    content: `${username} has left the game.`,
-                    cipher_length: 0,
-                    is_solved: true
-                });
-
-            // 3. Send system notifications to other players
-            const { data: otherPlayers } = await supabase
-                .from('game_players')
-                .select('user_id')
-                .eq('game_id', gameId)
-                .neq('user_id', user.id)
-                .eq('has_left', false); // Only notify active players
-
-            if (otherPlayers && otherPlayers.length > 0) {
-                const notifications = otherPlayers.map(p => ({
-                    user_id: p.user_id,
-                    type: 'player_left',
-                    content: `${username} left Game #${gameId.slice(0, 4)}`,
-                    metadata: { game_id: gameId }
-                }));
-
-                await supabase.from('notifications').insert(notifications);
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to leave game');
             }
 
-            // 4. Soft leave game (update has_left = true)
-            const { error } = await supabase
-                .from('game_players')
-                .update({ has_left: true })
-                .eq('game_id', gameId)
-                .eq('user_id', user.id);
-
-            if (error) throw error;
+            // Client-side state update handled below
+            // No need for manual inserts/updates here
 
             // Optimistic update
             setActiveGames(prev => prev.filter(g => g.id !== gameId));

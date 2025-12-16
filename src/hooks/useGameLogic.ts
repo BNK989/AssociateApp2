@@ -23,6 +23,7 @@ export type Message = {
     created_at: string;
     strikes: number;
     hint_level: number;
+    type?: 'text' | 'system';
     cipher_text?: string;
     ai_hint?: string;
     solved_by?: string;
@@ -54,6 +55,7 @@ export type Player = {
     score: number;
     joined_at: string;
     consecutive_correct_guesses: number;
+    has_left?: boolean;
     profiles?: {
         username: string;
         avatar_url: string;
@@ -90,7 +92,7 @@ export function useGameLogic(gameId: string) {
         if (!gameId) return;
 
         try {
-            const response = await fetch(`/api/game/${gameId}/state`);
+            const response = await fetch(`/api/game/${gameId}/state`, { cache: 'no-store' });
             if (!response.ok) {
                 if (response.status === 401) {
                     console.error("Unauthorized fetch");
@@ -228,7 +230,8 @@ export function useGameLogic(gameId: string) {
                         const senderId = (payload.new as any).user_id;
 
                         // Use shared logic
-                        const nextPlayerId = calculateNextTurnUserId(currentPlayers, senderId);
+                        const activePlayers = currentPlayers.filter(p => !p.has_left);
+                        const nextPlayerId = calculateNextTurnUserId(activePlayers, senderId);
 
                         if (nextPlayerId && prev.current_turn_user_id !== nextPlayerId) {
                             return {
@@ -238,6 +241,11 @@ export function useGameLogic(gameId: string) {
                         }
                         return prev;
                     });
+
+                    // Force sync on system message (e.g. player left) to ensure game state (timer) and players list (has_left) are updated
+                    if (newMessage.type === 'system') {
+                        fetchGameData();
+                    }
                 } else if (payload.eventType === 'UPDATE') {
                     const updatedMessage = payload.new as any;
                     setMessages(prev => prev.map(m => m.id === updatedMessage.id ? { ...m, ...updatedMessage } : m));
@@ -258,7 +266,7 @@ export function useGameLogic(gameId: string) {
                 const newGame = payload.new as GameState;
                 if (newGame.status === 'solving' && gameRef.current?.status !== 'solving') {
                     if (gameRef.current?.solving_proposal_created_at) {
-                        toast.info("Switching to Solving Mode!");
+                        toast.info("You started solve mode🥳 try to decipher the past messages");
                     } else {
                         toast.info("You started solve mode🥳 try to decipher the past messages");
                     }
@@ -274,6 +282,7 @@ export function useGameLogic(gameId: string) {
                         score,
                         joined_at,
                         consecutive_correct_guesses,
+                        has_left,
                         profiles:user_id (
                             username,
                             avatar_url
@@ -414,7 +423,11 @@ export function useGameLogic(gameId: string) {
         const isFreeForAll = solvingTimeLeft === 0;
         const isMyTurn = target.user_id === user.id;
 
-        if (!isFreeForAll && !isMyTurn) {
+        // Passive Leaver Logic: If target author has left, treat as Free For All
+        const targetAuthor = players.find(p => p.user_id === target.user_id);
+        const hasAuthorLeft = targetAuthor?.has_left || false;
+
+        if (!isFreeForAll && !isMyTurn && !hasAuthorLeft) {
             toast.warning("Wait for the author or the free-for-all!");
             return;
         }

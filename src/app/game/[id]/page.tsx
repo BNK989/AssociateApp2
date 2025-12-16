@@ -14,6 +14,7 @@ import { GameLoading } from '@/components/game/GameLoading';
 import { useTurnNotifications } from '@/hooks/useTurnNotifications';
 import { useVisualViewport } from '@/hooks/useVisualViewport';
 
+import { toast } from "sonner";
 
 export default function GameRoom() {
     const { id } = useParams();
@@ -55,6 +56,27 @@ export default function GameRoom() {
 
     useTurnNotifications(!!isMyTurn, !!isMyMessageBeingGuessed);
 
+    const handleLeaveGame = async () => {
+        try {
+            const response = await fetch(`/api/game/${gameId}/action`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'leave_game' })
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to leave game');
+            }
+
+            toast.success("You have left the game.");
+            router.push('/');
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to leave game.");
+        }
+    };
+
 
     if (loading) return <GameLoading />;
     if (!game) return <div className="flex items-center justify-center h-[100dvh]">Game not found</div>;
@@ -73,6 +95,7 @@ export default function GameRoom() {
                 solvingTimeLeft={solvingTimeLeft}
                 targetMessage={getTargetMessage()}
                 onBack={() => router.push('/')}
+                onLeave={handleLeaveGame}
                 onRefresh={fetchGameData}
                 onProposeSolving={proposeSolvingMode}
                 onConfirmSolving={confirmSolvingMode}

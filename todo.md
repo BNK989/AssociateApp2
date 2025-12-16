@@ -101,31 +101,38 @@
 - [x] remove solved toast
 - [x] when starting to solve provide instructions: "You started solve mode, try to guess the messages"
 - [x] change countdown at the end of the game i.e. last 3 messages to send 3 2 and last message, now it start to count 2 messages before the end but it should 3 messages before the end i.e. the "last message" should allow the last player to send the last message
-- [ ] improve layout on mobile - messages scroll out of view
+- [x] cancel toast message after invite is sent (in the game > invite > click on player name)
 
-## phase 13: define player leaving the game
+## phase 13: once a player left the game
+- [x] in texting mode let remininlg players carry on texting
+- [x] in solve mode the author of the message is not in the game allow free for all imidiatly
+- [x] when trying to switch to solve only verify the switch with active players 
+
+## phase 14: define player leaving the game
 - [x] player can leave the game by using the context menu (existing functionality).
-- [ ] when a player leaves the game show a system notification in the chat "player [player-name] left the game" and remove their turn and avatar from the game top bar (keeping messages they've sent)
-- [ ] player can be removed from the game by other active players: once a player is not responding a long time (set in gameConfig.ts), allow other active players to remove a non-responding player e.g., "[player-name] has not responded for [xx], you can remove them from the game to continue texting" then similar to how we confirm to switch to solve mode we should confirm the player removal by promting all the users to confirm the action (counting 10 seconds then auto confirming) once confirmed add a system notification in the chat "player [player-name] was removed"
+- [x] when a player leaves the game show a system notification in the chat "player [player-name] left the game" and remove their turn and avatar from the game top bar (keeping messages they've sent) and allowing other players to continue texting
+- [x] in guessing mode when the messsage author has left the game simply allow free for all imidiatly
+- [x] when a player clicks back at the top of the game page IN AN ACTIVE GAME show a dialog to confirm if they want to leave the game e.g. leave the game? you will not be able to return to this game 
+- [ ] add an option to remove a player from the game by other active players: once a player is not responding a long time (set in gameConfig.ts), allow other active players to remove a non-responding player e.g., "[player-name] has not responded for [xx], you can remove them from the game to continue playing" then similar to how we confirm to switch to solve mode we should confirm the player removal by promting all the users to confirm the action (counting 10 seconds then auto confirming). as when a player leaves by themselve,add a system notification in the chat "player [player-name] was removed"
 
-## phase 13.5: once a player left the game
-- [ ] in texting mode let remininlg players carry on texting
-- [ ] in solve mode the author of the message is not in the game allow free for all imidiatly
+## Phase 15: 
+- [ ] limit number of active games a user can have set limit in gameConfig.ts to 5 if a player has reached this limit show popup alert letting them archive games and prevent them from creating a new game. this needs to be handled gracefully to prevent the user from being stuck
+- [ ] rename the current homepage to lobby (i.e. /lobby) and add a new homepage that show the current active games and a CTA to create a new game (i.e. /) after a user log in move them to the lobby page
+- [ ] create an option for free chatroom, where a player can create a game and invite anyone to join, the game is then published to the lobby where anyone can join it (up to 5 players set in gameConfig.ts)
 
-
-## Phase 14: review and KPIs
+## Phase 16: review and KPIs
 - [ ] proffesional code reviewer to check site reliability and security
 - [ ] add a way for users to provide feedback and logs on the game
 - [ ] add analytics to the game, KPIs
 - [ ] get domain name
 - [ ] get ssl certificate
 
-## Phase 15: marketing
+## Phase 17: marketing
 - [ ] add subscibe for email updates
 - [ ] add social media links
 - [ ] add social media sharing
 
-## Phase 16: SEO
+## Phase 18: SEO
 - [ ] add SEO to the game
 - [ ] add meta tags to the game
 - [ ] add title to the game
@@ -134,12 +141,9 @@
 - [ ] add Open Graph tags to the game
 - [ ] add Twitter Card tags to the game
 
-## Phase 17: 
-- [ ] limit number of active games a user can have set limit in gameConfig.ts to 5 if a player has reached this limit show popup alert letting them archive games and prevent them from creating a new game. this needs to be handled gracefully to prevent the user from being stuck
-- [ ] rename the current homepage to lobby (i.e. /lobby) and add a new homepage that show the current active games and a CTA to create a new game (i.e. /) after a user log in move them to the lobby page
-- [ ] create an option for free chatroom, where a player can create a game and invite anyone to join, the game is then published to the lobby where anyone can join it (up to 5 players set in gameConfig.ts)
 
 ## fixes
+- [ ] improve layout on mobile - messages scroll out of view (Gerrit reported via iphone)
 - [ ] re-add the ::[cipher]:: (dubble colon format) for the cipher appears in the chat (no hints given) to better indicate that the user is viewing the cipher and not the message
 - [ ] fix the admin get hints option to work 
 - [ ] when game is generated sometimes the create game button does not work, the create button is stuck, after selecting game type (i.e short, medium etc.) - fix this
@@ -162,6 +166,7 @@
 - [x] three dots while other user is typing (peer to peer)
 - [ ] improve time before free-for-all ui with a countdown bar (like a progress bar that shows the time left)
 - [x] improve "encryption" so that the message length is not visible to the user
+- [ ] add nudge button (think if we need it in game of more of a sevice that'll send a notification to the user)
 
 ## guestmode
 - [x] when a guest logs out or after 24 hours remove them from the database (cascade delete)

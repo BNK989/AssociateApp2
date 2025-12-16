@@ -57,6 +57,7 @@ export async function GET(
                     score,
                     joined_at,
                     consecutive_correct_guesses,
+                    has_left,
                     profiles:user_id (
                         username,
                         avatar_url

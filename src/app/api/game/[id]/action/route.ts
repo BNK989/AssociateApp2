@@ -3,6 +3,9 @@ import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import { GAME_CONFIG } from '@/lib/gameConfig';
+import { calculateNextTurnUserId } from '@/lib/gameLogic'; // We might need to move this or duplicate logic if it's not server-ready, but let's assume util usage or implement inline.
+// Actually, calculateNextTurnUserId is in lib/gameLogic, let's verify if that file is clean for server usage. It usually is.
+
 
 export async function POST(
     request: Request,
@@ -41,15 +44,44 @@ export async function POST(
         console.log(`[API] Action received: ${action}`, JSON.stringify(payload || {}));
 
         if (action === 'propose_solve') {
+            // 1. Initialize Proposal
+            const initialConfirmations = [user.id];
             const { error } = await supabase
                 .from('games')
                 .update({
                     solving_proposal_created_at: new Date().toISOString(),
-                    solve_proposal_confirmations: [user.id]
+                    solve_proposal_confirmations: initialConfirmations
                 })
                 .eq('id', gameId);
             if (error) throw error;
 
+            // 2. Check for Immediate Auto-Approval (e.g. 1/1 players)
+            // Get Active Players
+            const { data: activePlayers } = await supabase
+                .from('game_players')
+                .select('user_id')
+                .eq('game_id', gameId)
+                .eq('has_left', false);
+
+            const activePlayerIds = activePlayers?.map(p => p.user_id) || [];
+
+            // Check if every active player is in the (initial) confirmations list
+            const allConfirmed = activePlayerIds.length > 0 && activePlayerIds.every(id => initialConfirmations.includes(id));
+
+            if (allConfirmed) {
+                await supabase
+                    .from('games')
+                    .update({
+                        status: 'solving',
+                        solving_proposal_created_at: null,
+                        solve_proposal_confirmations: [],
+                        solving_started_at: new Date().toISOString()
+                    })
+                    .eq('id', gameId);
+            }
+        } else if (action === 'leave_game') {
+            const { error: leaveError } = await supabase.rpc('player_leave_game', { p_game_id: gameId });
+            if (leaveError) throw leaveError;
         } else if (action === 'deny_solve') {
             const { error } = await supabase
                 .from('games')
@@ -111,8 +143,18 @@ export async function POST(
                 const newConfirms = [...currentConfirms, user.id];
 
                 // Check if all players confirmed
-                const { count } = await supabase.from('game_players').select('*', { count: 'exact', head: true }).eq('game_id', gameId);
-                const allConfirmed = count ? newConfirms.length >= count : false;
+                // 1. Get Active Players
+                const { data: activePlayers } = await supabase
+                    .from('game_players')
+                    .select('user_id')
+                    .eq('game_id', gameId)
+                    .eq('has_left', false);
+
+                const activePlayerIds = activePlayers?.map(p => p.user_id) || [];
+
+                // 2. Check if every active player is in the confirmations list
+                // We use newConfirms (which includes current user)
+                const allConfirmed = activePlayerIds.length > 0 && activePlayerIds.every(id => newConfirms.includes(id));
 
                 if (allConfirmed) {
                     await supabase
@@ -160,10 +202,23 @@ export async function POST(
 
             const isAuthor = targetMessage.user_id === user.id;
 
-            // Rule: Must be Author OR Free For All
+            // Rule: Must be Author OR Free For All OR Author Has Left
+            let isAuthorLeft = false;
             if (!isAuthor && !isFreeForAll) {
-                console.warn(`[Security] User ${user.id} attempted to solve out of turn. Target Author: ${targetMessage.user_id}`);
-                return NextResponse.json({ error: 'Not your turn! Wait for Free-for-all.' }, { status: 403 });
+                // Check if Author has left
+                const { data: authorData } = await supabase
+                    .from('game_players')
+                    .select('has_left')
+                    .eq('game_id', gameId)
+                    .eq('user_id', targetMessage.user_id)
+                    .single();
+
+                if (authorData?.has_left) {
+                    isAuthorLeft = true;
+                } else {
+                    console.warn(`[Security] User ${user.id} attempted to solve out of turn. Target Author: ${targetMessage.user_id}`);
+                    return NextResponse.json({ error: 'Not your turn! Wait for Free-for-all.' }, { status: 403 });
+                }
             }
 
             if (isMatch) {
@@ -344,9 +399,11 @@ export async function POST(
 
         return NextResponse.json({ success: true });
 
-    } catch (err: unknown) {
+    } catch (err: any) {
         console.error("Action API Error:", err);
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        return NextResponse.json({ error: errorMessage }, { status: 500 });
+        const errorMessage = err?.message || (err instanceof Error ? err.message : 'Unknown error');
+        // Include full error details if available (e.g. Supabase error hint/details)
+        const errorDetails = err?.details || err?.hint || undefined;
+        return NextResponse.json({ error: errorMessage, details: errorDetails }, { status: 500 });
     }
 }

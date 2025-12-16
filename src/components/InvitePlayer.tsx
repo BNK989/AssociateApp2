@@ -11,13 +11,15 @@ import { Button } from "@/components/ui/button";
 import { UserPlus, Check, Link, Share2 } from 'lucide-react';
 import { toast } from "sonner";
 
+import { Player } from '@/hooks/useGameLogic';
+
 type Profile = {
     id: string;
     username: string;
     avatar_url: string;
 };
 
-export function InvitePlayer({ gameId }: { gameId: string }) {
+export function InvitePlayer({ gameId, players }: { gameId: string; players: Player[] }) {
     const { user } = useAuth();
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
@@ -81,7 +83,6 @@ export function InvitePlayer({ gameId }: { gameId: string }) {
             toast.error("Failed to send invite");
         } else {
             setInvited(prev => new Set(prev).add(receiverId));
-            toast.success("Invite sent!");
         }
     };
 
@@ -119,7 +120,12 @@ export function InvitePlayer({ gameId }: { gameId: string }) {
                                     <div
                                         key={profile.id}
                                         className="flex items-center justify-between p-2 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
-                                        onClick={() => !invited.has(profile.id) && sendInvite(profile.id)}
+                                        onClick={() => {
+                                            const isJoined = players.some(p => p.user_id === profile.id);
+                                            if (!isJoined && !invited.has(profile.id)) {
+                                                sendInvite(profile.id);
+                                            }
+                                        }}
                                     >
                                         <div className="flex items-center gap-2">
                                             <Avatar className="w-8 h-8">
@@ -130,7 +136,11 @@ export function InvitePlayer({ gameId }: { gameId: string }) {
                                             </Avatar>
                                             <span>{profile.username}</span>
                                         </div>
-                                        {invited.has(profile.id) ? (
+                                        {players.some(p => p.user_id === profile.id) ? (
+                                            <span className="text-blue-500 flex items-center gap-1 text-xs font-bold">
+                                                <Check className="w-3 h-3" /> Joined
+                                            </span>
+                                        ) : invited.has(profile.id) ? (
                                             <span className="text-green-500 flex items-center gap-1 text-xs">
                                                 <Check className="w-3 h-3" /> Sent
                                             </span>
