@@ -38,6 +38,7 @@ export type Message = {
 
 export type GameState = {
     id: string;
+    handle: number;
     status: 'lobby' | 'texting' | 'active' | 'solving' | 'completed';
     mode: 'free' | '100_text';
     current_turn_user_id: string;
@@ -48,7 +49,7 @@ export type GameState = {
     fever_mode_remaining: number;
     solve_proposal_confirmations: string[];
     max_messages?: number;
-};
+}; // Added handle property
 
 export type Player = {
     user_id: string;

@@ -137,6 +137,9 @@ export default function GameRoom() {
                 onClose={() => router.push('/')}
                 players={players}
                 messages={messages}
+                gameId={game.id}
+                gameHandle={game.handle}
+                teamPot={game.team_pot}
             />
         </div>
     );

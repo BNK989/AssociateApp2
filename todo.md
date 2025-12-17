@@ -102,6 +102,10 @@
 - [x] when starting to solve provide instructions: "You started solve mode, try to guess the messages"
 - [x] change countdown at the end of the game i.e. last 3 messages to send 3 2 and last message, now it start to count 2 messages before the end but it should 3 messages before the end i.e. the "last message" should allow the last player to send the last message
 - [x] cancel toast message after invite is sent (in the game > invite > click on player name)
+- [ ] add share button to end screen to allow user to share theie results and thereby share the game with others
+- [ ] when a message is solved we need to better indicate who solved it, maybe add to the score animation the avatar of the player who solved it
+- [ ] users compain that they don't understand who the players are by their avatars, we need to expand on the avatar header in game to make it more clear who the players are
+- [ ] find a way to keep the player more engaged during the game, the issue is mostly while the players are waiting their turn  
 
 ## phase 13: once a player left the game
 - [x] in texting mode let remininlg players carry on texting
@@ -113,6 +117,7 @@
 - [x] when a player leaves the game show a system notification in the chat "player [player-name] left the game" and remove their turn and avatar from the game top bar (keeping messages they've sent) and allowing other players to continue texting
 - [x] in guessing mode when the messsage author has left the game simply allow free for all imidiatly
 - [x] when a player clicks back at the top of the game page IN AN ACTIVE GAME show a dialog to confirm if they want to leave the game e.g. leave the game? you will not be able to return to this game 
+- [ ] add a system notification also when players join the game i.e. "player [player-name] joined"
 - [ ] add an option to remove a player from the game by other active players: once a player is not responding a long time (set in gameConfig.ts), allow other active players to remove a non-responding player e.g., "[player-name] has not responded for [xx], you can remove them from the game to continue playing" then similar to how we confirm to switch to solve mode we should confirm the player removal by promting all the users to confirm the action (counting 10 seconds then auto confirming). as when a player leaves by themselve,add a system notification in the chat "player [player-name] was removed"
 
 ## Phase 15: 
@@ -126,6 +131,12 @@
 - [ ] add analytics to the game, KPIs
 - [ ] get domain name
 - [ ] get ssl certificate
+
+## Phase 16.5: posthog events
+- [ ] add posthog events for game status change (e.g. texting, solving, completed, archived, deleted)
+
+## Phase 16.6: db corn job verification
+- [ ] check corn job is running and verify it is running correctly cleanning old games and guest users
 
 ## Phase 17: marketing
 - [ ] add subscibe for email updates
