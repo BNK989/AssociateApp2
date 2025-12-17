@@ -180,10 +180,9 @@
 - [x] improve the pre-login screen create a better login experience by intreducing the game for unregistered users
 - [x] create a demo mode where a user can play the game without logging in 
 - [ ] add i18n to the game (support hebrew, english, german and spanish) - make sure all the game UI is RTL and LTR compatible by the users language
-- [x] three dots while other user is typing (peer to peer)
-- [ ] improve time before free-for-all ui with a countdown bar (like a progress bar that shows the time left)
-- [x] improve "encryption" so that the message length is not visible to the user
 - [ ] add nudge button (think if we need it in game of more of a sevice that'll send a notification to the user)
+- [x] three dots while other user is typing
+- [x] improve "encryption" so that the message length is not visible to the user
 
 ## guestmode
 - [x] when a guest logs out or after 24 hours remove them from the database (cascade delete)

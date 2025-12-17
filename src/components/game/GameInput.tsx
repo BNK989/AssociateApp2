@@ -3,6 +3,8 @@ import { User } from '@supabase/supabase-js';
 import { calculateMessageValue, HINT_COSTS } from '@/lib/gameLogic';
 import { Send, Loader2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
+import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from 'react';
 import { GAME_CONFIG } from '@/lib/gameConfig';
 import { toast } from "sonner";
@@ -149,7 +151,21 @@ export function GameInput({
             onTouchStart={handleInteraction}
         >
             <TooltipProvider>
-                <form onSubmit={onSendMessage} className="flex gap-2 items-center">
+                <form onSubmit={onSendMessage} className="flex gap-2 items-center relative">
+                    <AnimatePresence>
+                        {game.status === 'solving' && isFreeForAll && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 10 }}
+                                className="absolute -top-3 right-14 z-10"
+                            >
+                                <Badge variant="subtle" className="shadow-sm">
+                                    FREE FOR ALL
+                                </Badge>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                     {game.status === 'solving' && targetMessage && !isMaxHints && (
                         <Tooltip open={isTooltipOpen} onOpenChange={setIsTooltipOpen}>
                             <TooltipTrigger asChild>
