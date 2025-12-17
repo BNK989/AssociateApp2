@@ -104,9 +104,6 @@
 - [x] cancel toast message after invite is sent (in the game > invite > click on player name)
 - [x] add share button to end screen to allow user to share theie results and thereby share the game with others
 
-- [ ] users compain that they don't understand who the players are by their avatars, we need to expand on the avatar header in game to make it more clear who the players are
-- [ ] find a way to keep the player more engaged during the game, the issue is mostly while the players are waiting their turn  
-
 ### when a message is solve by a player who's not the author
 - [x] add a "steal" animation that zooms across the bottom of the screen with the avatar and name of the player who solved it
 - [x] show each player the points they earned, for solving the message and the assist bonus if any (currenty there seems to be an issue where both author and the solver see the same points) no need to change the animation here, just the number of points should be different for each player
@@ -156,6 +153,13 @@
 - [ ] add Open Graph tags to the game
 - [ ] add Twitter Card tags to the game
 
+## Phase 19: game info screen (popup)
+- [ ] add a game info screen that opens when clicking on the game header in the game room (clicking anywhere other than the back button)
+- [ ] add score info on the top of the screen
+- [ ] add players in the game to the screen including their avatar and name
+- [ ] allow quick return to game
+- [ ] add a info icon in this screen that opens the a popup with game rules and instructions
+
 
 ## fixes
 - [ ] improve layout on mobile - messages scroll out of view (Gerrit reported via iphone)
@@ -171,27 +175,20 @@
 - [x] bug: the placeholder text in the input field does not update as quickly (to indicate that the turns have switched)
 
 ## additions and do later
+- [ ] guestmode: for guest sign up we'll need to add captcha to the sign up form
+- [ ] find a way to keep the player more engaged during the game, the issue is mostly while the players are waiting their turn  
 - [ ] update stealAnimation.tsx to be more flexible and allow for different types of messages to be animated call it zoomAnimation.tsx
-- [x] add a way for the user to upload their own avatars - supabase storage (scale the image down to 256x256 on the client side before uploading)
 - [ ] after exosting the hints change the hint button to a giveup button to allow users to just get the word for no points (reset the streak counter)
-- [x] in the notification center (bell icon) add dismiss all option 
 - [ ] add leaderboard to the game
 - [ ] add NextStep.js to the project to aid in onboarding 
-- [x] improve the pre-login screen create a better login experience by intreducing the game for unregistered users
-- [x] create a demo mode where a user can play the game without logging in 
 - [ ] add i18n to the game (support hebrew, english, german and spanish) - make sure all the game UI is RTL and LTR compatible by the users language
-- [x] three dots while other user is typing (peer to peer)
-- [ ] improve time before free-for-all ui with a countdown bar (like a progress bar that shows the time left)
-- [x] improve "encryption" so that the message length is not visible to the user
 - [ ] add nudge button (think if we need it in game of more of a sevice that'll send a notification to the user)
-
-## guestmode
-- [x] when a guest logs out or after 24 hours remove them from the database (cascade delete)
-- [ ] for guest sign up we'll need to add captcha to the sign up form
-
-## Hits
-
-## Phase 8: AI & Polish
-- [x] PWA Configuration (Manifest, Service Worker)
 - [ ] `/test-playground` Implementation
 - [ ] allow users to connect their whatsapp account to recive notifications when via the game such as 'its your turn to play + link to the game' or 'game started + link to the game' etc.
+- [x] create a demo mode where a user can play the game without logging in 
+- [x] in the notification center (bell icon) add dismiss all option 
+- [x] add a way for the user to upload their own avatars - supabase storage (scale the image down to 256x256 on the client side before uploading)
+- [x] improve the pre-login screen create a better login experience by intreducing the game for unregistered users
+- [x] three dots while other user is typing
+- [x] improve "encryption" so that the message length is not visible to the user
+- [x] guestmode: when a guest logs out or after 24 hours remove them from the database (cascade delete)
