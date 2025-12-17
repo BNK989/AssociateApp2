@@ -3,7 +3,8 @@ import {
     calculateMessageValue,
     calculateSimilarity,
     generateCipherString,
-    calculateNextTurnUserId
+    calculateNextTurnUserId,
+    calculatePointDistribution
 } from '@/lib/gameLogic';
 
 describe('Game Logic', () => {
@@ -123,6 +124,36 @@ describe('Game Logic', () => {
 
         it('should return null if empty players', () => {
             expect(calculateNextTurnUserId([], 'u1')).toBeNull();
+        });
+    });
+
+    describe('calculatePointDistribution', () => {
+        it('should handle Self-Rescue (50% to solver)', () => {
+            const distribution = calculatePointDistribution(100, 'u1', 'u1'); // guesser == author
+            expect(distribution.type).toBe('SELF_RESCUE');
+            expect(distribution.winnerPoints).toBe(50);
+            expect(distribution.authorPoints).toBe(0);
+            expect(distribution.totalPoints).toBe(50);
+        });
+
+        it('should handle Steal (75% to solver, 25% to author)', () => {
+            const distribution = calculatePointDistribution(100, 'u2', 'u1'); // guesser != author
+            expect(distribution.type).toBe('STEAL');
+            expect(distribution.winnerPoints).toBe(75);
+            expect(distribution.authorPoints).toBe(25);
+            expect(distribution.totalPoints).toBe(100);
+        });
+
+        it('should handle multiplier', () => {
+            const distribution = calculatePointDistribution(100, 'u2', 'u1', 2);
+            expect(distribution.winnerPoints).toBe(150);
+            expect(distribution.authorPoints).toBe(50);
+        });
+
+        it('should floor decimal points', () => {
+            const distribution = calculatePointDistribution(10, 'u2', 'u1');
+            expect(distribution.winnerPoints).toBe(7);
+            expect(distribution.authorPoints).toBe(2);
         });
     });
 });

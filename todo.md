@@ -102,10 +102,14 @@
 - [x] when starting to solve provide instructions: "You started solve mode, try to guess the messages"
 - [x] change countdown at the end of the game i.e. last 3 messages to send 3 2 and last message, now it start to count 2 messages before the end but it should 3 messages before the end i.e. the "last message" should allow the last player to send the last message
 - [x] cancel toast message after invite is sent (in the game > invite > click on player name)
-- [ ] add share button to end screen to allow user to share theie results and thereby share the game with others
-- [ ] when a message is solved we need to better indicate who solved it, maybe add to the score animation the avatar of the player who solved it
+- [x] add share button to end screen to allow user to share theie results and thereby share the game with others
+
 - [ ] users compain that they don't understand who the players are by their avatars, we need to expand on the avatar header in game to make it more clear who the players are
 - [ ] find a way to keep the player more engaged during the game, the issue is mostly while the players are waiting their turn  
+
+### when a message is solve by a player who's not the author
+- [x] add a "steal" animation that zooms across the bottom of the screen with the avatar and name of the player who solved it
+- [x] show each player the points they earned, for solving the message and the assist bonus if any (currenty there seems to be an issue where both author and the solver see the same points) no need to change the animation here, just the number of points should be different for each player
 
 ## phase 13: once a player left the game
 - [x] in texting mode let remininlg players carry on texting
@@ -158,6 +162,7 @@
 - [ ] re-add the ::[cipher]:: (dubble colon format) for the cipher appears in the chat (no hints given) to better indicate that the user is viewing the cipher and not the message
 - [ ] fix the admin get hints option to work 
 - [ ] when game is generated sometimes the create game button does not work, the create button is stuck, after selecting game type (i.e short, medium etc.) - fix this
+- [ ] when resuming a game in solve mode there is a toast message letting you know your in solve mode - this is unneccessary and shoule not appear (it happends after a resuming player send a guess)
 - [x] when an invitation is sent via share link the exepting user (checked for logged in guest user) get stuck on "Checking credentials ... Please wait while we connect you to the game ..." - fix this
 - [x] when a guess is correct there should not be a toast alert
 - [x] the encription/decreption effect is not working - fix this when a message is encrypted or decrypted is should change mode letter by letter 
@@ -166,6 +171,7 @@
 - [x] bug: the placeholder text in the input field does not update as quickly (to indicate that the turns have switched)
 
 ## additions and do later
+- [ ] update stealAnimation.tsx to be more flexible and allow for different types of messages to be animated call it zoomAnimation.tsx
 - [x] add a way for the user to upload their own avatars - supabase storage (scale the image down to 256x256 on the client side before uploading)
 - [ ] after exosting the hints change the hint button to a giveup button to allow users to just get the word for no points (reset the streak counter)
 - [x] in the notification center (bell icon) add dismiss all option 

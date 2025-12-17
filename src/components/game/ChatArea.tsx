@@ -1,9 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CipherText } from '@/components/CipherText';
 import { Message, GameState } from '@/hooks/useGameLogic';
 import { generateCipherString } from '@/lib/gameLogic';
-import { useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { toast } from "sonner";
 import { supabase } from '@/lib/supabase';
@@ -18,6 +17,7 @@ import {
     ContextMenuSubContent,
 } from "@/components/ui/context-menu";
 import { TypingIndicator } from '../ui/TypingIndicator';
+import { StealAnimation } from './StealAnimation';
 
 type ChatAreaProps = {
     messages: Message[];
@@ -30,9 +30,24 @@ type ChatAreaProps = {
     onStartRandom?: () => void;
     typingUsers?: Set<string>;
     players?: any[];
+    stealData?: { stealerName: string; stealerAvatar?: string; authorName?: string } | null;
+    onStealAnimationComplete?: () => void;
 };
 
-export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, shakeMessageId, justSolvedData, onStartRandom, typingUsers, players }: ChatAreaProps) {
+export function ChatArea({
+    messages,
+    user,
+    game,
+    messagesEndRef,
+    targetMessage,
+    shakeMessageId,
+    justSolvedData,
+    onStartRandom,
+    typingUsers,
+    players,
+    stealData,
+    onStealAnimationComplete
+}: ChatAreaProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const { isAdmin } = useAdmin();
     const [revealedMessages, setRevealedMessages] = useState<Record<string, boolean>>({});
@@ -340,6 +355,18 @@ export function ChatArea({ messages, user, game, messagesEndRef, targetMessage, 
                     })}
                 </div>
             )}
+
+            {/* Steal Animation Overlay */}
+            {/* Steal Animation Overlay */}
+            {stealData && (
+                <StealAnimation
+                    stealerName={stealData.stealerName}
+                    stealerAvatar={stealData.stealerAvatar}
+                    authorName={stealData.authorName}
+                    onComplete={() => onStealAnimationComplete?.()}
+                />
+            )}
+
         </div >
     );
 }

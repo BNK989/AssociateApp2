@@ -85,6 +85,7 @@ export function useGameLogic(gameId: string) {
     const gameRef = useRef<GameState | null>(null); // To track previous state for toast
 
     const [justSolvedData, setJustSolvedMessageId] = useState<{ id: string; points: number } | null>(null);
+    const [stealData, setStealData] = useState<{ stealerName: string; stealerAvatar?: string; authorName: string } | null>(null);
     const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
     const typingTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map());
     const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -249,13 +250,69 @@ export function useGameLogic(gameId: string) {
                     }
                 } else if (payload.eventType === 'UPDATE') {
                     const updatedMessage = payload.new as any;
+                    const oldMessage = messages.find(m => m.id === updatedMessage.id);
+
                     setMessages(prev => prev.map(m => m.id === updatedMessage.id ? { ...m, ...updatedMessage } : m));
 
                     // Trigger Animation for Realtime Updates
                     if (updatedMessage.is_solved && user) {
-                        if (updatedMessage.user_id === user.id && updatedMessage.author_points > 0) {
-                            setJustSolvedMessageId({ id: updatedMessage.id, points: updatedMessage.author_points });
-                            setTimeout(() => setJustSolvedMessageId(null), 3000);
+                        // Check for Steal Event (if solved by someone other than author)
+                        const isSteal = updatedMessage.solved_by && updatedMessage.user_id && updatedMessage.solved_by !== updatedMessage.user_id;
+
+                        if (isSteal) {
+                            // Determine who stole it for the animation
+                            const solverId = updatedMessage.solved_by;
+                            // Try to find solver profile locally
+                            const solverProfile = playersRef.current.find(p => p.user_id === solverId)?.profiles;
+
+                            // Trigger Steal Animation for EVERYONE (including solver)
+                            if (solverProfile) {
+                                const authorId = updatedMessage.user_id;
+                                let authorName = 'Someone';
+                                if (authorId === user.id) {
+                                    authorName = 'You';
+                                } else {
+                                    const authorProfile = playersRef.current.find(p => p.user_id === authorId)?.profiles;
+                                    authorName = authorProfile?.username || 'Unknown';
+                                }
+
+                                const stealerName = solverId === user.id ? 'You' : solverProfile.username;
+                                setStealData({
+                                    stealerName: stealerName,
+                                    stealerAvatar: solverProfile.avatar_url,
+                                    authorName: authorName
+                                });
+                            } else {
+                                // Fallback if we don't have player loaded yet (rare)
+                                setStealData({
+                                    stealerName: 'Thief',
+                                    stealerAvatar: '',
+                                    authorName: 'Someone'
+                                });
+                            }
+                        }
+
+                        // Point Display Logic (Floating Numbers)
+                        // logic: Show points ONLY to the person who got them.
+                        // Solver: gets winner_points
+                        // Author: gets author_points (if > 0, which happens in steal)
+
+                        if (updatedMessage.solved_by === user.id) {
+                            // I am determining the points I earned.
+                            // If I am the solver, use winner_points.
+                            const points = updatedMessage.winner_points;
+                            if (points > 0) {
+                                setJustSolvedMessageId({ id: updatedMessage.id, points: points });
+                                setTimeout(() => setJustSolvedMessageId(null), 3000);
+                            }
+                        } else if (updatedMessage.user_id === user.id) {
+                            // I am the author. Did I get points?
+                            // If it was a steal, I get author_points.
+                            const points = updatedMessage.author_points;
+                            if (points > 0) {
+                                setJustSolvedMessageId({ id: updatedMessage.id, points: points });
+                                setTimeout(() => setJustSolvedMessageId(null), 3000);
+                            }
                         }
                     }
                 }
@@ -490,6 +547,25 @@ export function useGameLogic(gameId: string) {
             // 2. Set Just Solved Animation
             setJustSolvedMessageId({ id: target.id, points: distribution.winnerPoints });
             setTimeout(() => setJustSolvedMessageId(null), 3000);
+
+            // 3. Trigger Local Steal Animation (Immediate Feedback)
+            if (distribution.type === 'STEAL') {
+                const myProfile = players.find(p => p.user_id === user.id)?.profiles;
+                const authorId = target.user_id;
+                let authorName = 'Someone';
+                if (authorId === user.id) {
+                    authorName = 'You';
+                } else {
+                    const authorProfile = players.find(p => p.user_id === authorId)?.profiles;
+                    authorName = authorProfile?.username || 'Unknown';
+                }
+
+                setStealData({
+                    stealerName: 'You',
+                    stealerAvatar: myProfile?.avatar_url,
+                    authorName: authorName
+                });
+            }
 
 
             setInput('');
@@ -912,6 +988,8 @@ export function useGameLogic(gameId: string) {
         justSolvedData,
         startRandomGame,
         broadcastTyping,
-        typingUsers
+        typingUsers,
+        stealData,
+        setStealData
     };
 }

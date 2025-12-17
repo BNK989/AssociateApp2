@@ -45,7 +45,9 @@ export default function GameRoom() {
         justSolvedData,
         startRandomGame,
         broadcastTyping,
-        typingUsers
+        typingUsers,
+        stealData,
+        setStealData
     } = useGameLogic(gameId!);
 
     // Notification Logic
@@ -115,6 +117,8 @@ export default function GameRoom() {
                 onStartRandom={startRandomGame}
                 typingUsers={typingUsers}
                 players={players}
+                stealData={stealData}
+                onStealAnimationComplete={() => setStealData(null)}
             />
 
             <GameInput
