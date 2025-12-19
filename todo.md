@@ -96,7 +96,6 @@
 
 # Pre-launch
 
-
 ### user feed back (Gerrit)
 - [x] remove solved toast
 - [x] when starting to solve provide instructions: "You started solve mode, try to guess the messages"
@@ -122,30 +121,29 @@
 - [ ] add an option to remove a player from the game by other active players: once a player is not responding a long time (set in gameConfig.ts), allow other active players to remove a non-responding player e.g., "[player-name] has not responded for [xx], you can remove them from the game to continue playing" then similar to how we confirm to switch to solve mode we should confirm the player removal by promting all the users to confirm the action (counting 10 seconds then auto confirming). as when a player leaves by themselve,add a system notification in the chat "player [player-name] was removed"
 
 ## Phase 15: 
-- [ ] limit number of active games a user can have set limit in gameConfig.ts to 5 if a player has reached this limit show popup alert letting them archive games and prevent them from creating a new game. this needs to be handled gracefully to prevent the user from being stuck
+- [ ] limit number of active games a user can have set limit in gameConfig.ts to 10 if a player has reached this limit show popup alert letting them archive games and prevent them from creating a new game. this needs to be handled gracefully to prevent the user from being stuck
 - [ ] rename the current homepage to lobby (i.e. /lobby) and add a new homepage that show the current active games and a CTA to create a new game (i.e. /) after a user log in move them to the lobby page
 - [ ] create an option for free chatroom, where a player can create a game and invite anyone to join, the game is then published to the lobby where anyone can join it (up to 5 players set in gameConfig.ts)
 
 ## Phase 16: review and KPIs
 - [ ] proffesional code reviewer to check site reliability and security
-- [ ] add a way for users to provide feedback and logs on the game
 - [ ] add analytics to the game, KPIs
 - [ ] get domain name
 - [ ] get ssl certificate
+- [x] add a way for users to provide feedback and logs on the game
 
 ## Phase 16.5: posthog events
 - [ ] add posthog events for game status change (e.g. texting, solving, completed, archived, deleted)
 
 ## Phase 16.6: db corn job verification
-- [ ] check corn job is running and verify it is running correctly cleanning old games and guest users
+- [x] check corn job is running and verify it is running correctly cleanning old games and guest users - **Gamemaster Reference: at corn-jobs.md**
 
 ## Phase 17: marketing
 - [ ] add subscibe for email updates
 - [ ] add social media links
 - [ ] add social media sharing
 
-## Phase 18: SEO
-- [ ] add SEO to the game
+## Phase 18: - Adding SEO to the game
 - [ ] add meta tags to the game
 - [ ] add title to the game
 - [ ] add description to the game
@@ -160,10 +158,14 @@
 - [ ] allow quick return to game
 - [ ] add a info icon in this screen that opens the a popup with game rules and instructions
 
+# new feuture: daily challenge - to get players hooked
+each day the gamemaster would upload a daily chain (lets say of 25 messages) the players would get the list and go into the game in solve mode, where they have to guess back the words one by one. 
+example chain: engineering, design, blueprint, component, part, fastener, bolt, screw, rivet, tool, wrench, mechanism, gear, sprocket, axle, bearing, cam, spring, lever, pulley, valve, cylinder, piston, crankshaft, engine, turbine, chassis, circuit, robot, automation, assembly, fabrication, maintenance, repair, inspection
+
+----------------
 
 ## fixes
 - [ ] improve layout on mobile - messages scroll out of view (Gerrit reported via iphone)
-- [ ] re-add the ::[cipher]:: (dubble colon format) for the cipher appears in the chat (no hints given) to better indicate that the user is viewing the cipher and not the message
 - [ ] fix the admin get hints option to work 
 - [ ] when game is generated sometimes the create game button does not work, the create button is stuck, after selecting game type (i.e short, medium etc.) - fix this
 - [ ] when resuming a game in solve mode there is a toast message letting you know your in solve mode - this is unneccessary and shoule not appear (it happends after a resuming player send a guess)
@@ -173,11 +175,12 @@
 - [x] add notifications to the game - so that players are notified when its their turn and keeps them engaged 
 - [x] UI: the x button on toast notifications appear complitly black in hover mode, fix this
 - [x] bug: the placeholder text in the input field does not update as quickly (to indicate that the turns have switched)
+- [ ] ~~re-add the ::[cipher]:: (dubble colon format) for the cipher appears in the chat (no hints given) to better indicate that the user is viewing the cipher and not the message~~
 
 ## additions and do later
 - [ ] guestmode: for guest sign up we'll need to add captcha to the sign up form
 - [ ] find a way to keep the player more engaged during the game, the issue is mostly while the players are waiting their turn  
-- [ ] update stealAnimation.tsx to be more flexible and allow for different types of messages to be animated call it zoomAnimation.tsx
+- [ ] update stealAnimation.tsx to be more flexible and allow for different types of messages to be animated we can call it zoomAnimation.tsx
 - [ ] after exosting the hints change the hint button to a giveup button to allow users to just get the word for no points (reset the streak counter)
 - [ ] add leaderboard to the game
 - [ ] add NextStep.js to the project to aid in onboarding 

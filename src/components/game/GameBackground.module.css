@@ -1,0 +1,151 @@
+@keyframes move {
+    100% {
+        transform: translate3d(0, 0, 1px) rotate(360deg);
+    }
+}
+
+.background {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    overflow: hidden;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.ball {
+    position: absolute;
+    border-radius: 50%;
+    animation: move linear infinite;
+    border: none;
+    outline: none;
+    appearance: none;
+    box-shadow: none;
+}
+
+.ball:nth-child(odd) {
+    color: #4f46e5;
+    /* Indigo-600 */
+}
+
+.ball:nth-child(even) {
+    color: #9333ea;
+    /* Purple-600 */
+}
+
+/* 
+   Variations:
+   - Size (width/height): Small (10vmin), Medium (20vmin), Large (35vmin)
+   - Speed (animation-duration): Fast (25-35s), Medium (40-55s), Slow (60-90s)
+   - Blur (box-shadow split): Increased from ~5vmin to ~10-15vmin for "even more blur"
+*/
+
+/* Ball 1: Large & Slow */
+.ball:nth-child(1) {
+    width: 35vmin;
+    height: 35vmin;
+    top: 77%;
+    left: 88%;
+    animation-duration: 120s;
+    animation-delay: -3s;
+    /* Slower */
+    transform-origin: 16vw -2vh;
+    box-shadow: 65vmin 0 15vmin currentColor;
+    /* filter: opacity(0.65); */
+    /* Increased blur */
+}
+
+/* Ball 2: Medium & Medium Speed */
+.ball:nth-child(2) {
+    width: 20vmin;
+    height: 20vmin;
+    top: 42%;
+    left: 2%;
+    animation-duration: 110s;
+    animation-delay: -29s;
+    transform-origin: -19vw 21vh;
+    box-shadow: -65vmin 0 12vmin currentColor;
+    filter: opacity(0.65);
+}
+
+/* Ball 3: Small & Fast */
+.ball:nth-child(3) {
+    width: 12vmin;
+    height: 12vmin;
+    top: 28%;
+    left: 18%;
+    animation-duration: 90s;
+    /* Faster */
+    animation-delay: -8s;
+    transform-origin: -22vw 3vh;
+    box-shadow: 65vmin 0 10vmin currentColor;
+    filter: opacity(0.75);
+}
+
+/* Ball 4: Large & Slow */
+.ball:nth-child(4) {
+    width: 40vmin;
+    height: 40vmin;
+    top: 50%;
+    left: 79%;
+    animation-duration: 180s;
+    /* Very slow */
+    animation-delay: -21s;
+    transform-origin: -17vw -6vh;
+    box-shadow: 65vmin 0 18vmin currentColor;
+    filter: opacity(0.80);
+}
+
+/* Ball 5: Small & Fast */
+.ball:nth-child(5) {
+    width: 15vmin;
+    height: 15vmin;
+    top: 46%;
+    left: 15%;
+    animation-duration: 60s;
+    animation-delay: -40s;
+    transform-origin: 4vw 0vh;
+    box-shadow: -65vmin 0 10vmin currentColor;
+    filter: opacity(0.6);
+}
+
+/* Ball 6: Medium */
+.ball:nth-child(6) {
+    width: 22vmin;
+    height: 22vmin;
+    top: 77%;
+    left: 16%;
+    animation-duration: 90s;
+    animation-delay: -10s;
+    transform-origin: 18vw 4vh;
+    box-shadow: 65vmin 0 12vmin currentColor;
+    filter: opacity(0.5);
+}
+
+/* Ball 7: Large & Slow */
+.ball:nth-child(7) {
+    width: 30vmin;
+    height: 30vmin;
+    top: 22%;
+    left: 17%;
+    animation-duration: 140s;
+    animation-delay: -6s;
+    transform-origin: 1vw -23vh;
+    box-shadow: -65vmin 0 15vmin currentColor;
+    filter: opacity(0.75);
+}
+
+/* Ball 8: Small */
+.ball:nth-child(8) {
+    width: 18vmin;
+    height: 18vmin;
+    top: 41%;
+    left: 47%;
+    animation-duration: 80s;
+    animation-delay: -28s;
+    transform-origin: 25vw -3vh;
+    box-shadow: 65vmin 0 11vmin currentColor;
+    filter: opacity(0.45);
+}
