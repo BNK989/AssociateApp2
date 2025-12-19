@@ -7,6 +7,7 @@ import { DynamicToaster } from '@/components/DynamicToaster';
 import { SiteFooter } from '@/components/SiteFooter';
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { PostHogProvider } from "@/app/providers/PostHogProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -52,15 +53,17 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>
-            <NavBar />
-            <main className="flex-1 w-full">
-              {children}
-            </main>
-            <SiteFooter />
-            <DynamicToaster />
-            <ServiceWorkerRegister />
-          </AuthProvider>
+          <PostHogProvider>
+            <AuthProvider>
+              <NavBar />
+              <main className="flex-1 w-full">
+                {children}
+              </main>
+              <SiteFooter />
+              <DynamicToaster />
+              <ServiceWorkerRegister />
+            </AuthProvider>
+          </PostHogProvider>
         </ThemeProvider>
       </body>
     </html>

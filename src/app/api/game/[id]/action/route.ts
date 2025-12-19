@@ -3,7 +3,8 @@ import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import { GAME_CONFIG } from '@/lib/gameConfig';
-import { calculateNextTurnUserId } from '@/lib/gameLogic'; // We might need to move this or duplicate logic if it's not server-ready, but let's assume util usage or implement inline.
+import { calculateNextTurnUserId } from '@/lib/gameLogic';
+import { getPostHogServer } from '@/app/posthog-server'; // We might need to move this or duplicate logic if it's not server-ready, but let's assume util usage or implement inline.
 // Actually, calculateNextTurnUserId is in lib/gameLogic, let's verify if that file is clean for server usage. It usually is.
 
 
@@ -78,6 +79,27 @@ export async function POST(
                         solving_started_at: new Date().toISOString()
                     })
                     .eq('id', gameId);
+
+                const posthog = getPostHogServer();
+                if (posthog) {
+                    const { count: messageCount } = await supabase
+                        .from('messages')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('game_id', gameId)
+                        .eq('type', 'text');
+
+
+                    posthog.capture({
+                        distinctId: user.id,
+                        event: 'game_status_change',
+                        properties: {
+                            game_id: gameId,
+                            status: 'solving',
+                            messages_count: messageCount || 0
+                        }
+                    });
+                    await posthog.flush();
+                }
             }
         } else if (action === 'leave_game') {
             const { error: leaveError } = await supabase.rpc('player_leave_game', { p_game_id: gameId });
@@ -106,6 +128,21 @@ export async function POST(
                 })
                 .eq('id', gameId);
             if (gameError) throw gameError;
+
+            const posthog = getPostHogServer();
+            if (posthog) {
+
+                posthog.capture({
+                    distinctId: user.id,
+                    event: 'game_status_change',
+                    properties: {
+                        game_id: gameId,
+                        status: 'texting',
+                        messages_count: 0
+                    }
+                });
+                await posthog.flush();
+            }
 
             // 2. Reset Messages
             const { error: msgError } = await supabase
@@ -166,6 +203,27 @@ export async function POST(
                             solving_started_at: new Date().toISOString()
                         })
                         .eq('id', gameId);
+
+                    const posthog = getPostHogServer();
+                    if (posthog) {
+                        const { count: messageCount } = await supabase
+                            .from('messages')
+                            .select('*', { count: 'exact', head: true })
+                            .eq('game_id', gameId)
+                            .eq('type', 'text');
+
+
+                        posthog.capture({
+                            distinctId: user.id,
+                            event: 'game_status_change',
+                            properties: {
+                                game_id: gameId,
+                                status: 'solving',
+                                messages_count: messageCount || 0
+                            }
+                        });
+                        await posthog.flush();
+                    }
                 } else {
                     await supabase
                         .from('games')
@@ -270,6 +328,27 @@ export async function POST(
 
                 if (unsolvedCount === 0) {
                     await supabase.from('games').update({ status: 'completed' }).eq('id', gameId);
+
+                    const posthog = getPostHogServer();
+                    if (posthog) {
+                        const { count: totalMessageCount } = await supabase
+                            .from('messages')
+                            .select('*', { count: 'exact', head: true })
+                            .eq('game_id', gameId)
+                            .eq('type', 'text');
+
+
+                        posthog.capture({
+                            distinctId: user.id,
+                            event: 'game_status_change',
+                            properties: {
+                                game_id: gameId,
+                                status: 'completed',
+                                messages_count: totalMessageCount || 0
+                            }
+                        });
+                        await posthog.flush();
+                    }
                 } else {
                     // CRITICAL: Reset solving timer for NEXT turn
                     await supabase.from('games').update({ solving_started_at: new Date().toISOString() }).eq('id', gameId);

@@ -121,27 +121,25 @@
 - [ ] add an option to remove a player from the game by other active players: once a player is not responding a long time (set in gameConfig.ts), allow other active players to remove a non-responding player e.g., "[player-name] has not responded for [xx], you can remove them from the game to continue playing" then similar to how we confirm to switch to solve mode we should confirm the player removal by promting all the users to confirm the action (counting 10 seconds then auto confirming). as when a player leaves by themselve,add a system notification in the chat "player [player-name] was removed"
 
 ## Phase 15: 
+- [ ] add restriction for guest users to not be able to use any AI features (hint #3)
 - [ ] limit number of active games a user can have set limit in gameConfig.ts to 10 if a player has reached this limit show popup alert letting them archive games and prevent them from creating a new game. this needs to be handled gracefully to prevent the user from being stuck
 - [ ] rename the current homepage to lobby (i.e. /lobby) and add a new homepage that show the current active games and a CTA to create a new game (i.e. /) after a user log in move them to the lobby page
 - [ ] create an option for free chatroom, where a player can create a game and invite anyone to join, the game is then published to the lobby where anyone can join it (up to 5 players set in gameConfig.ts)
 
-## Phase 16: review and KPIs
+## Phase 16: posthog events & review and KPIs
+- [ ] add posthog events for game status change (e.g. texting, solving, completed, archived, deleted)
 - [ ] proffesional code reviewer to check site reliability and security
 - [ ] add analytics to the game, KPIs
 - [ ] get domain name
 - [ ] get ssl certificate
 - [x] add a way for users to provide feedback and logs on the game
 
-## Phase 16.5: posthog events
-- [ ] add posthog events for game status change (e.g. texting, solving, completed, archived, deleted)
-
 ## Phase 16.6: db corn job verification
 - [x] check corn job is running and verify it is running correctly cleanning old games and guest users - **Gamemaster Reference: at corn-jobs.md**
 
-## Phase 17: marketing
-- [ ] add subscibe for email updates
-- [ ] add social media links
-- [ ] add social media sharing
+## Phase 17: mid turn events 
+### new logic, while its not the player's turn, to keep the player engaged, let them guess the next message and if they guess correctly, they get a bonus point and some confetti animation
+
 
 ## Phase 18: - Adding SEO to the game
 - [ ] add meta tags to the game
@@ -150,6 +148,11 @@
 - [ ] add keywords to the game
 - [ ] add Open Graph tags to the game
 - [ ] add Twitter Card tags to the game
+
+## Phase 18.5: marketing
+- [ ] add subscibe for email updates
+- [ ] add social media links
+- [ ] add social media sharing
 
 ## Phase 19: game info screen (popup)
 - [ ] add a game info screen that opens when clicking on the game header in the game room (clicking anywhere other than the back button)

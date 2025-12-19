@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { GAME_MODES } from '@/lib/gameConfig';
 import { Label } from '@/components/ui/label';
 import GameCard from './GameCard';
+import { usePostHog } from 'posthog-js/react';
 
 // Match the type in GameCard.tsx
 type Game = {
@@ -48,6 +49,7 @@ export default function Lobby() {
     const { user } = useAuth();
     const { isAdmin } = useAdmin();
     const router = useRouter();
+    const posthog = usePostHog();
 
     const [activeGames, setActiveGames] = useState<Game[]>([]);
     const [completedGames, setCompletedGames] = useState<Game[]>([]);
@@ -184,6 +186,12 @@ export default function Lobby() {
                 });
 
             if (playerError) throw playerError;
+
+            posthog.capture('game_created', {
+                game_id: game.id,
+                status: 'texting', // Keeping status context might be useful, or just rely on event name
+                messages_count: 0
+            });
 
             setIsCreateOpen(false);
             router.push(`/game/${game.id}?action=invite`);

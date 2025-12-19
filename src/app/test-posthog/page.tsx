@@ -3,8 +3,10 @@
 import { useState, useEffect } from "react";
 import posthog from "posthog-js";
 import { Button } from "@/components/ui/button";
+import { useAdmin } from "@/hooks/useAdmin";
 
 export default function TestPostHog() {
+    const { isAdmin, loading } = useAdmin();
     const [isReady, setIsReady] = useState(false);
     const [distinctId, setDistinctId] = useState<string>("");
 
@@ -29,6 +31,19 @@ export default function TestPostHog() {
         posthog.capture("manual_test_event", { test: true });
         alert("Event captured! Check 'Activity' in PostHog.");
     };
+
+    if (loading) {
+        return <div className="p-8">Loading...</div>;
+    }
+
+    if (!isAdmin) {
+        return (
+            <div className="p-8 flex flex-col items-center justify-center min-h-[50vh] space-y-4">
+                <h1 className="text-2xl font-bold text-red-500">Unauthorized</h1>
+                <p className="text-muted-foreground">Only administrators can view this page.</p>
+            </div>
+        );
+    }
 
     return (
         <div className="p-8 max-w-2xl mx-auto space-y-6">
