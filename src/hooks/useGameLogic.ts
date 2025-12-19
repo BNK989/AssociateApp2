@@ -64,7 +64,7 @@ export type Player = {
 };
 
 export function useGameLogic(gameId: string) {
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const router = useRouter();
     const [game, setGame] = useState<GameState | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -90,7 +90,7 @@ export function useGameLogic(gameId: string) {
     const typingTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map());
     const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
-    const fetchGameData = async () => {
+    const fetchGameData = async (retryCount = 0) => {
         if (!gameId) return;
 
         try {
@@ -122,7 +122,19 @@ export function useGameLogic(gameId: string) {
 
         } catch (error) {
             console.error('Error fetching game data:', error);
+
+            // Retry logic for initial load
+            if (!game && retryCount < 2) {
+                console.log(`Retrying fetch... (${retryCount + 1}/2)`);
+                setTimeout(() => fetchGameData(retryCount + 1), 1000);
+                return; // meaningful return to skip setting loading false yet
+            }
             // toast.error("Failed to sync game data"); // Silent fail on polling is better
+        } finally {
+            // Only stop loading if we are not retrying
+            if (game || retryCount >= 2) {
+                setLoading(false);
+            }
         }
     };
 
@@ -366,7 +378,18 @@ export function useGameLogic(gameId: string) {
     const lastActionTime = useRef(0);
 
     useEffect(() => {
-        if (!user || !gameId) return;
+        // 1. Wait for Auth to Initialize
+        if (authLoading) return;
+
+        // 2. Handle Unauthenticated State
+        if (!user) {
+            setLoading(false); // Stop loading so UI can show specific error or redirect
+            return;
+        }
+
+        if (!gameId) return;
+
+        // 3. Start Game Data Fetch & Subscription
         fetchGameData();
         const cleanupSubscription = subscribeToGame();
 
@@ -383,7 +406,7 @@ export function useGameLogic(gameId: string) {
             cleanupSubscription();
             clearInterval(pollInterval);
         };
-    }, [user, gameId]);
+    }, [user, gameId, authLoading]);
 
 
 
