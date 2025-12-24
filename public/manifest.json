@@ -1,6 +1,7 @@
 {
-    "name": "Associate Game 2.0",
+    "name": "Associate Game",
     "short_name": "Associate",
+    "lang": "en",
     "description": "A multiplayer word association game.",
     "start_url": "/",
     "display": "standalone",

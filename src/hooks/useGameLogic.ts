@@ -60,6 +60,7 @@ export type Player = {
     profiles?: {
         username: string;
         avatar_url: string;
+        avatar_url: string;
     };
 };
 
@@ -181,7 +182,7 @@ export function useGameLogic(gameId: string) {
 
                 typingTimeouts.current.set(userId, timeout);
             })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, async (payload) => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'messages', filter: `game_id=eq.${gameId}` }, async (payload) => {
                 if (payload.eventType === 'INSERT') {
                     // Clear typing status for the message sender immediately
                     const senderId = payload.new.user_id;

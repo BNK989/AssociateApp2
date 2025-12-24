@@ -142,6 +142,11 @@ export function InfoScreen({ game, players, user, onClose }: InfoScreenProps) {
                                                 <span>Game Instructions</span>
                                             </DialogTitle>
                                         </DialogHeader>
+
+                                        <div className="pb-4">
+
+                                        </div>
+
                                         {instructions.map((item, i) => (
                                             <div key={i} className="space-y-1">
                                                 <h4 className="font-bold text-sm text-gray-900 dark:text-gray-100">{item.title}</h4>
