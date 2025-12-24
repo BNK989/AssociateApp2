@@ -120,13 +120,21 @@
 - [x] add a system notification also when players join the game i.e. "player [player-name] joined"
 - [ ] add an option to remove a player from the game by other active players: once a player is not responding a long time (set in gameConfig.ts), allow other active players to remove a non-responding player e.g., "[player-name] has not responded for [xx], you can remove them from the game to continue playing" then similar to how we confirm to switch to solve mode we should confirm the player removal by promting all the users to confirm the action (counting 10 seconds then auto confirming). as when a player leaves by themselve,add a system notification in the chat "player [player-name] was removed"
 
-## Phase 15: 
+## Phase 15: game info screen (popup)
+- [x] add a game info screen that opens when clicking on the game header in the game room (clicking anywhere other than the back button)
+- [x] score info on the top of the screen
+- [x] players info in the game; including their avatar and name
+- [x] allow quick return to game
+- [x] add a info icon in this screen that opens the a popup with game rules and instructions
+
+
+## Phase 16: 
 - [ ] add restriction for guest users to not be able to use any AI features (hint #3)
 - [ ] limit number of active games a user can have set limit in gameConfig.ts to 10 if a player has reached this limit show popup alert letting them archive games and prevent them from creating a new game. this needs to be handled gracefully to prevent the user from being stuck
 - [ ] rename the current homepage to lobby (i.e. /lobby) and add a new homepage that show the current active games and a CTA to create a new game (i.e. /) after a user log in move them to the lobby page
 - [ ] create an option for free chatroom, where a player can create a game and invite anyone to join, the game is then published to the lobby where anyone can join it (up to 5 players set in gameConfig.ts)
 
-## Phase 16: posthog events & review and KPIs
+## Phase 17: posthog events & review and KPIs
 - [ ] add posthog events for game status change (e.g. texting, solving, completed, archived, deleted)
 - [ ] proffesional code reviewer to check site reliability and security
 - [ ] add analytics to the game, KPIs
@@ -134,14 +142,14 @@
 - [ ] get ssl certificate
 - [x] add a way for users to provide feedback and logs on the game
 
-## Phase 16.6: db corn job verification
+## Phase 17.6: db corn job verification
 - [x] check corn job is running and verify it is running correctly cleanning old games and guest users - **Gamemaster Reference: at corn-jobs.md**
 
-## Phase 17: mid turn events 
+## Phase 18: mid turn events 
 ### new logic, while its not the player's turn, to keep the player engaged, let them guess the next message and if they guess correctly, they get a bonus point and some confetti animation
 
 
-## Phase 18: - Adding SEO to the game
+## Phase 19: - Adding SEO to the game
 - [ ] add meta tags to the game
 - [ ] add title to the game
 - [ ] add description to the game
@@ -149,17 +157,11 @@
 - [ ] add Open Graph tags to the game
 - [ ] add Twitter Card tags to the game
 
-## Phase 18.5: marketing
+## Phase 19.5: marketing
 - [ ] add subscibe for email updates
 - [ ] add social media links
 - [ ] add social media sharing
 
-## Phase 19: game info screen (popup)
-- [ ] add a game info screen that opens when clicking on the game header in the game room (clicking anywhere other than the back button)
-- [ ] add score info on the top of the screen
-- [ ] add players in the game to the screen including their avatar and name
-- [ ] allow quick return to game
-- [ ] add a info icon in this screen that opens the a popup with game rules and instructions
 
 # new feuture: daily challenge - to get players hooked
 each day the gamemaster would upload a daily chain (lets say of 25 messages) the players would get the list and go into the game in solve mode, where they have to guess back the words one by one. 

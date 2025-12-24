@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { InvitePlayer } from '@/components/InvitePlayer';
 import { GameState, Player, Message } from '@/hooks/useGameLogic';
 import { Progress } from "@/components/ui/progress";
+import { InfoScreen } from './InfoScreen';
 
 type GameHeaderProps = {
     game: GameState;
@@ -144,8 +145,10 @@ export function GameHeader({
 
     const [isProposing, setIsProposing] = React.useState(false);
     const [showLeaveConfirm, setShowLeaveConfirm] = React.useState(false); // New State
+    const [showInfo, setShowInfo] = React.useState(false);
 
-    const handleBackClick = () => {
+    const handleBackClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
         // Simple confirm if game is active
         if (game.status !== 'completed' && game.status !== 'lobby') {
             setShowLeaveConfirm(true);
@@ -191,7 +194,10 @@ export function GameHeader({
     };
 
     return (
-        <header className={`relative shrink-0 z-20 w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 transition-colors duration-500 ${isFeverMode ? 'dark:bg-orange-950/30' : ''}`}>
+        <header
+            className={`relative shrink-0 z-20 w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 transition-colors duration-500 cursor-pointer ${isFeverMode ? 'dark:bg-orange-950/30' : ''}`}
+            onClick={() => setShowInfo(true)}
+        >
             {/* Main Header Row */}
             <div className="p-2 flex justify-between items-center">
                 <div className="flex items-center gap-3">
@@ -254,7 +260,9 @@ export function GameHeader({
                     {game.status !== 'solving' && (
                         <>
                             {messageCount < 5 ? (
-                                <InvitePlayer gameId={game.id} players={players} />
+                                <div onClick={(e) => e.stopPropagation()}>
+                                    <InvitePlayer gameId={game.id} players={players} />
+                                </div>
                             ) : (
                                 <button
                                     onClick={handlePropose}
@@ -359,6 +367,19 @@ export function GameHeader({
                                 </button>
                             </div>
                         </div>
+                    </div>
+                )
+            }
+            {/* Info Screen Overlay */}
+            {
+                showInfo && (
+                    <div onClick={(e) => e.stopPropagation()}>
+                        <InfoScreen
+                            game={game}
+                            players={players}
+                            user={user}
+                            onClose={() => setShowInfo(false)}
+                        />
                     </div>
                 )
             }
