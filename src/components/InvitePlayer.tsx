@@ -20,7 +20,7 @@ type Profile = {
 };
 
 export function InvitePlayer({ gameId, players }: { gameId: string; players: Player[] }) {
-    const { user } = useAuth();
+    const { user, profile } = useAuth();
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<Profile[]>([]);
@@ -172,7 +172,10 @@ export function InvitePlayer({ gameId, players }: { gameId: string; players: Pla
                                 variant="outline"
                                 className="flex-1 gap-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-purple-500 hover:text-purple-500 dark:hover:text-purple-400"
                                 onClick={() => {
-                                    const link = `${window.location.origin}/join/${gameId}`;
+                                    let link = `${window.location.origin}/join/${gameId}`;
+                                    if (profile?.username) {
+                                        link += `?invitedBy=${encodeURIComponent(profile.username)}`;
+                                    }
                                     navigator.clipboard.writeText(link);
                                     toast.success("Link copied to clipboard!");
                                 }}
@@ -186,7 +189,10 @@ export function InvitePlayer({ gameId, players }: { gameId: string; players: Pla
                                     variant="secondary"
                                     className="flex-1 gap-2"
                                     onClick={() => {
-                                        const link = `${window.location.origin}/join/${gameId}`;
+                                        let link = `${window.location.origin}/join/${gameId}`;
+                                        if (profile?.username) {
+                                            link += `?invitedBy=${encodeURIComponent(profile.username)}`;
+                                        }
                                         navigator.share({
                                             title: 'Join my game!',
                                             text: 'Come play with me!',

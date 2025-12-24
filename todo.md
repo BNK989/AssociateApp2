@@ -117,7 +117,7 @@
 - [x] when a player leaves the game show a system notification in the chat "player [player-name] left the game" and remove their turn and avatar from the game top bar (keeping messages they've sent) and allowing other players to continue texting
 - [x] in guessing mode when the messsage author has left the game simply allow free for all imidiatly
 - [x] when a player clicks back at the top of the game page IN AN ACTIVE GAME show a dialog to confirm if they want to leave the game e.g. leave the game? you will not be able to return to this game 
-- [ ] add a system notification also when players join the game i.e. "player [player-name] joined"
+- [x] add a system notification also when players join the game i.e. "player [player-name] joined"
 - [ ] add an option to remove a player from the game by other active players: once a player is not responding a long time (set in gameConfig.ts), allow other active players to remove a non-responding player e.g., "[player-name] has not responded for [xx], you can remove them from the game to continue playing" then similar to how we confirm to switch to solve mode we should confirm the player removal by promting all the users to confirm the action (counting 10 seconds then auto confirming). as when a player leaves by themselve,add a system notification in the chat "player [player-name] was removed"
 
 ## Phase 15: 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthProvider';
 import { Loader2 } from 'lucide-react';
@@ -10,6 +10,9 @@ import { toast } from "sonner";
 export default function JoinGamePage() {
     const params = useParams();
     const gameId = params.gameId as string;
+    const searchParams = useSearchParams();
+    const invitedBy = searchParams.get('invitedBy');
+
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
     const [status, setStatus] = useState('Checking credentials...');
@@ -18,11 +21,11 @@ export default function JoinGamePage() {
     useEffect(() => {
         if (authLoading) return;
 
+        // If not logged in, we stay on this page to show the invite card
+        // unless there is no invitedBy param (legacy link), in which case maybe we still show a generic invite?
+        // Let's settle on: Always show invite card if not logged in.
         if (!user) {
-            // Store the return URL and redirect to login (which is at root /)
-            const nextUrl = `/join/${gameId}`;
-            // Redirect to root with next param
-            router.push(`/?next=${encodeURIComponent(nextUrl)}`);
+            setStatus('Waiting for login...');
             return;
         }
 
@@ -42,7 +45,7 @@ export default function JoinGamePage() {
                 .select('username')
                 .eq('id', user.id)
                 .single();
-            
+
             const username = profile?.username || 'Unknown Player';
 
             // 1. Check if already a player
@@ -68,7 +71,7 @@ export default function JoinGamePage() {
                         .eq('user_id', user.id);
 
                     if (rejoinError) throw rejoinError;
-                    
+
                     // Insert Rejoin System Message
                     await supabase.from('messages').insert({
                         game_id: gameId,
@@ -127,6 +130,53 @@ export default function JoinGamePage() {
             setTimeout(() => router.push('/'), 3000);
         }
     };
+
+    if (authLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+                <Loader2 className="w-12 h-12 animate-spin text-purple-600" />
+            </div>
+        );
+    }
+
+    // Unauthenticated State - Show Invitation
+    if (!user) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-4">
+                <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl max-w-md w-full text-center space-y-6">
+                    <div className="mx-auto w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center text-3xl">
+                        ✉️
+                    </div>
+
+                    <div className="space-y-2">
+                        <h1 className="text-2xl font-bold">Game Invitation</h1>
+                        <p className="text-gray-600 dark:text-gray-400">
+                            {invitedBy
+                                ? <span>You've been invited to play with <span className="font-semibold text-purple-600 dark:text-purple-400">{invitedBy}</span>!</span>
+                                : "You've been invited to join a game of Associate."
+                            }
+                        </p>
+                    </div>
+
+                    <div className="space-y-3 pt-2">
+                        <button
+                            onClick={() => {
+                                const nextUrl = `/join/${gameId}`;
+                                router.push(`/?next=${encodeURIComponent(nextUrl)}#auth-form`);
+                            }}
+                            className="w-full py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-semibold transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-purple-500/25"
+                        >
+                            Login to Play
+                        </button>
+
+                        <p className="text-xs text-gray-500">
+                            Don't have an account? You can play as a guest!
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
