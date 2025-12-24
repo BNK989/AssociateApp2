@@ -213,7 +213,7 @@ export function ChatArea({
                 ref={containerRef}
                 className="relative z-10 flex-1 overflow-y-auto p-4 space-y-4 flex flex-col"
             >
-                {messages.length === 0 && onStartRandom && (
+                {messages.filter(m => m.type !== 'system').length === 0 && onStartRandom && (
                     <div className="flex-1 flex flex-col items-center justify-center gap-4 min-h-[50vh] animate-in fade-in zoom-in duration-500">
                         <div className="text-center space-y-2 opacity-80">
                             <p className="text-xl font-bold text-gray-700 dark:text-gray-300">Start the Game!</p>
@@ -263,9 +263,11 @@ export function ChatArea({
                     return (
                         <div key={msg.id}>
                             {msg.type === 'system' ? (
-                                <div className="flex justify-center my-4 animate-in fade-in zoom-in duration-300">
+                                <div className="flex justify-center animate-in fade-in zoom-in duration-300">
                                     <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700 shadow-sm">
-                                        {msg.content}
+                                        {msg.user_id === user?.id && msg.content.includes('joined the game')
+                                            ? 'You joined the game'
+                                            : msg.content}
                                     </span>
                                 </div>
                             ) : (

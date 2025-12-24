@@ -807,7 +807,9 @@ export function useGameLogic(gameId: string) {
     };
 
     const startRandomGame = async () => {
-        if (!game || !user || messages.length > 0 || sending) return;
+        // Allow starting if there are NO text messages (ignore system messages)
+        const hasTextMessages = messages.some(m => m.type !== 'system');
+        if (!game || !user || hasTextMessages || sending) return;
 
         const randomWord = COMMON_WORDS[Math.floor(Math.random() * COMMON_WORDS.length)];
 

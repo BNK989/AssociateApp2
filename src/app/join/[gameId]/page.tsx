@@ -36,6 +36,15 @@ export default function JoinGamePage() {
         setStatus('Joining game...');
 
         try {
+            // Fetch profile for username
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('username')
+                .eq('id', user.id)
+                .single();
+            
+            const username = profile?.username || 'Unknown Player';
+
             // 1. Check if already a player
             const { data: existingPlayer, error: checkError } = await supabase
                 .from('game_players')
@@ -59,6 +68,17 @@ export default function JoinGamePage() {
                         .eq('user_id', user.id);
 
                     if (rejoinError) throw rejoinError;
+                    
+                    // Insert Rejoin System Message
+                    await supabase.from('messages').insert({
+                        game_id: gameId,
+                        user_id: user.id,
+                        content: `Player ${username} joined the game`,
+                        type: 'system',
+                        cipher_length: 0,
+                        is_solved: true // System messages are "solved" by default implicitly or just visible
+                    });
+
                     toast.success("Welcome back!");
                 } else {
                     toast.info("You are already in this game.");
@@ -82,6 +102,16 @@ export default function JoinGamePage() {
                         throw joinError;
                     }
                 } else {
+                    // Insert Join System Message
+                    await supabase.from('messages').insert({
+                        game_id: gameId,
+                        user_id: user.id,
+                        content: `Player ${username} joined the game`, // Standard format
+                        type: 'system',
+                        cipher_length: 0,
+                        is_solved: true
+                    });
+
                     toast.success("Joined game successfully!");
                 }
             }
