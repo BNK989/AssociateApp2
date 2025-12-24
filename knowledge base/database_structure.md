@@ -15,6 +15,7 @@ Stores user profile information, linked to the Supabase Auth `users` table.
 | `settings` | jsonb | `{"theme": "dark", "language": "en", "audio_volume": 1.0}` | User preferences |
 | `updated_at` | timestamptz | `now()` | Last update timestamp |
 | `is_admin` | boolean | `false` | Admin status flag |
+| `has_seen_onboarding` | boolean | `false` | Has the user seen the onboarding tour? |
 
 ### 2. games
 Stores information about game instances.

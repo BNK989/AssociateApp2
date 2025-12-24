@@ -22,6 +22,6 @@ export default withPostHogConfig(nextConfig, {
   envId: '266458',
   host: 'https://us.i.posthog.com',
   sourcemaps: {
-    enabled: true,
+    enabled: !!process.env.SOURCE_MAP_UPLOAD,
   },
 });

@@ -195,8 +195,7 @@ export function GameHeader({
 
     return (
         <header
-            className={`relative shrink-0 z-20 w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 transition-colors duration-500 cursor-pointer ${isFeverMode ? 'dark:bg-orange-950/30' : ''}`}
-            onClick={() => setShowInfo(true)}
+            className={`relative shrink-0 z-20 w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 transition-colors duration-500 ${isFeverMode ? 'dark:bg-orange-950/30' : ''}`}
         >
             {/* Main Header Row */}
             <div className="p-2 flex justify-between items-center">
@@ -210,7 +209,10 @@ export function GameHeader({
                     </button>
 
                     {/* Avatar Stack */}
-                    <div className="flex items-center -space-x-2 mr-2">
+                    <div
+                        className="flex items-center -space-x-2 mr-2 cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => setShowInfo(true)}
+                    >
                         {sortedPlayers.map((player) => (
                             <Avatar key={player.user_id} className={`w-8 h-8 border-2 border-white dark:border-gray-900 ${player.user_id === activePlayerId ? 'z-10 ring-2 ring-green-500' : ''} ${player.has_left ? 'opacity-40 grayscale' : ''}`}>
                                 <AvatarImage src={player.profiles?.avatar_url} />
@@ -223,7 +225,10 @@ export function GameHeader({
                 </div>
 
                 {/* Score & Bank (Updated) */}
-                <div className="flex items-center gap-4 mx-2">
+                <div
+                    className="flex items-center gap-4 mx-2 cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => setShowInfo(true)}
+                >
                     {/* Bank / Pot */}
                     <div className="flex items-center gap-1.5 text-purple-600 dark:text-purple-400 font-bold opacity-80 scale-90">
                         <Landmark className="w-3.5 h-3.5" />
@@ -260,9 +265,7 @@ export function GameHeader({
                     {game.status !== 'solving' && (
                         <>
                             {messageCount < 5 ? (
-                                <div onClick={(e) => e.stopPropagation()}>
-                                    <InvitePlayer gameId={game.id} players={players} />
-                                </div>
+                                <InvitePlayer gameId={game.id} players={players} />
                             ) : (
                                 <button
                                     onClick={handlePropose}
@@ -345,13 +348,17 @@ export function GameHeader({
                             </p>
                             <div className="flex flex-col gap-2 w-full">
                                 <button
-                                    onClick={handleConfirmLeave}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleConfirmLeave();
+                                    }}
                                     className="w-full px-4 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded"
                                 >
                                     Leave Game (Permanent)
                                 </button>
                                 <button
-                                    onClick={() => {
+                                    onClick={(e) => {
+                                        e.stopPropagation();
                                         onBack();
                                         setShowLeaveConfirm(false);
                                     }}
@@ -360,7 +367,10 @@ export function GameHeader({
                                     Go Home (Keep Game Open)
                                 </button>
                                 <button
-                                    onClick={() => setShowLeaveConfirm(false)}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setShowLeaveConfirm(false);
+                                    }}
                                     className="w-full px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                                 >
                                     Cancel
