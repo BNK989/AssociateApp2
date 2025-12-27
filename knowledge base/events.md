@@ -29,6 +29,19 @@ Fired whenever the game state transitions on the server.
 | `completed` | When a `solve_attempt` results in 0 remaining unsolved words. |
 | `texting` | When a game is manually reset via the `reset_game` action. |
 
+
+### 3. `onboarding_started`
+Fired when a new user (who has not seen the tutorial) enters the lobby for the first time.
+
+- **Trigger**: Client-side in `Lobby.tsx`, conditionally on `profile.has_seen_onboarding === false`.
+- **Properties**: None (Default PostHog person properties apply).
+
+### 4. `onboarding_completed`
+Fired when a user successfully completes the onboarding tutorial.
+
+- **Trigger**: Client-side in `Lobby.tsx` via `handleTutorialComplete`.
+- **Properties**: None (Default PostHog person properties apply).
+
 ## Implementation Details
 - **Client-Side**: Uses `usePostHog()` hook from `posthog-js/react`.
 - **Server-Side**: Uses `getPostHogServer()` singleton from `src/app/posthog-server.ts` and `posthog-node`. Events are flushed immediately using `await posthog.flush()`.
