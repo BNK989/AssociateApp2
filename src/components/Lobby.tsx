@@ -1,5 +1,7 @@
 'use client';
 
+import { Plus, MessageSquarePlus, Sparkles } from 'lucide-react';
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthProvider';
@@ -19,6 +21,7 @@ import { GAME_MODES } from '@/lib/gameConfig';
 import { Label } from '@/components/ui/label';
 import GameCard from './GameCard';
 import { usePostHog } from 'posthog-js/react';
+import { OnboardingTutorial } from './OnboardingTutorial';
 
 // Match the type in GameCard.tsx
 type Game = {
@@ -46,7 +49,7 @@ type Game = {
 };
 
 export default function Lobby() {
-    const { user } = useAuth();
+    const { user, profile, refreshProfile } = useAuth();
     const { isAdmin } = useAdmin();
     const router = useRouter();
     const posthog = usePostHog();
@@ -60,6 +63,27 @@ export default function Lobby() {
     // Create Game State
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [selectedModeId, setSelectedModeId] = useState<string>(GAME_MODES[0].id);
+
+    const [showTutorial, setShowTutorial] = useState(false);
+
+    useEffect(() => {
+        if (profile && profile.has_seen_onboarding === false) {
+            setShowTutorial(true);
+            posthog.capture('onboarding_started');
+        }
+    }, [profile]);
+
+    const handleTutorialComplete = async () => {
+        setShowTutorial(false);
+        if (user) {
+            posthog.capture('onboarding_completed');
+            await supabase
+                .from('profiles')
+                .update({ has_seen_onboarding: true })
+                .eq('id', user.id);
+            await refreshProfile();
+        }
+    };
 
     useEffect(() => {
         if (!user) return;
@@ -297,13 +321,14 @@ export default function Lobby() {
             <section>
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold text-purple-400">Your Games</h2>
-                    <button
+                    <Button
                         onClick={() => setIsCreateOpen(true)}
                         disabled={creating}
-                        className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50"
+                        className="bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 transition-all duration-300 transform hover:-translate-y-0.5"
                     >
+                        <Plus className="w-4 h-4 mr-2" />
                         Create New Game
-                    </button>
+                    </Button>
                 </div>
 
                 {activeGames.length > 0 ? (
@@ -321,9 +346,26 @@ export default function Lobby() {
                         ))}
                     </div>
                 ) : (
-                    <p className="text-gray-400 text-center py-10 bg-gray-800/30 rounded-lg border border-gray-800 border-dashed">
-                        You are not in any active games. Create one to get started!
-                    </p>
+                    <div className="flex flex-col items-center justify-center py-16 px-4 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-800 text-center animate-in fade-in zoom-in duration-500">
+                        <div className="bg-purple-100 dark:bg-purple-900/30 p-4 rounded-full mb-6 relative group">
+                            <Sparkles className="w-10 h-10 text-purple-600 dark:text-purple-400 absolute -top-2 -right-2 animate-pulse" />
+                            <MessageSquarePlus className="w-12 h-12 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                            Start Your First Game!
+                        </h3>
+                        <p className="text-gray-500 dark:text-gray-400 max-w-md mb-8 leading-relaxed">
+                            Create a game to start associating words with your friends. Test your connection and see who knows who best!
+                        </p>
+                        <Button
+                            onClick={() => setIsCreateOpen(true)}
+                            size="lg"
+                            className="text-lg px-8 py-6 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-xl shadow-purple-500/20 hover:shadow-purple-500/40 transition-all duration-300 transform hover:scale-105"
+                        >
+                            <Sparkles className="w-5 h-5 mr-2" />
+                            Create Game
+                        </Button>
+                    </div>
                 )}
             </section>
 
@@ -410,6 +452,11 @@ export default function Lobby() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            <OnboardingTutorial
+                open={showTutorial}
+                onComplete={handleTutorialComplete}
+            />
         </div>
     );
 }

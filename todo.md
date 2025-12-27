@@ -138,8 +138,8 @@
 - [ ] add posthog events for game status change (e.g. texting, solving, completed, archived, deleted)
 - [ ] proffesional code reviewer to check site reliability and security
 - [ ] add analytics to the game, KPIs
-- [ ] get domain name
-- [ ] get ssl certificate
+- [x] get domain name associ8game.com/
+- [x] get ssl certificate
 - [x] add a way for users to provide feedback and logs on the game
 
 ## Phase 17.6: db corn job verification
@@ -188,11 +188,11 @@ example chain: engineering, design, blueprint, component, part, fastener, bolt, 
 - [ ] update stealAnimation.tsx to be more flexible and allow for different types of messages to be animated we can call it zoomAnimation.tsx
 - [ ] after exosting the hints change the hint button to a giveup button to allow users to just get the word for no points (reset the streak counter)
 - [ ] add leaderboard to the game
-- [ ] add NextStep.js to the project to aid in onboarding 
 - [ ] add i18n to the game (support hebrew, english, german and spanish) - make sure all the game UI is RTL and LTR compatible by the users language
 - [ ] add nudge button (think if we need it in game of more of a sevice that'll send a notification to the user)
 - [ ] `/test-playground` Implementation
 - [ ] allow users to connect their whatsapp account to recive notifications when via the game such as 'its your turn to play + link to the game' or 'game started + link to the game' etc.
+- [x] add onboarding for new users 
 - [x] create a demo mode where a user can play the game without logging in 
 - [x] in the notification center (bell icon) add dismiss all option 
 - [x] add a way for the user to upload their own avatars - supabase storage (scale the image down to 256x256 on the client side before uploading)
