@@ -150,12 +150,12 @@
 
 
 ## Phase 19: - Adding SEO to the game
-- [ ] add meta tags to the game
-- [ ] add title to the game
-- [ ] add description to the game
-- [ ] add keywords to the game
-- [ ] add Open Graph tags to the game
-- [ ] add Twitter Card tags to the game
+- [x] add meta tags to the game
+- [x] add title to the game
+- [x] add description to the game
+- [x] add keywords to the game
+- [x] add Open Graph tags to the game
+- [x] add Twitter Card tags to the game
 
 ## Phase 19.5: marketing
 - [ ] add subscibe for email updates

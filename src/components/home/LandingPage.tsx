@@ -39,7 +39,7 @@ export default function LandingPage() {
                             className="inline-block"
                         >
                             <Badge variant="secondary" className="px-3 py-1 rounded-full text-sm font-medium border-primary/20 bg-primary/5 text-primary">
-                                ✨ The Chat Association Game
+                                ✨ The Ultimate Social Word Game
                             </Badge>
                         </motion.div>
 
@@ -59,7 +59,7 @@ export default function LandingPage() {
                             transition={{ delay: 0.2 }}
                             className="text-lg text-muted-foreground leading-relaxed max-w-lg mx-auto lg:mx-0"
                         >
-                            Join the ultimate group chat game where your ability to connect unrelated words is the key to victory. Fun, interactive, and oddly satisfying.
+                            Join the ultimate real-time word association game. If you love <strong className="text-foreground">Connections</strong>, <strong className="text-foreground">Wordle</strong>, or <strong className="text-foreground">Codenames</strong>, you'll be addicted to Associ8. Connect words, steal points, and race to victory with friends.
                         </motion.p>
                     </div>
 

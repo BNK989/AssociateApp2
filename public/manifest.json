@@ -2,7 +2,7 @@
     "name": "Associate Game",
     "short_name": "Associate",
     "lang": "en",
-    "description": "A multiplayer word association game.",
+    "description": "Multiplayer word association game. Beat your friends in real-time. Similar to Connections and Wordle.",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#111827",
