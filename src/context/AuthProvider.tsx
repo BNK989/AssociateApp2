@@ -53,8 +53,16 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
     useEffect(() => {
         const initializeAuth = async () => {
+            // Safety timeout to prevent infinite loading screens if Supabase hangs
+            const timeoutId = setTimeout(() => {
+                console.warn("Auth initialization timed out - forcing app load");
+                setLoading(false);
+            }, 5000);
+
             // 1. Get initial session
             const { data: { session: initialSession } } = await supabase.auth.getSession();
+            clearTimeout(timeoutId); // Clear timeout if successful
+
             setSession(initialSession);
             setUser(initialSession?.user ?? null);
 

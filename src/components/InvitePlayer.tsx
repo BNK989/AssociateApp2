@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthProvider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -19,7 +19,7 @@ type Profile = {
     avatar_url: string;
 };
 
-export function InvitePlayer({ gameId, players }: { gameId: string; players: Player[] }) {
+function InvitePlayerContent({ gameId, players }: { gameId: string; players: Player[] }) {
     const { user, profile } = useAuth();
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
@@ -213,5 +213,13 @@ export function InvitePlayer({ gameId, players }: { gameId: string; players: Pla
                 </div>
             </DialogContent>
         </Dialog>
+    );
+}
+
+export function InvitePlayer(props: { gameId: string; players: Player[] }) {
+    return (
+        <Suspense fallback={<Button variant="outline" size="sm" disabled>Loading...</Button>}>
+            <InvitePlayerContent {...props} />
+        </Suspense>
     );
 }

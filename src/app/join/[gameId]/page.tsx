@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthProvider';
 import { Loader2 } from 'lucide-react';
 import { toast } from "sonner";
 
-export default function JoinGamePage() {
+function JoinGameContent() {
     const params = useParams();
     const gameId = params.gameId as string;
     const searchParams = useSearchParams();
@@ -186,5 +186,17 @@ export default function JoinGamePage() {
                 <p className="text-sm text-gray-500">Please wait while we connect you to the game...</p>
             </div>
         </div>
+    );
+}
+
+export default function JoinGamePage() {
+    return (
+        <Suspense fallback={
+            <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+                <Loader2 className="w-12 h-12 animate-spin text-purple-600" />
+            </div>
+        }>
+            <JoinGameContent />
+        </Suspense>
     );
 }

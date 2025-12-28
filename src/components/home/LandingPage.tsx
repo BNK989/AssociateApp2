@@ -1,10 +1,12 @@
 'use client';
 
 import { useAuth } from '@/context/AuthProvider';
+import { Suspense } from 'react';
 import { motion } from 'framer-motion';
 import GameDemo from './GameDemo';
 import AuthForm from './AuthForm';
 import { Badge } from '@/components/ui/badge';
+import { Loader2 } from 'lucide-react';
 
 export default function LandingPage() {
     const { loading } = useAuth();
@@ -87,7 +89,9 @@ export default function LandingPage() {
                         <p className="text-sm text-muted-foreground">Jump right into the action</p>
                     </div>
 
-                    <AuthForm />
+                    <Suspense fallback={<div className="h-64 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
+                        <AuthForm />
+                    </Suspense>
                 </motion.div>
             </main>
 
