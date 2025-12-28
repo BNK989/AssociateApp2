@@ -22,7 +22,10 @@ type GameHeaderProps = {
     onProposeSolving: () => void;
     onConfirmSolving: () => void;
     onDenySolving: () => void;
-    onLeave?: () => void; // New Prop
+    onLeave?: () => void;
+    skipExitConfirm?: boolean;
+    theme?: string;
+    hideBank?: boolean;
 };
 
 export function GameHeader({
@@ -40,7 +43,10 @@ export function GameHeader({
     onProposeSolving,
     onConfirmSolving,
     onDenySolving,
-    onLeave
+    onLeave,
+    skipExitConfirm,
+    theme,
+    hideBank
 }: GameHeaderProps) {
     const router = useRouter();
 
@@ -150,7 +156,7 @@ export function GameHeader({
     const handleBackClick = (e: React.MouseEvent) => {
         e.stopPropagation();
         // Simple confirm if game is active
-        if (game.status !== 'completed' && game.status !== 'lobby') {
+        if (!skipExitConfirm && game.status !== 'completed' && game.status !== 'lobby') {
             setShowLeaveConfirm(true);
         } else {
             onBack();
@@ -178,6 +184,7 @@ export function GameHeader({
         // I will add a `onLeave` prop to GameHeader in the next step or modify this step to assume it exists?
         // Let's modify the props interface first.
         // ACTUALLY: The user said "when a player leaves the game ... show notification".
+        // The requirement says: "when a player leaves the game ... show notification".
         // This dialog is for that.
         // So `onLeave` is needed.
         onLeave?.();
@@ -198,11 +205,11 @@ export function GameHeader({
             className={`relative shrink-0 z-20 w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 transition-colors duration-500 ${isFeverMode ? 'dark:bg-orange-950/30' : ''}`}
         >
             {/* Main Header Row */}
-            <div className="p-2 flex justify-between items-center">
-                <div className="flex items-center gap-3">
+            <div className="p-2 flex justify-between items-center relative">
+                <div className="flex items-center gap-3 w-1/3">
                     <button
                         onClick={handleBackClick}
-                        className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-900 dark:text-white"
+                        className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-900 dark:text-white shrink-0"
                         aria-label="Back to Lobby"
                     >
                         <ArrowLeft className="w-5 h-5" />
@@ -210,7 +217,7 @@ export function GameHeader({
 
                     {/* Avatar Stack */}
                     <div
-                        className="flex items-center -space-x-2 mr-2 cursor-pointer hover:opacity-80 transition-opacity"
+                        className="flex items-center -space-x-2 mr-2 cursor-pointer hover:opacity-80 transition-opacity overflow-hidden"
                         onClick={() => setShowInfo(true)}
                     >
                         {sortedPlayers.map((player) => (
@@ -224,15 +231,29 @@ export function GameHeader({
                     </div>
                 </div>
 
+                {/* Theme Title (Daily Game) */}
+                {theme && (
+                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-none z-0">
+                        <span className="text-[9px] uppercase font-black text-amber-500/80 tracking-widest leading-none mb-0.5">Daily Chain</span>
+                        <span className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white leading-none whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px] sm:max-w-none text-center">
+                            {theme}
+                        </span>
+                    </div>
+                )}
+
                 {/* Score & Bank (Updated) */}
                 <div
-                    className="flex items-center gap-4 mx-2 cursor-pointer hover:opacity-80 transition-opacity"
+                    className="flex items-center justify-end gap-2 sm:gap-4 mx-2 cursor-pointer hover:opacity-80 transition-opacity w-1/3"
                     onClick={() => setShowInfo(true)}
                 >
                     {/* Bank / Pot */}
                     <div className="flex items-center gap-1.5 text-purple-600 dark:text-purple-400 font-bold opacity-80 scale-90">
-                        <Landmark className="w-3.5 h-3.5" />
-                        <span className="text-sm">{displayPot}</span>
+                        {!hideBank && (
+                            <>
+                                <Landmark className="w-3.5 h-3.5" />
+                                <span className="text-sm">{displayPot}</span>
+                            </>
+                        )}
 
                         {/* Message Counter */}
                         {game.status !== 'solving' && maxMessages && (

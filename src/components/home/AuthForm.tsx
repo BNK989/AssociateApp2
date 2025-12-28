@@ -30,13 +30,19 @@ export default function AuthForm() {
 
     const handleGoogleLogin = async () => {
         setLoadingMethod('google');
-        await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo: callbackUrl
-            }
-        });
-        // OAuth will redirect, so no need to stop loading really, but just in case
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: callbackUrl
+                }
+            });
+            if (error) throw error;
+        } catch (error: any) {
+            console.error("Google login error:", error);
+            setMessage(error.message || "Failed to initiate Google login.");
+            setLoadingMethod(null);
+        }
     };
 
     const handleEmailLogin = async (e: React.FormEvent) => {

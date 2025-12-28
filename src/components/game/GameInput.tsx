@@ -22,6 +22,7 @@ type GameInputProps = {
     onGetHint: () => void;
     isEmpty?: boolean;
     onTyping?: () => void; // New prop for triggering broadcast
+    isSinglePlayer?: boolean;
 };
 
 export function GameInput({
@@ -36,7 +37,8 @@ export function GameInput({
     onSendMessage,
     onGetHint,
     isEmpty = false,
-    onTyping
+    onTyping,
+    isSinglePlayer = false
 }: GameInputProps) {
 
     // Determine who has the "turn"
@@ -50,12 +52,14 @@ export function GameInput({
 
     // If the target player has left, force Free For All mode immediately
     const targetPlayerHasLeft = targetPlayer?.has_left || false;
-    const isFreeForAll = solvingTimeLeft === 0 || targetPlayerHasLeft;
+    const isFreeForAll = isSinglePlayer || solvingTimeLeft === 0 || targetPlayerHasLeft;
 
     // Determine Placeholder Text
     let placeholderText = "Type a message...";
     if (game.status === 'solving') {
-        if (isFreeForAll) {
+        if (isSinglePlayer) {
+            placeholderText = "Guess the word...";
+        } else if (isFreeForAll) {
             if (isMyTurn) {
                 // Should technically be impossible if I left, but handle gracefully
                 placeholderText = "Anyone can guess your text";
@@ -153,7 +157,7 @@ export function GameInput({
             <TooltipProvider>
                 <form onSubmit={onSendMessage} className="flex gap-2 items-center relative">
                     <AnimatePresence>
-                        {game.status === 'solving' && isFreeForAll && (
+                        {game.status === 'solving' && isFreeForAll && !isSinglePlayer && (
                             <motion.div
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}

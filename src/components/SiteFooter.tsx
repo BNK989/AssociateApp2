@@ -8,7 +8,7 @@ export function SiteFooter() {
     const pathname = usePathname();
 
     // Don't show footer on game pages
-    if (pathname?.startsWith("/game/")) {
+    if (pathname?.startsWith("/game/") || pathname?.startsWith("/daily")) {
         return null;
     }
 

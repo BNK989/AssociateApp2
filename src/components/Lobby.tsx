@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, MessageSquarePlus, Sparkles } from 'lucide-react';
+import { Plus, MessageSquarePlus, Sparkles, Calendar, CheckCircle, ArrowRight } from 'lucide-react';
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -65,6 +65,17 @@ export default function Lobby() {
     const [selectedModeId, setSelectedModeId] = useState<string>(GAME_MODES[0].id);
 
     const [showTutorial, setShowTutorial] = useState(false);
+    const [isDailyCompleted, setIsDailyCompleted] = useState(false);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const today = new Date().toISOString().split('T')[0];
+            const completed = localStorage.getItem(`daily_game_completed_${today}`);
+            if (completed === 'true') {
+                setIsDailyCompleted(true);
+            }
+        }
+    }, []);
 
     useEffect(() => {
         if (profile && profile.has_seen_onboarding === false) {
@@ -327,8 +338,44 @@ export default function Lobby() {
                         className="bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 transition-all duration-300 transform hover:-translate-y-0.5"
                     >
                         <Plus className="w-4 h-4 mr-2" />
-                        Create New Game
+                        New Game
                     </Button>
+                </div>
+
+                {/* Daily Challenge Card */}
+                <div className="mb-8 p-1">
+                    <button
+                        onClick={() => router.push('/daily')}
+                        className={`w-full group relative overflow-hidden rounded-2xl border transition-all duration-300 transform hover:scale-[1.01] hover:shadow-xl text-left cursor-pointer
+                        ${isDailyCompleted
+                                ? 'bg-secondary/50 border-border opacity-80'
+                                : 'bg-gradient-to-r from-amber-100 to-orange-100 dark:bg-none dark:bg-gray-900/40 border-orange-200 dark:border-amber-500/20'
+                            }`}
+                    >
+                        <div className="p-6 flex items-center justify-between relative z-10">
+                            <div className="flex items-center gap-4">
+                                <div className={`p-3 rounded-xl ${isDailyCompleted ? 'bg-secondary' : 'bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg shadow-orange-500/20'}`}>
+                                    {isDailyCompleted ? <CheckCircle className="w-6 h-6 text-green-500" /> : <Calendar className="w-6 h-6" />}
+                                </div>
+                                <div>
+                                    <h3 className={`text-lg font-bold ${isDailyCompleted ? 'text-muted-foreground' : 'text-orange-900 dark:text-amber-100'}`}>
+                                        {isDailyCompleted ? 'Daily Challenge Completed' : 'Daily Challenge'}
+                                    </h3>
+                                    <p className={`text-sm ${isDailyCompleted ? 'text-muted-foreground' : 'text-orange-700 dark:text-gray-400'}`}>
+                                        {isDailyCompleted ? 'Great job! Come back tomorrow for a new chain.' : 'Solve the daily word chain to win points!'}
+                                    </p>
+                                </div>
+                            </div>
+                            {!isDailyCompleted && (
+                                <div className="bg-white/80 dark:bg-white/10 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity transform group-hover:translate-x-1">
+                                    <ArrowRight className="w-5 h-5 text-orange-600 dark:text-amber-400" />
+                                </div>
+                            )}
+                        </div>
+                        {!isDailyCompleted && (
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 dark:bg-amber-400/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+                        )}
+                    </button>
                 </div>
 
                 {activeGames.length > 0 ? (

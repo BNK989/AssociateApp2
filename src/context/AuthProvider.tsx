@@ -35,6 +35,8 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     // Proactive session check on tab resume
     // Proactive session check on tab resume
     useEffect(() => {
+        if (loading) return; // Don't check visibility if still loading
+
         const handleVisibilityChange = async () => {
             if (document.visibilityState === 'visible') {
                 const { data, error } = await supabase.auth.getUser();
@@ -49,7 +51,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
         document.addEventListener('visibilitychange', handleVisibilityChange);
         return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-    }, []);
+    }, [loading]);
 
     useEffect(() => {
         const initializeAuth = async () => {

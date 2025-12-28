@@ -127,7 +127,6 @@
 - [x] allow quick return to game
 - [x] add a info icon in this screen that opens the a popup with game rules and instructions
 
-
 ## Phase 16: 
 - [ ] add restriction for guest users to not be able to use any AI features (hint #3)
 - [ ] limit number of active games a user can have set limit in gameConfig.ts to 10 if a player has reached this limit show popup alert letting them archive games and prevent them from creating a new game. this needs to be handled gracefully to prevent the user from being stuck
@@ -163,9 +162,11 @@
 - [ ] add social media sharing
 
 
-# new feuture: daily challenge - to get players hooked
-each day the gamemaster would upload a daily chain (lets say of 25 messages) the players would get the list and go into the game in solve mode, where they have to guess back the words one by one. 
+# daily challenge - to get players hooked
+each day the gamemaster would upload a daily chain for now lets do 25 messages) the players would get the list and go into the game in solve mode, where they have to guess back the words one by one. 
 example chain: engineering, design, blueprint, component, part, fastener, bolt, screw, rivet, tool, wrench, mechanism, gear, sprocket, axle, bearing, cam, spring, lever, pulley, valve, cylinder, piston, crankshaft, engine, turbine, chassis, circuit, robot, automation, assembly, fabrication, maintenance, repair, inspection
+### limit number of AI hints a non registered player can get to
+- imrpove AI hint to not just tell me the first letter but actually try to hint `the - word
 
 ----------------
 
