@@ -1,6 +1,6 @@
 # Knowledge Base
 
-## Game Management
+## Classic Multiplayer Game Management
 
 ### 1. Player Archival (User Action)
 When a player clicks "Archive Game":

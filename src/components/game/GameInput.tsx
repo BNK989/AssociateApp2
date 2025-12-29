@@ -165,6 +165,7 @@ export function GameInput({
         <button
             type="button"
             disabled={(!isMyTurn && !isFreeForAll) || sending}
+            onMouseDown={(e) => e.preventDefault()}
             onClick={(e) => {
                 e.preventDefault();
                 handleInteraction();
@@ -185,6 +186,7 @@ export function GameInput({
         <button
             type="button"
             disabled={(!isMyTurn && !isFreeForAll) || sending}
+            onMouseDown={(e) => e.preventDefault()}
             onClick={(e) => {
                 e.preventDefault();
                 if (onGiveUp) onGiveUp();

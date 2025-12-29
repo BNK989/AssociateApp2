@@ -18,7 +18,7 @@ Stores user profile information, linked to the Supabase Auth `users` table.
 | `has_seen_onboarding` | boolean | `false` | Has the user seen the onboarding tour? |
 
 ### 2. games
-Stores information about game instances.
+Stores information about game instances (Classic Mode).
 
 | Column | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
@@ -109,6 +109,17 @@ Tracks API usage metrics.
 | `endpoint` | text | - | API endpoint accessed |
 | `ip_hash` | text | - | Hashed IP address for rate limiting/tracking |
 | `created_at` | timestamptz | `now()` | Access timestamp |
+
+### 8. daily_games
+Stores the predetermined word chains for the Daily Challenge mode.
+
+| Column | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | uuid | `gen_random_uuid()` | Primary Key |
+| `play_date` | date | - | The date the game is played (YYYY-MM-DD). Unique. |
+| `words` | jsonb | - | JSON Array of strings containing the word chain |
+| `theme` | text | - | A short subject or title for the chain |
+| `created_at` | timestamptz | `now()` | Auto-generated timestamp |
 
 ## Relationships
 

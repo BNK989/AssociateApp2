@@ -5,7 +5,7 @@ This document outlines the PostHog events tracked in the application, their trig
 ## Events
 
 ### 1. `game_created`
-Fired when a user successfully creates a new game from the lobby.
+Fired when a user successfully creates a new Classic Multiplayer game from the lobby.
 
 - **Trigger**: Client-side, immediately after game insertion in `Lobby.tsx`.
 - **Properties**:
