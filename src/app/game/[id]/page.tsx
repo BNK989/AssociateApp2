@@ -47,7 +47,8 @@ export default function GameRoom() {
         broadcastTyping,
         typingUsers,
         stealData,
-        setStealData
+        setStealData,
+        handleGiveUp
     } = useGameLogic(gameId!);
 
     // Notification Logic
@@ -134,6 +135,7 @@ export default function GameRoom() {
                 onGetHint={handleGetHint}
                 isEmpty={messages.length === 0}
                 onTyping={broadcastTyping}
+                onGiveUp={handleGiveUp}
             />
 
             <EndGamePopover

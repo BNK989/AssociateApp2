@@ -21,7 +21,7 @@ export function DailyGameTutorial({ open, onComplete }: DailyGameTutorialProps) 
     const steps = [
         {
             title: "Daily Challenge 📅",
-            description: "Welcome to your daily mental workout! Every day, we release a new chain of 5 connected words.",
+            description: "Welcome to your daily mental workout! Every day, we release a new chain of a few connected words.",
             icon: <Calendar className="w-12 h-12 text-orange-500" />,
             color: "bg-orange-50 dark:bg-orange-900/20",
         },

@@ -474,6 +474,55 @@ export async function POST(
             const { error } = await supabase.from('messages').update(updatePayload).eq('id', targetId);
 
             if (error) throw error;
+            if (error) throw error;
+        } else if (action === 'give_up') {
+            const { targetId, userId } = payload;
+
+            // 1. Fetch Target Message
+            const { data: targetMessage, error: targetError } = await supabase
+                .from('messages')
+                .select('*')
+                .eq('id', targetId)
+                .single();
+
+            if (targetError || !targetMessage) {
+                return NextResponse.json({ error: 'Target message not found' }, { status: 404 });
+            }
+
+            // 2. Update Message (0 points, solved)
+            const { error: msgError } = await supabase.from('messages').update({
+                is_solved: true,
+                solved_by: userId,
+                winner_points: 0,
+                author_points: 0
+            }).eq('id', targetId);
+            if (msgError) throw msgError;
+
+            // 3. Reset Player Stats
+            await supabase.from('game_players').update({
+                consecutive_correct_guesses: 0
+            }).eq('game_id', gameId).eq('user_id', userId);
+
+            // 4. Reset Team Stats
+            await supabase.from('games').update({
+                team_consecutive_correct: 0,
+                fever_mode_remaining: 0
+            }).eq('id', gameId);
+
+            // 5. Check Completion
+            const { count: unsolvedCount } = await supabase.from('messages')
+                .select('*', { count: 'exact', head: true })
+                .eq('game_id', gameId)
+                .eq('is_solved', false)
+                .lt('strikes', 3);
+
+            if (unsolvedCount === 0) {
+                await supabase.from('games').update({ status: 'completed' }).eq('id', gameId);
+                // Optional: PostHog event...
+            } else {
+                // Reset solving timer for next turn
+                await supabase.from('games').update({ solving_started_at: new Date().toISOString() }).eq('id', gameId);
+            }
         }
 
         return NextResponse.json({ success: true });

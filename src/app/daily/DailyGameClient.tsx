@@ -223,6 +223,30 @@ export default function DailyGameClient({ dailyWords, date, theme }: DailyGameCl
         toast.info(`Hint Level ${nextLevel} Applied!`);
     };
 
+    const handleGiveUp = () => {
+        if (!targetMessage || gameOver) return;
+
+        setMessages(prev => prev.map(m => m.id === targetMessage.id ? {
+            ...m,
+            is_solved: true,
+            solved_by: MEST_USER_ID,
+            winner_points: 0
+        } : m));
+
+        setConsecutive(0);
+        toast.info(`Gave up on word: ${targetMessage.content}`);
+
+        // Check Completion
+        // Need to check remaining messages excluding the just solved one
+        const remaining = messages.filter(m => !m.is_solved && m.id !== targetMessage.id && (m.strikes || 0) < 3).length;
+        if (remaining === 0) {
+            setGameOver(true);
+            toast.success("Daily Challenge Completed!");
+        }
+
+        setInput('');
+    };
+
     const handleSolve = (guess: string) => {
         if (!targetMessage) return;
 
@@ -348,6 +372,7 @@ export default function DailyGameClient({ dailyWords, date, theme }: DailyGameCl
                 onGetHint={handleGetHint}
                 isEmpty={false}
                 isSinglePlayer={true}
+                onGiveUp={handleGiveUp}
             />
 
             {/* Daily End Game Popover */}

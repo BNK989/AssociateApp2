@@ -221,7 +221,7 @@ export function GameHeader({
                         onClick={() => setShowInfo(true)}
                     >
                         {sortedPlayers.map((player) => (
-                            <Avatar key={player.user_id} className={`w-8 h-8 border-2 border-white dark:border-gray-900 ${player.user_id === activePlayerId ? 'z-10 ring-2 ring-green-500' : ''} ${player.has_left ? 'opacity-40 grayscale' : ''}`}>
+                            <Avatar key={player.user_id} className={`w-8 h-8 border-2 border-white dark:border-gray-900 ${player.user_id === activePlayerId ? 'z-10' : ''} ${player.has_left ? 'opacity-40 grayscale' : ''}`}>
                                 <AvatarImage src={player.profiles?.avatar_url} />
                                 <AvatarFallback className={`${getAvatarColor(player.profiles?.username || '')} text-white text-xs`}>
                                     {getInitials(player.profiles?.username || '')}

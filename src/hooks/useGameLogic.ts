@@ -646,6 +646,49 @@ export function useGameLogic(gameId: string) {
         }
     };
 
+    const handleGiveUp = async () => {
+        if (!game || !user) return;
+        const target = getTargetMessage();
+        if (!target) return;
+
+        const isFreeForAll = solvingTimeLeft === 0;
+        const isMyTurn = target.user_id === user.id;
+        const targetAuthor = players.find(p => p.user_id === target.user_id);
+        const hasAuthorLeft = targetAuthor?.has_left || false;
+
+        if (!isFreeForAll && !isMyTurn && !hasAuthorLeft) {
+            toast.warning("Wait for the author or the free-for-all!");
+            return;
+        }
+
+        // Optimistic Update
+        setMessages(prev => prev.map(m => m.id === target.id ? {
+            ...m,
+            is_solved: true,
+            solved_by: user.id,
+            winner_points: 0
+        } : m));
+
+        toast.info(`Gave up on word: ${target.content}`);
+        setInput('');
+
+        // SERVER ACTION call
+        await fetch(`/api/game/${game.id}/action`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'give_up',
+                payload: {
+                    targetId: target.id,
+                    userId: user.id
+                }
+            })
+        });
+
+        // No need to fetch immediately if we trust the subscription, but safe to do so
+        fetchGameData();
+    };
+
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!input.trim() || !user || !game || sending) return;
@@ -1015,6 +1058,8 @@ export function useGameLogic(gameId: string) {
         broadcastTyping,
         typingUsers,
         stealData,
-        setStealData
+        setStealData,
+        handleGiveUp
     };
 }
+

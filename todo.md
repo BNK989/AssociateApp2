@@ -165,8 +165,12 @@
 # daily challenge - to get players hooked
 each day the gamemaster would upload a daily chain for now lets do 25 messages) the players would get the list and go into the game in solve mode, where they have to guess back the words one by one. 
 example chain: engineering, design, blueprint, component, part, fastener, bolt, screw, rivet, tool, wrench, mechanism, gear, sprocket, axle, bearing, cam, spring, lever, pulley, valve, cylinder, piston, crankshaft, engine, turbine, chassis, circuit, robot, automation, assembly, fabrication, maintenance, repair, inspection
-### limit number of AI hints a non registered player can get to
-- imrpove AI hint to not just tell me the first letter but actually try to hint `the - word
+- [ ] limit number of AI hints a non registered player can get to
+- [ ] improve AI hint to not just tell me the first letter but actually try to hint `the - word
+- [-] add to the classic game and daily challenge game after all the hints were given the hint button should change to forfeit message
+- [-] fix the tooltip that keeps showing up after a player clicks on the hint button
+- [-] cancel scroll after clicking on hint button
+- [ ] fix ui: header: green circle gets cut off | after getting a hint #2 somethimes the highlight effect stays yellow on the last revealed letter
 
 ----------------
 

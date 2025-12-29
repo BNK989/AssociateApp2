@@ -145,7 +145,29 @@ export function ChatArea({
     };
 
     // Scroll on messages change
+    const prevTargetIdRef = useRef<string | undefined>(undefined);
+    const prevHintLevelRef = useRef<number>(0);
+
     useEffect(() => {
+        const isHintIncrease =
+            game.status === 'solving' &&
+            targetMessage &&
+            targetMessage.id === prevTargetIdRef.current &&
+            (targetMessage.hint_level || 0) > prevHintLevelRef.current;
+
+        // Update refs
+        if (targetMessage) {
+            prevTargetIdRef.current = targetMessage.id;
+            prevHintLevelRef.current = targetMessage.hint_level || 0;
+        } else {
+            prevTargetIdRef.current = undefined;
+            prevHintLevelRef.current = 0;
+        }
+
+        if (isHintIncrease) {
+            return; // Skip scrolling on hint reveal
+        }
+
         scrollToSmart();
     }, [messages, game.status, targetMessage]);
 
@@ -276,7 +298,7 @@ export function ChatArea({
                                         <div
                                             id={`msg-${msg.id}`}
                                             data-message-id={msg.id}
-                                            className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : 'flex-row'} ${isShaking ? 'animate-shake' : ''} ${hasHint ? 'my-6' : ''}`}
+                                            className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : 'flex-row'} ${isShaking ? 'animate-shake' : ''} ${hasHint ? 'my-2' : ''}`}
                                         >
                                             <Avatar className="w-8 h-8">
                                                 <AvatarImage src={msg.profiles?.avatar_url} />

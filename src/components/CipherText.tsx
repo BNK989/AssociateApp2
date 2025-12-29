@@ -114,7 +114,8 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
             if (newChanged.size > 0) {
                 setChangedIndices(newChanged);
                 // Clear highlight after animation
-                setTimeout(() => setChangedIndices(new Set()), 1000);
+                const timer = setTimeout(() => setChangedIndices(new Set()), 1000);
+                return () => clearTimeout(timer);
             }
             prevCipherRef.current = currentCipher;
         }
@@ -146,7 +147,12 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
             textShadow: isMatch
                 ? ['0px 0px 0px rgba(0,0,0,0)', '0px 0px 8px rgba(251, 191, 36, 0.8)', '0px 0px 0px rgba(0,0,0,0)']
                 : 'none',
-            transition: { duration: 0.4, ease: "easeOut" as const }
+            transition: { duration: 0.4, ease: "easeOut" as const },
+            transitionEnd: {
+                color: "inherit",
+                textShadow: "none",
+                scale: 1
+            }
         })
     };
 

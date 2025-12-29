@@ -23,6 +23,7 @@ type GameInputProps = {
     isEmpty?: boolean;
     onTyping?: () => void; // New prop for triggering broadcast
     isSinglePlayer?: boolean;
+    onGiveUp?: () => void;
 };
 
 export function GameInput({
@@ -38,7 +39,8 @@ export function GameInput({
     onGetHint,
     isEmpty = false,
     onTyping,
-    isSinglePlayer = false
+    isSinglePlayer = false,
+    onGiveUp
 }: GameInputProps) {
 
     // Determine who has the "turn"
@@ -122,19 +124,24 @@ export function GameInput({
     // Auto-show tooltip logic
     const [isTooltipOpen, setIsTooltipOpen] = useState(false);
     const [hasInteracted, setHasInteracted] = useState(false);
+    const [hasSeenTooltip, setHasSeenTooltip] = useState(false);
+    const TOOLTIP_STORAGE_KEY = 'associ8-hint-tooltip-seen';
 
     useEffect(() => {
+        // Check global seen state immediately
+        const seen = localStorage.getItem(TOOLTIP_STORAGE_KEY);
+        if (seen) {
+            setHasSeenTooltip(true);
+            return;
+        }
+
         if (game.status !== 'solving' || !targetMessage || isMaxHints) return;
-
-        const storageKey = `hint-tooltip-shown-${game.id}`;
-        const hasShown = localStorage.getItem(storageKey);
-
-        if (hasShown) return;
 
         const timer = setTimeout(() => {
             if (!hasInteracted) {
                 setIsTooltipOpen(true);
-                localStorage.setItem(storageKey, 'true');
+                localStorage.setItem(TOOLTIP_STORAGE_KEY, 'true');
+                setHasSeenTooltip(true);
             }
         }, 5000);
 
@@ -142,11 +149,52 @@ export function GameInput({
     }, [game.status, targetMessage, isMaxHints, hasInteracted, game.id]);
 
     const handleInteraction = () => {
+        // Always mark as seen on interaction
+        if (!hasSeenTooltip) {
+            localStorage.setItem(TOOLTIP_STORAGE_KEY, 'true');
+            setHasSeenTooltip(true);
+        }
+
         if (!hasInteracted) {
             setHasInteracted(true);
             setIsTooltipOpen(false);
         }
     };
+
+    const HintButton = (
+        <button
+            type="button"
+            disabled={(!isMyTurn && !isFreeForAll) || sending}
+            onClick={(e) => {
+                e.preventDefault();
+                handleInteraction();
+                onGetHint();
+            }}
+            onContextMenu={(e) => {
+                // Mobile long press simulation
+                e.preventDefault();
+            }}
+            className="h-10 w-10 flex flex-col items-center justify-center rounded-lg transition-colors bg-secondary text-secondary-foreground hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+            <span className="text-sm leading-none mb-0.5">💡</span>
+            <span className="text-[10px] font-bold leading-none">{buttonText}</span>
+        </button>
+    );
+
+    const GiveUpButton = (
+        <button
+            type="button"
+            disabled={(!isMyTurn && !isFreeForAll) || sending}
+            onClick={(e) => {
+                e.preventDefault();
+                if (onGiveUp) onGiveUp();
+            }}
+            className="h-10 w-10 flex flex-col items-center justify-center rounded-lg transition-colors bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Give Up"
+        >
+            <span className="text-lg leading-none">🏳️</span>
+        </button>
+    );
 
     return (
         <div
@@ -170,35 +218,23 @@ export function GameInput({
                             </motion.div>
                         )}
                     </AnimatePresence>
-                    {game.status === 'solving' && targetMessage && !isMaxHints && (
-                        <Tooltip open={isTooltipOpen} onOpenChange={setIsTooltipOpen}>
-                            <TooltipTrigger asChild>
-                                <button
-                                    type="button"
-                                    disabled={(!isMyTurn && !isFreeForAll) || sending}
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        handleInteraction();
-                                        onGetHint();
-                                    }}
-                                    onContextMenu={(e) => {
-                                        // Mobile long press simulation (though native Tooltip usually handles touch long press nicely or click)
-                                        // For now relying on default trigger behaviors + our auto show
-                                    }}
-                                    className="h-10 w-10 flex flex-col items-center justify-center rounded-lg transition-colors bg-secondary text-secondary-foreground hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <span className="text-sm leading-none mb-0.5">💡</span>
-                                    <span className="text-[10px] font-bold leading-none">{buttonText}</span>
-                                </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="top" align="start">
-                                <div className="text-xs space-y-1">
-                                    <p className="font-bold">{nextLabel}</p>
-                                    <p className="text-muted-foreground">Cost: <span className="text-red-500 dark:text-red-400">-{nextCost} pts</span></p>
-                                    <p className="text-[10px] text-muted-foreground opacity-70">Deducted from word value</p>
-                                </div>
-                            </TooltipContent>
-                        </Tooltip>
+                    {game.status === 'solving' && targetMessage && (
+                        isMaxHints ? GiveUpButton : (
+                            hasSeenTooltip ? HintButton : (
+                                <Tooltip open={isTooltipOpen} onOpenChange={setIsTooltipOpen}>
+                                    <TooltipTrigger asChild>
+                                        {HintButton}
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" align="start">
+                                        <div className="text-xs space-y-1">
+                                            <p className="font-bold">{nextLabel}</p>
+                                            <p className="text-muted-foreground">Cost: <span className="text-red-500 dark:text-red-400">-{nextCost} pts</span></p>
+                                            <p className="text-[10px] text-muted-foreground opacity-70">Deducted from word value</p>
+                                        </div>
+                                    </TooltipContent>
+                                </Tooltip>
+                            )
+                        )
                     )}
 
                     <input
@@ -208,6 +244,7 @@ export function GameInput({
                             const val = e.target.value;
                             if (val.length > GAME_CONFIG.MESSAGE_MAX_LENGTH) {
                                 toast.error(`Message cannot exceed ${GAME_CONFIG.MESSAGE_MAX_LENGTH} characters`);
+                                import("sonner").then(mod => mod.toast.dismiss()); // optional cleanup
                                 return;
                             }
                             setInput(val);
