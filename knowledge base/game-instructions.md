@@ -46,3 +46,7 @@ A new unique puzzle drops every day!
 *   **Speed Bonus**: Faster answers get more points.
 *   **Streak Bonus**: Consecutive correct answers multiply your score.
 *   **Hint Penalty**: Using hints reduces the potential points for that word.
+
+## ⚠️ Limitations
+
+*   **AI Hints**: Using the 3rd hint (AI-generated) is subject to availability and usage limits (5 per game, 100 per day per IP). Guest users do not have access to AI hints.

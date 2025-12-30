@@ -625,7 +625,7 @@ export function useGameLogic(gameId: string) {
             if (newStrikes >= 3) {
                 toast.error(`💥 WORD LOST! The word was "${target.content}"`);
             } else {
-                toast.error(`Incorrect! Strike ${newStrikes}/3`);
+                // toast.error(`Incorrect! Strike ${newStrikes}/3`);
             }
 
             setInput('');
@@ -669,7 +669,7 @@ export function useGameLogic(gameId: string) {
             winner_points: 0
         } : m));
 
-        toast.info(`Gave up on word: ${target.content}`);
+        // toast.info(`Gave up on word: ${target.content}`);
         setInput('');
 
         // SERVER ACTION call

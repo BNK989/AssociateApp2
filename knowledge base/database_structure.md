@@ -99,7 +99,7 @@ Stores user feedback submissions.
 | `created_at` | timestamptz | `now()` | Submission timestamp |
 
 ### 7. api_usage
-Tracks API usage metrics.
+Tracks API usage metrics, including AI hint requests. Daily Game requests are rate-limited per player (5 per day) and per IP (100 per day).
 
 | Column | Type | Default | Description |
 | :--- | :--- | :--- | :--- |

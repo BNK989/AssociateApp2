@@ -147,6 +147,7 @@ export function ChatArea({
     // Scroll on messages change
     const prevTargetIdRef = useRef<string | undefined>(undefined);
     const prevHintLevelRef = useRef<number>(0);
+    const prevStrikesRef = useRef<number>(0);
 
     useEffect(() => {
         const isHintIncrease =
@@ -155,17 +156,25 @@ export function ChatArea({
             targetMessage.id === prevTargetIdRef.current &&
             (targetMessage.hint_level || 0) > prevHintLevelRef.current;
 
+        const isStrikeIncrease =
+            game.status === 'solving' &&
+            targetMessage &&
+            targetMessage.id === prevTargetIdRef.current &&
+            (targetMessage.strikes || 0) > prevStrikesRef.current;
+
         // Update refs
         if (targetMessage) {
             prevTargetIdRef.current = targetMessage.id;
             prevHintLevelRef.current = targetMessage.hint_level || 0;
+            prevStrikesRef.current = targetMessage.strikes || 0;
         } else {
             prevTargetIdRef.current = undefined;
             prevHintLevelRef.current = 0;
+            prevStrikesRef.current = 0;
         }
 
-        if (isHintIncrease) {
-            return; // Skip scrolling on hint reveal
+        if (isHintIncrease || isStrikeIncrease) {
+            return; // Skip scrolling on hint reveal or wrong guess (strike increase)
         }
 
         scrollToSmart();

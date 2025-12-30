@@ -171,6 +171,13 @@ example chain: engineering, design, blueprint, component, part, fastener, bolt, 
 - [x] fix the tooltip that keeps showing up after a player clicks on the hint button
 - [x] cancel scroll after clicking on hint button
 - [x] fix ui: header: green circle gets cut off | after getting a hint #2 somethimes the highlight effect stays yellow on the last revealed letter
+-[ ] On long press on the hint button allow to give up directly
+
+-[x] Remove toast message for wrong guess and for hint or giveup word
+-[x] Cancel scrol to word after a wong guess
+-[x] Adjust header all the way to the right so that there is more space for the theme
+-[x] Enable actual Ai hints for logged in users
+==
 
 ----------------
 
