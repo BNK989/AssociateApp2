@@ -177,6 +177,11 @@ example chain: engineering, design, blueprint, component, part, fastener, bolt, 
 -[x] Cancel scrol to word after a wong guess
 -[x] Adjust header all the way to the right so that there is more space for the theme
 -[x] Enable actual Ai hints for logged in users
+
+## hints logic update
+- [ ] do not encrypt the length of the word
+- [ ] first hint should simply reveal the first letter of the word
+
 ==
 
 ----------------

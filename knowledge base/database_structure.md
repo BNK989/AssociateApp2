@@ -119,6 +119,7 @@ Stores the predetermined word chains for the Daily Challenge mode.
 | `play_date` | date | - | The date the game is played (YYYY-MM-DD). Unique. |
 | `words` | jsonb | - | JSON Array of strings containing the word chain |
 | `theme` | text | - | A short subject or title for the chain |
+| `hints` | jsonb | - | JSON Array of pre-generated AI hints for each word |
 | `created_at` | timestamptz | `now()` | Auto-generated timestamp |
 
 ## Relationships

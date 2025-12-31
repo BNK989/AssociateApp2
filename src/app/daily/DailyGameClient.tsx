@@ -233,49 +233,49 @@ export default function DailyGameClient({ dailyWords, date, theme }: DailyGameCl
         if (nextLevel === 3) {
             let aiHint = `Contains ${targetMessage.content.length} letters. First letter is ${targetMessage.content[0].toUpperCase()}.`;
 
-            // Check if Real User for AI Hint
-            if (authUser && session) {
-                try {
-                    // Extract index from ID "msg-0", "msg-1"
-                    const targetIndex = dailyWords.indexOf(targetMessage.content);
+            // Optimistic update with loading or static hint first? 
+            // For now, static hint is default fallback.
 
-                    if (targetIndex !== -1) {
-                        // Optimistic update with loading or static hint first? 
-                        // For now, static hint is default fallback.
+            try {
+                // Extract index from ID "msg-0", "msg-1"
+                const targetIndex = dailyWords.indexOf(targetMessage.content);
 
-                        // We can trigger the fetch in background or await it.
-                        // Requirement: "subtle loading or nothing".
-                        // We'll await it to ensure we display the AI hint if successful, otherwise static.
+                if (targetIndex !== -1) {
+                    // We can trigger the fetch in background or await it.
+                    // Requirement: "subtle loading or nothing".
+                    // We'll await it to ensure we display the AI hint if successful, otherwise static.
 
-                        const res = await fetch('/api/daily/hint', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${session.access_token}`
-                            },
-                            body: JSON.stringify({
-                                date: date,
-                                targetIndex: targetIndex
-                            })
-                        });
+                    const headersMs: Record<string, string> = {
+                        'Content-Type': 'application/json',
+                    };
 
-                        if (res.ok) {
-                            const data = await res.json();
-                            if (data.hint) {
-                                aiHint = data.hint;
-                            }
-                        } else {
-                            const err = await res.json();
-                            if (err.error === 'Limit reached for this game' || err.error === 'Daily IP limit reached') {
-                                toast.error("Daily AI Hint limit reached");
-                            }
+                    if (session?.access_token) {
+                        headersMs['Authorization'] = `Bearer ${session.access_token}`;
+                    }
+
+                    const res = await fetch('/api/daily/hint', {
+                        method: 'POST',
+                        headers: headersMs,
+                        body: JSON.stringify({
+                            date: date,
+                            targetIndex: targetIndex
+                        })
+                    });
+
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.hint) {
+                            aiHint = data.hint;
+                        }
+                    } else {
+                        const err = await res.json();
+                        if (err.error === 'Limit reached for this game' || err.error === 'Daily IP limit reached') {
+                            toast.error("Daily AI Hint limit reached");
                         }
                     }
-                } catch (e) {
-                    console.error("Failed to fetch AI hint", e);
                 }
-            } else {
-                toast.info("Login to get AI Hint");
+            } catch (e) {
+                console.error("Failed to fetch AI hint", e);
             }
 
             updates.ai_hint = aiHint;

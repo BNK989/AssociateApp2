@@ -30,7 +30,7 @@ export const GAME_CONFIG = {
   STREAK_BONUS_MULTIPLIER: 1.5,
   GUESS_TIMEOUT_SECONDS: 10, // Time before specific turn becomes free-for-all
   GAME_MODE_100_LIMIT: 100,
-  AI_HINT_MODEL: "gemini-1.5-flash", // or current cheapest
+  AI_HINT_MODEL: "gemini-2.5-flash-lite", // or current cheapest
 };
 ```
 

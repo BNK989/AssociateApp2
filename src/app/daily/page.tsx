@@ -35,6 +35,11 @@ export default async function DailyGamePage() {
         .eq('play_date', new Date().toISOString().split('T')[0])
         .single();
 
+    if (dailyGame && (!dailyGame.hints || !Array.isArray(dailyGame.hints))) {
+        const { ensureDailyHints } = await import('@/lib/dailyHintUtils');
+        await ensureDailyHints(dailyGame.id, dailyGame.words, dailyGame.theme);
+    }
+
     if (error || !dailyGame) {
         // Fallback or Not Found
         // For development, we inserted data for today, so it should be there.

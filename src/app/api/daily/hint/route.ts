@@ -38,11 +38,9 @@ export async function POST(request: Request) {
             if (user) userId = user.id;
         }
 
-        // Requirement: "logged in user that is not a guest"
-        // If no userId, reject (Guest or not logged in)
-        if (!userId) {
-            return NextResponse.json({ error: 'Authentication required for AI hints' }, { status: 401 });
-        }
+        // Requirement: "logged in user that is not a guest" - NOW ALLOWING GUESTS
+        // If no userId, we consider it a guest request.
+        // We will rely on IP limiting for guests.
 
         // Check if user is Guest (via metadata or email convention if any)
         // MOCK_USER in client has id 'me', we need to filter that out on Client side.
@@ -71,15 +69,18 @@ export async function POST(request: Request) {
         const gameId = dailyGame.id;
 
         // 3a. Per Player Limit
-        const { count: playerUsage, error: countError } = await supabase
-            .from('api_usage')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', userId)
-            .eq('game_id', gameId)
-            .eq('endpoint', 'daily_hint');
+        // 3a. Per Player Limit (Only if logged in)
+        if (userId) {
+            const { count: playerUsage, error: countError } = await supabase
+                .from('api_usage')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', userId)
+                .eq('game_id', gameId)
+                .eq('endpoint', 'daily_hint');
 
-        if (playerUsage !== null && playerUsage >= GAME_CONFIG.AI_HINT_LIMIT_PER_GAME_PLAYER) { // 5
-            return NextResponse.json({ error: 'Limit reached for this game' }, { status: 429 });
+            if (playerUsage !== null && playerUsage >= GAME_CONFIG.AI_HINT_LIMIT_PER_GAME_PLAYER) { // 5
+                return NextResponse.json({ error: 'Limit reached for this game' }, { status: 429 });
+            }
         }
 
         // 3b. Per IP Limit (Global safety)
@@ -100,43 +101,57 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Daily IP limit reached' }, { status: 429 });
         }
 
-        // 4. Call Gemini API
-        if (!GEMINI_API_KEY) {
-            return NextResponse.json({ hint: `[MOCK] First letter is ${targetWord[0].toUpperCase()}` });
+        // 4. Retrieve Hint
+        let hint: string | null = null;
+
+        // Check if pre-generated hints exist in the fetched dailyGame
+        if (dailyGame.hints && Array.isArray(dailyGame.hints) && dailyGame.hints[targetIndex]) {
+            hint = dailyGame.hints[targetIndex];
         }
 
-        const prompt = `Give a subtle hint for the word "${targetWord}" which comes after "${contextWord}" in a word association chain. 
-        The hint should be short, cryptic but helpful. 
-        CRITICAL INSTRUCTION: Do NOT use the word "${targetWord}" or any of its variations in the hint itself.
-        Example format: "Think about..." or "Related to..."`;
-
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${GAME_CONFIG.AI_HINT_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }]
-                })
+        // Fallback: Generate if missing
+        if (!hint) {
+            if (!GEMINI_API_KEY) {
+                return NextResponse.json({ hint: `[MOCK] First letter is ${targetWord[0].toUpperCase()}` });
             }
-        );
 
-        if (!response.ok) {
-            throw new Error('Gemini API failed');
+            const prompt = `Give a subtle hint for the word "${targetWord}" which comes after "${contextWord}" in a word association chain. 
+            The hint should be short, cryptic but helpful. 
+            CRITICAL INSTRUCTION: Do NOT use the word "${targetWord}" or any of its variations in the hint itself.
+            Example format: "Think about..." or "Related to..."`;
+
+            const response = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/${GAME_CONFIG.AI_HINT_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }]
+                    })
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error('Gemini API failed');
+            }
+
+            const data = await response.json();
+            hint = data.candidates?.[0]?.content?.parts?.[0]?.text || "No hint available.";
         }
-
-        const data = await response.json();
-        const hint = data.candidates?.[0]?.content?.parts?.[0]?.text || "No hint available.";
 
         // 5. Track Usage
+        const usageData: any = {
+            game_id: gameId,
+            endpoint: 'daily_hint',
+            ip_hash: ipHash
+        };
+        if (userId) {
+            usageData.user_id = userId;
+        }
+
         await supabase
             .from('api_usage')
-            .insert({
-                user_id: userId,
-                game_id: gameId,
-                endpoint: 'daily_hint',
-                ip_hash: ipHash
-            });
+            .insert(usageData);
 
         return NextResponse.json({ hint });
 
