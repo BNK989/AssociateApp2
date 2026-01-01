@@ -190,11 +190,11 @@ example chain: engineering, design, blueprint, component, part, fastener, bolt, 
 
 ## fixes
 - [ ] classic game: any player should be able to start the game (this was once an option but some how it does not work now)
-- [ ] when giving up (white flag) or when guessing the word wrong 3 time reaviling the word but gettin no points, we should NOT show the floating message "[player_name] solved [player_name] text"
 - [ ] improve layout on mobile - messages scroll out of view (Gerrit reported via iphone)
 - [ ] fix the admin get hints option to work 
 - [ ] when game is generated sometimes the create game button does not work, the create button is stuck, after selecting game type (i.e short, medium etc.) - fix this
 - [ ] when resuming a game in solve mode there is a toast message letting you know your in solve mode - this is unneccessary and shoule not appear (it happends after a resuming player send a guess)
+- [x] when giving up (white flag) or when guessing the word wrong 3 time reaviling the word but gettin no points, we should NOT show the floating message "[player_name] solved [player_name] text"
 - [x] when an invitation is sent via share link the exepting user (checked for logged in guest user) get stuck on "Checking credentials ... Please wait while we connect you to the game ..." - fix this
 - [x] when a guess is correct there should not be a toast alert
 - [x] the encription/decreption effect is not working - fix this when a message is encrypted or decrypted is should change mode letter by letter 

@@ -46,8 +46,8 @@ export default function GameRoom() {
         startRandomGame,
         broadcastTyping,
         typingUsers,
-        stealData,
-        setStealData,
+        floatingAnimation,
+        setFloatingAnimation,
         handleGiveUp
     } = useGameLogic(gameId!);
 
@@ -118,8 +118,8 @@ export default function GameRoom() {
                 onStartRandom={startRandomGame}
                 typingUsers={typingUsers}
                 players={players}
-                stealData={stealData}
-                onStealAnimationComplete={() => setStealData(null)}
+                floatingAnimation={floatingAnimation}
+                onAnimationComplete={() => setFloatingAnimation(null)}
             />
 
             <GameInput

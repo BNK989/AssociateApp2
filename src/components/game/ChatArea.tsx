@@ -17,7 +17,7 @@ import {
     ContextMenuSubContent,
 } from "@/components/ui/context-menu";
 import { TypingIndicator } from '../ui/TypingIndicator';
-import { StealAnimation } from './StealAnimation';
+import { FloatingMessage, AnimationData } from './FloatingMessage';
 import { GameBackground } from './GameBackground';
 
 type ChatAreaProps = {
@@ -31,8 +31,8 @@ type ChatAreaProps = {
     onStartRandom?: () => void;
     typingUsers?: Set<string>;
     players?: any[];
-    stealData?: { stealerName: string; stealerAvatar?: string; authorName?: string } | null;
-    onStealAnimationComplete?: () => void;
+    floatingAnimation?: AnimationData | null;
+    onAnimationComplete?: () => void;
 };
 
 export function ChatArea({
@@ -46,8 +46,8 @@ export function ChatArea({
     onStartRandom,
     typingUsers,
     players,
-    stealData,
-    onStealAnimationComplete
+    floatingAnimation,
+    onAnimationComplete
 }: ChatAreaProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const { isAdmin } = useAdmin();
@@ -407,13 +407,10 @@ export function ChatArea({
                 )}
 
                 {/* Steal Animation Overlay */}
-                {/* Steal Animation Overlay */}
-                {stealData && (
-                    <StealAnimation
-                        stealerName={stealData.stealerName}
-                        stealerAvatar={stealData.stealerAvatar}
-                        authorName={stealData.authorName}
-                        onComplete={() => onStealAnimationComplete?.()}
+                {floatingAnimation && (
+                    <FloatingMessage
+                        data={floatingAnimation}
+                        onComplete={() => onAnimationComplete?.()}
                     />
                 )}
 

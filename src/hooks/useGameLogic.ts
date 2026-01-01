@@ -14,6 +14,19 @@ import {
 import { toast } from "sonner";
 import { COMMON_WORDS } from '@/lib/commonWords';
 
+
+export type FloatingAnimationData = {
+    type: 'steal';
+    stealerName: string;
+    stealerAvatar?: string;
+    authorName?: string;
+} | {
+    type: 'announcement';
+    message: string;
+    subMessage?: string;
+    icon?: string;
+};
+
 export type Message = {
     id: string;
     content: string;
@@ -84,8 +97,9 @@ export function useGameLogic(gameId: string) {
     const [shakeMessageId, setShakeMessageId] = useState<string | null>(null);
     const gameRef = useRef<GameState | null>(null); // To track previous state for toast
 
+
     const [justSolvedData, setJustSolvedMessageId] = useState<{ id: string; points: number } | null>(null);
-    const [stealData, setStealData] = useState<{ stealerName: string; stealerAvatar?: string; authorName: string } | null>(null);
+    const [floatingAnimation, setFloatingAnimation] = useState<FloatingAnimationData | null>(null);
     const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
     const typingTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map());
     const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -269,7 +283,10 @@ export function useGameLogic(gameId: string) {
                     // Trigger Animation for Realtime Updates
                     if (updatedMessage.is_solved && user) {
                         // Check for Steal Event (if solved by someone other than author)
-                        const isSteal = updatedMessage.solved_by && updatedMessage.user_id && updatedMessage.solved_by !== updatedMessage.user_id;
+                        const isSteal = updatedMessage.solved_by &&
+                            updatedMessage.user_id &&
+                            updatedMessage.solved_by !== updatedMessage.user_id &&
+                            updatedMessage.winner_points > 0;
 
                         if (isSteal) {
                             // Determine who stole it for the animation
@@ -289,14 +306,16 @@ export function useGameLogic(gameId: string) {
                                 }
 
                                 const stealerName = solverId === user.id ? 'You' : solverProfile.username;
-                                setStealData({
+                                setFloatingAnimation({
+                                    type: 'steal',
                                     stealerName: stealerName,
                                     stealerAvatar: solverProfile.avatar_url,
                                     authorName: authorName
                                 });
                             } else {
                                 // Fallback if we don't have player loaded yet (rare)
-                                setStealData({
+                                setFloatingAnimation({
+                                    type: 'steal',
                                     stealerName: 'Thief',
                                     stealerAvatar: '',
                                     authorName: 'Someone'
@@ -335,11 +354,12 @@ export function useGameLogic(gameId: string) {
                 // Toast on Switch to Solving
                 const newGame = payload.new as GameState;
                 if (newGame.status === 'solving' && gameRef.current?.status !== 'solving') {
-                    if (gameRef.current?.solving_proposal_created_at) {
-                        toast.info("You started solve mode🥳 try to decipher the past messages");
-                    } else {
-                        toast.info("You started solve mode🥳 try to decipher the past messages");
-                    }
+                    setFloatingAnimation({
+                        type: 'announcement',
+                        message: "Solving Mode Activated!",
+                        subMessage: "Try to decipher the past messages",
+                        icon: "🥳"
+                    });
                 }
                 gameRef.current = newGame; // Keep track for comparison
             })
@@ -526,7 +546,7 @@ export function useGameLogic(gameId: string) {
             let deductionMultiplier = 0;
             if (target.hint_level === 1) deductionMultiplier = HINT_COSTS.TIER_1;
             else if (target.hint_level === 2) deductionMultiplier = HINT_COSTS.TIER_1 + HINT_COSTS.TIER_2;
-            else if (target.hint_level === 3) deductionMultiplier = HINT_COSTS.TIER_1 + HINT_COSTS.TIER_2 + HINT_COSTS.TIER_3;
+            else if (target.hint_level === 3) deductionMultiplier = HINT_COSTS.TIER_1 + HINT_COSTS.TIER_1 + HINT_COSTS.TIER_3;
 
             // Apply minor penalty for imperfect match
             const accuracyPenalty = similarity < 1.0 ? 0.1 : 0;
@@ -583,7 +603,8 @@ export function useGameLogic(gameId: string) {
                     authorName = authorProfile?.username || 'Unknown';
                 }
 
-                setStealData({
+                setFloatingAnimation({
+                    type: 'steal',
                     stealerName: 'You',
                     stealerAvatar: myProfile?.avatar_url,
                     authorName: authorName
@@ -1074,8 +1095,8 @@ export function useGameLogic(gameId: string) {
         startRandomGame,
         broadcastTyping,
         typingUsers,
-        stealData,
-        setStealData,
+        floatingAnimation,
+        setFloatingAnimation,
         handleGiveUp
     };
 }
