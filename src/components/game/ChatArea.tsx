@@ -323,8 +323,19 @@ export function ChatArea({
                                                     className={isMe || isJustSolved ? 'text-white' : 'text-gray-900 dark:text-white'}
                                                     isSolving={game.status === 'solving' && targetMessage?.id === msg.id && (typingUsers?.size ?? 0) > 0}
                                                 />
+                                                {/* AI Loading State: Level 3 but no hint yet */}
+                                                {(msg.hint_level === 3 && !msg.ai_hint) && (
+                                                    <div className="mt-2 text-xs font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 p-2 rounded border border-indigo-200 dark:border-indigo-800 animate-pulse flex items-center gap-2">
+                                                        <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                                        <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                                        <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                                        <span className="ml-1">Consulting AI...</span>
+                                                    </div>
+                                                )}
+
+                                                {/* Actual AI Hint */}
                                                 {msg.ai_hint && (
-                                                    <div className="mt-2 text-xs font-medium text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/40 p-2 rounded border border-yellow-200 dark:border-yellow-800 animate-in fade-in slide-in-from-top-1">
+                                                    <div className="mt-2 text-xs font-medium text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/40 p-2 rounded border border-yellow-200 dark:border-yellow-800 animate-in zoom-in-95 slide-in-from-top-2 duration-500">
                                                         💡 Hint: {msg.ai_hint}
                                                     </div>
                                                 )}

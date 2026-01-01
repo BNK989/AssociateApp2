@@ -375,12 +375,11 @@ export async function POST(
 
             // Level 3: AI Hint
             if (nextLevel === 3) {
-                // *** Rate Limiting ***
+                // Rate Limiting Logic
                 const ip = request.headers.get('x-forwarded-for') || 'unknown';
                 const userIp = Array.isArray(ip) ? ip[0] : ip;
 
-                // Use Service Role client for rate limit checks to bypass RLS (if we enable it on api_usage)
-                // We fallback to standard client if no service key, but RLS might block it then.
+                // Use Service Role client for rate limit checks
                 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
                 const adminSupabase = serviceKey
                     ? createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey)
@@ -414,51 +413,81 @@ export async function POST(
                 const { data: msg } = await supabase.from('messages').select('content').eq('id', targetId).single();
                 if (msg?.content) {
                     try {
-                        const apiKey = process.env.GEMINI_KEY;
-                        console.log(`[Hint Debug] Key exists: ${!!apiKey}, Model: ${GAME_CONFIG.AI_HINT_MODEL}`);
+                        const apiKey = process.env.GEMINI_KEY || process.env.GEMINI_API_KEY;
+
                         if (apiKey) {
-                            const prompt = `Give a short, cryptic but helpful single-sentence hint for the word or phrase: "${msg.content}". Do not use the word itself. Max 12 words.`;
+                            const modelsToTry = [
+                                GAME_CONFIG.AI_HINT_MODEL,
+                                GAME_CONFIG.AI_HINT_BACKUP_MODEL
+                            ].filter(Boolean);
 
-                            const modelId = GAME_CONFIG.AI_HINT_MODEL;
-                            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`;
+                            console.log(`[Hint Debug] Models to try: ${modelsToTry.join(', ')}`);
 
-                            console.log(`[Hint Debug] Sending request to: ${url.split('?')[0]}...`);
-                            console.log(`[Hint Debug] Payload:`, JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }));
+                            for (const modelId of modelsToTry) {
+                                try {
+                                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`;
 
-                            const geminiResponse = await fetch(url, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    contents: [{ parts: [{ text: prompt }] }]
-                                })
-                            });
+                                    const prompt = `Give a short, cryptic but helpful single-sentence hint for the word or phrase: "${msg.content}". Do not use the word itself. Max 12 words.`;
 
-                            console.log(`[Hint Debug] Response Status: ${geminiResponse.status}`);
+                                    console.log(`[Hint Debug] Attempting model: ${modelId}`);
+                                    // console.log(`[Hint Debug] Sending request to: ${url.replace(apiKey, 'HIDDEN')}...`);
 
-                            if (geminiResponse.ok) {
-                                const data = await geminiResponse.json();
-                                console.log(`[Hint Debug] Response Data:`, JSON.stringify(data).slice(0, 200));
-                                aiHint = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-                                console.log(`[Hint Debug] Extracted Hint: ${aiHint}`);
+                                    const geminiResponse = await fetch(url, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            contents: [{ parts: [{ text: prompt }] }]
+                                        })
+                                    });
 
-                                // Track Usage (using admin client to ensure insert works even if RLS somehow restricts)
-                                await adminSupabase.from('api_usage').insert({
-                                    user_id: user.id,
-                                    game_id: gameId,
-                                    endpoint: 'gemini-hint',
-                                    ip_hash: userIp
-                                });
+                                    console.log(`[Hint Debug] ${modelId} Response Status: ${geminiResponse.status}`);
 
-                            } else {
-                                const errorText = await geminiResponse.text();
-                                console.error('[Hint Debug] Gemini API Error:', errorText);
+                                    if (geminiResponse.ok) {
+                                        const data = await geminiResponse.json();
+                                        console.log(`[Hint Debug] Response Data Preview:`, JSON.stringify(data).slice(0, 300));
+
+                                        const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+                                        if (candidateText) {
+                                            aiHint = candidateText;
+                                            console.log(`[Hint Debug] Success with ${modelId}. Extracted Hint: "${aiHint}"`);
+
+                                            // Track Usage
+                                            await adminSupabase.from('api_usage').insert({
+                                                user_id: user.id,
+                                                game_id: gameId,
+                                                endpoint: 'gemini-hint',
+                                                model: modelId, // Log model if column exists, otherwise just log usage
+                                                ip_hash: userIp
+                                            });
+
+                                            break; // Exit loop on success
+                                        } else {
+                                            console.warn(`[Hint Debug] ${modelId} returned valid JSON but no text content.`);
+                                        }
+                                    } else {
+                                        const errorText = await geminiResponse.text();
+                                        console.error(`[Hint Debug] ${modelId} Error Response:`, errorText);
+                                        // Continue to next model
+                                    }
+                                } catch (innerErr) {
+                                    console.error(`[Hint Debug] Exception with ${modelId}:`, innerErr);
+                                }
                             }
                         } else {
-                            console.error('[Hint Debug] Missing GEMINI_KEY env var');
+                            console.error('[Hint Debug] CRITICAL: Missing GEMINI_KEY or GEMINI_API_KEY environment variable!');
                         }
-                    } catch (e) {
-                        console.error('[Hint Debug] Gemini Hint Gen Exception:', e);
+                    } catch (e: any) {
+                        console.error('[Hint Debug] Hint Exception:', e.toString());
+                        if (e.cause) console.error('[Hint Debug] Cause:', e.cause);
                     }
+                } else {
+                    console.warn('[Hint Debug] Msg Content missing for targetId:', targetId);
+                }
+
+                // Fallback if AI failed
+                if (!aiHint && msg?.content) {
+                    aiHint = `It relates to "${msg.content.substring(0, 1)}..." (AI unavailable)`;
                 }
             }
 
@@ -474,7 +503,9 @@ export async function POST(
             const { error } = await supabase.from('messages').update(updatePayload).eq('id', targetId);
 
             if (error) throw error;
-            if (error) throw error;
+
+            // Return the hint to client
+            return NextResponse.json({ success: true, ai_hint: aiHint });
         } else if (action === 'give_up') {
             const { targetId, userId } = payload;
 

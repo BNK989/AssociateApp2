@@ -179,14 +179,18 @@ example chain: engineering, design, blueprint, component, part, fastener, bolt, 
 -[x] Enable actual Ai hints for logged in users
 
 ## hints logic update
-- [ ] do not encrypt the length of the word
+- [ ] do not encrypt the length of the word. i.e. the cipher should be the length of the message
 - [ ] first hint should simply reveal the first letter of the word
+- [ ] second hint should scrumble the message letters and after scrumbling reveal all the letters
+
 
 ==
 
 ----------------
 
 ## fixes
+- [ ] classic game: any player should be able to start the game (this was once an option but some how it does not work now)
+- [ ] when giving up (white flag) or when guessing the word wrong 3 time reaviling the word but gettin no points, we should NOT show the floating message "[player_name] solved [player_name] text"
 - [ ] improve layout on mobile - messages scroll out of view (Gerrit reported via iphone)
 - [ ] fix the admin get hints option to work 
 - [ ] when game is generated sometimes the create game button does not work, the create button is stuck, after selecting game type (i.e short, medium etc.) - fix this

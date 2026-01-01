@@ -990,6 +990,12 @@ export function useGameLogic(gameId: string) {
         const isMyTurn = target.user_id === user?.id;
         const isFreeForAll = solvingTimeLeft === 0;
 
+        // Block AI Hint for Guest Users
+        if (nextLevel === 3 && user?.is_anonymous) {
+            toast.info("Register to get AI hints!");
+            return;
+        }
+
         if (!isMyTurn && !isFreeForAll) {
             toast.warning("Wait for the author or the free-for-all!");
             return;
@@ -1009,7 +1015,7 @@ export function useGameLogic(gameId: string) {
                 cipher_text: newCipherText
             } : m));
 
-            await fetch(`/api/game/${game.id}/action`, {
+            const res = await fetch(`/api/game/${game.id}/action`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1021,6 +1027,17 @@ export function useGameLogic(gameId: string) {
                     }
                 })
             });
+
+            if (res.ok) {
+                const data = await res.json();
+                if (data.ai_hint) {
+                    // Update AI hint locally immediately if returned
+                    setMessages(prev => prev.map(m => m.id === target.id ? {
+                        ...m,
+                        ai_hint: data.ai_hint
+                    } : m));
+                }
+            }
 
             // Sync immediately after
             fetchGameData();

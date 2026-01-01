@@ -154,6 +154,7 @@ export async function ensureDailyHints(gameId: string, words: string[], theme: s
             if (updateError) {
                 console.error("Error saving hints:", updateError);
             }
+            return hints;
         }
     } catch (err) {
         console.error("Error in ensureDailyHints:", err);

@@ -37,7 +37,10 @@ export default async function DailyGamePage() {
 
     if (dailyGame && (!dailyGame.hints || !Array.isArray(dailyGame.hints))) {
         const { ensureDailyHints } = await import('@/lib/dailyHintUtils');
-        await ensureDailyHints(dailyGame.id, dailyGame.words, dailyGame.theme);
+        const generatedHints = await ensureDailyHints(dailyGame.id, dailyGame.words, dailyGame.theme);
+        if (generatedHints) {
+            dailyGame.hints = generatedHints;
+        }
     }
 
     if (error || !dailyGame) {
@@ -54,6 +57,11 @@ export default async function DailyGamePage() {
     }
 
     return (
-        <DailyGameClient dailyWords={dailyGame.words || []} date={dailyGame.play_date} theme={dailyGame.theme} />
+        <DailyGameClient
+            dailyWords={dailyGame.words || []}
+            date={dailyGame.play_date}
+            theme={dailyGame.theme}
+            initialHints={dailyGame.hints}
+        />
     );
 }

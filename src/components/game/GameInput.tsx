@@ -177,7 +177,9 @@ export function GameInput({
             }}
             className="h-10 w-10 flex flex-col items-center justify-center rounded-lg transition-colors bg-secondary text-secondary-foreground hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
         >
-            <span className="text-sm leading-none mb-0.5">💡</span>
+            <span className="text-sm leading-none mb-0.5">
+                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : "💡"}
+            </span>
             <span className="text-[10px] font-bold leading-none">{buttonText}</span>
         </button>
     );

@@ -17,6 +17,7 @@ type DailyGameClientProps = {
     dailyWords: string[];
     date: string;
     theme?: string;
+    initialHints?: string[] | null;
 };
 
 // Mock User for Daily Game
@@ -45,7 +46,7 @@ const MY_PROFILE = {
     avatar_url: 'https://api.dicebear.com/9.x/thumbs/svg?seed=guest',
 };
 
-export default function DailyGameClient({ dailyWords, date, theme }: DailyGameClientProps) {
+export default function DailyGameClient({ dailyWords, date, theme, initialHints }: DailyGameClientProps) {
     const router = useRouter();
     const { user: authUser, session } = useAuth();
     const viewportHeight = useVisualViewport();
@@ -233,49 +234,55 @@ export default function DailyGameClient({ dailyWords, date, theme }: DailyGameCl
         if (nextLevel === 3) {
             let aiHint = `Contains ${targetMessage.content.length} letters. First letter is ${targetMessage.content[0].toUpperCase()}.`;
 
-            // Optimistic update with loading or static hint first? 
-            // For now, static hint is default fallback.
-
-            try {
-                // Extract index from ID "msg-0", "msg-1"
+            // Use preloaded hints if available
+            if (initialHints && Array.isArray(initialHints)) {
                 const targetIndex = dailyWords.indexOf(targetMessage.content);
-
-                if (targetIndex !== -1) {
-                    // We can trigger the fetch in background or await it.
-                    // Requirement: "subtle loading or nothing".
-                    // We'll await it to ensure we display the AI hint if successful, otherwise static.
-
-                    const headersMs: Record<string, string> = {
-                        'Content-Type': 'application/json',
-                    };
-
-                    if (session?.access_token) {
-                        headersMs['Authorization'] = `Bearer ${session.access_token}`;
-                    }
-
-                    const res = await fetch('/api/daily/hint', {
-                        method: 'POST',
-                        headers: headersMs,
-                        body: JSON.stringify({
-                            date: date,
-                            targetIndex: targetIndex
-                        })
-                    });
-
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data.hint) {
-                            aiHint = data.hint;
-                        }
-                    } else {
-                        const err = await res.json();
-                        if (err.error === 'Limit reached for this game' || err.error === 'Daily IP limit reached') {
-                            toast.error("Daily AI Hint limit reached");
-                        }
-                    }
+                if (targetIndex !== -1 && initialHints[targetIndex]) {
+                    aiHint = initialHints[targetIndex];
                 }
-            } catch (e) {
-                console.error("Failed to fetch AI hint", e);
+            } else {
+                // Fallback to fetch if for some reason hints weren't loaded (e.g. error, or old API style)
+                try {
+                    // Extract index from ID "msg-0", "msg-1"
+                    const targetIndex = dailyWords.indexOf(targetMessage.content);
+
+                    if (targetIndex !== -1) {
+                        // We can trigger the fetch in background or await it.
+                        // Requirement: "subtle loading or nothing".
+                        // We'll await it to ensure we display the AI hint if successful, otherwise static.
+
+                        const headersMs: Record<string, string> = {
+                            'Content-Type': 'application/json',
+                        };
+
+                        if (session?.access_token) {
+                            headersMs['Authorization'] = `Bearer ${session.access_token}`;
+                        }
+
+                        const res = await fetch('/api/daily/hint', {
+                            method: 'POST',
+                            headers: headersMs,
+                            body: JSON.stringify({
+                                date: date,
+                                targetIndex: targetIndex
+                            })
+                        });
+
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.hint) {
+                                aiHint = data.hint;
+                            }
+                        } else {
+                            const err = await res.json();
+                            if (err.error === 'Limit reached for this game' || err.error === 'Daily IP limit reached') {
+                                toast.error("Daily AI Hint limit reached");
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch AI hint", e);
+                }
             }
 
             updates.ai_hint = aiHint;
