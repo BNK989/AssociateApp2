@@ -146,46 +146,25 @@ export function ChatArea({
 
     // Scroll on messages change
     const prevTargetIdRef = useRef<string | undefined>(undefined);
-    const prevHintLevelRef = useRef<number>(0);
-    const prevStrikesRef = useRef<number>(0);
+    const prevMessagesLengthRef = useRef(messages.length);
+    const prevGameStatusRef = useRef(game.status);
 
     useEffect(() => {
-        const isHintIncrease =
-            game.status === 'solving' &&
-            targetMessage &&
-            targetMessage.id === prevTargetIdRef.current &&
-            (targetMessage.hint_level || 0) > prevHintLevelRef.current;
+        const isNewMessage = messages.length > prevMessagesLengthRef.current;
+        const isTargetChange = targetMessage?.id !== prevTargetIdRef.current;
+        const isStatusChange = game.status !== prevGameStatusRef.current;
 
-        const isStrikeIncrease =
-            game.status === 'solving' &&
-            targetMessage &&
-            targetMessage.id === prevTargetIdRef.current &&
-            (targetMessage.strikes || 0) > prevStrikesRef.current;
+        // Update Refs
+        prevMessagesLengthRef.current = messages.length;
+        prevTargetIdRef.current = targetMessage?.id;
+        prevGameStatusRef.current = game.status;
 
-        // Update refs
-        if (targetMessage) {
-            prevTargetIdRef.current = targetMessage.id;
-            prevHintLevelRef.current = targetMessage.hint_level || 0;
-            prevStrikesRef.current = targetMessage.strikes || 0;
-        } else {
-            prevTargetIdRef.current = undefined;
-            prevHintLevelRef.current = 0;
-            prevStrikesRef.current = 0;
-        }
-
-        if (isHintIncrease || isStrikeIncrease) {
-            return; // Skip scrolling on hint reveal or wrong guess (strike increase)
-        }
-
-        scrollToSmart();
-    }, [messages, game.status, targetMessage]);
-
-    // Scroll on typing
-    useEffect(() => {
-        if (typingUsers && typingUsers.size > 0) {
+        // Strict Whitelist: Only scroll on structural changes (New Message, New Target, Mode Change)
+        // This implicitly prevents scrolling on simple updates (Hints, Strikes, Points)
+        if (isNewMessage || isTargetChange || isStatusChange) {
             scrollToSmart();
         }
-    }, [typingUsers]);
+    }, [messages, game.status, targetMessage]);
 
     // Scroll on resize (keyboard open)
     useEffect(() => {

@@ -430,15 +430,7 @@ export function useGameLogic(gameId: string) {
 
 
 
-    useEffect(() => {
-        if (messages.length > prevMessagesLength.current) {
-            scrollToBottom();
-            prevMessagesLength.current = messages.length;
-        } else if (messages.length === 0 && prevMessagesLength.current > 0) {
-            // Reset if messages cleared (unlikely but safe)
-            prevMessagesLength.current = 0;
-        }
-    }, [messages]);
+
 
     const finalizeSolvingMode = useCallback(async () => {
         if (!game) return;
@@ -502,9 +494,7 @@ export function useGameLogic(gameId: string) {
         return () => clearInterval(interval);
     }, [game?.status, game?.solving_started_at]);
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    };
+
 
     const getTargetMessage = () => {
         const reversed = [...messages].reverse();
@@ -781,7 +771,7 @@ export function useGameLogic(gameId: string) {
 
             setMessages(prev => [...prev, optimisticMessage]);
             setInput(''); // Clear input immediately for better UX
-            scrollToBottom();
+
 
             // Helper function to send via API with retry
             const sendSafe = async (attempt = 0): Promise<boolean> => {
@@ -912,7 +902,7 @@ export function useGameLogic(gameId: string) {
             }
 
             setMessages(prev => [...prev, optimisticMessage]);
-            scrollToBottom();
+
 
             await fetch('/api/messages/send', {
                 method: 'POST',
