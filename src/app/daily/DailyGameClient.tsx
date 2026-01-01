@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { usePostHog } from 'posthog-js/react';
 import { Message, GameState, Player } from '@/hooks/useGameLogic';
 import { ChatArea } from '@/components/game/ChatArea';
 import { useAuth } from '@/context/AuthProvider';
@@ -48,8 +49,21 @@ const MY_PROFILE = {
 
 export default function DailyGameClient({ dailyWords, date, theme, initialHints }: DailyGameClientProps) {
     const router = useRouter();
-    const { user: authUser, session } = useAuth();
+    const { user: authUser, session, loading: authLoading } = useAuth();
+    const posthog = usePostHog();
     const viewportHeight = useVisualViewport();
+    const hasTrackedEntrance = useRef(false);
+
+    // Track Entrance
+    useEffect(() => {
+        if (!authLoading && !hasTrackedEntrance.current) {
+            hasTrackedEntrance.current = true;
+            posthog.capture('daily_game_entered', {
+                user_type: authUser ? 'registered' : 'guest',
+                date: date
+            });
+        }
+    }, [authLoading, authUser, date, posthog]);
 
     // Game State
     const [messages, setMessages] = useState<Message[]>([]);
@@ -365,12 +379,31 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
                 setJustSolvedData({ id: targetMessage.id, points });
                 setTimeout(() => setJustSolvedData(null), 1500);
 
+                // Track Word Solved
+                posthog.capture('daily_word_solved', {
+                    word: targetMessage.content,
+                    score_gained: points,
+                    total_score: score + points,
+                    consecutive: consecutive + 1,
+                    user_type: authUser ? 'registered' : 'guest',
+                    date: date
+                });
+
                 // Check Completion
                 const remaining = messages.filter(m => !m.is_solved && m.id !== targetMessage.id && (m.strikes || 0) < 3).length;
                 if (remaining === 0) {
                     setGameOver(true);
                     toast.success("Daily Challenge Completed!");
+
+                    // Track Completion
+                    posthog.capture('daily_game_completed', {
+                        final_score: score + points,
+                        total_words: dailyWords.length,
+                        user_type: authUser ? 'registered' : 'guest',
+                        date: date
+                    });
                 }
+
 
                 setInput('');
 

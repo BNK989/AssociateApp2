@@ -42,6 +42,36 @@ Fired when a user successfully completes the onboarding tutorial.
 - **Trigger**: Client-side in `Lobby.tsx` via `handleTutorialComplete`.
 - **Properties**: None (Default PostHog person properties apply).
 
+### 5. `daily_game_entered`
+Fired when a user visits the Daily Game page.
+
+- **Trigger**: Client-side in `DailyGameClient.tsx` on mount (once auth is resolved).
+- **Properties**:
+    - `user_type`: 'registered' | 'guest'
+    - `date`: string (The date of the daily game, e.g., '2023-10-27')
+
+### 6. `daily_word_solved`
+Fired when a user successfully solves a word in the Daily Game.
+
+- **Trigger**: Client-side in `DailyGameClient.tsx` inside `handleSolve`.
+- **Properties**:
+    - `word`: string (The solved word)
+    - `score_gained`: number
+    - `total_score`: number (Cumulative score)
+    - `consecutive`: number (Streak count)
+    - `user_type`: 'registered' | 'guest'
+    - `date`: string
+
+### 7. `daily_game_completed`
+Fired when a user solves all words in the Daily Game.
+
+- **Trigger**: Client-side in `DailyGameClient.tsx` when remaining words is 0.
+- **Properties**:
+    - `final_score`: number
+    - `total_words`: number
+    - `user_type`: 'registered' | 'guest'
+    - `date`: string
+
 ## Implementation Details
 - **Client-Side**: Uses `usePostHog()` hook from `posthog-js/react`.
 - **Server-Side**: Uses `getPostHogServer()` singleton from `src/app/posthog-server.ts` and `posthog-node`. Events are flushed immediately using `await posthog.flush()`.
