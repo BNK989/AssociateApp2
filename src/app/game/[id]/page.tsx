@@ -133,7 +133,7 @@ export default function GameRoom() {
                 targetMessage={getTargetMessage()}
                 onSendMessage={handleSendMessage}
                 onGetHint={handleGetHint}
-                isEmpty={messages.length === 0}
+                isEmpty={messages.filter(m => m.type !== 'system').length === 0}
                 onTyping={broadcastTyping}
                 onGiveUp={handleGiveUp}
             />

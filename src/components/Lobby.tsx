@@ -59,6 +59,7 @@ export default function Lobby() {
     const [creating, setCreating] = useState(false);
     const [gameToLeave, setGameToLeave] = useState<string | null>(null);
     const [leaving, setLeaving] = useState(false);
+    const [gamesLoading, setGamesLoading] = useState(true);
 
     // Create Game State
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -100,7 +101,9 @@ export default function Lobby() {
         if (!user) return;
 
         const fetchGames = async () => {
+            setGamesLoading(true);
             console.log('Fetching games for user:', user.id);
+            console.log('Supabase client initialized:', !!supabase);
             // Fetch both active and completed in one go or separate if needed complexity
             // We'll fetch all relevant games for the user
             const { data: gamesData, error } = await supabase
@@ -119,6 +122,9 @@ export default function Lobby() {
 
             if (error) {
                 console.error('Error fetching games:', error);
+                console.error('Error details:', JSON.stringify(error, null, 2));
+                toast.error("Failed to load games: " + error.message);
+                setGamesLoading(false);
                 return;
             }
 
@@ -162,6 +168,7 @@ export default function Lobby() {
 
             setActiveGames(active);
             setCompletedGames(completed);
+            setGamesLoading(false);
         };
 
         const fetchAll = () => {
@@ -198,29 +205,55 @@ export default function Lobby() {
             const maxMessages = selectedMode ? selectedMode.limit : 25;
 
             // 1. Create Game
-            const { data: game, error: gameError } = await supabase
+            console.log('Starting game creation with mode:', selectedModeId, 'maxMessages:', maxMessages);
+            const insertPayload = {
+                status: 'texting',
+                mode: 'free',
+                current_turn_user_id: user.id,
+                max_messages: maxMessages
+            };
+            console.log('Insert payload:', insertPayload);
+
+            // Wrap in timeout
+            const createGamePromise = supabase
                 .from('games')
-                .insert({
-                    status: 'texting',
-                    mode: 'free',
-                    current_turn_user_id: user.id,
-                    max_messages: maxMessages
-                })
+                .insert(insertPayload)
                 .select()
                 .single();
 
+            const { data: game, error: gameError } = await Promise.race([
+                createGamePromise,
+                new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Game creation timeout')), 10000))
+            ]);
+
+            console.log('Game creation result:', { game, error: gameError });
+
             if (gameError) throw gameError;
 
-            // 2. Add Creator as Player
-            const { error: playerError } = await supabase
-                .from('game_players')
-                .insert({
-                    game_id: game.id,
-                    user_id: user.id,
-                    score: 0
-                });
+            console.log('Adding creator as player...', { gameId: game.id, userId: user.id });
 
-            if (playerError) throw playerError;
+            // 2. Add Creator as Player
+            // 2. Add Creator as Player
+            // Wrap in timeout
+            const { error: playerError } = await Promise.race([
+                supabase
+                    .from('game_players')
+                    .insert({
+                        game_id: game.id,
+                        user_id: user.id,
+                        score: 0
+                    }),
+                new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Player insertion timeout')), 10000))
+            ]);
+
+            console.log('Player addition result:', { playerError });
+
+            if (playerError) {
+                // Rollback: Delete the game if player creation failed
+                console.error("Player creation failed, rolling back game...", playerError);
+                await supabase.from('games').delete().eq('id', game.id);
+                throw playerError;
+            }
 
             posthog.capture('game_created', {
                 game_id: game.id,
@@ -229,12 +262,18 @@ export default function Lobby() {
             });
 
             setIsCreateOpen(false);
-            router.push(`/game/${game.id}?action=invite`);
+            const targetUrl = `/game/${game.id}?action=invite`;
+            console.log('Redirecting to:', targetUrl);
+            router.push(targetUrl);
+            console.log('Router push called');
 
         } catch (error: any) {
             console.error('Error creating game:', JSON.stringify(error, null, 2));
-            if (error.message) alert(`Failed to create game: ${error.message}`);
-            else alert('Failed to create game (Unknown error)');
+            toast.error(error.message || 'Failed to create game');
+            // If it was a timeout, explicitly alter the error message
+            if (error.message && error.message.includes('timeout')) {
+                alert('Connection timed out. Please check your internet connection and try again.');
+            }
         } finally {
             setCreating(false);
         }
@@ -342,77 +381,87 @@ export default function Lobby() {
                     </Button>
                 </div>
 
-                {/* Daily Challenge Card */}
-                <div className="mb-8 p-1">
-                    <button
-                        onClick={() => router.push('/daily')}
-                        className={`w-full group relative overflow-hidden rounded-2xl border transition-all duration-300 transform hover:scale-[1.01] hover:shadow-xl text-left cursor-pointer
-                        ${isDailyCompleted
-                                ? 'bg-secondary/50 border-border opacity-80'
-                                : 'bg-gradient-to-r from-amber-100 to-orange-100 dark:bg-none dark:bg-gray-900/40 border-orange-200 dark:border-amber-500/20'
-                            }`}
-                    >
-                        <div className="p-6 flex items-center justify-between relative z-10">
-                            <div className="flex items-center gap-4">
-                                <div className={`p-3 rounded-xl ${isDailyCompleted ? 'bg-secondary' : 'bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg shadow-orange-500/20'}`}>
-                                    {isDailyCompleted ? <CheckCircle className="w-6 h-6 text-green-500" /> : <Calendar className="w-6 h-6" />}
-                                </div>
-                                <div>
-                                    <h3 className={`text-lg font-bold ${isDailyCompleted ? 'text-muted-foreground' : 'text-orange-900 dark:text-amber-100'}`}>
-                                        {isDailyCompleted ? 'Daily Challenge Completed' : 'Daily Challenge'}
-                                    </h3>
-                                    <p className={`text-sm ${isDailyCompleted ? 'text-muted-foreground' : 'text-orange-700 dark:text-gray-400'}`}>
-                                        {isDailyCompleted ? 'Great job! Come back tomorrow for a new chain.' : 'Solve the daily word chain to win points!'}
-                                    </p>
-                                </div>
-                            </div>
-                            {!isDailyCompleted && (
-                                <div className="bg-white/80 dark:bg-white/10 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity transform group-hover:translate-x-1">
-                                    <ArrowRight className="w-5 h-5 text-orange-600 dark:text-amber-400" />
-                                </div>
-                            )}
-                        </div>
-                        {!isDailyCompleted && (
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 dark:bg-amber-400/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
-                        )}
-                    </button>
-                </div>
-
-                {activeGames.length > 0 ? (
+                {gamesLoading ? (
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {activeGames.map((game) => (
-                            <GameCard
-                                key={game.id}
-                                game={game}
-                                onArchive={handleArchive}
-                                onLeave={() => setGameToLeave(game.id)}
-                                onDelete={handleDeleteGame}
-                                onReset={handleResetGame}
-                                isAdmin={isAdmin}
-                            />
+                        {[1, 2, 3].map((i) => (
+                            <div key={i} className="h-48 w-full bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse" />
                         ))}
                     </div>
                 ) : (
-                    <div className="flex flex-col items-center justify-center py-16 px-4 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-800 text-center animate-in fade-in zoom-in duration-500">
-                        <div className="bg-purple-100 dark:bg-purple-900/30 p-4 rounded-full mb-6 relative group">
-                            <Sparkles className="w-10 h-10 text-purple-600 dark:text-purple-400 absolute -top-2 -right-2 animate-pulse" />
-                            <MessageSquarePlus className="w-12 h-12 text-purple-600 dark:text-purple-400" />
+                    <>
+                        {/* Daily Challenge Card */}
+                        <div className="mb-8 p-1">
+                            <button
+                                onClick={() => router.push('/daily')}
+                                className={`w-full group relative overflow-hidden rounded-2xl border transition-all duration-300 transform hover:scale-[1.01] hover:shadow-xl text-left cursor-pointer
+                        ${isDailyCompleted
+                                        ? 'bg-secondary/50 border-border opacity-80'
+                                        : 'bg-gradient-to-r from-amber-100 to-orange-100 dark:bg-none dark:bg-gray-900/40 border-orange-200 dark:border-amber-500/20'
+                                    }`}
+                            >
+                                <div className="p-6 flex items-center justify-between relative z-10">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`p-3 rounded-xl ${isDailyCompleted ? 'bg-secondary' : 'bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg shadow-orange-500/20'}`}>
+                                            {isDailyCompleted ? <CheckCircle className="w-6 h-6 text-green-500" /> : <Calendar className="w-6 h-6" />}
+                                        </div>
+                                        <div>
+                                            <h3 className={`text-lg font-bold ${isDailyCompleted ? 'text-muted-foreground' : 'text-orange-900 dark:text-amber-100'}`}>
+                                                {isDailyCompleted ? 'Daily Challenge Completed' : 'Daily Challenge'}
+                                            </h3>
+                                            <p className={`text-sm ${isDailyCompleted ? 'text-muted-foreground' : 'text-orange-700 dark:text-gray-400'}`}>
+                                                {isDailyCompleted ? 'Great job! Come back tomorrow for a new chain.' : 'Solve the daily word chain to win points!'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    {!isDailyCompleted && (
+                                        <div className="bg-white/80 dark:bg-white/10 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity transform group-hover:translate-x-1">
+                                            <ArrowRight className="w-5 h-5 text-orange-600 dark:text-amber-400" />
+                                        </div>
+                                    )}
+                                </div>
+                                {!isDailyCompleted && (
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 dark:bg-amber-400/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+                                )}
+                            </button>
                         </div>
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                            Start Your First Game!
-                        </h3>
-                        <p className="text-gray-500 dark:text-gray-400 max-w-md mb-8 leading-relaxed">
-                            Create a game to start associating words with your friends. Test your connection and see who knows who best!
-                        </p>
-                        <Button
-                            onClick={() => setIsCreateOpen(true)}
-                            size="lg"
-                            className="text-lg px-8 py-6 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-xl shadow-purple-500/20 hover:shadow-purple-500/40 transition-all duration-300 transform hover:scale-105"
-                        >
-                            <Sparkles className="w-5 h-5 mr-2" />
-                            Create Game
-                        </Button>
-                    </div>
+
+                        {activeGames.length > 0 ? (
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                {activeGames.map((game) => (
+                                    <GameCard
+                                        key={game.id}
+                                        game={game}
+                                        onArchive={handleArchive}
+                                        onLeave={() => setGameToLeave(game.id)}
+                                        onDelete={handleDeleteGame}
+                                        onReset={handleResetGame}
+                                        isAdmin={isAdmin}
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-16 px-4 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-800 text-center animate-in fade-in zoom-in duration-500">
+                                <div className="bg-purple-100 dark:bg-purple-900/30 p-4 rounded-full mb-6 relative group">
+                                    <Sparkles className="w-10 h-10 text-purple-600 dark:text-purple-400 absolute -top-2 -right-2 animate-pulse" />
+                                    <MessageSquarePlus className="w-12 h-12 text-purple-600 dark:text-purple-400" />
+                                </div>
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                                    Start Your First Game!
+                                </h3>
+                                <p className="text-gray-500 dark:text-gray-400 max-w-md mb-8 leading-relaxed">
+                                    Create a game to start associating words with your friends. Test your connection and see who knows who best!
+                                </p>
+                                <Button
+                                    onClick={() => setIsCreateOpen(true)}
+                                    size="lg"
+                                    className="text-lg px-8 py-6 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-xl shadow-purple-500/20 hover:shadow-purple-500/40 transition-all duration-300 transform hover:scale-105"
+                                >
+                                    <Sparkles className="w-5 h-5 mr-2" />
+                                    Create Game
+                                </Button>
+                            </div>
+                        )}
+                    </>
                 )}
             </section>
 

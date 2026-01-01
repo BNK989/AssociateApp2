@@ -709,7 +709,10 @@ export function useGameLogic(gameId: string) {
             return;
         }
 
-        if (messages.length > 0 && game.current_turn_user_id && game.current_turn_user_id !== user.id) {
+        // Allow any player to send the first message (start the game)
+        const hasTextMessages = messages.some(m => m.type !== 'system');
+
+        if (hasTextMessages && game.current_turn_user_id && game.current_turn_user_id !== user.id) {
             toast.warning("It's not your turn!");
             return;
         }

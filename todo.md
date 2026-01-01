@@ -179,9 +179,10 @@ example chain: engineering, design, blueprint, component, part, fastener, bolt, 
 -[x] Enable actual Ai hints for logged in users
 
 ## hints logic update
-- [ ] do not encrypt the length of the word. i.e. the cipher should be the length of the message
-- [ ] first hint should simply reveal the first letter of the word
-- [ ] second hint should scrumble the message letters and after scrumbling reveal all the letters
+- [ ] do not encrypt the length of the word in the daily game only. i.e. the cipher should be the length of the message
+- [ ] first hint should simply reveal only the first letter of the word and correct the cipher to the reflect the number of letters in the message (applies to the classic game in the daily it should already be clear the number of letters in the message )
+- [ ] second hint should scrumble the message letters and after scrumbling reveal 70% of the letters (add a floating animation to the letters that are revealed where each letter hovers up and down at an angle of -35 to +35 degrees)
+- [ ] third hint stays the AI hint
 
 
 ==
@@ -193,7 +194,7 @@ example chain: engineering, design, blueprint, component, part, fastener, bolt, 
 - [ ] improve layout on mobile - messages scroll out of view (Gerrit reported via iphone)
 - [ ] fix the admin get hints option to work 
 - [ ] when game is generated sometimes the create game button does not work, the create button is stuck, after selecting game type (i.e short, medium etc.) - fix this
-- [ ] when resuming a game in solve mode there is a toast message letting you know your in solve mode - this is unneccessary and shoule not appear (it happends after a resuming player send a guess)
+- [ ] when resuming a game in solve mode there is a floating message letting you know your in solve mode - this is unneccessary and shoule not appear (it happends after a resuming player send a guess)
 - [x] when giving up (white flag) or when guessing the word wrong 3 time reaviling the word but gettin no points, we should NOT show the floating message "[player_name] solved [player_name] text"
 - [x] when an invitation is sent via share link the exepting user (checked for logged in guest user) get stuck on "Checking credentials ... Please wait while we connect you to the game ..." - fix this
 - [x] when a guess is correct there should not be a toast alert
