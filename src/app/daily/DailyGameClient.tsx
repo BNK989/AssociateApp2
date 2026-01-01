@@ -98,7 +98,18 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
             try {
                 const parsed = JSON.parse(savedState);
                 if (parsed && parsed.dailyWordsJSON === JSON.stringify(dailyWords)) {
-                    setMessages(parsed.messages);
+                    // Sanitize: Fix old state where Level 0 cipher length was randomized
+                    const sanitizedMessages = parsed.messages.map((m: Message) => {
+                        if (m.hint_level === 0 && (m.cipher_text?.length ?? 0) !== m.content.length) {
+                            return {
+                                ...m,
+                                cipher_text: generateCipherString(m.content, 0, true)
+                            };
+                        }
+                        return m;
+                    });
+
+                    setMessages(sanitizedMessages);
                     setScore(parsed.score);
                     setConsecutive(parsed.consecutive);
                     setGameOver(parsed.gameOver);
@@ -121,7 +132,7 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
                 created_at: new Date(Date.now() - (dailyWords.length - index) * 1000).toISOString(),
                 strikes: 0,
                 hint_level: 0,
-                cipher_text: generateCipherString(word, 0),
+                cipher_text: generateCipherString(word, 0, true),
                 author_points: 0,
                 winner_points: 0,
                 type: 'text',
@@ -223,7 +234,10 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
         // It is applied in handleSolve or similar.
 
         // Generate new Cipher (Static Fallback)
-        const newCipherText = generateCipherString(targetMessage.content, nextLevel);
+        // Only regenerate for Level 1 and 2. Level 3 should preserve the visual state.
+        const newCipherText = nextLevel < 3
+            ? generateCipherString(targetMessage.content, nextLevel, true)
+            : (targetMessage.cipher_text || generateCipherString(targetMessage.content, 2, true));
 
         // Update Message
         const updates: Partial<Message> = {
@@ -349,7 +363,7 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
                 } : m));
 
                 setJustSolvedData({ id: targetMessage.id, points });
-                setTimeout(() => setJustSolvedData(null), 3000);
+                setTimeout(() => setJustSolvedData(null), 1500);
 
                 // Check Completion
                 const remaining = messages.filter(m => !m.is_solved && m.id !== targetMessage.id && (m.strikes || 0) < 3).length;

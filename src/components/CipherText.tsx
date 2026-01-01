@@ -10,9 +10,10 @@ interface CipherTextProps {
     visible: boolean;
     className?: string;
     isSolving?: boolean;
+    hintLevel?: number;
 }
 
-export function CipherText({ text, cipherText, visible, className = '', isSolving = false }: CipherTextProps) {
+export function CipherText({ text, cipherText, visible, className = '', isSolving = false, hintLevel = 0 }: CipherTextProps) {
     const cipherRef = useRef<string>('');
 
     // Initialize cipher string lazily, but PREFER cipherText if available
@@ -156,16 +157,49 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
         })
     };
 
+    const floatVariant = {
+        float: (i: number) => {
+            // Deterministic random based on index/char for stable SSR/render
+            // Alternating directions and varied angles (-25 to -5, 5 to 25)
+            const seed = i * 1337;
+            const sign = i % 2 === 0 ? 1 : -1;
+            const angleMagnitude = 5 + (seed % 20); // 5 to 24 degrees
+            const randomRotation = sign * angleMagnitude;
+
+            return {
+                y: [0, -4, 0], // Reduced movement slightly
+                rotate: randomRotation,
+                transition: {
+                    y: {
+                        duration: 3, // Slower (was 2)
+                        repeat: Infinity,
+                        ease: "easeInOut" as const,
+                        delay: i * 0.2 // More staggered
+                    },
+                    rotate: {
+                        duration: 0 // Static rotation
+                    }
+                }
+            };
+        }
+    };
+
     return (
         <span className={`${className} breaking-words`}>
             {showColons && <span className="mr-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
             {display.split('').map((char, i) => {
-                const isMatch = char === text[i];
+                const isPositionalMatch = char === text[i];
+                // For Level 2+ Scramble, we use inclusion matching (anagram style)
+                // We ensure it's not a filler char by checking if text includes it.
+                // Note: simple inclusion check might highlight random lucky fillers, but acceptable for now.
+                const isScrambleMatch = hintLevel >= 2 && text.toLowerCase().includes(char.toLowerCase()) && char !== ' ';
+
+                const isEffectiveMatch = isPositionalMatch || isScrambleMatch;
                 const isJustRevealed = changedIndices.has(i);
 
                 if (visible) {
                     return (
-                        <span key={i} className={isMatch ? '' : 'text-green-500 opacity-70'}>
+                        <span key={i} className={isPositionalMatch ? '' : 'text-green-500 opacity-70'}>
                             {char}
                         </span>
                     );
@@ -175,11 +209,11 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                 return (
                     <motion.span
                         key={`${i}-${char}`}
-                        custom={isMatch} // Pass isMatch to variant
-                        variants={isJustRevealed ? popVariant : (isSolving ? bounceVariant : undefined)}
-                        animate={isJustRevealed ? "pop" : (isSolving ? "bounce" : undefined)}
-                        className={`inline-block ${isMatch
-                            ? 'font-bold text-inherit drop-shadow-[0_0_2px_rgba(255,255,255,0.5)]'
+                        custom={isEffectiveMatch ? i : isEffectiveMatch} // Pass index for float, bool for others
+                        variants={isJustRevealed ? popVariant : ((hintLevel >= 2 && isEffectiveMatch && !visible) ? floatVariant : (isSolving ? bounceVariant : undefined))}
+                        animate={isJustRevealed ? "pop" : ((hintLevel >= 2 && isEffectiveMatch && !visible) ? "float" : (isSolving ? "bounce" : undefined))}
+                        className={`inline-block ${isEffectiveMatch
+                            ? `font-bold text-inherit drop-shadow-[0_0_2px_rgba(255,255,255,0.5)] ${(hintLevel >= 2 && !visible) ? 'mx-0.5' : ''}` // Added margin for floating mode
                             : 'font-mono opacity-75'
                             }`}
                     >

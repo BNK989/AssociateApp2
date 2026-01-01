@@ -61,42 +61,54 @@ describe('Game Logic', () => {
             }
         });
 
-        it('should return EXACT length at level 1', () => {
-            // Level 1 reveals length (no chars) - cipher length == input length
+        it('should return EXACT length at level 1 and reveal first char', () => {
+            // Level 1 reveals length + first char
             const cipher = generateCipherString(input, 1);
             expect(cipher.length).toBe(input.length);
+            expect(cipher[0]).toBe(input[0]);
         });
 
-        it('should reveal 1st char + 25% at level 2', () => {
-            const longInput = "AAAAA AAAAA AAAAA"; // 17 chars
+        it('should reveal 70% at level 2', () => {
+            const longInput = "AAAAA AAAAA AAAAA"; // 17 chars (14 non-space)
             const cipher = generateCipherString(longInput, 2);
 
             expect(cipher.length).toBe(longInput.length);
-            expect(cipher[0]).toBe('A');
+            // In Scramble mode, index 0 is not guaranteed to be 'A' positionally.
+            // But we should find at least the expected number of A's in the string.
 
             let matches = 0;
-            for (let i = 0; i < longInput.length; i++) {
-                if (cipher[i] === longInput[i] && longInput[i] !== ' ') {
-                    matches++;
-                }
+            const nonSpaces = longInput.split('').filter(c => c !== ' ').length;
+            for (let i = 0; i < cipher.length; i++) {
+                if (cipher[i] === 'A') matches++;
             }
-            // 17 * 0.25 = 4.25 -> 4 revealed ints. + index 0 (which is also 'A')
-            // logic: indices (14 non-space). 14*0.25 = 3. 
-            // set adds index 0. total 4 indices revealed.
-            expect(matches).toBeGreaterThanOrEqual(1);
+
+            const expectedMatches = Math.floor(nonSpaces * 0.70);
+            expect(matches).toBeGreaterThanOrEqual(expectedMatches);
         });
 
-        it('should only reveal 1st char for short words at level 2', () => {
+        it('should reveal required count for short words at level 2', () => {
             const shortInput = "ABC"; // 3 chars
             const cipher = generateCipherString(shortInput, 2);
 
             expect(cipher.length).toBe(3);
-            expect(cipher[0]).toBe('A');
+            // 3 * 0.7 = 2.1 -> 2 chars.
+            let lettersFound = 0;
+            if (shortInput.includes(cipher[0])) lettersFound++;
+            if (shortInput.includes(cipher[1])) lettersFound++;
+            if (shortInput.includes(cipher[2])) lettersFound++;
+
+            expect(lettersFound).toBeGreaterThanOrEqual(2);
         });
 
         it('should NOT necessarily preserve spaces', () => {
             const cipher = generateCipherString("a b c", 0);
             expect(cipher.length).toBeGreaterThan(0);
+        });
+
+        it('should return EXACT length for Daily Game at level 0', () => {
+            const input = "Hello";
+            const cipher = generateCipherString(input, 0, true);
+            expect(cipher.length).toBe(input.length);
         });
     });
 

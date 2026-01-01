@@ -579,7 +579,7 @@ export function useGameLogic(gameId: string) {
 
             // 2. Set Just Solved Animation
             setJustSolvedMessageId({ id: target.id, points: distribution.winnerPoints });
-            setTimeout(() => setJustSolvedMessageId(null), 3000);
+            setTimeout(() => setJustSolvedMessageId(null), 1500);
 
             // 3. Trigger Local Steal Animation (Immediate Feedback)
             if (distribution.type === 'STEAL') {
@@ -1020,7 +1020,10 @@ export function useGameLogic(gameId: string) {
 
 
         try {
-            const newCipherText = generateCipherString(target.content, nextLevel);
+            // Only regenerate cipher for levels 1 and 2. Level 3 (AI Hint) should preserve existing reveal.
+            const newCipherText = nextLevel < 3
+                ? generateCipherString(target.content, nextLevel)
+                : (target.cipher_text || generateCipherString(target.content, 2)); // Fallback if missing
 
             // OPTIMISTIC UPDATE
             setMessages(prev => prev.map(m => m.id === target.id ? {

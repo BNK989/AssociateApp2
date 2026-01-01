@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { motion } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CipherText } from '@/components/CipherText';
 import { Message, GameState } from '@/hooks/useGameLogic';
@@ -301,6 +302,7 @@ export function ChatArea({
                                                     visible={isVisible || !!revealedMessages[msg.id]}
                                                     className={isMe || isJustSolved ? 'text-white' : 'text-gray-900 dark:text-white'}
                                                     isSolving={game.status === 'solving' && targetMessage?.id === msg.id && (typingUsers?.size ?? 0) > 0}
+                                                    hintLevel={msg.hint_level}
                                                 />
                                                 {/* AI Loading State: Level 3 but no hint yet */}
                                                 {(msg.hint_level === 3 && !msg.ai_hint) && (
@@ -314,9 +316,22 @@ export function ChatArea({
 
                                                 {/* Actual AI Hint */}
                                                 {msg.ai_hint && (
-                                                    <div className="mt-2 text-xs font-medium text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/40 p-2 rounded border border-yellow-200 dark:border-yellow-800 animate-in zoom-in-95 slide-in-from-top-2 duration-500">
-                                                        💡 Hint: {msg.ai_hint}
-                                                    </div>
+                                                    <motion.div
+                                                        initial={{ opacity: 0, scale: 0.9, height: 0 }}
+                                                        animate={{ opacity: 1, scale: 1, height: "auto" }}
+                                                        transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                                                        className="mt-2 text-xs font-medium text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/40 p-2 rounded border border-yellow-200 dark:border-yellow-800 overflow-hidden"
+                                                    >
+                                                        <motion.span
+                                                            initial={{ opacity: 0, y: 5 }}
+                                                            animate={{ opacity: 1, y: 0 }}
+                                                            transition={{ delay: 0.1, duration: 0.3 }}
+                                                            className="flex items-start gap-1.5"
+                                                        >
+                                                            <span className="text-base leading-none select-none">💡</span>
+                                                            <span className="leading-snug">{msg.ai_hint}</span>
+                                                        </motion.span>
+                                                    </motion.div>
                                                 )}
                                                 {isJustSolved && justSolvedData && (
                                                     <div className="absolute -top-10 -right-4 text-3xl font-black text-green-500 dark:text-green-400 animate-float-up z-20 drop-shadow-xl whitespace-nowrap pointer-events-none">
