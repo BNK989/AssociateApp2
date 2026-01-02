@@ -35,10 +35,7 @@ export async function generateDailyHints(words: string[], theme: string): Promis
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: {
-                        response_mime_type: "application/json"
-                    }
+                    contents: [{ parts: [{ text: prompt }] }]
                 })
             }
         );
@@ -138,7 +135,7 @@ export async function ensureDailyHints(gameId: string, words: string[], theme: s
         }
 
         if (data.hints && Array.isArray(data.hints) && data.hints.length > 0) {
-            return;
+            return data.hints;
         }
 
         // Generate
