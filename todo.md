@@ -140,6 +140,8 @@
 - [x] get domain name associ8game.com/
 - [x] get ssl certificate
 - [x] add a way for users to provide feedback and logs on the game
+- [x] add vercel speed insights
+
 
 ## Phase 17.6: db corn job verification
 - [x] check corn job is running and verify it is running correctly cleanning old games and guest users - **Gamemaster Reference: at corn-jobs.md**

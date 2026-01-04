@@ -8,6 +8,7 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { PostHogProvider } from "@/app/providers/PostHogProvider";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -92,6 +93,7 @@ export default function RootLayout({
               <SiteFooter />
               <DynamicToaster />
               <ServiceWorkerRegister />
+              <SpeedInsights />
             </AuthProvider>
           </PostHogProvider>
         </ThemeProvider>
