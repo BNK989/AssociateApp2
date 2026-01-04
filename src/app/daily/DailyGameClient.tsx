@@ -40,7 +40,7 @@ const MOCK_USER = {
 
 const BOT_PROFILE = {
     username: 'Daily Bot',
-    avatar_url: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=dailybot',
+    avatar_url: '/logos/android-chrome-192x192.png',
 };
 
 const MY_PROFILE = {
@@ -116,13 +116,15 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
                 if (parsed && parsed.dailyWordsJSON === JSON.stringify(dailyWords)) {
                     // Sanitize: Fix old state where Level 0 cipher length was randomized
                     const sanitizedMessages = parsed.messages.map((m: Message) => {
+                        let newMessage = { ...m };
                         if (m.hint_level === 0 && (m.cipher_text?.length ?? 0) !== m.content.length) {
-                            return {
-                                ...m,
-                                cipher_text: generateCipherString(m.content, 0, true)
-                            };
+                            newMessage.cipher_text = generateCipherString(m.content, 0, true);
                         }
-                        return m;
+                        // Force update bot profile to use new logo
+                        if (m.user_id === BOT_USER_ID) {
+                            newMessage.profiles = BOT_PROFILE;
+                        }
+                        return newMessage;
                     });
 
                     setMessages(sanitizedMessages);
@@ -159,6 +161,23 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
 
         setMessages(initMessages);
     }, [dailyWords, date]);
+
+    // Force update legacy avatars if they persist (fix for hot-reload/stale state)
+    useEffect(() => {
+        const needsUpdate = messages.some(m =>
+            m.user_id === BOT_USER_ID &&
+            m.profiles?.avatar_url !== BOT_PROFILE.avatar_url
+        );
+
+        if (needsUpdate) {
+            setMessages(prev => prev.map(m => {
+                if (m.user_id === BOT_USER_ID && m.profiles?.avatar_url !== BOT_PROFILE.avatar_url) {
+                    return { ...m, profiles: BOT_PROFILE };
+                }
+                return m;
+            }));
+        }
+    }, [messages]);
 
     // Celebrate and Show Summary on Completion
     useEffect(() => {
@@ -542,6 +561,7 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
                 onLeave={() => router.push('/')}
                 skipExitConfirm={true}
                 theme={theme}
+                hideAvatars={true}
                 hideBank={true}
             />
 

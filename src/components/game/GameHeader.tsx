@@ -26,6 +26,7 @@ type GameHeaderProps = {
     skipExitConfirm?: boolean;
     theme?: string;
     hideBank?: boolean;
+    hideAvatars?: boolean;
 };
 
 export function GameHeader({
@@ -46,7 +47,8 @@ export function GameHeader({
     onLeave,
     skipExitConfirm,
     theme,
-    hideBank
+    hideBank,
+    hideAvatars
 }: GameHeaderProps) {
     const router = useRouter();
 
@@ -216,19 +218,21 @@ export function GameHeader({
                     </button>
 
                     {/* Avatar Stack */}
-                    <div
-                        className="flex items-center -space-x-2 mr-2 cursor-pointer hover:opacity-80 transition-opacity overflow-hidden"
-                        onClick={() => setShowInfo(true)}
-                    >
-                        {sortedPlayers.map((player) => (
-                            <Avatar key={player.user_id} className={`w-8 h-8 border-2 border-white dark:border-gray-900 ${player.user_id === activePlayerId ? 'z-10' : ''} ${player.has_left ? 'opacity-40 grayscale' : ''}`}>
-                                <AvatarImage src={player.profiles?.avatar_url} />
-                                <AvatarFallback className={`${getAvatarColor(player.profiles?.username || '')} text-white text-xs`}>
-                                    {getInitials(player.profiles?.username || '')}
-                                </AvatarFallback>
-                            </Avatar>
-                        ))}
-                    </div>
+                    {!hideAvatars && (
+                        <div
+                            className="flex items-center -space-x-2 mr-2 cursor-pointer hover:opacity-80 transition-opacity overflow-hidden"
+                            onClick={() => setShowInfo(true)}
+                        >
+                            {sortedPlayers.map((player) => (
+                                <Avatar key={player.user_id} className={`w-8 h-8 border-2 border-white dark:border-gray-900 ${player.user_id === activePlayerId ? 'z-10' : ''} ${player.has_left ? 'opacity-40 grayscale' : ''}`}>
+                                    <AvatarImage src={player.profiles?.avatar_url} />
+                                    <AvatarFallback className={`${getAvatarColor(player.profiles?.username || '')} text-white text-xs`}>
+                                        {getInitials(player.profiles?.username || '')}
+                                    </AvatarFallback>
+                                </Avatar>
+                            ))}
+                        </div>
+                    )}
 
                     {/* Theme Title (Daily Game) - In Flow */}
                     {theme && (
@@ -245,7 +249,7 @@ export function GameHeader({
 
                 {/* Score & Bank (Updated) */}
                 <div
-                    className={`flex items-center justify-end gap-2 sm:gap-4 mx-2 cursor-pointer hover:opacity-80 transition-opacity ${theme ? 'flex-grow' : 'w-1/3'}`}
+                    className={`flex items-center justify-end gap-2 sm:gap-4 ml-2 mr-3 cursor-pointer hover:opacity-80 transition-opacity ${theme ? 'flex-grow' : 'w-1/3'}`}
                     onClick={() => setShowInfo(true)}
                 >
                     {/* Bank / Pot */}
