@@ -1,7 +1,7 @@
 import { GameState, Player, Message } from '@/hooks/useGameLogic';
 import { User } from '@supabase/supabase-js';
 import { calculateMessageValue, HINT_COSTS } from '@/lib/gameLogic';
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, Shuffle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { AnimatePresence, motion } from "framer-motion";
@@ -105,7 +105,7 @@ export function GameInput({
 
     let nextCost = 0;
     let nextLabel = "";
-    let buttonText = "1ˢᵗ";
+    let buttonText: React.ReactNode = "1ˢᵗ";
 
     if (currentLevel === 0) {
         nextCost = Math.ceil(wordValue * HINT_COSTS.TIER_1); // 10%
@@ -114,11 +114,11 @@ export function GameInput({
     } else if (currentLevel === 1) {
         nextCost = Math.ceil(wordValue * HINT_COSTS.TIER_2); // 10%
         nextLabel = "Reveal 1st + 25%";
-        buttonText = "2ⁿᵈ";
+        buttonText = <Shuffle className="h-3 w-3" />;
     } else if (currentLevel === 2) {
         nextCost = Math.ceil(wordValue * HINT_COSTS.TIER_3); // 40%
         nextLabel = "AI Hint";
-        buttonText = "3ʳᵈ";
+        buttonText = "AI";
     }
 
     // Auto-show tooltip logic

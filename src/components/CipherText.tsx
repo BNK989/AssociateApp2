@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion } from "framer-motion";
 
+
 const CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
 
 interface CipherTextProps {
@@ -59,6 +60,34 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
 
             // If already at target, skip
             if (display === target) return;
+
+            // PRE-ANIMATION: Scramble Effect for Hint Level 2 (transitions to scrambled state)
+            // We want to show "chaos" before settling on the scrambled letters
+            if (!visible && hintLevel >= 2) {
+                const duration = 600;
+                const frameRate = 50;
+                const frames = duration / frameRate;
+
+                for (let f = 0; f < frames; f++) {
+                    if (isCancelled) return;
+                    // Generate completely random string of target length to simulate "shuffling"
+                    // We preserve spaces to keep word structure
+                    const randomStr = target.split('').map((c, idx) => {
+                        if (c === ' ') return ' ';
+                        // Occasionally show the real char from target to hint at it settling
+                        if (Math.random() > 0.7) return target[idx];
+                        return CHARS[Math.floor(Math.random() * CHARS.length)];
+                    }).join('');
+
+                    setDisplay(randomStr);
+                    await new Promise(r => setTimeout(r, frameRate));
+                }
+                // After scramble, we are "done" with the chaotic part. 
+                // We can either let the wipe finish it or just set it. 
+                // Let's set it to target immediately to snap to the anagram.
+                setDisplay(target);
+                return;
+            }
 
             const steps = Math.max(text.length, cipherRef.current.length);
             const delay = Math.max(30, Math.min(100, 1000 / steps));
@@ -222,6 +251,8 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                 );
             })}
             {showColons && <span className="ml-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
+
+
         </span>
     );
 }

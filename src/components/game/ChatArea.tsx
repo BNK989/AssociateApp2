@@ -20,6 +20,8 @@ import {
 import { TypingIndicator } from '../ui/TypingIndicator';
 import { FloatingMessage, AnimationData } from './FloatingMessage';
 import { GameBackground } from './GameBackground';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Shuffle } from "lucide-react";
 
 type ChatAreaProps = {
     messages: Message[];
@@ -57,6 +59,7 @@ export function ChatArea({
     const containerRef = useRef<HTMLDivElement>(null);
     const { isAdmin } = useAdmin();
     const [revealedMessages, setRevealedMessages] = useState<Record<string, boolean>>({});
+    const [activeTooltipId, setActiveTooltipId] = useState<string | null>(null);
 
     const handleAdminAction = async (action: string, messageId: string) => {
         try {
@@ -299,7 +302,7 @@ export function ChatArea({
                                                     {getInitials(username)}
                                                 </AvatarFallback>
                                             </Avatar>
-                                            <div className={`relative max-w-[70%] p-3 rounded-lg transition-all duration-300 ${isMe ? 'bg-indigo-600 text-white glow-me' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white glow-gray'} ${game.status === 'solving' && targetMessage?.id === msg.id ? 'target-message-glow' : ''} ${isJustSolved ? 'scale-110 bg-green-500 text-white ring-4 ring-green-300 dark:ring-green-900' : ''}`}>
+                                            <div className={`relative max-w-[70%] rounded-lg transition-all duration-300 ${isMe ? 'bg-indigo-600 text-white glow-me' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white glow-gray'} ${game.status === 'solving' && targetMessage?.id === msg.id ? 'target-message-glow' : ''} ${isJustSolved ? 'scale-110 bg-green-500 text-white ring-4 ring-green-300 dark:ring-green-900' : ''} ${(msg.hint_level >= 2 && !isVisible && !revealedMessages[msg.id]) ? 'p-3 pr-7' : 'p-3'}`}>
                                                 <CipherText
                                                     text={msg.content}
                                                     cipherText={msg.cipher_text}
@@ -308,6 +311,35 @@ export function ChatArea({
                                                     isSolving={game.status === 'solving' && targetMessage?.id === msg.id && (typingUsers?.size ?? 0) > 0}
                                                     hintLevel={msg.hint_level}
                                                 />
+                                                {/* Scramble Indicator (Check-like) */}
+                                                {(msg.hint_level >= 2 && !isVisible && !revealedMessages[msg.id]) && (
+                                                    <div className="absolute bottom-1 right-1.5 flex items-center justify-end">
+                                                        <TooltipProvider>
+                                                            <Tooltip
+                                                                open={activeTooltipId === msg.id}
+                                                                onOpenChange={(open) => {
+                                                                    if (open) setActiveTooltipId(msg.id);
+                                                                    else setActiveTooltipId(null);
+                                                                }}
+                                                            >
+                                                                <TooltipTrigger asChild>
+                                                                    <div
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setActiveTooltipId(prev => prev === msg.id ? null : msg.id);
+                                                                        }}
+                                                                        className="cursor-help p-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+                                                                    >
+                                                                        <Shuffle className="h-3 w-3 opacity-60" />
+                                                                    </div>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent side="left" className="text-xs px-2 py-1">
+                                                                    <p>Letters are scrambled</p>
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        </TooltipProvider>
+                                                    </div>
+                                                )}
                                                 {/* AI Loading State: Level 3 but no hint yet */}
                                                 {(msg.hint_level === 3 && !msg.ai_hint) && (
                                                     <div className="mt-2 text-xs font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 p-2 rounded border border-indigo-200 dark:border-indigo-800 animate-pulse flex items-center gap-2">
