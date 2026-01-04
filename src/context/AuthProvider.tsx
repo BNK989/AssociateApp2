@@ -53,57 +53,76 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
     }, [loading]);
 
+
+
+    // Effect for cleanup needs to be cleaner.
+    // Let's restructure to match React best practices for async effects.
     useEffect(() => {
-        const initializeAuth = async () => {
-            // Safety timeout to prevent infinite loading screens if Supabase hangs
+        let mounted = true;
+        let subscription: any = null;
+
+        const init = async () => {
             const timeoutId = setTimeout(() => {
-                console.warn("Auth initialization timed out - forcing app load");
+                if (mounted) {
+                    console.warn("Auth initialization timed out - forcing app load");
+                    setLoading(false);
+                }
+            }, 2000);
+
+            try {
+                const { data: { session: initialSession } } = await supabase.auth.getSession();
+                clearTimeout(timeoutId);
+
+                if (!mounted) return;
+
+                setSession(initialSession);
+                setUser(initialSession?.user ?? null);
+
+                if (initialSession?.user) {
+                    fetchProfile(initialSession.user.id).catch(console.error);
+                }
+
                 setLoading(false);
-            }, 5000);
 
-            // 1. Get initial session
-            const { data: { session: initialSession } } = await supabase.auth.getSession();
-            clearTimeout(timeoutId); // Clear timeout if successful
-
-            setSession(initialSession);
-            setUser(initialSession?.user ?? null);
-
-            if (initialSession?.user) {
-                await fetchProfile(initialSession.user.id);
-            }
-            setLoading(false);
-
-            // 2. Listen for changes
-            const { data: { subscription } } = supabase.auth.onAuthStateChange(
-                async (event, currentSession) => {
+                const { data } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+                    if (!mounted) return;
                     setSession(currentSession);
                     setUser(currentSession?.user ?? null);
 
-                    if (currentSession?.user && event !== 'INITIAL_SESSION') {
-                        // Only fetch profile if user changed or signed in (avoid double fetch on init)
-                        await fetchProfile(currentSession.user.id);
-                    } else if (!currentSession?.user) {
+                    if (currentSession?.user) {
+                        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                            fetchProfile(currentSession.user.id).catch(console.error);
+                        }
+                    } else {
                         setProfile(null);
                     }
-
                     setLoading(false);
-                }
-            );
+                });
+                subscription = data.subscription;
 
-            return () => {
-                subscription.unsubscribe();
-            };
+            } catch (e) {
+                console.error("Auth init failed", e);
+                if (mounted) setLoading(false);
+            }
         };
 
-        initializeAuth();
+        init();
+
+        return () => {
+            mounted = false;
+            if (subscription) subscription.unsubscribe();
+        };
     }, []);
 
     // Apply theme based on profile settings or system preference
     useEffect(() => {
+        if (!profile) return; // Wait for profile for theme, or default to system handled by ThemeProvider
         const applyTheme = () => {
             const userTheme = profile?.settings?.theme;
+            // ThemeProvider handles system default, we only override if user has preference
+            // Actually, we should probably integrate with next-themes useTheme hook instead of manual class manipulation
+            // But preserving existing logic for now.
             const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
             const shouldBeDark = userTheme === 'dark' || (!userTheme && systemDark);
 
             if (shouldBeDark) {

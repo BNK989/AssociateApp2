@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { usePostHog } from 'posthog-js/react';
+import confetti from 'canvas-confetti';
 import { Message, GameState, Player } from '@/hooks/useGameLogic';
 import { ChatArea } from '@/components/game/ChatArea';
 import { useAuth } from '@/context/AuthProvider';
@@ -70,6 +71,7 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
     const [score, setScore] = useState(0);
     const [consecutive, setConsecutive] = useState(0);
     const [gameOver, setGameOver] = useState(false);
+    const [showSummary, setShowSummary] = useState(false);
 
     // Inputs
     const [input, setInput] = useState('');
@@ -127,6 +129,7 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
                     setScore(parsed.score);
                     setConsecutive(parsed.consecutive);
                     setGameOver(parsed.gameOver);
+                    if (parsed.gameOver) setShowSummary(true);
                     return;
                 }
             } catch (e) {
@@ -157,7 +160,45 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
         setMessages(initMessages);
     }, [dailyWords, date]);
 
-    // Save State
+    // Celebrate and Show Summary on Completion
+    useEffect(() => {
+        if (gameOver && !showSummary) {
+            // Trigger Confetti
+            const duration = 1500;
+            const end = Date.now() + duration;
+
+            // Fire some confetti
+            const fireConfetti = () => {
+                const count = 200;
+                const defaults = {
+                    origin: { y: 0.7 }
+                };
+
+                const fire = (particleRatio: number, opts: confetti.Options) => {
+                    confetti({
+                        ...defaults,
+                        ...opts,
+                        particleCount: Math.floor(count * particleRatio)
+                    });
+                };
+
+                fire(0.25, { spread: 26, startVelocity: 55 });
+                fire(0.2, { spread: 60 });
+                fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+                fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+                fire(0.1, { spread: 120, startVelocity: 45 });
+            };
+
+            fireConfetti();
+
+            // Delay showing the summary popup
+            const timer = setTimeout(() => {
+                setShowSummary(true);
+            }, 2000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [gameOver, showSummary]);
     useEffect(() => {
         if (messages.length === 0) return;
 
@@ -237,7 +278,7 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
         if (currentLevel >= 3) return;
 
         const nextLevel = currentLevel + 1;
-        const wordValue = calculateMessageValue(targetMessage.content);
+        // const wordValue = calculateMessageValue(targetMessage.content);
 
         // Calculate Cost (unused currently, but kept for future logic or removed to satisfy lint)
         // let deduction = 0;
@@ -438,6 +479,46 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
     // Calculate time left (Mock)
     const solvingTimeLeft = 20;
 
+    const handleTestEndSequence = () => {
+        setGameOver(true);
+        setShowSummary(false);
+    };
+
+    const handleResetGame = () => {
+        const storageKey = `daily_game_state_${date}`;
+        localStorage.removeItem(storageKey);
+        localStorage.removeItem(`daily_game_completed_${date}`);
+
+        // Re-initialize state
+        const initMessages: Message[] = dailyWords.map((word, index) => {
+            const isLast = index === dailyWords.length - 1;
+            return {
+                id: `msg-${index}`,
+                content: word,
+                cipher_length: word.length,
+                is_solved: isLast,
+                user_id: BOT_USER_ID,
+                created_at: new Date(Date.now() - (dailyWords.length - index) * 1000).toISOString(),
+                strikes: 0,
+                hint_level: 0,
+                cipher_text: generateCipherString(word, 0, true),
+                author_points: 0,
+                winner_points: 0,
+                type: 'text',
+                profiles: BOT_PROFILE
+            };
+        });
+
+        setMessages(initMessages);
+        setScore(0);
+        setConsecutive(0);
+        setGameOver(false);
+        setShowSummary(false);
+        setInput('');
+
+        toast.success("Game reset to initial state");
+    };
+
     return (
         <div
             className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-white dark:bg-gray-900 max-w-md mx-auto"
@@ -474,6 +555,8 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
                 shakeMessageId={shakeMessageId}
                 justSolvedData={justSolvedData}
                 players={players}
+                onTestEndSequence={handleTestEndSequence}
+                onResetGame={handleResetGame}
             />
 
             <GameInput
@@ -495,7 +578,7 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
 
             {/* Daily End Game Popover */}
             <DailyEndGamePopover
-                open={gameOver}
+                open={showSummary}
                 score={score}
                 totalWords={dailyWords.length}
                 date={date}

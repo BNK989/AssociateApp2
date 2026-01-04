@@ -16,7 +16,7 @@ export default function TermsPage() {
                     <h2 className="text-xl font-semibold mb-3">2. User Conduct</h2>
                     <p className="text-muted-foreground">
                         You agree to use the service only for lawful purposes and in a way that does not infringe the rights of,
-                        restrict or inhibit anyone else's use and enjoyment of the service.
+                        restrict or inhibit anyone else&apos;s use and enjoyment of the service.
                         <br /><br />
                         Harassment, hate speech, and abusive behavior in game chats will not be tolerated.
                     </p>

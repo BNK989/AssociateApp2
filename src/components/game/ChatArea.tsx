@@ -34,6 +34,8 @@ type ChatAreaProps = {
     players?: any[];
     floatingAnimation?: AnimationData | null;
     onAnimationComplete?: () => void;
+    onTestEndSequence?: () => void;
+    onResetGame?: () => void;
 };
 
 export function ChatArea({
@@ -48,7 +50,9 @@ export function ChatArea({
     typingUsers,
     players,
     floatingAnimation,
-    onAnimationComplete
+    onAnimationComplete,
+    onTestEndSequence,
+    onResetGame
 }: ChatAreaProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const { isAdmin } = useAdmin();
@@ -359,6 +363,29 @@ export function ChatArea({
                                             >
                                                 Delete Message
                                             </ContextMenuItem>
+                                            {onTestEndSequence && (
+                                                <>
+                                                    <div className="h-px bg-gray-200 dark:bg-gray-800 my-1" />
+                                                    <ContextMenuItem
+                                                        onClick={() => onTestEndSequence()}
+                                                        className="text-purple-600 focus:bg-gray-800 focus:text-purple-500 cursor-pointer font-bold"
+                                                    >
+                                                        Test End Sequence
+                                                    </ContextMenuItem>
+                                                </>
+                                            )}
+                                            {onResetGame && (
+                                                <ContextMenuItem
+                                                    onClick={() => {
+                                                        if (confirm('Are you sure you want to completely reset this daily game?')) {
+                                                            onResetGame();
+                                                        }
+                                                    }}
+                                                    className="text-orange-600 focus:bg-gray-800 focus:text-orange-500 cursor-pointer font-bold"
+                                                >
+                                                    Reset Game (Debug)
+                                                </ContextMenuItem>
+                                            )}
                                         </ContextMenuContent>
                                     )}
                                 </ContextMenu>

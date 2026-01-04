@@ -83,7 +83,7 @@ export default function Lobby() {
             setShowTutorial(true);
             posthog.capture('onboarding_started');
         }
-    }, [profile]);
+    }, [profile, posthog]);
 
     const handleTutorialComplete = async () => {
         setShowTutorial(false);
@@ -223,7 +223,7 @@ export default function Lobby() {
 
             const { data: game, error: gameError } = await Promise.race([
                 createGamePromise,
-                new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Game creation timeout')), 10000))
+                new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Game creation timeout')), 10000))
             ]);
 
             console.log('Game creation result:', { game, error: gameError });
@@ -243,7 +243,7 @@ export default function Lobby() {
                         user_id: user.id,
                         score: 0
                     }),
-                new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Player insertion timeout')), 10000))
+                new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Player insertion timeout')), 10000))
             ]);
 
             console.log('Player addition result:', { playerError });
@@ -267,11 +267,12 @@ export default function Lobby() {
             router.push(targetUrl);
             console.log('Router push called');
 
-        } catch (error: any) {
-            console.error('Error creating game:', JSON.stringify(error, null, 2));
-            toast.error(error.message || 'Failed to create game');
+        } catch (error) {
+            const err = error as Error;
+            console.error('Error creating game:', JSON.stringify(err, null, 2));
+            toast.error(err.message || 'Failed to create game');
             // If it was a timeout, explicitly alter the error message
-            if (error.message && error.message.includes('timeout')) {
+            if (err.message && err.message.includes('timeout')) {
                 alert('Connection timed out. Please check your internet connection and try again.');
             }
         } finally {
