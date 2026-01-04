@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CipherText } from '@/components/CipherText';
 import { Message, GameState } from '@/hooks/useGameLogic';
@@ -60,10 +60,12 @@ export function ChatArea({
     const { isAdmin } = useAdmin();
     const [revealedMessages, setRevealedMessages] = useState<Record<string, boolean>>({});
     const [activeTooltipId, setActiveTooltipId] = useState<string | null>(null);
+    const [scrambleTriggerMap, setScrambleTriggerMap] = useState<Record<string, number>>({});
 
     const handleAdminAction = async (action: string, messageId: string) => {
         try {
             if (action === 'delete') {
+
                 if (!confirm('Delete this message?')) return;
                 const { error } = await supabase.from('messages').delete().eq('id', messageId);
                 if (error) throw error;
@@ -310,6 +312,7 @@ export function ChatArea({
                                                     className={isMe || isJustSolved ? 'text-white' : 'text-gray-900 dark:text-white'}
                                                     isSolving={game.status === 'solving' && targetMessage?.id === msg.id && (typingUsers?.size ?? 0) > 0}
                                                     hintLevel={msg.hint_level}
+                                                    forceScramble={scrambleTriggerMap[msg.id]}
                                                 />
                                                 {/* Scramble Indicator (Check-like) */}
                                                 {(msg.hint_level >= 2 && !isVisible && !revealedMessages[msg.id]) && (
@@ -340,33 +343,34 @@ export function ChatArea({
                                                         </TooltipProvider>
                                                     </div>
                                                 )}
-                                                {/* AI Loading State: Level 3 but no hint yet */}
-                                                {(msg.hint_level === 3 && !msg.ai_hint) && (
-                                                    <div className="mt-2 text-xs font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 p-2 rounded border border-indigo-200 dark:border-indigo-800 animate-pulse flex items-center gap-2">
-                                                        <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                                        <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                                        <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                                                        <span className="ml-1">Consulting AI...</span>
-                                                    </div>
-                                                )}
-
-                                                {/* Actual AI Hint */}
-                                                {msg.ai_hint && (
+                                                {/* Unified AI Hint / Loading Area */}
+                                                {(msg.hint_level === 3 || msg.ai_hint) && (
                                                     <motion.div
-                                                        initial={{ opacity: 0, scale: 0.9, height: 0 }}
-                                                        animate={{ opacity: 1, scale: 1, height: "auto" }}
-                                                        transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                                                        className="mt-2 text-xs font-medium text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/40 p-2 rounded border border-yellow-200 dark:border-yellow-800 overflow-hidden"
+                                                        layout
+                                                        initial={{ opacity: 0, height: 0, scale: 0.95 }}
+                                                        animate={{ opacity: 1, height: "auto", scale: 1 }}
+                                                        transition={{
+                                                            layout: { duration: 0.3, type: "spring", bounce: 0 },
+                                                            opacity: { duration: 0.2 }
+                                                        }}
+                                                        className={`mt-2 text-xs font-medium p-2 rounded border overflow-hidden ${msg.ai_hint
+                                                                ? 'text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/40 border-yellow-200 dark:border-yellow-800'
+                                                                : 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800'
+                                                            }`}
                                                     >
-                                                        <motion.span
-                                                            initial={{ opacity: 0, y: 5 }}
-                                                            animate={{ opacity: 1, y: 0 }}
-                                                            transition={{ delay: 0.1, duration: 0.3 }}
-                                                            className="flex items-start gap-1.5"
-                                                        >
-                                                            <span className="text-base leading-none select-none">💡</span>
-                                                            <span className="leading-snug">{msg.ai_hint}</span>
-                                                        </motion.span>
+                                                        {!msg.ai_hint ? (
+                                                            <div className="flex items-center gap-2 h-5">
+                                                                <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                                                <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                                                <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                                                <span className="ml-1">Consulting AI...</span>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-start gap-1.5 animate-in fade-in duration-300">
+                                                                <span className="text-base leading-none select-none">💡</span>
+                                                                <span className="leading-snug">{msg.ai_hint}</span>
+                                                            </div>
+                                                        )}
                                                     </motion.div>
                                                 )}
                                                 {isJustSolved && justSolvedData && (
@@ -406,6 +410,12 @@ export function ChatArea({
                                                     </ContextMenuItem>
                                                 </>
                                             )}
+                                            <ContextMenuItem
+                                                onClick={() => setScrambleTriggerMap(prev => ({ ...prev, [msg.id]: Date.now() }))}
+                                                className="text-blue-600 focus:bg-gray-800 focus:text-blue-500 cursor-pointer font-bold"
+                                            >
+                                                Test Scramble Effect
+                                            </ContextMenuItem>
                                             {onResetGame && (
                                                 <ContextMenuItem
                                                     onClick={() => {
