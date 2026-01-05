@@ -173,7 +173,7 @@ export const generateCipherString = (content: string, level: number, isDaily: bo
             do {
                 c = CIPHER_CHARS[Math.floor(Math.random() * CIPHER_CHARS.length)];
                 attempts++;
-            } while (content.includes(c) && attempts < 5); // Try to avoid valid chars
+            } while (content.toLowerCase().includes(c.toLowerCase()) && attempts < 10); // Try to avoid valid chars (case-insensitive)
             charBag.push(c);
         }
 
