@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { useTheme } from 'next-themes';
 
 
 
@@ -31,6 +32,8 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const [session, setSession] = useState<Session | null>(null);
     const [profile, setProfile] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
+    const { setTheme } = useTheme();
+    const [lastSyncedTheme, setLastSyncedTheme] = useState<string | null>(null);
 
     // Proactive session check on tab resume
     // Proactive session check on tab resume
@@ -95,6 +98,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                         }
                     } else {
                         setProfile(null);
+                        setLastSyncedTheme(null); // Reset sync state on logout
                     }
                     setLoading(false);
                 });
@@ -114,26 +118,13 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         };
     }, []);
 
-    // Apply theme based on profile settings or system preference
+    // Sync theme from profile settings if available
     useEffect(() => {
-        if (!profile) return; // Wait for profile for theme, or default to system handled by ThemeProvider
-        const applyTheme = () => {
-            const userTheme = profile?.settings?.theme;
-            // ThemeProvider handles system default, we only override if user has preference
-            // Actually, we should probably integrate with next-themes useTheme hook instead of manual class manipulation
-            // But preserving existing logic for now.
-            const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            const shouldBeDark = userTheme === 'dark' || (!userTheme && systemDark);
-
-            if (shouldBeDark) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
-        };
-
-        applyTheme();
-    }, [profile]);
+        if (profile?.settings?.theme && profile.settings.theme !== lastSyncedTheme) {
+            setTheme(profile.settings.theme);
+            setLastSyncedTheme(profile.settings.theme);
+        }
+    }, [profile, setTheme, lastSyncedTheme]);
 
     const fetchProfile = async (userId: string) => {
         try {

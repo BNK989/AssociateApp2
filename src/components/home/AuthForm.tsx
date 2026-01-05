@@ -121,6 +121,19 @@ export default function AuthForm() {
         }
     };
 
+    const handleClearData = () => {
+        if (window.confirm("This will clear your local cookies and cache to resolve login issues. Continue?")) {
+            localStorage.clear();
+            sessionStorage.clear();
+            document.cookie.split(";").forEach((c) => {
+                document.cookie = c
+                    .replace(/^ +/, "")
+                    .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+            });
+            window.location.reload();
+        }
+    };
+
     return (
         <div className="w-full max-w-md mx-auto space-y-6">
             <Tabs defaultValue="login" className="w-full">
@@ -225,6 +238,20 @@ export default function AuthForm() {
                     {message}
                 </div>
             )}
+
+
+            <div className="text-center pt-8 border-t border-gray-100 dark:border-gray-800">
+                <p className="text-xs text-muted-foreground">
+                    Trouble logging in?{' '}
+                    <button
+                        onClick={handleClearData}
+                        className="underline hover:text-primary transition-colors focus:outline-none"
+                        type="button"
+                    >
+                        Clear app data
+                    </button>
+                </p>
+            </div>
         </div>
     );
 }

@@ -32,6 +32,19 @@ export function NavBar() {
             }
         }
         await supabase.auth.signOut();
+
+        // Fail-safe: Clear all local storage and cookies to ensure a clean slate
+        localStorage.clear();
+        sessionStorage.clear();
+        // clear all cookies
+        document.cookie.split(";").forEach((c) => {
+            document.cookie = c
+                .replace(/^ +/, "")
+                .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+        });
+
+        // Force reload to apply changes
+        window.location.href = '/';
     };
 
     if (!user) return null;
