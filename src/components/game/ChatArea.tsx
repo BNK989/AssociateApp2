@@ -145,6 +145,17 @@ export function ChatArea({
                         behavior: 'smooth'
                     });
                 }
+            } else if (game.status === 'completed') {
+                // Game Completed: Celebrate by focusing on the last word revealed (justSolvedData)
+                // If not available (e.g. page reload), focus on the last message in the list
+                const focusId = justSolvedData?.id || (messages.length > 0 ? messages[messages.length - 1].id : null);
+
+                if (focusId) {
+                    const focusEl = document.getElementById(`msg-${focusId}`);
+                    if (focusEl) {
+                        focusEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
             } else {
                 // Normal mode: scroll to bottom
                 if (containerRef.current) {
@@ -223,6 +234,31 @@ export function ChatArea({
         prevStatusRef.current = game.status;
     }, [game.status]);
 
+    const hasTextMessages = messages.filter(m => m.type !== 'system').length > 0;
+
+    const TypingIndicatorsBlock = (
+        game.status !== 'solving' && typingUsers && typingUsers.size > 0 ? (
+            <div className="flex flex-col gap-2 pt-2 animate-in fade-in duration-300">
+                {Array.from(typingUsers).map(typingUserId => {
+                    const player = players?.find(p => p.user_id === typingUserId);
+                    const username = player?.profiles?.username || 'Player';
+
+                    return (
+                        <div key={typingUserId} className="flex items-center gap-2">
+                            <Avatar className="w-6 h-6 opacity-70">
+                                <AvatarImage src={player?.profiles?.avatar_url} />
+                                <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">{getInitials(username)}</AvatarFallback>
+                            </Avatar>
+                            <div className="bg-gray-100 dark:bg-neutral-800 rounded-2xl rounded-tl-none px-3 py-2 shadow-sm">
+                                <TypingIndicator />
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        ) : null
+    );
+
     return (
         <div className="flex-1 relative flex flex-col overflow-hidden">
             {/* Animated Background */}
@@ -233,6 +269,9 @@ export function ChatArea({
                 ref={containerRef}
                 className="relative z-10 flex-1 overflow-y-auto p-4 space-y-4 flex flex-col"
             >
+                {/* Typing Indicators (Top - Only when no text messages exist) */}
+                {!hasTextMessages && TypingIndicatorsBlock}
+
                 {messages.filter(m => m.type !== 'system').length === 0 && onStartRandom && (
                     <div className="flex-1 flex flex-col items-center justify-center gap-4 min-h-[50vh] animate-in fade-in zoom-in duration-500">
                         <div className="text-center space-y-2 opacity-80">
@@ -354,8 +393,8 @@ export function ChatArea({
                                                             opacity: { duration: 0.2 }
                                                         }}
                                                         className={`mt-2 text-xs font-medium p-2 rounded border overflow-hidden ${msg.ai_hint
-                                                                ? 'text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/40 border-yellow-200 dark:border-yellow-800'
-                                                                : 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800'
+                                                            ? 'text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/40 border-yellow-200 dark:border-yellow-800'
+                                                            : 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800'
                                                             }`}
                                                     >
                                                         {!msg.ai_hint ? (
@@ -446,28 +485,8 @@ export function ChatArea({
                 {/* We keep this ref but don't rely on it for scrolling anymore, or we could remove it if useGameLogic doesn't error */}
                 <div ref={messagesEndRef} />
 
-                {/* Typing Indicators (only show if NOT in solving mode) */}
-                {game.status !== 'solving' && typingUsers && typingUsers.size > 0 && (
-                    <div className="flex flex-col gap-2 pt-2 animate-in fade-in duration-300">
-                        {Array.from(typingUsers).map(typingUserId => {
-                            const player = players?.find(p => p.user_id === typingUserId);
-                            // Fallback username if player data missing or just 'Someone'
-                            const username = player?.profiles?.username || 'Player';
-
-                            return (
-                                <div key={typingUserId} className="flex items-center gap-2">
-                                    <Avatar className="w-6 h-6 opacity-70">
-                                        <AvatarImage src={player?.profiles?.avatar_url} />
-                                        <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">{getInitials(username)}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="bg-gray-100 dark:bg-neutral-800 rounded-2xl rounded-tl-none px-3 py-2 shadow-sm">
-                                        <TypingIndicator />
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                )}
+                {/* Typing Indicators (Bottom - Only when text messages exist) */}
+                {hasTextMessages && TypingIndicatorsBlock}
 
                 {/* Steal Animation Overlay */}
                 {floatingAnimation && (
