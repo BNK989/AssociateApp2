@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/context/AuthProvider';
+import { clearAuthCookies } from '@/app/actions/auth';
 
 export default function AuthForm() {
     const [loadingMethod, setLoadingMethod] = useState<string | null>(null);
@@ -121,8 +122,9 @@ export default function AuthForm() {
         }
     };
 
-    const handleClearData = () => {
+    const handleClearData = async () => {
         if (window.confirm("This will clear your local cookies and cache to resolve login issues. Continue?")) {
+            // Client side clear
             localStorage.clear();
             sessionStorage.clear();
             document.cookie.split(";").forEach((c) => {
@@ -130,6 +132,14 @@ export default function AuthForm() {
                     .replace(/^ +/, "")
                     .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
             });
+
+            // Server side clear
+            try {
+                await clearAuthCookies();
+            } catch (e) {
+                console.error("Failed to clear server cookies", e);
+            }
+
             window.location.reload();
         }
     };

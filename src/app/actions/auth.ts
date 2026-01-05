@@ -28,3 +28,12 @@ export async function deleteGuestAccount() {
         }
     }
 }
+
+export async function clearAuthCookies() {
+    try {
+        const supabase = await createSupabaseServerClient();
+        await supabase.auth.signOut();
+    } catch (e) {
+        console.error("Error clearing auth cookies:", e);
+    }
+}
