@@ -46,7 +46,7 @@
 
 ## Phase 8: versitilty of gmaemaster  
 - [x] create a file within the code to document and control all the variables used in the game such as time to confirm solve, time before free for all etc. you can start with just these and as we'll carry on developing we'll add additional variable
--   [x] to protect the gemini API from abuse lets create a limitation of 5 hints per game per player and no more than 100 per IP per day  - keep these variables in the variable file include logs and alarts for when abused.
+- [x] to protect the gemini API from abuse lets create a limitation of 5 hints per game per player and no more than 100 per IP per day  - keep these variables in the variable file include logs and alarts for when abused.
 
 
 ## Phase 8.5: reliability and improvements for QA  

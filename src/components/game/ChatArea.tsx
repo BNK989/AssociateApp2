@@ -343,7 +343,14 @@ export function ChatArea({
                                                     {getInitials(username)}
                                                 </AvatarFallback>
                                             </Avatar>
-                                            <div className={`relative max-w-[70%] rounded-lg transition-all duration-300 ${isMe ? 'bg-indigo-600 text-white glow-me' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white glow-gray'} ${game.status === 'solving' && targetMessage?.id === msg.id ? 'target-message-glow' : ''} ${isJustSolved ? 'scale-110 bg-green-500 text-white ring-4 ring-green-300 dark:ring-green-900' : ''} ${(msg.hint_level >= 2 && !isVisible && !revealedMessages[msg.id]) ? 'p-3 pr-7' : 'p-3'}`}>
+                                            <div
+                                                onClick={(e) => {
+                                                    if (msg.hint_level >= 2 && !isVisible && !revealedMessages[msg.id]) {
+                                                        e.stopPropagation();
+                                                        setScrambleTriggerMap(prev => ({ ...prev, [msg.id]: Date.now() }));
+                                                    }
+                                                }}
+                                                className={`relative max-w-[70%] rounded-lg transition-all duration-300 ${isMe ? 'bg-indigo-600 text-white glow-me' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white glow-gray'} ${game.status === 'solving' && targetMessage?.id === msg.id ? 'target-message-glow' : ''} ${isJustSolved ? 'scale-110 bg-green-500 text-white ring-4 ring-green-300 dark:ring-green-900' : ''} ${(msg.hint_level >= 2 && !isVisible && !revealedMessages[msg.id]) ? 'p-3 pb-6 cursor-pointer hover:ring-2 hover:ring-indigo-400/50' : 'p-3'}`}>
                                                 <CipherText
                                                     text={msg.content}
                                                     cipherText={msg.cipher_text}
@@ -353,35 +360,45 @@ export function ChatArea({
                                                     hintLevel={msg.hint_level}
                                                     forceScramble={scrambleTriggerMap[msg.id]}
                                                 />
-                                                {/* Scramble Indicator (Check-like) */}
-                                                {(msg.hint_level >= 2 && !isVisible && !revealedMessages[msg.id]) && (
-                                                    <div className="absolute bottom-1 right-1.5 flex items-center justify-end">
-                                                        <TooltipProvider>
-                                                            <Tooltip
-                                                                open={activeTooltipId === msg.id}
-                                                                onOpenChange={(open) => {
-                                                                    if (open) setActiveTooltipId(msg.id);
-                                                                    else setActiveTooltipId(null);
-                                                                }}
-                                                            >
+                                                {(msg.hint_level >= 2 && !isVisible && !revealedMessages[msg.id]) ? (
+                                                    <motion.div
+                                                        layout
+                                                        initial={{ opacity: 0, height: 0, scale: 0.95 }}
+                                                        animate={{ opacity: 1, height: "auto", scale: 1 }}
+                                                        transition={{
+                                                            layout: { duration: 0.3, type: "spring", bounce: 0 },
+                                                            opacity: { duration: 0.2 }
+                                                        }}
+                                                        className="absolute bottom-0.5 left-1 z-10"
+                                                    >
+                                                        <TooltipProvider delayDuration={0}>
+                                                            <Tooltip>
                                                                 <TooltipTrigger asChild>
                                                                     <div
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
-                                                                            setActiveTooltipId(prev => prev === msg.id ? null : msg.id);
+                                                                            setScrambleTriggerMap(prev => ({ ...prev, [msg.id]: Date.now() }));
                                                                         }}
-                                                                        className="cursor-help p-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+                                                                        className="flex items-center cursor-pointer p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors active:scale-95 group"
                                                                     >
-                                                                        <Shuffle className="h-3 w-3 opacity-60" />
+                                                                        <Shuffle className="h-3.5 w-3.5 opacity-60 group-hover:opacity-100 group-hover:text-indigo-500 transition-all" />
+                                                                        <motion.span
+                                                                            initial={{ width: "auto", opacity: 1, paddingLeft: 4 }}
+                                                                            animate={{ width: 0, opacity: 0, paddingLeft: 0 }}
+                                                                            transition={{ delay: 3, duration: 0.8, ease: "easeInOut" }}
+                                                                            className="overflow-hidden whitespace-nowrap text-[10px] font-medium text-indigo-500/80 dark:text-indigo-400/80 select-none"
+                                                                        >
+                                                                            Shuffle
+                                                                        </motion.span>
                                                                     </div>
                                                                 </TooltipTrigger>
                                                                 <TooltipContent side="left" className="text-xs px-2 py-1">
-                                                                    <p>Letters are scrambled</p>
+                                                                    <p>Shuffle letters</p>
                                                                 </TooltipContent>
                                                             </Tooltip>
                                                         </TooltipProvider>
-                                                    </div>
-                                                )}
+                                                    </motion.div>
+                                                ) : null}
                                                 {/* Unified AI Hint / Loading Area */}
                                                 {(msg.hint_level === 3 || msg.ai_hint) && (
                                                     <motion.div
@@ -470,16 +487,19 @@ export function ChatArea({
                                         </ContextMenuContent>
                                     )}
                                 </ContextMenu>
-                            )}
+                            )
+                            }
 
-                            {showMessageWarning && (
-                                <div className="flex justify-center my-4 animate-in fade-in slide-in-from-bottom-2">
-                                    <span className="bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-xs px-3 py-1 rounded-full shadow-sm font-medium border border-gray-200 dark:border-gray-700">
-                                        {messagesLeft === 1 ? 'Last message!' : `${messagesLeft} messages until switching to solve`}
-                                    </span>
-                                </div>
-                            )}
-                        </div>
+                            {
+                                showMessageWarning && (
+                                    <div className="flex justify-center my-4 animate-in fade-in slide-in-from-bottom-2">
+                                        <span className="bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-xs px-3 py-1 rounded-full shadow-sm font-medium border border-gray-200 dark:border-gray-700">
+                                            {messagesLeft === 1 ? 'Last message!' : `${messagesLeft} messages until switching to solve`}
+                                        </span>
+                                    </div>
+                                )
+                            }
+                        </div >
                     );
                 })}
                 {/* We keep this ref but don't rely on it for scrolling anymore, or we could remove it if useGameLogic doesn't error */}
@@ -489,14 +509,16 @@ export function ChatArea({
                 {hasTextMessages && TypingIndicatorsBlock}
 
                 {/* Steal Animation Overlay */}
-                {floatingAnimation && (
-                    <FloatingMessage
-                        data={floatingAnimation}
-                        onComplete={() => onAnimationComplete?.()}
-                    />
-                )}
+                {
+                    floatingAnimation && (
+                        <FloatingMessage
+                            data={floatingAnimation}
+                            onComplete={() => onAnimationComplete?.()}
+                        />
+                    )
+                }
 
-            </div>
+            </div >
         </div >
     );
 }

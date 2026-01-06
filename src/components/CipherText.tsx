@@ -3,6 +3,8 @@ import { useEffect, useState, useRef } from 'react';
 import { motion } from "framer-motion";
 
 const CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+// Special chars used for hinting (must match gameLogic.ts)
+const SPECIAL_CHARS = new Set(['~', '•', '$', '^', '+', '*', '=', '?', '#', '@', '&', '%']);
 
 interface CipherTextProps {
     text: string;
@@ -70,6 +72,13 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
             const target = visible ? text : (cipherText || cipherRef.current);
             const start = display;
 
+            // 0. Handle Exit from Scramble Mode (Reveal)
+            if (visible && scrambleItems) {
+                setScrambleItems(null);
+                setDisplay(text);
+                return;
+            }
+
             const isForced = forceScramble && forceScramble > lastForceScrambleRef.current;
             if (isForced) {
                 lastForceScrambleRef.current = forceScramble!;
@@ -89,12 +98,15 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                 // Create stable items from the TARGET string (the Anagram)
                 const baseItems: ScrambleItem[] = target.split('').map((c, i) => {
                     // Determined style: if it matches the Real Text (case insensitive) -> Sans (Real)
-                    // Note: Level 2 reveals 70% real chars. Fillers are Mono.
-                    // This heuristic matches the render logic below.
-                    const isReal = text.toLowerCase().includes(c.toLowerCase()) && c !== ' ';
+                    // Note: Level 2 reveals 70% real chars. Fillers are Mono special chars.
+                    // For Hint 2: Real letters are those that ARE NOT special cipher chars
+                    // We also check text.includes for safety, but primarily !isSpecial for Hint 2
+                    const isSpecial = SPECIAL_CHARS.has(c);
+                    const isReal = !isSpecial && text.toLowerCase().includes(c.toLowerCase()) && c !== ' ';
                     return {
                         char: c,
-                        id: `char-${i}-${c}-${Date.now()}`,
+                        // Use STABLE ID matching the static render key to prevent unmount/mount flash
+                        id: `${i}-${c}`,
                         isSpace: c === ' ',
                         isReal
                     };
@@ -109,8 +121,10 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                     await new Promise(r => setTimeout(r, interval));
 
                     if (i === shuffles - 1) {
-                        // Final step: settle to target order
-                        setScrambleItems(baseItems);
+                        // Final step: settle to A RANDOM configuration, not the base order
+                        // This ensures that "re-scrambling" actually changes the positions
+                        const finalShuffle = generateShuffledView(baseItems);
+                        setScrambleItems(finalShuffle);
                     } else {
                         // Shuffle again
                         setScrambleItems(prev => prev ? generateShuffledView(prev) : baseItems);
@@ -118,10 +132,16 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                 }
 
                 await new Promise(r => setTimeout(r, 500));
+
                 if (!isCancelled) {
-                    setDisplay(target);
-                    // Clear items to return to standard optimized text rendering
-                    setScrambleItems(null);
+                    // If we are still in Hint 2 mode, keep the scrambled items as the view
+                    // This persists the random order and the glow effect
+                    if (!visible && hintLevel >= 2) {
+                        // Do not clear.
+                    } else {
+                        setDisplay(target);
+                        setScrambleItems(null);
+                    }
                 }
                 return;
             }
@@ -202,7 +222,8 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
     const popVariant = {
         pop: (isMatch: boolean) => ({
             scale: [1, 1.5, 1],
-            color: isMatch ? ['#ffffff', '#fbbf24', '#ffffff'] : ['#ffffff', '#a8a29e', '#ffffff'],
+            // Removed color animation to prevent overriding text-inherit with white (issue in Light Mode)
+            // Rely on textShadow and scale for the effect
             textShadow: isMatch
                 ? ['0px 0px 0px rgba(0,0,0,0)', '0px 0px 8px rgba(251, 191, 36, 0.8)', '0px 0px 0px rgba(0,0,0,0)']
                 : 'none',
@@ -235,30 +256,26 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
 
     if (scrambleItems) {
         return (
-            <motion.span layout className={`${className} breaking-words inline-block`}>
+            <motion.span layout className={`${className} breaking-words flex gap-1`}>
                 {showColons && <span className="mr-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
                 {scrambleItems.map((item, i) => {
-                    // We apply the float variant here too so it matches the destination state
-                    // The 'layout' prop handles the x/y shuffling. 
-                    // 'float' handles local y/rotate oscillation.
                     const shouldFloat = item.isReal && !visible;
 
                     return (
                         <motion.span
                             layout
                             key={item.id}
-                            custom={i} // Use display index for deterministic float seed matching
+                            custom={i}
                             variants={floatVariant as any}
                             animate={shouldFloat ? "float" : undefined}
                             className={`inline-block ${item.isSpace ? 'whitespace-pre' : ''} ${item.isReal
-                                ? 'font-bold text-inherit mx-0.5'
-                                : 'font-mono opacity-80'
+                                ? 'font-bold text-inherit mx-0.5 drop-shadow-[0_0_2px_rgba(255,255,255,0.5)]'
+                                : 'font-mono text-gray-400 dark:text-gray-500 font-medium'
                                 }`}
                             transition={{
                                 layout: {
-                                    type: "spring",
-                                    stiffness: 300,
-                                    damping: 25
+                                    duration: 0.4,
+                                    ease: "easeInOut"
                                 }
                             }}
                         >
@@ -273,18 +290,23 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
 
     // Normal / Fallback Render
     return (
-        <span className={`${className} breaking-words`}>
+        <motion.span layout className={`${className} breaking-words flex`}>
             {showColons && <span className="mr-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
             {display.split('').map((char, i) => {
                 const isPositionalMatch = char === text[i];
-                const isScrambleMatch = hintLevel >= 2 && text.toLowerCase().includes(char.toLowerCase()) && char !== ' ';
+                // For Hint 2: Real letters are those that ARE NOT special cipher chars
+                const isSpecial = SPECIAL_CHARS.has(char);
+                // "Real" in the context of Hint 2 means "Exposed Letter" (not a special cipher char)
+                // We rely on the fact that generaetCipherString puts special chars in non-exposed slots.
+                // But we also check if it exists in text to be safe/consistent with old logic?
+                // Actually, if a normal letter is used as a cipher filler (Level 0/1), we don't want to highlight it as "Real" unless position matches.
+                // But for Level 2 (Hint 2), we know special chars are the cipher.
+
+                const isScrambleMatch = hintLevel >= 2 && !isSpecial && char !== ' ';
                 const isEffectiveMatch = isPositionalMatch || isScrambleMatch;
                 const isJustRevealed = changedIndices.has(i);
 
                 // Determine Animation
-                // 1. Just Revealed -> Pop
-                // 2. Hint 2 Active & Match & Not Solved -> Float
-                // 3. Solving -> Bounce
                 let animateState = undefined;
                 let variantToUse = undefined;
 
@@ -309,13 +331,14 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
 
                 return (
                     <motion.span
+                        layout
                         key={`${i}-${char}`}
                         custom={isEffectiveMatch ? i : isEffectiveMatch}
                         animate={animateState}
                         variants={variantToUse as any}
                         className={`inline-block ${isEffectiveMatch
                             ? `font-bold text-inherit drop-shadow-[0_0_2px_rgba(255,255,255,0.5)] ${(hintLevel >= 2 && !visible) ? 'mx-0.5' : ''}`
-                            : 'font-mono opacity-75'
+                            : 'font-mono text-gray-400 dark:text-gray-500 font-medium'
                             }`}
                     >
                         {char}
@@ -323,7 +346,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                 );
             })}
             {showColons && <span className="ml-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
-        </span>
+        </motion.span>
     );
 }
 

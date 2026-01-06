@@ -93,11 +93,12 @@ export const HINT_COSTS = {
 };
 
 const CIPHER_CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+const SPECIAL_CIPHER_CHARS = '~•$^+*=?#@&%';
 
 export const generateCipherString = (content: string, level: number, isDaily: boolean = false): string => {
     const length = content.length;
 
-    // Calculate indices for non-space characters (candidates for hints)
+    // Calculate indices for non-space characters
     const indices: number[] = [];
     for (let i = 0; i < length; i++) {
         if (content[i] !== ' ') {
@@ -107,83 +108,55 @@ export const generateCipherString = (content: string, level: number, isDaily: bo
 
     const revealedIndices = new Set<number>();
 
-    // Level 1+: Reveal First Letter
+    // Level 1+: Reveal First Letter (always true for hints)
     if (level >= 1 && indices.length > 0) {
         revealedIndices.add(indices[0]);
     }
 
     // Level 2+: Scramble + Reveal 70%
-    // Logic: 
-    // 1. Pick 70% of real charecters (must include index 0).
-    // 2. Fill rest with random chars.
-    // 3. Shuffle ONLY the positions, keeping spaces? 
-    // Actually, "scramble message letters" usually implies word structure might be lost or just letters jumbled.
-    // To fit existing UI simple string mapping, we'll just generate a string of length N.
-    // It will contain the chosen real letters and fillers, randomized.
-
     if (level >= 2) {
-        // 1. Gather Real Chars to Reveal
-        const realCharIndices = new Set<number>();
-        if (indices.length > 0) realCharIndices.add(indices[0]); // Always include first letter
-
-        // Add more to reach 70%
+        // 1. Determine which indices are "exposed" letters
+        // We want 70% of the letters to be real letters from the message
         const targetCount = Math.floor(indices.length * 0.70);
-        const pool = indices.filter(i => !realCharIndices.has(i));
 
-        // Shuffle pool to pick random additional letters
+        // We already have index 0
+        const pool = indices.filter(i => !revealedIndices.has(i));
+
+        // Shuffle pool to pick random additional letters to reveal
         for (let i = pool.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [pool[i], pool[j]] = [pool[j], pool[i]];
         }
 
+        // Add to revealed set until we reach target
         for (const idx of pool) {
-            if (realCharIndices.size >= targetCount) break;
-            realCharIndices.add(idx);
+            if (revealedIndices.size >= targetCount) break;
+            revealedIndices.add(idx);
         }
 
         // 2. Construct the bag of characters
         const charBag: string[] = [];
 
-        // Add real chars
-        realCharIndices.forEach(idx => charBag.push(content[idx]));
+        // Add the real letters (scrambled or not, they go into the bag)
+        revealedIndices.forEach(idx => charBag.push(content[idx]));
 
-        // Add random fillers for the rest of path (excluding spaces which we might just preserve or also fill?)
-        // If we want to preserve message LENGTH and Space structure?
-        // "Review" -> "Rsvie@" (6 chars).
-        // If we have spaces "Hello World" -> "Hlool Wrld"?
-        // Usually hints preserve space structure to help guessing length.
-        // Let's preserve Spaces in their original positions, and scramble only the letters within the word?
-        // Or just scramble everything?
-        // "Scrumble the message letters" -> implies anagram.
-        // Let's try to preserve spaces for readability of word count, but scramble letters globally? 
-        // Or scramble per word?
-        // Simplest Global Scramble of letters, keeping spaces fixed.
+        // 3. Add special cipher characters for the remaining slots
+        // Total slots needed = Total non-space chars - Revealed chars
+        const slotsNeeded = indices.length - revealedIndices.size;
 
-        const spaceIndices = new Set<number>();
-        for (let i = 0; i < length; i++) {
-            if (content[i] === ' ') spaceIndices.add(i);
-        }
-
-        const slotsNeeded = length - spaceIndices.size - charBag.length;
         for (let i = 0; i < slotsNeeded; i++) {
-            // Pick random char that is NOT in content? Or just random.
-            // To make "real" letters distinct in UI, better if filler doesn't match content.
-            let c;
-            let attempts = 0;
-            do {
-                c = CIPHER_CHARS[Math.floor(Math.random() * CIPHER_CHARS.length)];
-                attempts++;
-            } while (content.toLowerCase().includes(c.toLowerCase()) && attempts < 10); // Try to avoid valid chars (case-insensitive)
+            const c = SPECIAL_CIPHER_CHARS[Math.floor(Math.random() * SPECIAL_CIPHER_CHARS.length)];
             charBag.push(c);
         }
 
-        // 3. Shuffle the bag
+        // 4. Shuffle the bag (The "Scramble" effect)
+        // User wants "Exposed letters have been shuffeled"
         for (let i = charBag.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [charBag[i], charBag[j]] = [charBag[j], charBag[i]];
         }
 
-        // 4. Reconstruct string, inserting spaces where they belong
+        // 5. Reconstruct string, inserting spaces where they belong
         let result = '';
         let bagIndex = 0;
         for (let i = 0; i < length; i++) {
@@ -204,20 +177,10 @@ export const generateCipherString = (content: string, level: number, isDaily: bo
         targetLen = Math.floor(Math.random() * (maxLen - minLen + 1)) + minLen;
     }
 
-    // Re-verify exact length for Level 1 or Daily
-    // If we passed the level >= 2 block, we are here for Level 0 or 1.
-    // Ensure we respect revealed indices from Level 1 block up top.
-
-    let result = '';
-    // Fix: revealedIndices only populated for Level 1 above now (removed Level 2 block there)
-
     // Ensure cipher length matches target for Level 1 match consistency
     if (level >= 1) targetLen = length;
 
-    // Handle length mismatch for Level 0 randomization
-    // If targetLen > length, we pad. If < length, we truncate?
-    // Actually generateCipherString just produces a string.
-
+    let result = '';
     for (let i = 0; i < targetLen; i++) {
         if (i < length && revealedIndices.has(i)) {
             result += content[i];
