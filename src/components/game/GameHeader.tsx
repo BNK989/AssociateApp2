@@ -27,6 +27,8 @@ type GameHeaderProps = {
     theme?: string;
     hideBank?: boolean;
     hideAvatars?: boolean;
+    date?: string;
+    solvedCount?: number;
 };
 
 export function GameHeader({
@@ -48,7 +50,9 @@ export function GameHeader({
     skipExitConfirm,
     theme,
     hideBank,
-    hideAvatars
+    hideAvatars,
+    date,
+    solvedCount
 }: GameHeaderProps) {
     const router = useRouter();
 
@@ -167,28 +171,6 @@ export function GameHeader({
 
     // Explicit Leave Handler passed to dialog
     const handleConfirmLeave = () => {
-        // User confirmed they want to leave.
-        // We just call onBack() and let the parent/Lobby handle the rest? 
-        // Wait, the parent (GameRoom) calls router.push('/'). 
-        // The user wants to TRIGGER the "leave game" logic effectively? 
-        // Or just leave the *room*?
-        // The requirement says: "leave the game? you will not be able to return".
-        // This implies triggering the actual LEAVE action.
-        // But the GameHeader prop `onBack` currently only navigates away.
-        // We probably need a new prop `onLeaveGame` or we need to modify what onBack does if confirmed.
-        // If we just navigate away, the user is still in the game.
-        // The user requirement implies "Leaving the game PERMANENTLY".
-        // So we should call the leave logic.
-        // UseGameLogic doesn't expose `leaveGame` directly yet, but Lobby has it.
-        // GameRoom handles rendering.
-        // We should add `onLeave` prop to GameHeader and wire it up to `leave_game` action in useGameLogic/GameRoom.
-        // FOR NOW: Let's assume onBack just navigates, but the user requested "Leave Game".
-        // I will add a `onLeave` prop to GameHeader in the next step or modify this step to assume it exists?
-        // Let's modify the props interface first.
-        // ACTUALLY: The user said "when a player leaves the game ... show notification".
-        // The requirement says: "when a player leaves the game ... show notification".
-        // This dialog is for that.
-        // So `onLeave` is needed.
         onLeave?.();
         setShowLeaveConfirm(false);
     };
@@ -236,7 +218,10 @@ export function GameHeader({
 
                     {/* Theme Title (Daily Game) - In Flow */}
                     {theme && (
-                        <div className="flex flex-col items-start animate-in fade-in slide-in-from-left-2 ml-1">
+                        <div
+                            className="flex flex-col items-start animate-in fade-in slide-in-from-left-2 ml-1 cursor-pointer hover:opacity-70 transition-opacity"
+                            onClick={() => setShowInfo(true)}
+                        >
                             <span className="text-[9px] uppercase font-black text-amber-500/80 tracking-widest leading-none mb-0.5">Daily Chain</span>
                             <span className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white leading-none whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px] sm:max-w-[200px]">
                                 {theme}
@@ -416,6 +401,9 @@ export function GameHeader({
                             players={players}
                             user={user}
                             onClose={() => setShowInfo(false)}
+                            theme={theme}
+                            date={date}
+                            solvedCount={solvedCount}
                         />
                     </div>
                 )

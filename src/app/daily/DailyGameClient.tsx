@@ -563,6 +563,8 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
                 theme={theme}
                 hideAvatars={true}
                 hideBank={true}
+                date={date}
+                solvedCount={messages.filter(m => m.is_solved).length}
             />
 
             <ChatArea
