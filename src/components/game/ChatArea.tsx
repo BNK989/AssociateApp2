@@ -383,7 +383,7 @@ export function ChatArea({
                                                                     >
                                                                         <Shuffle className="h-3.5 w-3.5 opacity-60 group-hover:opacity-100 group-hover:text-indigo-500 transition-all" />
                                                                         <motion.span
-                                                                            initial={{ width: "auto", opacity: 1, paddingLeft: 4 }}
+                                                                            initial={{ width: "100%", opacity: 1, paddingLeft: 4 }}
                                                                             animate={{ width: 0, opacity: 0, paddingLeft: 0 }}
                                                                             transition={{ delay: 3, duration: 0.8, ease: "easeInOut" }}
                                                                             className="overflow-hidden whitespace-nowrap text-[10px] font-medium text-indigo-500/80 dark:text-indigo-400/80 select-none"

@@ -79,11 +79,30 @@ export function InfoScreen({ game, players, user, onClose, theme, date, solvedCo
 
 
 
-    const handleShare = () => {
+    const handleShare = async () => {
         if (!isDaily || !date) return;
         const text = `Daily Chain ${date}\nScore: ${myScore}\nTheme: ${theme}\n\nPlay at: ${window.location.origin}/daily`;
-        navigator.clipboard.writeText(text);
-        toast.success("Copied to clipboard!");
+
+        try {
+            if (navigator.share) {
+                await navigator.share({
+                    title: 'Daily Chain Results',
+                    text: text,
+                });
+            } else {
+                await navigator.clipboard.writeText(text);
+                toast.success("Copied to clipboard!");
+            }
+        } catch (error) {
+            console.error('Error sharing:', error);
+            // Fallback for desktop Safari/Firefox if share fails or is denied
+            try {
+                await navigator.clipboard.writeText(text);
+                toast.success("Copied to clipboard!");
+            } catch (clipboardError) {
+                toast.error("Failed to share results");
+            }
+        }
     };
 
     return (

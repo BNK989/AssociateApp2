@@ -190,7 +190,7 @@ export function GameHeader({
         >
             {/* Main Header Row */}
             <div className="p-2 flex justify-between items-center relative">
-                <div className={`flex items-center gap-3 ${theme ? 'flex-shrink-0 mr-4' : 'w-1/3'}`}>
+                <div className={`flex items-center gap-3 ${theme ? 'flex-1 min-w-0 mr-4' : 'w-1/3'}`}>
                     <button
                         onClick={handleBackClick}
                         className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-900 dark:text-white shrink-0"
@@ -219,11 +219,11 @@ export function GameHeader({
                     {/* Theme Title (Daily Game) - In Flow */}
                     {theme && (
                         <div
-                            className="flex flex-col items-start animate-in fade-in slide-in-from-left-2 ml-1 cursor-pointer hover:opacity-70 transition-opacity"
+                            className="flex flex-col items-start animate-in fade-in slide-in-from-left-2 ml-1 cursor-pointer hover:opacity-70 transition-opacity min-w-0"
                             onClick={() => setShowInfo(true)}
                         >
                             <span className="text-[9px] uppercase font-black text-amber-500/80 tracking-widest leading-none mb-0.5">Daily Chain</span>
-                            <span className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white leading-none whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px] sm:max-w-[200px]">
+                            <span className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white leading-none whitespace-nowrap overflow-hidden text-ellipsis w-full">
                                 {theme}
                             </span>
                         </div>
@@ -234,7 +234,7 @@ export function GameHeader({
 
                 {/* Score & Bank (Updated) */}
                 <div
-                    className={`flex items-center justify-end gap-2 sm:gap-4 ml-2 mr-3 cursor-pointer hover:opacity-80 transition-opacity ${theme ? 'flex-grow' : 'w-1/3'}`}
+                    className={`flex items-center justify-end gap-2 sm:gap-4 ml-2 mr-3 cursor-pointer hover:opacity-80 transition-opacity ${theme ? 'shrink-0' : 'w-1/3'}`}
                     onClick={() => setShowInfo(true)}
                 >
                     {/* Bank / Pot */}
