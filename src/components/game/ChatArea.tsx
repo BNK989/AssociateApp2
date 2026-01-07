@@ -21,7 +21,7 @@ import { TypingIndicator } from '../ui/TypingIndicator';
 import { FloatingMessage, AnimationData } from './FloatingMessage';
 import { GameBackground } from './GameBackground';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Shuffle } from "lucide-react";
+import { Shuffle, X, Check } from "lucide-react";
 
 type ChatAreaProps = {
     messages: Message[];
@@ -319,6 +319,12 @@ export function ChatArea({
                         }
                     }
 
+                    const strikes = msg.strikes || 0;
+                    const isFailed = strikes >= 3 && msg.is_solved;
+                    const isCorrect = msg.is_solved && strikes < 3;
+                    const showStrikeIndicator = (strikes > 0 && strikes < 3 && !isVisible) || isFailed || isCorrect;
+                    const needsExtraPadding = (msg.hint_level >= 2 && !isVisible && !revealedMessages[msg.id]) || showStrikeIndicator;
+
                     return (
                         <div key={msg.id}>
                             {msg.type === 'system' ? (
@@ -351,7 +357,7 @@ export function ChatArea({
                                                     }
                                                 }}
                                                 onMouseDown={(e) => e.preventDefault()}
-                                                className={`relative max-w-[70%] rounded-lg transition-all duration-300 ${isMe ? 'bg-indigo-600 text-white glow-me' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white glow-gray'} ${game.status === 'solving' && targetMessage?.id === msg.id ? 'target-message-glow' : ''} ${isJustSolved ? 'scale-110 bg-green-500 text-white ring-4 ring-green-300 dark:ring-green-900' : ''} ${(msg.hint_level >= 2 && !isVisible && !revealedMessages[msg.id]) ? 'p-3 pb-6 cursor-pointer hover:ring-2 hover:ring-indigo-400/50' : 'p-3'}`}>
+                                                className={`relative max-w-[70%] rounded-lg transition-all duration-300 ${isMe ? 'bg-indigo-600 text-white glow-me' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white glow-gray'} ${game.status === 'solving' && targetMessage?.id === msg.id ? 'target-message-glow' : ''} ${isJustSolved ? 'scale-110 bg-green-500 text-white ring-4 ring-green-300 dark:ring-green-900' : ''} ${needsExtraPadding ? 'p-3 pb-6 cursor-pointer hover:ring-2 hover:ring-indigo-400/50' : 'p-3'}`}>
                                                 <CipherText
                                                     text={msg.content}
                                                     cipherText={msg.cipher_text}
@@ -401,6 +407,60 @@ export function ChatArea({
                                                         </TooltipProvider>
                                                     </motion.div>
                                                 ) : null}
+
+                                                {/* Strike / Fail / Success Indicator */}
+                                                {showStrikeIndicator && (
+                                                    <motion.div
+                                                        initial={{ opacity: 0, scale: 0.5 }}
+                                                        animate={{ opacity: 1, scale: 1 }}
+                                                        className="absolute bottom-1 right-1 flex items-center gap-1 z-10"
+                                                    >
+                                                        {isCorrect ? (
+                                                            // Success State
+                                                            <div className="flex items-center text-green-500 dark:text-green-400 opacity-90" title="Solved">
+                                                                <Check className="w-4 h-4" />
+                                                            </div>
+                                                        ) : isFailed ? (
+                                                            // Failed State: Just the X, no text or frame
+                                                            <div className="flex items-center text-gray-400 dark:text-gray-500 opacity-80" title="Word Lost">
+                                                                <X className="w-4 h-4" />
+                                                            </div>
+                                                        ) : (
+                                                            // Dots State (Strikes < 3)
+                                                            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/20 dark:bg-black/20 backdrop-blur-[1px]">
+                                                                {/* Dots */}
+                                                                <div className="flex gap-0.5">
+                                                                    {[1, 2, 3].map((i) => {
+                                                                        const livesLeft = 3 - strikes;
+                                                                        const isFilled = i <= livesLeft;
+                                                                        // 1 life left (2 strikes) -> Warning color
+                                                                        const isWarning = livesLeft === 1;
+
+                                                                        return (
+                                                                            <div
+                                                                                key={i}
+                                                                                className={`w-1.5 h-1.5 rounded-full shadow-[0_0_1px_rgba(0,0,0,0.2)] ${isFilled
+                                                                                    ? (isWarning ? 'bg-orange-500 shadow-[0_0_4px_rgba(249,115,22,0.6)]' : 'bg-white dark:bg-gray-200')
+                                                                                    : 'bg-black/10 dark:bg-white/10'
+                                                                                    }`}
+                                                                            />
+                                                                        );
+                                                                    })}
+                                                                </div>
+
+                                                                {/* Text Label */}
+                                                                <motion.span
+                                                                    initial={{ width: "auto", opacity: 1, paddingLeft: 4 }}
+                                                                    animate={{ width: 0, opacity: 0, paddingLeft: 0 }}
+                                                                    transition={{ delay: 3, duration: 0.8, ease: "easeInOut" }}
+                                                                    className="overflow-hidden whitespace-nowrap text-[10px] font-medium text-gray-600 dark:text-gray-300 select-none"
+                                                                >
+                                                                    {strikes === 1 ? "2 guesses remain" : "last guess"}
+                                                                </motion.span>
+                                                            </div>
+                                                        )}
+                                                    </motion.div>
+                                                )}
                                                 {/* Unified AI Hint / Loading Area */}
                                                 {(msg.hint_level === 3 || msg.ai_hint) && (
                                                     <motion.div
