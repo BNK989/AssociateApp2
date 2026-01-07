@@ -90,16 +90,22 @@ export function InfoScreen({ game, players, user, onClose, theme, date, solvedCo
                     text: text,
                 });
             } else {
-                await navigator.clipboard.writeText(text);
-                toast.success("Copied to clipboard!");
+                const { copyToClipboard } = await import('@/lib/utils');
+                const success = await copyToClipboard(text);
+                if (success) {
+                    toast.success("Copied to clipboard!");
+                } else {
+                    toast.error("Failed to copy to clipboard");
+                }
             }
         } catch (error) {
             console.error('Error sharing:', error);
-            // Fallback for desktop Safari/Firefox if share fails or is denied
-            try {
-                await navigator.clipboard.writeText(text);
+            // Fallback attempt with clipboard if share fails
+            const { copyToClipboard } = await import('@/lib/utils');
+            const success = await copyToClipboard(text);
+            if (success) {
                 toast.success("Copied to clipboard!");
-            } catch (clipboardError) {
+            } else {
                 toast.error("Failed to share results");
             }
         }

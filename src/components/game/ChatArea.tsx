@@ -350,6 +350,7 @@ export function ChatArea({
                                                         setScrambleTriggerMap(prev => ({ ...prev, [msg.id]: Date.now() }));
                                                     }
                                                 }}
+                                                onMouseDown={(e) => e.preventDefault()}
                                                 className={`relative max-w-[70%] rounded-lg transition-all duration-300 ${isMe ? 'bg-indigo-600 text-white glow-me' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white glow-gray'} ${game.status === 'solving' && targetMessage?.id === msg.id ? 'target-message-glow' : ''} ${isJustSolved ? 'scale-110 bg-green-500 text-white ring-4 ring-green-300 dark:ring-green-900' : ''} ${(msg.hint_level >= 2 && !isVisible && !revealedMessages[msg.id]) ? 'p-3 pb-6 cursor-pointer hover:ring-2 hover:ring-indigo-400/50' : 'p-3'}`}>
                                                 <CipherText
                                                     text={msg.content}
@@ -379,6 +380,7 @@ export function ChatArea({
                                                                             e.stopPropagation();
                                                                             setScrambleTriggerMap(prev => ({ ...prev, [msg.id]: Date.now() }));
                                                                         }}
+                                                                        onMouseDown={(e) => e.preventDefault()}
                                                                         className="flex items-center cursor-pointer p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors active:scale-95 group"
                                                                     >
                                                                         <Shuffle className="h-3.5 w-3.5 opacity-60 group-hover:opacity-100 group-hover:text-indigo-500 transition-all" />

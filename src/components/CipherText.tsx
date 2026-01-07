@@ -290,7 +290,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
 
     // Normal / Fallback Render
     return (
-        <motion.span layout className={`${className} breaking-words flex`}>
+        <motion.span layout className={`${className} breaking-words flex ${visible ? '[&>span:first-child]:uppercase' : ''}`}>
             {showColons && <span className="mr-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
             {display.split('').map((char, i) => {
                 const isPositionalMatch = char === text[i];
