@@ -100,10 +100,11 @@ export function GameInput({
 
     // Hint Logic
     const currentLevel = targetMessage?.hint_level || 0;
-    const isFirstLetterSolved = targetMessage?.guesses?.some(g => g[0]?.toLowerCase() === targetMessage.content[0].toLowerCase());
+    const firstLetter = targetMessage?.content?.[0]?.toLowerCase();
+    const isFirstLetterRevealed = firstLetter && targetMessage?.guesses?.some(g => g.toLowerCase().includes(firstLetter));
 
-    // If we are at Level 0 but first letter is solved, treat as Level 1 (Next is 2)
-    const effectiveLevel = (currentLevel === 0 && isFirstLetterSolved) ? 1 : currentLevel;
+    // If we are at Level 0 but first letter is revealed, treat as Level 1 (Next is 2)
+    const effectiveLevel = (currentLevel === 0 && isFirstLetterRevealed) ? 1 : currentLevel;
 
     const isMaxHints = effectiveLevel >= 3;
     const wordValue = targetMessage ? calculateMessageValue(targetMessage.content) : 0;

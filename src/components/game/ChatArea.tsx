@@ -359,13 +359,13 @@ export function ChatArea({
                                                     }
                                                 }}
                                                 onMouseDown={(e) => e.preventDefault()}
-                                                className={`relative max-w-[70%] rounded-lg transition-all duration-300 ${isMe ? 'bg-indigo-600 text-white glow-me' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white glow-gray'} ${game.status === 'solving' && targetMessage?.id === msg.id ? 'target-message-glow' : ''} ${isJustSolved ? 'scale-110 bg-green-500 text-white ring-4 ring-green-300 dark:ring-green-900' : ''} ${needsExtraPadding ? 'p-3 pb-5 cursor-pointer hover:ring-2 hover:ring-indigo-400/50' : 'p-3'}`}>
+                                                className={`relative max-w-[70%] rounded-lg transition-all duration-300 ${isMe ? 'bg-indigo-600 text-white glow-me' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white glow-gray'} ${game.status === 'solving' && targetMessage?.id === msg.id ? 'target-message-glow' : ''} ${isJustSolved ? 'scale-110 ring-2 ring-green-500 dark:ring-green-400 shadow-[0_0_15px_rgba(34,197,94,0.3)]' : ''} ${needsExtraPadding ? 'p-3 pb-5 cursor-pointer hover:ring-2 hover:ring-indigo-400/50' : 'p-3'}`}>
                                                 <CipherText
                                                     text={msg.content}
                                                     cipherText={msg.cipher_text}
                                                     visible={isVisible || !!revealedMessages[msg.id]}
-                                                    className={isMe || isJustSolved ? 'text-white' : 'text-gray-900 dark:text-white'}
-                                                    isSolving={game.status === 'solving' && targetMessage?.id === msg.id && (typingUsers?.size ?? 0) > 0}
+                                                    className={isMe ? 'text-white' : 'text-gray-900 dark:text-white'}
+                                                    isSolving={game.status === 'solving' && targetMessage?.id === msg.id}
                                                     hintLevel={msg.hint_level}
                                                     guesses={msg.guesses || []}
                                                     forceScramble={scrambleTriggerMap[msg.id]}

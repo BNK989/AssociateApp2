@@ -135,6 +135,8 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                     let isReal = false;
                     let locked = false;
 
+                    const SPECIAL_CHARS_ARRAY = Array.from(SPECIAL_CHARS);
+
                     if (isGreen) {
                         charToShow = realChar;
                         isReal = true;
@@ -142,8 +144,22 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                     } else if (isOrange) {
                         charToShow = realChar;
                         isReal = true; // Orange letters participate in "Real" styling
+                    } else if (hintLevel >= 2) {
+                        const shouldReveal = Math.random() < 0.7;
+                        if (shouldReveal) {
+                            charToShow = realChar;
+                            isReal = true;
+                        } else {
+                            // Hidden: Force Special Char
+                            if (!SPECIAL_CHARS.has(cipherChar)) {
+                                charToShow = SPECIAL_CHARS_ARRAY[Math.floor(Math.random() * SPECIAL_CHARS_ARRAY.length)];
+                            } else {
+                                charToShow = cipherChar;
+                            }
+                            isReal = false;
+                        }
                     } else {
-                        // Inherit from Cipher (could be real or special depending on hint level)
+                        // Level 0/1: Standard Cipher
                         const isCipherSpecial = SPECIAL_CHARS.has(cipherChar);
                         charToShow = cipherChar;
                         isReal = !isCipherSpecial && text.toLowerCase().includes(cipherChar.toLowerCase());
@@ -305,7 +321,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
 
     if (scrambleItems) {
         return (
-            <motion.span layout className={`${className} breaking-words flex gap-1`}>
+            <motion.span className={`${className} break-words inline-flex flex-wrap gap-1`}>
                 {showColons && <span className="mr-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
                 {scrambleItems.map((item, i) => {
                     const shouldFloat = item.isReal && !visible;
@@ -346,9 +362,8 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
         );
     }
 
-    // Normal / Fallback Render (No Scramble)
     return (
-        <motion.span layout className={`${className} breaking-words flex ${(visible || hintLevel >= 1) ? '[&>span:first-child]:uppercase' : ''}`}>
+        <motion.span className={`${className} break-words inline-flex flex-wrap ${(visible || hintLevel >= 1 || isSolving) ? '[&>span:first-child]:uppercase' : ''} ${isSolving ? 'gap-1' : ''}`}>
             {showColons && <span className="mr-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
             {display.split('').map((char, i) => {
                 const isPositionalMatch = char === text[i];

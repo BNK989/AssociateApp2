@@ -299,9 +299,11 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
 
         let nextLevel = currentLevel + 1;
 
-        // Smart Hint Skip: If first letter is already solved (Green), skip Level 1 (Reveal First)
-        const isFirstLetterSolved = targetMessage.guesses?.some(g => g[0]?.toLowerCase() === targetMessage.content[0].toLowerCase());
-        if (currentLevel === 0 && isFirstLetterSolved) {
+        // Smart Hint Skip: If first letter is already revealed (Green OR Orange), skip Level 1 (Reveal First)
+        const firstLetter = targetMessage.content[0]?.toLowerCase();
+        const isFirstLetterRevealed = targetMessage.guesses?.some(g => g.toLowerCase().includes(firstLetter));
+
+        if (currentLevel === 0 && isFirstLetterRevealed) {
             nextLevel = 2;
         }
 
