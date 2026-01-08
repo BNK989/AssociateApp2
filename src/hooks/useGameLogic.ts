@@ -47,6 +47,7 @@ export type Message = {
         username: string;
         avatar_url: string;
     };
+    guesses?: string[];
 };
 
 export type GameState = {

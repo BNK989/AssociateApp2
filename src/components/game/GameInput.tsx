@@ -100,22 +100,27 @@ export function GameInput({
 
     // Hint Logic
     const currentLevel = targetMessage?.hint_level || 0;
-    const isMaxHints = currentLevel >= 3;
+    const isFirstLetterSolved = targetMessage?.guesses?.some(g => g[0]?.toLowerCase() === targetMessage.content[0].toLowerCase());
+
+    // If we are at Level 0 but first letter is solved, treat as Level 1 (Next is 2)
+    const effectiveLevel = (currentLevel === 0 && isFirstLetterSolved) ? 1 : currentLevel;
+
+    const isMaxHints = effectiveLevel >= 3;
     const wordValue = targetMessage ? calculateMessageValue(targetMessage.content) : 0;
 
     let nextCost = 0;
     let nextLabel = "";
     let buttonText: React.ReactNode = "1ˢᵗ";
 
-    if (currentLevel === 0) {
+    if (effectiveLevel === 0) {
         nextCost = Math.ceil(wordValue * HINT_COSTS.TIER_1); // 10%
         nextLabel = "Reveal Length";
         buttonText = "1ˢᵗ";
-    } else if (currentLevel === 1) {
+    } else if (effectiveLevel === 1) {
         nextCost = Math.ceil(wordValue * HINT_COSTS.TIER_2); // 10%
         nextLabel = "Reveal 1st + 25%";
         buttonText = <Shuffle className="h-3 w-3" />;
-    } else if (currentLevel === 2) {
+    } else if (effectiveLevel === 2) {
         nextCost = Math.ceil(wordValue * HINT_COSTS.TIER_3); // 40%
         nextLabel = "AI Hint";
         buttonText = "AI";

@@ -367,6 +367,7 @@ export function ChatArea({
                                                     className={isMe || isJustSolved ? 'text-white' : 'text-gray-900 dark:text-white'}
                                                     isSolving={game.status === 'solving' && targetMessage?.id === msg.id && (typingUsers?.size ?? 0) > 0}
                                                     hintLevel={msg.hint_level}
+                                                    guesses={msg.guesses || []}
                                                     forceScramble={scrambleTriggerMap[msg.id]}
                                                 />
                                                 {(msg.hint_level >= 2 && !isVisible && !revealedMessages[msg.id]) ? (

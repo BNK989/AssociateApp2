@@ -14,6 +14,7 @@ interface CipherTextProps {
     isSolving?: boolean;
     hintLevel?: number;
     forceScramble?: number;
+    guesses?: string[];
 }
 
 interface ScrambleItem {
@@ -21,9 +22,10 @@ interface ScrambleItem {
     id: string; // Stable ID for layout animations
     isSpace: boolean;
     isReal: boolean; // Tracking if it's a real char (Sans) or filler (Mono) during scramble
+    locked?: boolean; // If true, this item MUST NOT move (Green letter)
 }
 
-export function CipherText({ text, cipherText, visible, className = '', isSolving = false, hintLevel = 0, forceScramble }: CipherTextProps) {
+export function CipherText({ text, cipherText, visible, className = '', isSolving = false, hintLevel = 0, forceScramble, guesses = [] }: CipherTextProps) {
     const cipherRef = useRef<string>('');
 
     // Initialize cipher string lazily, but PREFER cipherText if available
@@ -48,6 +50,32 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
     const lastForceScrambleRef = useRef<number>(forceScramble || 0);
 
     const isFirstRender = useRef(true);
+
+    // Calculate Wordle States
+    // Green: Correct char at correct index
+    // Orange: Correct char somewhere in the text, but not at this index (and not fully consumed by greens)
+    // Note: Simple version for game - if you guessed a letter and it is in the target, show it orange everywhere it appears (unless green).
+
+    const greenIndices = new Set<number>();
+    const revealedChars = new Set<string>();
+
+    if (!visible) {
+        guesses.forEach(guess => {
+            const cleanGuess = guess.toLowerCase();
+            const cleanText = text.toLowerCase();
+
+            // 1. Check Greens and Reveals
+            for (let i = 0; i < Math.min(cleanGuess.length, cleanText.length); i++) {
+                if (cleanGuess[i] === cleanText[i]) {
+                    greenIndices.add(i);
+                }
+                // Track all guessed chars
+                if (cleanText[i] && cleanText.includes(cleanGuess[i])) { // Added check
+                    revealedChars.add(cleanGuess[i]);
+                }
+            }
+        });
+    }
 
     useEffect(() => {
         // Update local cipher ref if prop changes (e.g. new hint bought)
@@ -95,40 +123,51 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                 const shuffles = Math.floor(Math.random() * 5) + 2;
                 const interval = duration / shuffles;
 
-                // Create stable items from the TARGET string (the Anagram)
+                // Create stable items from the TARGET string (the Anagram/Cipher mixed)
                 const baseItems: ScrambleItem[] = target.split('').map((c, i) => {
-                    // Determined style: if it matches the Real Text (case insensitive) -> Sans (Real)
-                    // Note: Level 2 reveals 70% real chars. Fillers are Mono special chars.
-                    // For Hint 2: Real letters are those that ARE NOT special cipher chars
-                    // We also check text.includes for safety, but primarily !isSpecial for Hint 2
-                    const isSpecial = SPECIAL_CHARS.has(c);
-                    const isReal = !isSpecial && text.toLowerCase().includes(c.toLowerCase()) && c !== ' ';
+                    const isGreen = greenIndices.has(i);
+                    const isOrange = !isGreen && revealedChars.has(text[i].toLowerCase());
+
+                    const realChar = text[i];
+                    const cipherChar = (cipherText || cipherRef.current)[i];
+
+                    let charToShow = cipherChar;
+                    let isReal = false;
+                    let locked = false;
+
+                    if (isGreen) {
+                        charToShow = realChar;
+                        isReal = true;
+                        locked = true;
+                    } else if (isOrange) {
+                        charToShow = realChar;
+                        isReal = true; // Orange letters participate in "Real" styling
+                    } else {
+                        // Inherit from Cipher (could be real or special depending on hint level)
+                        const isCipherSpecial = SPECIAL_CHARS.has(cipherChar);
+                        charToShow = cipherChar;
+                        isReal = !isCipherSpecial && text.toLowerCase().includes(cipherChar.toLowerCase());
+                    }
+
                     return {
-                        char: c,
-                        // Use STABLE ID matching the static render key to prevent unmount/mount flash
-                        id: `${i}-${c}`,
-                        isSpace: c === ' ',
-                        isReal
+                        char: charToShow,
+                        id: `${i}-${charToShow}`, // Stable-ish ID
+                        isSpace: realChar === ' ',
+                        isReal,
+                        locked: locked || realChar === ' ' // Spaces always locked effectively
                     };
                 });
 
                 // Hint 1 Fix: Ensure the FIRST letter is actually the correct one before we start shuffling
-                // This prevents the "wrong letter locked at start" issue
                 if (hintLevel >= 1 && baseItems.length > 0) {
-                    const firstChar = text[0].toLowerCase();
-                    // Find the item that corresponds to the first char
-                    // We look for a match in the baseItems pool
-                    const correctIdx = baseItems.findIndex(item => item.char.toLowerCase() === firstChar);
-
-                    if (correctIdx !== -1 && correctIdx !== 0) {
-                        // Swap it to the front
-                        [baseItems[0], baseItems[correctIdx]] = [baseItems[correctIdx], baseItems[0]];
-                    }
+                    // Force lock first char
+                    baseItems[0].locked = true;
+                    baseItems[0].isReal = true;
+                    baseItems[0].char = text[0]; // Ensure it's real char
                 }
 
                 // Initial shuffle
-                const preserveFirst = hintLevel >= 1;
-                const shuffledStart = generateShuffledView(baseItems, preserveFirst);
+                const shuffledStart = generateShuffledView(baseItems);
                 setScrambleItems(shuffledStart);
 
                 for (let i = 0; i < shuffles; i++) {
@@ -137,20 +176,19 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
 
                     if (i === shuffles - 1) {
                         // Final step: settle to A RANDOM configuration
-                        const finalShuffle = generateShuffledView(baseItems, preserveFirst);
+                        const finalShuffle = generateShuffledView(baseItems);
                         setScrambleItems(finalShuffle);
                     } else {
                         // Shuffle again
-                        setScrambleItems(prev => prev ? generateShuffledView(prev, preserveFirst) : baseItems);
+                        setScrambleItems(prev => prev ? generateShuffledView(prev) : baseItems);
                     }
                 }
 
                 await new Promise(r => setTimeout(r, 500));
 
                 if (!isCancelled) {
-                    // If we are still in Hint 2 mode, keep the scrambled items as the view
                     if (!visible && hintLevel >= 2) {
-                        // Do not clear.
+                        // Keep scramble view
                     } else {
                         setDisplay(target);
                         setScrambleItems(null);
@@ -183,9 +221,9 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
 
         animate();
         return () => { isCancelled = true; };
-    }, [visible, text, cipherText, hintLevel, forceScramble]);
+    }, [visible, text, cipherText, hintLevel, forceScramble, guesses]); // Added guesses dependency
 
-    // Track previous cipher to detect changes (Hint Reveals)
+    // Track changes
     const prevCipherRef = useRef(cipherText || '');
     const [changedIndices, setChangedIndices] = useState<Set<number>>(new Set());
 
@@ -235,8 +273,6 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
     const popVariant = {
         pop: (isMatch: boolean) => ({
             scale: [1, 1.5, 1],
-            // Removed color animation to prevent overriding text-inherit with white (issue in Light Mode)
-            // Rely on textShadow and scale for the effect
             textShadow: isMatch
                 ? ['0px 0px 0px rgba(0,0,0,0)', '0px 0px 8px rgba(251, 191, 36, 0.8)', '0px 0px 0px rgba(0,0,0,0)']
                 : 'none',
@@ -275,6 +311,14 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                     const shouldFloat = item.isReal && !visible;
                     const isFirst = i === 0;
 
+                    const isGreen = item.locked && item.isReal;
+                    const isOrange = !item.locked && item.isReal; // It's moving, but it's a real char.
+
+                    let colorClass = 'text-inherit';
+                    if (isGreen) colorClass = 'text-green-600 dark:text-green-400';
+                    else if (isOrange) colorClass = 'text-orange-500 dark:text-orange-400';
+                    else colorClass = 'text-gray-400 dark:text-gray-500';
+
                     return (
                         <motion.span
                             layout
@@ -283,7 +327,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                             variants={floatVariant as any}
                             animate={shouldFloat ? "float" : undefined}
                             className={`inline-block ${item.isSpace ? 'whitespace-pre' : ''} ${item.isReal
-                                ? 'font-bold text-inherit mx-0.5 drop-shadow-[0_0_2px_rgba(255,255,255,0.5)]'
+                                ? `font-bold mx-0.5 drop-shadow-[0_0_2px_rgba(255,255,255,0.5)] ${colorClass}`
                                 : 'font-mono text-gray-400 dark:text-gray-500 font-medium'
                                 } ${isFirst && hintLevel >= 1 ? 'uppercase' : ''}`}
                             transition={{
@@ -302,37 +346,36 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
         );
     }
 
-    // Normal / Fallback Render
+    // Normal / Fallback Render (No Scramble)
     return (
         <motion.span layout className={`${className} breaking-words flex ${(visible || hintLevel >= 1) ? '[&>span:first-child]:uppercase' : ''}`}>
             {showColons && <span className="mr-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
             {display.split('').map((char, i) => {
                 const isPositionalMatch = char === text[i];
-                // For Hint 2: Real letters are those that ARE NOT special cipher chars
                 const isSpecial = SPECIAL_CHARS.has(char);
-                // "Real" in the context of Hint 2 means "Exposed Letter" (not a special cipher char)
-                // We rely on the fact that generaetCipherString puts special chars in non-exposed slots.
-                // But we also check if it exists in text to be safe/consistent with old logic?
-                // Actually, if a normal letter is used as a cipher filler (Level 0/1), we don't want to highlight it as "Real" unless position matches.
-                // But for Level 2 (Hint 2), we know special chars are the cipher.
 
-                const isScrambleMatch = hintLevel >= 2 && !isSpecial && char !== ' ';
-                const isEffectiveMatch = isPositionalMatch || isScrambleMatch;
-                const isJustRevealed = changedIndices.has(i);
+                const isGreen = greenIndices.has(i);
 
-                // Determine Animation
-                let animateState = undefined;
-                let variantToUse = undefined;
+                let renderChar = char;
+                let isEffectiveMatch = isPositionalMatch;
+                let colorClass = '';
 
-                if (isJustRevealed) {
-                    animateState = "pop";
-                    variantToUse = popVariant;
-                } else if (hintLevel >= 2 && isEffectiveMatch && !visible) {
-                    animateState = "float";
-                    variantToUse = floatVariant;
-                } else if (isSolving) {
-                    animateState = "bounce";
-                    variantToUse = bounceVariant;
+                if (!visible) {
+                    if (isGreen && text[i]) {
+                        renderChar = text[i];
+                        isEffectiveMatch = true;
+                        colorClass = 'text-green-600 dark:text-green-400';
+                    } else if (text[i] && revealedChars.has(text[i].toLowerCase())) {
+                        // Orange
+                        renderChar = text[i];
+                        isEffectiveMatch = true;
+                        colorClass = 'text-orange-500 dark:text-orange-400';
+                    } else {
+                        // Standard Cipher Logic
+                        const isScrambleMatch = hintLevel >= 2 && !isSpecial && char !== ' ';
+                        if (isScrambleMatch) isEffectiveMatch = true;
+                        if (!isEffectiveMatch) colorClass = 'text-gray-400 dark:text-gray-500 font-medium font-mono';
+                    }
                 }
 
                 if (visible) {
@@ -343,19 +386,21 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                     );
                 }
 
+                const isJustRevealed = changedIndices.has(i);
+
                 return (
                     <motion.span
                         layout
-                        key={`${i}-${char}`}
+                        key={`${i}-${renderChar}`}
                         custom={isEffectiveMatch ? i : isEffectiveMatch}
-                        animate={animateState}
-                        variants={variantToUse as any}
+                        animate={isJustRevealed ? "pop" : (hintLevel >= 2 && isEffectiveMatch && !visible) ? "float" : undefined}
+                        variants={isJustRevealed ? popVariant : floatVariant as any}
                         className={`inline-block ${isEffectiveMatch
-                            ? `font-bold text-inherit drop-shadow-[0_0_2px_rgba(255,255,255,0.5)] ${(hintLevel >= 2 && !visible) ? 'mx-0.5' : ''}`
-                            : 'font-mono text-gray-400 dark:text-gray-500 font-medium'
+                            ? `font-bold text-inherit drop-shadow-[0_0_2px_rgba(255,255,255,0.5)] ${colorClass} ${(hintLevel >= 2 && !visible) ? 'mx-0.5' : ''}`
+                            : `${colorClass}`
                             }`}
                     >
-                        {char}
+                        {renderChar}
                     </motion.span>
                 );
             })}
@@ -369,10 +414,9 @@ function generateShuffledView(baseItems: ScrambleItem[], preserveFirst: boolean 
     const result = new Array(baseItems.length);
     const movers: ScrambleItem[] = [];
 
-    // 1. Separate spaces and movers
+    // 1. Separate locked and movers
     baseItems.forEach((item, idx) => {
-        // preserveFirst logic: if we are at index 0 and preserveFirst is true, LOCK it.
-        if (preserveFirst && idx === 0) {
+        if (item.locked || (preserveFirst && idx === 0)) {
             result[idx] = item;
             return;
         }

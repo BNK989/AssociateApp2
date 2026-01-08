@@ -155,7 +155,8 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
                 author_points: 0,
                 winner_points: 0,
                 type: 'text',
-                profiles: BOT_PROFILE
+                profiles: BOT_PROFILE,
+                guesses: []
             };
         });
 
@@ -296,7 +297,14 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
         const currentLevel = targetMessage.hint_level || 0;
         if (currentLevel >= 3) return;
 
-        const nextLevel = currentLevel + 1;
+        let nextLevel = currentLevel + 1;
+
+        // Smart Hint Skip: If first letter is already solved (Green), skip Level 1 (Reveal First)
+        const isFirstLetterSolved = targetMessage.guesses?.some(g => g[0]?.toLowerCase() === targetMessage.content[0].toLowerCase());
+        if (currentLevel === 0 && isFirstLetterSolved) {
+            nextLevel = 2;
+        }
+
         // const wordValue = calculateMessageValue(targetMessage.content);
 
         // Calculate Cost (unused currently, but kept for future logic or removed to satisfy lint)
@@ -469,10 +477,14 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
 
             } else {
                 const newStrikes = (targetMessage.strikes || 0) + 1;
+                // Add the wrong guess to the message's guesses array
+                const newGuesses = [...(targetMessage.guesses || []), guess];
+
                 setMessages(prev => prev.map(m => m.id === targetMessage.id ? {
                     ...m,
                     strikes: newStrikes,
-                    is_solved: newStrikes >= 3 ? true : false
+                    is_solved: newStrikes >= 3 ? true : false,
+                    guesses: newGuesses
                 } : m));
 
                 setConsecutive(0);
@@ -524,7 +536,8 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
                 author_points: 0,
                 winner_points: 0,
                 type: 'text',
-                profiles: BOT_PROFILE
+                profiles: BOT_PROFILE,
+                guesses: []
             };
         });
 
