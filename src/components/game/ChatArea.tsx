@@ -320,8 +320,10 @@ export function ChatArea({
                     }
 
                     const strikes = msg.strikes || 0;
-                    const isFailed = strikes >= 3 && msg.is_solved;
-                    const isCorrect = msg.is_solved && strikes < 3;
+                    // robust check: if points are 0 or missing (undefined/null) but solved, treat as give up
+                    const isGivenUp = msg.is_solved && (!msg.winner_points || msg.winner_points === 0);
+                    const isFailed = (strikes >= 3 && msg.is_solved) || isGivenUp;
+                    const isCorrect = msg.is_solved && !isFailed && (msg.winner_points || 0) > 0;
                     const showStrikeIndicator = (strikes > 0 && strikes < 3 && !isVisible) || isFailed || isCorrect;
                     const needsExtraPadding = (msg.hint_level >= 2 && !isVisible && !revealedMessages[msg.id]) || showStrikeIndicator;
 
@@ -357,7 +359,7 @@ export function ChatArea({
                                                     }
                                                 }}
                                                 onMouseDown={(e) => e.preventDefault()}
-                                                className={`relative max-w-[70%] rounded-lg transition-all duration-300 ${isMe ? 'bg-indigo-600 text-white glow-me' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white glow-gray'} ${game.status === 'solving' && targetMessage?.id === msg.id ? 'target-message-glow' : ''} ${isJustSolved ? 'scale-110 bg-green-500 text-white ring-4 ring-green-300 dark:ring-green-900' : ''} ${needsExtraPadding ? 'p-3 pb-6 cursor-pointer hover:ring-2 hover:ring-indigo-400/50' : 'p-3'}`}>
+                                                className={`relative max-w-[70%] rounded-lg transition-all duration-300 ${isMe ? 'bg-indigo-600 text-white glow-me' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white glow-gray'} ${game.status === 'solving' && targetMessage?.id === msg.id ? 'target-message-glow' : ''} ${isJustSolved ? 'scale-110 bg-green-500 text-white ring-4 ring-green-300 dark:ring-green-900' : ''} ${needsExtraPadding ? 'p-3 pb-5 cursor-pointer hover:ring-2 hover:ring-indigo-400/50' : 'p-3'}`}>
                                                 <CipherText
                                                     text={msg.content}
                                                     cipherText={msg.cipher_text}
@@ -376,7 +378,7 @@ export function ChatArea({
                                                             layout: { duration: 0.3, type: "spring", bounce: 0 },
                                                             opacity: { duration: 0.2 }
                                                         }}
-                                                        className="absolute bottom-0.5 left-1 z-10"
+                                                        className={`absolute bottom-0.5 left-1 z-10 ${(msg.hint_level === 3 || msg.ai_hint) ? 'scale-75 origin-bottom-left' : ''}`}
                                                     >
                                                         <TooltipProvider delayDuration={0}>
                                                             <Tooltip>
@@ -387,17 +389,19 @@ export function ChatArea({
                                                                             setScrambleTriggerMap(prev => ({ ...prev, [msg.id]: Date.now() }));
                                                                         }}
                                                                         onMouseDown={(e) => e.preventDefault()}
-                                                                        className="flex items-center cursor-pointer p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors active:scale-95 group"
+                                                                        className={`flex items-center cursor-pointer p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors active:scale-95 group`}
                                                                     >
                                                                         <Shuffle className="h-3.5 w-3.5 opacity-60 group-hover:opacity-100 group-hover:text-indigo-500 transition-all" />
-                                                                        <motion.span
-                                                                            initial={{ width: "100%", opacity: 1, paddingLeft: 4 }}
-                                                                            animate={{ width: 0, opacity: 0, paddingLeft: 0 }}
-                                                                            transition={{ delay: 3, duration: 0.8, ease: "easeInOut" }}
-                                                                            className="overflow-hidden whitespace-nowrap text-[10px] font-medium text-indigo-500/80 dark:text-indigo-400/80 select-none"
-                                                                        >
-                                                                            Shuffle
-                                                                        </motion.span>
+                                                                        {!(msg.hint_level === 3 || msg.ai_hint) && (
+                                                                            <motion.span
+                                                                                initial={{ width: "auto", opacity: 1, paddingLeft: 4 }}
+                                                                                animate={{ width: 0, opacity: 0, paddingLeft: 0 }}
+                                                                                transition={{ delay: 3, duration: 0.8, ease: "easeInOut" }}
+                                                                                className="overflow-hidden whitespace-nowrap text-[10px] font-medium text-indigo-500/80 dark:text-indigo-400/80 select-none"
+                                                                            >
+                                                                                Shuffle
+                                                                            </motion.span>
+                                                                        )}
                                                                     </div>
                                                                 </TooltipTrigger>
                                                                 <TooltipContent side="left" className="text-xs px-2 py-1">
@@ -427,7 +431,7 @@ export function ChatArea({
                                                             </div>
                                                         ) : (
                                                             // Dots State (Strikes < 3)
-                                                            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/20 dark:bg-black/20 backdrop-blur-[1px]">
+                                                            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded backdrop-blur-[1px]">
                                                                 {/* Dots */}
                                                                 <div className="flex gap-0.5">
                                                                     {[1, 2, 3].map((i) => {
@@ -449,14 +453,17 @@ export function ChatArea({
                                                                 </div>
 
                                                                 {/* Text Label */}
-                                                                <motion.span
-                                                                    initial={{ width: "auto", opacity: 1, paddingLeft: 4 }}
-                                                                    animate={{ width: 0, opacity: 0, paddingLeft: 0 }}
-                                                                    transition={{ delay: 3, duration: 0.8, ease: "easeInOut" }}
-                                                                    className="overflow-hidden whitespace-nowrap text-[10px] font-medium text-gray-600 dark:text-gray-300 select-none"
-                                                                >
-                                                                    {strikes === 1 ? "2 guesses remain" : "last guess"}
-                                                                </motion.span>
+                                                                {/* Text Label - Hide if message is short (adaptive UI) */}
+                                                                {(msg.content.length >= 10) && (
+                                                                    <motion.span
+                                                                        initial={{ width: "auto", opacity: 1, paddingLeft: 4 }}
+                                                                        animate={{ width: 0, opacity: 0, paddingLeft: 0 }}
+                                                                        transition={{ delay: 3, duration: 0.8, ease: "easeInOut" }}
+                                                                        className="overflow-hidden whitespace-nowrap text-[10px] font-medium text-gray-600 dark:text-gray-300 select-none"
+                                                                    >
+                                                                        {strikes === 1 ? "2 guesses remain" : "last guess"}
+                                                                    </motion.span>
+                                                                )}
                                                             </div>
                                                         )}
                                                     </motion.div>

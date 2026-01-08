@@ -112,8 +112,23 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                     };
                 });
 
+                // Hint 1 Fix: Ensure the FIRST letter is actually the correct one before we start shuffling
+                // This prevents the "wrong letter locked at start" issue
+                if (hintLevel >= 1 && baseItems.length > 0) {
+                    const firstChar = text[0].toLowerCase();
+                    // Find the item that corresponds to the first char
+                    // We look for a match in the baseItems pool
+                    const correctIdx = baseItems.findIndex(item => item.char.toLowerCase() === firstChar);
+
+                    if (correctIdx !== -1 && correctIdx !== 0) {
+                        // Swap it to the front
+                        [baseItems[0], baseItems[correctIdx]] = [baseItems[correctIdx], baseItems[0]];
+                    }
+                }
+
                 // Initial shuffle
-                const shuffledStart = generateShuffledView(baseItems);
+                const preserveFirst = hintLevel >= 1;
+                const shuffledStart = generateShuffledView(baseItems, preserveFirst);
                 setScrambleItems(shuffledStart);
 
                 for (let i = 0; i < shuffles; i++) {
@@ -121,13 +136,12 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                     await new Promise(r => setTimeout(r, interval));
 
                     if (i === shuffles - 1) {
-                        // Final step: settle to A RANDOM configuration, not the base order
-                        // This ensures that "re-scrambling" actually changes the positions
-                        const finalShuffle = generateShuffledView(baseItems);
+                        // Final step: settle to A RANDOM configuration
+                        const finalShuffle = generateShuffledView(baseItems, preserveFirst);
                         setScrambleItems(finalShuffle);
                     } else {
                         // Shuffle again
-                        setScrambleItems(prev => prev ? generateShuffledView(prev) : baseItems);
+                        setScrambleItems(prev => prev ? generateShuffledView(prev, preserveFirst) : baseItems);
                     }
                 }
 
@@ -135,7 +149,6 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
 
                 if (!isCancelled) {
                     // If we are still in Hint 2 mode, keep the scrambled items as the view
-                    // This persists the random order and the glow effect
                     if (!visible && hintLevel >= 2) {
                         // Do not clear.
                     } else {
@@ -260,6 +273,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                 {showColons && <span className="mr-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
                 {scrambleItems.map((item, i) => {
                     const shouldFloat = item.isReal && !visible;
+                    const isFirst = i === 0;
 
                     return (
                         <motion.span
@@ -271,7 +285,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                             className={`inline-block ${item.isSpace ? 'whitespace-pre' : ''} ${item.isReal
                                 ? 'font-bold text-inherit mx-0.5 drop-shadow-[0_0_2px_rgba(255,255,255,0.5)]'
                                 : 'font-mono text-gray-400 dark:text-gray-500 font-medium'
-                                }`}
+                                } ${isFirst && hintLevel >= 1 ? 'uppercase' : ''}`}
                             transition={{
                                 layout: {
                                     duration: 0.4,
@@ -290,7 +304,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
 
     // Normal / Fallback Render
     return (
-        <motion.span layout className={`${className} breaking-words flex ${visible ? '[&>span:first-child]:uppercase' : ''}`}>
+        <motion.span layout className={`${className} breaking-words flex ${(visible || hintLevel >= 1) ? '[&>span:first-child]:uppercase' : ''}`}>
             {showColons && <span className="mr-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
             {display.split('').map((char, i) => {
                 const isPositionalMatch = char === text[i];
@@ -351,12 +365,18 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
 }
 
 // Fixed Shuffler for array logic
-function generateShuffledView(baseItems: ScrambleItem[]): ScrambleItem[] {
+function generateShuffledView(baseItems: ScrambleItem[], preserveFirst: boolean = false): ScrambleItem[] {
     const result = new Array(baseItems.length);
     const movers: ScrambleItem[] = [];
 
     // 1. Separate spaces and movers
     baseItems.forEach((item, idx) => {
+        // preserveFirst logic: if we are at index 0 and preserveFirst is true, LOCK it.
+        if (preserveFirst && idx === 0) {
+            result[idx] = item;
+            return;
+        }
+
         if (item.isSpace) {
             result[idx] = item;
         } else {
