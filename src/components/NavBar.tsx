@@ -13,14 +13,16 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { LogOut } from 'lucide-react';
+import { LogOut, Sun, Moon } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { deleteGuestAccount } from '@/app/actions/auth';
+import { useTheme } from 'next-themes';
 
 import { usePathname } from 'next/navigation';
 
 export function NavBar() {
-    const { user, profile } = useAuth();
+    const { user, profile, refreshProfile } = useAuth();
+    const { setTheme, resolvedTheme } = useTheme();
     const pathname = usePathname();
 
     const handleSignOut = async () => {
@@ -45,6 +47,28 @@ export function NavBar() {
 
         // Force reload to apply changes
         window.location.href = '/';
+    };
+
+    const toggleTheme = async () => {
+        const newTheme = resolvedTheme === 'dark' ? 'light' : 'dark';
+        setTheme(newTheme);
+
+        if (user && !user.is_anonymous) {
+            try {
+                const { error } = await supabase.from('profiles').update({
+                    settings: {
+                        ...profile?.settings,
+                        theme: newTheme
+                    }
+                }).eq('id', user.id);
+
+                if (!error) {
+                    await refreshProfile();
+                }
+            } catch (e) {
+                console.error("Error updating theme preference:", e);
+            }
+        }
     };
 
     if (!user) return null;
@@ -80,19 +104,38 @@ export function NavBar() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-56 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white" align="end" forceMount>
-                                <DropdownMenuLabel className="font-normal">
-                                    <div className="flex flex-col space-y-1">
-                                        <div className="flex items-center gap-2">
-                                            <p className="text-sm font-medium leading-none">{profile?.username || user?.user_metadata?.username || 'Guest'}</p>
-                                            {user.is_anonymous && (
-                                                <span className="text-[10px] bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/20 px-1.5 py-0.5 rounded uppercase font-bold tracking-wide">
-                                                    Guest
-                                                </span>
-                                            )}
+                                <DropdownMenuLabel className="font-normal min-w-[200px]">
+                                    <div className="flex items-center justify-between gap-4">
+                                        <div className="flex flex-col space-y-1">
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm font-medium leading-none">{profile?.username || user?.user_metadata?.username || 'Guest'}</p>
+                                                {user.is_anonymous && (
+                                                    <span className="text-[10px] bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/20 px-1.5 py-0.5 rounded uppercase font-bold tracking-wide">
+                                                        Guest
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-xs leading-none text-gray-500 dark:text-gray-400">
+                                                {user.is_anonymous ? 'Sign up to save progress' : user.email}
+                                            </p>
                                         </div>
-                                        <p className="text-xs leading-none text-gray-500 dark:text-gray-400">
-                                            {user.is_anonymous ? 'Sign up to save progress' : user.email}
-                                        </p>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 rounded-full text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                toggleTheme();
+                                            }}
+                                        >
+                                            {resolvedTheme === 'dark' ? (
+                                                <Sun className="h-4 w-4" />
+                                            ) : (
+                                                <Moon className="h-4 w-4" />
+                                            )}
+                                            <span className="sr-only">Toggle theme</span>
+                                        </Button>
                                     </div>
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-800" />

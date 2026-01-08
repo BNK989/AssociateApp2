@@ -396,7 +396,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                         animate={isJustRevealed ? "pop" : (hintLevel >= 2 && isEffectiveMatch && !visible) ? "float" : undefined}
                         variants={isJustRevealed ? popVariant : floatVariant as any}
                         className={`inline-block ${isEffectiveMatch
-                            ? `font-bold text-inherit drop-shadow-[0_0_2px_rgba(255,255,255,0.5)] ${colorClass} ${(hintLevel >= 2 && !visible) ? 'mx-0.5' : ''}`
+                            ? `font-bold drop-shadow-[0_0_2px_rgba(255,255,255,0.5)] ${colorClass || 'text-inherit'} ${(hintLevel >= 2 && !visible) ? 'mx-0.5' : ''}`
                             : `${colorClass}`
                             }`}
                     >
