@@ -137,12 +137,23 @@ export const generateCipherString = (content: string, level: number, isDaily: bo
         // 2. Construct the bag of characters
         const charBag: string[] = [];
 
+        // Identify pinned index (First Letter) if applicable
+        const pinnedIndex = (level >= 1 && indices.length > 0) ? indices[0] : -1;
+
         // Add the real letters (scrambled or not, they go into the bag)
-        revealedIndices.forEach(idx => charBag.push(content[idx]));
+        // EXCLUDE the pinned index from the bag
+        revealedIndices.forEach(idx => {
+            if (idx !== pinnedIndex) {
+                charBag.push(content[idx]);
+            }
+        });
 
         // 3. Add special cipher characters for the remaining slots
         // Total slots needed = Total non-space chars - Revealed chars
-        const slotsNeeded = indices.length - revealedIndices.size;
+        // Correction: Slots needed = (Total non-space chars) - (Pinned Chars) - (Chars in Bag)
+        // Actually simpler: Total Bag Size must equal (Total Non-Space - Pinned Count)
+        const pinnedCount = pinnedIndex !== -1 ? 1 : 0;
+        const slotsNeeded = indices.length - pinnedCount - charBag.length;
 
         for (let i = 0; i < slotsNeeded; i++) {
             const c = SPECIAL_CIPHER_CHARS[Math.floor(Math.random() * SPECIAL_CIPHER_CHARS.length)];
@@ -162,6 +173,9 @@ export const generateCipherString = (content: string, level: number, isDaily: bo
         for (let i = 0; i < length; i++) {
             if (content[i] === ' ') {
                 result += ' ';
+            } else if (i === pinnedIndex) {
+                // Insert Pinned First Letter directly
+                result += content[i];
             } else {
                 result += charBag[bagIndex++] || '?';
             }

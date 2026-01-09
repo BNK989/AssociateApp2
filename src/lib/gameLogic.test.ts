@@ -110,6 +110,25 @@ describe('Game Logic', () => {
             const cipher = generateCipherString(input, 0, true);
             expect(cipher.length).toBe(input.length);
         });
+
+        it('should generate cipher string for level 2 (scramble) with pinned first letter', () => {
+            const content = 'apple';
+            const cipher = generateCipherString(content, 2);
+
+            // Length should match
+            expect(cipher.length).toBe(content.length);
+
+            // First letter should be PINNED (Hint 1 logic preserved)
+            expect(cipher[0]).toBe('a');
+
+            // Check that we have scrambled/masked characters if length allows
+            if (content.length > 2) {
+                const originalTail = content.slice(1);
+                const cipherTail = cipher.slice(1);
+                // It's probabilistic, but highly unlikely to match exactly for non-trivial length
+                // We just expect valid format.
+            }
+        });
     });
 
     describe('calculateNextTurnUserId', () => {

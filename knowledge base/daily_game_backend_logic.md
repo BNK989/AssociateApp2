@@ -48,3 +48,21 @@ The "3rd Hint" (AI Hint) requires a server-side call to ensure security and rate
     *   **Per IP Limit**: Max 100 hints per day (global safety).
 4.  **Gemini Integation**: If validation passes, the server makes a request to the Google Gemini API to generate a context-aware hint.
 5.  **Logging**: The usage is recorded in `api_usage`.
+
+## 4. Feature Flags (PostHog)
+
+The Daily Game uses **PostHog** feature flags to control rollout strategies and game difficulty adjustments without redeploying code.
+
+### `dailygame-auto-hint-level`
+Controls the initial difficulty of the game by automatically revealing hints for the active word.
+
+*   **Key**: `dailygame-auto-hint-level`
+*   **Payload**: `{ "initialHintCount": number }` (0-3)
+
+#### Levels:
+*   **Level 0 (Default)**: Standard game. No auto-hints.
+*   **Level 1**: **First Letter** of the active word is revealed.
+*   **Level 2**: **Scramble Mode**. First letter is pinned (from L1), and 70% of the remaining letters are revealed but scrambled.
+*   **Level 3**: **AI Hint**. Includes Level 2 scramble + an automatic AI text hint.
+
+> **Note**: The game prioritizes local `localStorage` state. If a user has already started a game, changing the flag will not affect them until the next day (or if they clear storage).

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { usePostHog } from 'posthog-js/react';
+import { usePostHog, useFeatureFlagPayload } from 'posthog-js/react';
 import confetti from 'canvas-confetti';
 import { Message, GameState, Player } from '@/hooks/useGameLogic';
 import { ChatArea } from '@/components/game/ChatArea';
@@ -54,6 +54,21 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
     const posthog = usePostHog();
     const viewportHeight = useVisualViewport();
     const hasTrackedEntrance = useRef(false);
+
+    // Feature Flag: Auto Hint Level
+    const autoHintPayload = useFeatureFlagPayload('dailygame-auto-hint-level');
+    const initialHintCount = typeof autoHintPayload === 'object' && autoHintPayload !== null && 'initialHintCount' in autoHintPayload
+        ? (autoHintPayload as { initialHintCount: number }).initialHintCount
+        : 0;
+
+    useEffect(() => {
+        console.log('[DailyGame] Feature Flag DEBUG:', {
+            payload: autoHintPayload,
+            resolvedCount: initialHintCount,
+            variant: posthog.getFeatureFlag('dailygame-auto-hint-level')
+        });
+    }, [autoHintPayload, initialHintCount, posthog]);
+
 
     // Track Entrance
     useEffect(() => {
@@ -142,6 +157,24 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
         // Fallback to init if no save or mismatch
         const initMessages: Message[] = dailyWords.map((word, index) => {
             const isLast = index === dailyWords.length - 1;
+
+            // Determine initial Hint Level for this game
+            // Only the FIRST target message (the one before the start word) gets the auto hint.
+            // The start word (index === length-1) is solved.
+            // The first target is index === length-2.
+            const isFirstTarget = index === dailyWords.length - 2;
+            const targetHintLevel = isFirstTarget ? Math.max(0, Math.min(3, initialHintCount)) : 0;
+
+            let aiHint: string | undefined = undefined;
+
+            // Pre-fill AI hint if we are starting at max level
+            if (targetHintLevel === 3) {
+                aiHint = `Contains ${word.length} letters. First letter is ${word[0].toUpperCase()}.`;
+                if (initialHints && initialHints[index]) {
+                    aiHint = initialHints[index];
+                }
+            }
+
             return {
                 id: `msg-${index}`,
                 content: word,
@@ -150,8 +183,9 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
                 user_id: BOT_USER_ID,
                 created_at: new Date(Date.now() - (dailyWords.length - index) * 1000).toISOString(),
                 strikes: 0,
-                hint_level: 0,
-                cipher_text: generateCipherString(word, 0, true),
+                hint_level: targetHintLevel,
+                cipher_text: generateCipherString(word, targetHintLevel, true),
+                ai_hint: aiHint,
                 author_points: 0,
                 winner_points: 0,
                 type: 'text',
@@ -161,7 +195,40 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
         });
 
         setMessages(initMessages);
-    }, [dailyWords, date]);
+    }, [dailyWords, date, initialHintCount, initialHints]);
+
+    // Runtime Auto-Hint Application
+    // When a new target becomes active, check if it needs to be updated to the initial hint count
+    useEffect(() => {
+        const targetMessage = messages.slice().reverse().find(m => !m.is_solved && (m.strikes || 0) < 3);
+        if (!targetMessage || gameOver) return;
+
+        // If currently lower than the Auto Hint Level, upgrade it
+        const targetLevel = Math.max(0, Math.min(3, initialHintCount));
+        if (targetMessage.hint_level < targetLevel) {
+            const nextLevel = targetLevel;
+            // Generate new Cipher
+            const newCipherText = nextLevel < 3
+                ? generateCipherString(targetMessage.content, nextLevel, true)
+                : (targetMessage.cipher_text || generateCipherString(targetMessage.content, 2, true));
+
+            let aiHint = targetMessage.ai_hint;
+            if (nextLevel === 3 && !aiHint) {
+                aiHint = `Contains ${targetMessage.content.length} letters. First letter is ${targetMessage.content[0].toUpperCase()}.`;
+                const targetIndex = dailyWords.indexOf(targetMessage.content);
+                if (initialHints && initialHints[targetIndex]) {
+                    aiHint = initialHints[targetIndex];
+                }
+            }
+
+            setMessages(prev => prev.map(m => m.id === targetMessage.id ? {
+                ...m,
+                hint_level: nextLevel,
+                cipher_text: newCipherText,
+                ai_hint: aiHint
+            } : m));
+        }
+    }, [messages, initialHintCount, dailyWords, initialHints, gameOver]);
 
     // Force update legacy avatars if they persist (fix for hot-reload/stale state)
     useEffect(() => {
