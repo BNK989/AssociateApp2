@@ -240,6 +240,38 @@
   }
 }
 
+@keyframes welcome-scale {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-welcome-scale {
+  animation: welcome-scale 0.5s ease-out forwards;
+}
+
+@keyframes welcome-slide {
+  0% {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-welcome-slide {
+  animation: welcome-slide 0.7s ease-out forwards;
+}
+
 
 /* Sonner Toast Close Button Override (Fixes black hover issue) */
 /* Sonner Toast Close Button Override (Fixes black hover issue) */

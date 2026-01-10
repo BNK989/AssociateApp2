@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowLeft, Flame, Landmark, Star, Crown } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { InvitePlayer } from '@/components/InvitePlayer';
@@ -184,10 +185,56 @@ export function GameHeader({
         }
     };
 
+    // Welcome Animation State
+    const [showWelcome, setShowWelcome] = React.useState(!!theme);
+
+    React.useEffect(() => {
+        if (theme) {
+            // Start with welcome screen value true, wait, then set to false to trigger layout animation
+            const timer = setTimeout(() => {
+                setShowWelcome(false);
+            }, 2500); // 2.5s display in center to allow reading
+            return () => clearTimeout(timer);
+        }
+    }, [theme]);
+
     return (
         <header
             className={`relative shrink-0 z-20 w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 transition-colors duration-500 ${isFeverMode ? 'dark:bg-orange-950/30' : ''}`}
         >
+            {/* Welcome Overlay (Center Screen) */}
+            <AnimatePresence>
+                {showWelcome && theme && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0, transition: { duration: 0.8 } }}
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md"
+                    >
+                        <div className="flex flex-col items-center p-6">
+                            <motion.span
+                                layoutId="theme-label"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2, duration: 0.5 }}
+                                className="text-xl md:text-2xl text-gray-200 font-medium mb-3 tracking-wide"
+                            >
+                                Today&apos;s Theme
+                            </motion.span>
+                            <motion.span
+                                layoutId="theme-text"
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: 0.8, duration: 0.5 }}
+                                className="text-4xl md:text-5xl font-bold text-white text-center drop-shadow-2xl"
+                            >
+                                {theme}
+                            </motion.span>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* Main Header Row */}
             <div className="p-2 flex justify-between items-center relative">
                 <div className={`flex items-center gap-3 ${theme ? 'flex-1 min-w-0 mr-4' : 'w-1/3'}`}>
@@ -217,15 +264,24 @@ export function GameHeader({
                     )}
 
                     {/* Theme Title (Daily Game) - In Flow */}
-                    {theme && (
+                    {/* Theme Title (Daily Game) - In Flow */}
+                    {theme && !showWelcome && (
                         <div
-                            className="flex flex-col items-start animate-in fade-in slide-in-from-left-2 ml-1 cursor-pointer hover:opacity-70 transition-opacity min-w-0"
+                            className="flex flex-col items-start ml-1 cursor-pointer hover:opacity-70 transition-opacity min-w-0"
                             onClick={() => setShowInfo(true)}
                         >
-                            <span className="text-[9px] uppercase font-black text-amber-500/80 tracking-widest leading-none mb-0.5">Daily Chain</span>
-                            <span className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white leading-none whitespace-nowrap overflow-hidden text-ellipsis w-full">
+                            <motion.span
+                                layoutId="theme-label"
+                                className="text-[10px] uppercase font-black text-amber-500/90 tracking-widest leading-none mb-0.5"
+                            >
+                                Today&apos;s Theme
+                            </motion.span>
+                            <motion.span
+                                layoutId="theme-text"
+                                className="text-sm sm:text-base md:text-lg font-bold text-gray-900 dark:text-white leading-none whitespace-nowrap overflow-hidden text-ellipsis w-full"
+                            >
                                 {theme}
-                            </span>
+                            </motion.span>
                         </div>
                     )}
                 </div>
