@@ -167,10 +167,61 @@ export function GameInput({
         }
     };
 
+    // Animation Logic
+    const [animationStage, setAnimationStage] = useState<'idle' | 'gentle' | 'intense'>('idle');
+
+    useEffect(() => {
+        setAnimationStage('idle');
+
+        // Only run animation logic if it's my turn/free for all, message is unsolved, and hints aren't maxed
+        if (game.status !== 'solving' || !targetMessage || isMaxHints || (!isMyTurn && !isFreeForAll)) return;
+
+        const gentleTimer = setTimeout(() => {
+            setAnimationStage('gentle');
+        }, 5000);
+
+        const intenseTimer = setTimeout(() => {
+            setAnimationStage('intense');
+        }, 15000); // 10 seconds after gentle
+
+        return () => {
+            clearTimeout(gentleTimer);
+            clearTimeout(intenseTimer);
+        };
+    }, [game.status, targetMessage?.id, isMaxHints, isMyTurn, isFreeForAll]);
+
+    const jumpAndVibrate = {
+        idle: { y: 0, x: 0, rotate: 0 },
+        gentle: {
+            y: [0, -4, 0, -2, 0],
+            x: [0, -1, 1, -1, 0],
+            rotate: [0, -2, 2, -1, 0],
+            transition: {
+                duration: 0.6,
+                repeat: Infinity,
+                repeatDelay: 3 // Repeat every 3 seconds
+            }
+        },
+        intense: {
+            y: [0, -8, 0, -4, 0], // Higher jump
+            x: [0, -3, 3, -2, 2, 0], // More vibration
+            rotate: [0, -5, 5, -3, 3, 0], // More rotation
+            scale: [1, 1.1, 1, 1.1, 1], // Slight grow effect
+            transition: {
+                duration: 0.5,
+                repeat: Infinity,
+                repeatDelay: 3 // Same frequency, higher intensity
+            }
+        }
+    };
+
     const HintButton = (
-        <button
+        <motion.button
             type="button"
             disabled={(!isMyTurn && !isFreeForAll) || sending}
+            variants={jumpAndVibrate}
+            animate={animationStage}
+            whileTap={{ scale: 0.9 }}
             onMouseDown={(e) => e.preventDefault()}
             onClick={(e) => {
                 e.preventDefault();
@@ -187,7 +238,7 @@ export function GameInput({
                 {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : "💡"}
             </span>
             <span className="text-[10px] font-bold leading-none">{buttonText}</span>
-        </button>
+        </motion.button>
     );
 
     const GiveUpButton = (
