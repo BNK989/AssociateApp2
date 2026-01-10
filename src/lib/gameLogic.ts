@@ -1,3 +1,5 @@
+import { CIPHER_SIGNS } from './gameConfig';
+
 export const calculateMessageValue = (content: string): number => {
     // Base value 10 + 1 point per character
     // Strip whitespace to avoid gaming the system with spaces? 
@@ -92,8 +94,7 @@ export const HINT_COSTS = {
     TIER_3: 0.40  // 40%
 };
 
-const CIPHER_CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
-const SPECIAL_CIPHER_CHARS = '~•$^+*=?#@&%';
+
 
 export const generateCipherString = (content: string, level: number, isDaily: boolean = false): string => {
     const length = content.length;
@@ -156,7 +157,7 @@ export const generateCipherString = (content: string, level: number, isDaily: bo
         const slotsNeeded = indices.length - pinnedCount - charBag.length;
 
         for (let i = 0; i < slotsNeeded; i++) {
-            const c = SPECIAL_CIPHER_CHARS[Math.floor(Math.random() * SPECIAL_CIPHER_CHARS.length)];
+            const c = CIPHER_SIGNS[Math.floor(Math.random() * CIPHER_SIGNS.length)];
             charBag.push(c);
         }
 
@@ -201,7 +202,7 @@ export const generateCipherString = (content: string, level: number, isDaily: bo
         } else {
             let randomChar;
             do {
-                randomChar = CIPHER_CHARS[Math.floor(Math.random() * CIPHER_CHARS.length)];
+                randomChar = CIPHER_SIGNS[Math.floor(Math.random() * CIPHER_SIGNS.length)];
             } while (i < length && randomChar === content[i]);
             result += randomChar;
         }

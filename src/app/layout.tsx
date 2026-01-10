@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Noto_Sans_Symbols_2 } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "@/context/AuthProvider";
 import { NavBar } from "@/components/NavBar";
@@ -18,6 +18,12 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const notoSymbols = Noto_Sans_Symbols_2({
+  variable: "--font-noto-symbols",
+  subsets: ["symbols"],
+  weight: "400",
 });
 
 export const metadata: Metadata = {
@@ -76,7 +82,7 @@ export default function RootLayout({
   return (
     <html lang="en" translate="no" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground flex flex-col min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} ${notoSymbols.variable} antialiased bg-background text-foreground flex flex-col min-h-screen`}
       >
         <ThemeProvider
           attribute="class"

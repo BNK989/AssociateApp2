@@ -33,7 +33,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
         if (cipherText) {
             cipherRef.current = cipherText;
         } else {
-            cipherRef.current = text.split('').map((originalChar) => {
+            cipherRef.current = [...text].map((originalChar) => {
                 if (originalChar === ' ') return ' ';
                 let randomChar;
                 do {
@@ -124,7 +124,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                 const interval = duration / shuffles;
 
                 // Create stable items from the TARGET string (the Anagram/Cipher mixed)
-                const baseItems: ScrambleItem[] = target.split('').map((c, i) => {
+                const baseItems: ScrambleItem[] = [...target].map((c, i) => {
                     const isGreen = greenIndices.has(i);
                     const isOrange = !isGreen && revealedChars.has(text[i].toLowerCase());
 
@@ -344,7 +344,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                             animate={shouldFloat ? "float" : undefined}
                             className={`inline-block ${item.isSpace ? 'whitespace-pre' : ''} ${item.isReal
                                 ? `font-bold mx-0.5 drop-shadow-[0_0_2px_rgba(255,255,255,0.5)] ${colorClass}`
-                                : 'font-mono text-gray-400 dark:text-gray-500 font-medium'
+                                : 'text-gray-400 dark:text-gray-500 font-medium'
                                 } ${isFirst && hintLevel >= 1 ? 'uppercase' : ''}`}
                             transition={{
                                 layout: {
@@ -365,7 +365,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
     return (
         <motion.span className={`${className} break-words inline-flex flex-wrap ${(visible || hintLevel >= 1 || isSolving) ? '[&>span:first-child]:uppercase' : ''} ${isSolving ? 'gap-1' : ''}`}>
             {showColons && <span className="mr-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
-            {display.split('').map((char, i) => {
+            {[...display].map((char, i) => {
                 const isPositionalMatch = char === text[i];
                 const isSpecial = SPECIAL_CHARS.has(char);
 
@@ -389,7 +389,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                         // Standard Cipher Logic
                         const isScrambleMatch = hintLevel >= 2 && !isSpecial && char !== ' ';
                         if (isScrambleMatch) isEffectiveMatch = true;
-                        if (!isEffectiveMatch) colorClass = 'text-gray-400 dark:text-gray-500 font-medium font-mono';
+                        if (!isEffectiveMatch) colorClass = 'text-gray-400 dark:text-gray-500 font-medium';
                     }
                 }
 
@@ -420,7 +420,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                 );
             })}
             {showColons && <span className="ml-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
-        </motion.span>
+        </motion.span >
     );
 }
 

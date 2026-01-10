@@ -14,7 +14,8 @@ export function useTurnNotifications(isMyTurn: boolean, isMyMessageBeingGuessed:
     // Initialize Audio
     useEffect(() => {
         if (typeof window !== 'undefined') {
-            audioRef.current = new Audio('/sounds/notifications/chime1.mp3');
+            audioRef.current = new Audio('/sounds/notifications/chime-alert-demo.mp3');
+            audioRef.current.onerror = (e) => console.warn("Audio load error:", e);
         }
 
         // Unlock audio on first user interaction
