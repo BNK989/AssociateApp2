@@ -39,6 +39,7 @@ The system relies on Postgres Cron Jobs (`pg_cron`) running in the background.
 | :--- | :--- | :--- | :--- |
 | `daily-cleanup` | `0 3 * * *` (3:00 AM) | `SELECT cleanup_games_logic()` | Archives inactive games (>72h) and deletes old ones (>7d). |
 | `delete-guest-users` | `0 4 * * *` (4:00 AM) | `SELECT delete_expired_guests()` | Deletes anonymous guest accounts older than 24 hours. |
+| `generate-daily-hints` | `0 1 * * *` (1:00 AM) | `net.http_post(...)` | Generates AI hints for upcoming daily games (2-day lookahead). |
 
 ### Verification Instructions
 
@@ -77,3 +78,13 @@ You can manually trigger the logic at any time to verify it works or to see imme
     SELECT delete_expired_guests();
     ```
     *Expect return:* `void` (No output means success. If it fails, it will show an error).
+
+*   **Test Daily Hint Generation:**
+    ```sql
+    select net.http_post(
+        url:='https://pueadfincgiwwylpgxxs.supabase.co/functions/v1/generate-daily-hints',
+        headers:='{"Content-Type": "application/json", "Authorization": "Bearer <SERVICE_ROLE_KEY>"}'::jsonb
+    ) as request_id;
+    ```
+    *Expect return:* A `request_id` (integer). You can check the Edge Function logs in the Supabase Dashboard to see the output.
+

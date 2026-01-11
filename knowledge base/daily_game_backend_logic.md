@@ -38,15 +38,25 @@ The daily game content is pre-determined and stored in the `daily_games` table.
 
 While the core loop is client-side, specific features utilize backend API routes.
 
-### AI Hints (`src/app/api/daily/hint/route.ts`)
-The "3rd Hint" (AI Hint) requires a server-side call to ensure security and rate limiting.
+### AI Hints
+The "3rd Hint" (AI Hint) is generated in advance by a scheduled background job, but the client still requests validation from the server before revealing it.
+
+#### Generation (Cron Job)
+*   **Schedule**: Runs daily at 1:00 AM UTC via `pg_cron`.
+*   **Function**: Invokes the `generate-daily-hints` Edge Function.
+*   **Logic**: Checks for upcoming games (next 2 days) that are missing hints and uses Google Gemini to generate and save them.
+
+#### Retrieval (`src/app/api/daily/hint/route.ts`)
+The API route now primarily acts as a gatekeeper:
 
 1.  **Authentication**: The route validates that the request comes from a logged-in User (Guest users are blocked).
 2.  **Verification**: It re-fetches the `daily_games` data to ensure the client is asking for a valid word index.
 3.  **Rate Limiting**: Checks the `api_usage` table to enforce:
     *   **Per Player Limit**: Max 5 hints per game.
     *   **Per IP Limit**: Max 100 hints per day (global safety).
-4.  **Gemini Integation**: If validation passes, the server makes a request to the Google Gemini API to generate a context-aware hint.
+4.  **Gemini Integation**: 
+    *   **Primary**: Hints are pre-loaded in the `daily_games` table. The server simply returns the stored hint.
+    *   **Fallback**: If hints are missing (cron failed), the client (via `page.tsx`) or server may trigger on-demand generation (legacy behavior retained for robustness).
 5.  **Logging**: The usage is recorded in `api_usage`.
 
 ## 4. Feature Flags (PostHog)
