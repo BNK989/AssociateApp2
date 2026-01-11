@@ -30,6 +30,7 @@ type GameHeaderProps = {
     hideAvatars?: boolean;
     date?: string;
     solvedCount?: number;
+    onWelcomeComplete?: () => void;
 };
 
 export function GameHeader({
@@ -53,7 +54,8 @@ export function GameHeader({
     hideBank,
     hideAvatars,
     date,
-    solvedCount
+    solvedCount,
+    onWelcomeComplete
 }: GameHeaderProps) {
     const router = useRouter();
 
@@ -188,11 +190,18 @@ export function GameHeader({
     // Welcome Animation State
     const [showWelcome, setShowWelcome] = React.useState(!!theme);
 
+    // Use ref to safe-guard the callback against stale closures without resetting the timer
+    const onWelcomeCompleteRef = React.useRef(onWelcomeComplete);
+    React.useEffect(() => {
+        onWelcomeCompleteRef.current = onWelcomeComplete;
+    }, [onWelcomeComplete]);
+
     React.useEffect(() => {
         if (theme) {
             // Start with welcome screen value true, wait, then set to false to trigger layout animation
             const timer = setTimeout(() => {
                 setShowWelcome(false);
+                setTimeout(() => onWelcomeCompleteRef.current?.(), 500); // Small delay to let layout settle
             }, 2500); // 2.5s display in center to allow reading
             return () => clearTimeout(timer);
         }

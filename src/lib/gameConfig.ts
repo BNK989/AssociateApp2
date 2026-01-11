@@ -21,6 +21,7 @@ export const GAME_CONFIG = {
   GAME_ARCHIVE_HOURS: 72,
   GAME_DELETE_DAYS: 7,
   ENABLE_TYPING_INDICATORS: true,
+  DAILY_GAME_ANIMATE_START_MESSAGE: true,
 };
 
 export const CIPHER_SIGNS = [...'⊗⊕⊖⊙⊚⊛⊠⌖⌂⌁⌇⌖⌂⌁🜁🜂🜄🜃🜁🜄🜂◆◇▲▼○●⬡⬢⬟░▲●★☆☉✵✶∝∞∧∨∩∪∴∵∶∷✷✸✹✺✱✲✢✣✤✥✦❈❉❊❋❀❁❂❃❖❘❙❚✦✧✩✪✫✬✭✮✯♃♄♅♆♇☉☾☽☿🜚🜛🜜🜝🜞🜟🜓🜔🜕🜖🜗🜘🜌🜅🜆🜇🜈🜉🜊🜋🜍🜎🜏🜐🜑'];

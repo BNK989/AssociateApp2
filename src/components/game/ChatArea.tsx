@@ -8,6 +8,7 @@ import { User } from '@supabase/supabase-js';
 import { toast } from "sonner";
 import { supabase } from '@/lib/supabase';
 import { useAdmin } from '@/hooks/useAdmin';
+import { GAME_CONFIG } from '@/lib/gameConfig';
 import {
     ContextMenu,
     ContextMenuContent,
@@ -322,7 +323,9 @@ export function ChatArea({
                     const strikes = msg.strikes || 0;
                     // robust check: if points are 0 or missing (undefined/null) but solved, treat as give up
                     const isGivenUp = msg.is_solved && (!msg.winner_points || msg.winner_points === 0);
-                    const isFailed = (strikes >= 3 && msg.is_solved) || isGivenUp;
+                    // Hide "Failed/X" for daily game start message (it has 0 points but shouldn't look failed)
+                    const isDailyStart = game.id === 'daily-game' && isActuallyLast;
+                    const isFailed = ((strikes >= 3 && msg.is_solved) || isGivenUp) && !isDailyStart;
                     const isCorrect = msg.is_solved && !isFailed && (msg.winner_points || 0) > 0;
                     const showStrikeIndicator = (strikes > 0 && strikes < 3 && !isVisible) || isFailed || isCorrect;
                     const needsExtraPadding = (msg.hint_level >= 2 && !isVisible && !revealedMessages[msg.id]) || showStrikeIndicator;
@@ -499,7 +502,7 @@ export function ChatArea({
                                                         )}
                                                     </motion.div>
                                                 )}
-                                                {isJustSolved && justSolvedData && (
+                                                {isJustSolved && justSolvedData && justSolvedData.points > 0 && (
                                                     <div className="absolute -top-10 -right-4 text-3xl font-black text-green-500 dark:text-green-400 animate-float-up z-20 drop-shadow-xl whitespace-nowrap pointer-events-none">
                                                         +{justSolvedData.points}
                                                     </div>

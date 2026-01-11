@@ -14,6 +14,7 @@ import { generateCipherString, calculateSimilarity, calculateMessageValue, HINT_
 import { useVisualViewport } from '@/hooks/useVisualViewport';
 import { DailyEndGamePopover } from '@/components/game/DailyEndGamePopover';
 import { DailyGameTutorial } from '@/components/game/DailyGameTutorial';
+import { GAME_CONFIG } from '@/lib/gameConfig';
 
 type DailyGameClientProps = {
     dailyWords: string[];
@@ -179,7 +180,9 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
                 id: `msg-${index}`,
                 content: word,
                 cipher_length: word.length,
-                is_solved: isLast, // Last message is already "solved" / exposed
+                // If animation is enabled, start the last message as UNSOLVED (encrypted).
+                // It will be solved by the animation.
+                is_solved: isLast && !GAME_CONFIG.DAILY_GAME_ANIMATE_START_MESSAGE,
                 user_id: BOT_USER_ID,
                 created_at: new Date(Date.now() - (dailyWords.length - index) * 1000).toISOString(),
                 strikes: 0,
@@ -647,6 +650,45 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
                 hideBank={true}
                 date={date}
                 solvedCount={messages.filter(m => m.is_solved).length}
+                onWelcomeComplete={() => {
+                    if (!GAME_CONFIG.DAILY_GAME_ANIMATE_START_MESSAGE) return;
+
+                    const startMsgIndex = messages.findIndex(m => m.content === dailyWords[dailyWords.length - 1]);
+                    const startMsg = messages[startMsgIndex];
+
+                    // Only animate if it exists and is NOT solved yet
+                    if (startMsg && !startMsg.is_solved) {
+                        const fullText = startMsg.content;
+                        let currentText = '';
+                        let charIndex = 0;
+
+                        const typeInterval = setInterval(() => {
+                            if (charIndex < fullText.length) {
+                                currentText += fullText[charIndex];
+                                setInput(currentText);
+                                charIndex++;
+                            } else {
+                                clearInterval(typeInterval);
+                                // Solve it after short delay
+                                setTimeout(() => {
+                                    // Manual Solve (0 points)
+                                    setMessages(prev => prev.map(m => m.id === startMsg.id ? {
+                                        ...m,
+                                        is_solved: true,
+                                        solved_by: MEST_USER_ID,
+                                        winner_points: 0 // 0 Points as requested
+                                    } : m));
+
+                                    // Visual feedback for solve
+                                    setJustSolvedData({ id: startMsg.id, points: 0 });
+                                    setTimeout(() => setJustSolvedData(null), 1500);
+
+                                    setInput('');
+                                }, 300);
+                            }
+                        }, 50); // 50ms per char
+                    }
+                }}
             />
 
             <ChatArea
