@@ -650,6 +650,7 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
                 hideBank={true}
                 date={date}
                 solvedCount={messages.filter(m => m.is_solved).length}
+                showTutorial={showTutorial}
                 onWelcomeComplete={() => {
                     if (!GAME_CONFIG.DAILY_GAME_ANIMATE_START_MESSAGE) return;
 
