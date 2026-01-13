@@ -10,7 +10,7 @@ import { ChatArea } from '@/components/game/ChatArea';
 import { useAuth } from '@/context/AuthProvider';
 import { GameHeader } from '@/components/game/GameHeader';
 import { GameInput } from '@/components/game/GameInput';
-import { generateCipherString, calculateSimilarity, calculateMessageValue, HINT_COSTS } from '@/lib/gameLogic';
+import { generateCipherString, calculateSimilarity, calculateMessageValue, HINT_COSTS, calculateRevealedPercentage } from '@/lib/gameLogic';
 import { useVisualViewport } from '@/hooks/useVisualViewport';
 import { DailyEndGamePopover } from '@/components/game/DailyEndGamePopover';
 import { DailyGameTutorial } from '@/components/game/DailyGameTutorial';
@@ -375,6 +375,15 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
 
         if (currentLevel === 0 && isFirstLetterRevealed) {
             nextLevel = 2;
+        }
+
+        // Hint 2 Skip: If ALREADY >66% revealed, skip Hint 2 (Scramble) and go straight to Hint 3 (AI)
+        // because Hint 2 would be redundant/useless.
+        if ((currentLevel === 1 || nextLevel === 2) && nextLevel !== 3) {
+            const revealedPct = calculateRevealedPercentage(targetMessage.content, targetMessage.guesses || []);
+            if (revealedPct >= GAME_CONFIG.PERCENT_REVEALED_SHUFFLE_HINT) {
+                nextLevel = 3;
+            }
         }
 
         // const wordValue = calculateMessageValue(targetMessage.content);

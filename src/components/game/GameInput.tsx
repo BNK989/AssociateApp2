@@ -1,6 +1,6 @@
 import { GameState, Player, Message } from '@/hooks/useGameLogic';
 import { User } from '@supabase/supabase-js';
-import { calculateMessageValue, HINT_COSTS } from '@/lib/gameLogic';
+import { calculateMessageValue, HINT_COSTS, calculateRevealedPercentage } from '@/lib/gameLogic';
 import { Send, Loader2, Shuffle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
@@ -104,7 +104,15 @@ export function GameInput({
     const isFirstLetterRevealed = firstLetter && targetMessage?.guesses?.some(g => g.toLowerCase().includes(firstLetter));
 
     // If we are at Level 0 but first letter is revealed, treat as Level 1 (Next is 2)
-    const effectiveLevel = (currentLevel === 0 && isFirstLetterRevealed) ? 1 : currentLevel;
+    let effectiveLevel = (currentLevel === 0 && isFirstLetterRevealed) ? 1 : currentLevel;
+
+    // Check for Skip condition (Level 2 Skip)
+    if (effectiveLevel === 1) {
+        const revealedPct = calculateRevealedPercentage(targetMessage?.content || '', targetMessage?.guesses || []);
+        if (revealedPct >= GAME_CONFIG.PERCENT_REVEALED_SHUFFLE_HINT) {
+            effectiveLevel = 2;
+        }
+    }
 
     const isMaxHints = effectiveLevel >= 3;
     const wordValue = targetMessage ? calculateMessageValue(targetMessage.content) : 0;
@@ -327,8 +335,8 @@ export function GameInput({
                         {/* Character Counter */}
                         {(input.length > 0 || (game.status === 'solving' && targetMessage && (isSinglePlayer || currentLevel >= 1))) && (
                             <div className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium select-none pointer-events-none transition-colors ${targetMessage && input.replace(/\s/g, '').length > targetMessage.content.replace(/\s/g, '').length
-                                    ? 'text-red-500 dark:text-red-400'
-                                    : 'text-gray-400 dark:text-gray-500'
+                                ? 'text-red-500 dark:text-red-400'
+                                : 'text-gray-400 dark:text-gray-500'
                                 }`}>
                                 {input.replace(/\s/g, '').length}
                                 {(isSinglePlayer || currentLevel >= 1) && targetMessage && (

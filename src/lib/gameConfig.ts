@@ -22,6 +22,7 @@ export const GAME_CONFIG = {
   GAME_DELETE_DAYS: 7,
   ENABLE_TYPING_INDICATORS: true,
   DAILY_GAME_ANIMATE_START_MESSAGE: true,
+  PERCENT_REVEALED_SHUFFLE_HINT: 0.66,
 };
 
 export const CIPHER_SIGNS = [...'⊗⊕⊖⊙⊚⊛⊠⌖⌂⌁⌇⌖⌂⌁🜁🜂🜄🜃🜁🜄🜂◆◇▲▼○●⬡⬢⬟░▲●★☆☉✵✶∝∞∧∨∩∪∴∵∶∷✷✸✹✺✱✲✢✣✤✥✦❈❉❊❋❀❁❂❃❖❘❙❚✦✧✩✪✫✬✭✮✯♃♄♅♆♇☉☾☽☿🜚🜛🜜🜝🜞🜟🜓🜔🜕🜖🜗🜘🜌🜅🜆🜇🜈🜉🜊🜋🜍🜎🜏🜐🜑'];

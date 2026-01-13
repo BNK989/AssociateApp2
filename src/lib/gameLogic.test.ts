@@ -4,8 +4,10 @@ import {
     calculateSimilarity,
     generateCipherString,
     calculateNextTurnUserId,
-    calculatePointDistribution
+    calculatePointDistribution,
+    calculateRevealedPercentage
 } from '@/lib/gameLogic';
+import { GAME_CONFIG } from '@/lib/gameConfig';
 
 describe('Game Logic', () => {
     describe('calculateMessageValue', () => {
@@ -68,7 +70,7 @@ describe('Game Logic', () => {
             expect(cipher[0]).toBe(input[0]);
         });
 
-        it('should reveal 70% at level 2', () => {
+        it('should reveal 66% at level 2', () => {
             const longInput = "AAAAA AAAAA AAAAA"; // 17 chars (14 non-space)
             const cipher = generateCipherString(longInput, 2);
 
@@ -82,7 +84,7 @@ describe('Game Logic', () => {
                 if (cipher[i] === 'A') matches++;
             }
 
-            const expectedMatches = Math.floor(nonSpaces * 0.70);
+            const expectedMatches = Math.ceil(nonSpaces * GAME_CONFIG.PERCENT_REVEALED_SHUFFLE_HINT);
             expect(matches).toBeGreaterThanOrEqual(expectedMatches);
         });
 
@@ -91,7 +93,7 @@ describe('Game Logic', () => {
             const cipher = generateCipherString(shortInput, 2);
 
             expect(cipher.length).toBe(3);
-            // 3 * 0.7 = 2.1 -> 2 chars.
+            // 3 * 0.66 = 1.98 -> ceil is 2.
             let lettersFound = 0;
             if (shortInput.includes(cipher[0])) lettersFound++;
             if (shortInput.includes(cipher[1])) lettersFound++;
@@ -185,6 +187,29 @@ describe('Game Logic', () => {
             const distribution = calculatePointDistribution(10, 'u2', 'u1');
             expect(distribution.winnerPoints).toBe(7);
             expect(distribution.authorPoints).toBe(2);
+        });
+    });
+    describe('calculateRevealedPercentage', () => {
+        it('should return 0 for no guesses', () => {
+            expect(calculateRevealedPercentage('hello', [])).toBe(0);
+        });
+
+        it('should return 1.0 when completely revealed', () => {
+            expect(calculateRevealedPercentage('abc', ['a', 'b', 'c'])).toBe(1.0);
+        });
+
+        it('should handle partial reveals', () => {
+            // 'hello' -> 5 chars. Guesses 'l' -> reveals 2 'l's. 2/5 = 0.4
+            expect(calculateRevealedPercentage('hello', ['l'])).toBe(0.4);
+        });
+
+        it('should handle case insensitivity', () => {
+            expect(calculateRevealedPercentage('Abc', ['a'])).toBeCloseTo(0.33, 1);
+        });
+
+        it('should ignore spaces in total count', () => {
+            // "a b" -> 2 non-space chars. Guess 'a' -> 1/2 = 0.5
+            expect(calculateRevealedPercentage('a b', ['a'])).toBe(0.5);
         });
     });
 });

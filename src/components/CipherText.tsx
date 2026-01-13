@@ -56,22 +56,28 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
     // Orange: Correct char somewhere in the text, but not at this index (and not fully consumed by greens)
     // Note: Simple version for game - if you guessed a letter and it is in the target, show it orange everywhere it appears (unless green).
 
+    // Convert to arrays to handle surrogate pairs (e.g. Alchemy symbols) correctly
+    const textChars = [...text];
+    const cipherChars = [...(cipherText || cipherRef.current)];
+
+    // Calculate Wordle States
     const greenIndices = new Set<number>();
     const revealedChars = new Set<string>();
 
     if (!visible) {
         guesses.forEach(guess => {
-            const cleanGuess = guess.toLowerCase();
-            const cleanText = text.toLowerCase();
+            const guessChars = [...guess.toLowerCase()];
+            const cleanTextChars = textChars.map(c => c.toLowerCase());
 
             // 1. Check Greens and Reveals
-            for (let i = 0; i < Math.min(cleanGuess.length, cleanText.length); i++) {
-                if (cleanGuess[i] === cleanText[i]) {
+            const len = Math.min(guessChars.length, cleanTextChars.length);
+            for (let i = 0; i < len; i++) {
+                if (guessChars[i] === cleanTextChars[i]) {
                     greenIndices.add(i);
                 }
                 // Track all guessed chars
-                if (cleanText[i] && cleanText.includes(cleanGuess[i])) { // Added check
-                    revealedChars.add(cleanGuess[i]);
+                if (cleanTextChars[i] && cleanTextChars.includes(guessChars[i])) {
+                    revealedChars.add(guessChars[i]);
                 }
             }
         });
@@ -98,7 +104,8 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
         const animate = async () => {
             // Target is what we want to end up at
             const target = visible ? text : (cipherText || cipherRef.current);
-            const start = display;
+            const targetChars = [...target];
+            const start = display; // String
 
             // 0. Handle Exit from Scramble Mode (Reveal)
             if (visible && scrambleItems) {
@@ -124,12 +131,13 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                 const interval = duration / shuffles;
 
                 // Create stable items from the TARGET string (the Anagram/Cipher mixed)
-                const baseItems: ScrambleItem[] = [...target].map((c, i) => {
+                const baseItems: ScrambleItem[] = targetChars.map((c, i) => {
                     const isGreen = greenIndices.has(i);
-                    const isOrange = !isGreen && revealedChars.has(text[i].toLowerCase());
+                    // Use textChars[i] because i is the character index, not byte index
+                    const realChar = textChars[i];
+                    const isOrange = !isGreen && revealedChars.has(realChar.toLowerCase());
 
-                    const realChar = text[i];
-                    const cipherChar = (cipherText || cipherRef.current)[i];
+                    const cipherChar = [...(cipherText || cipherRef.current)][i];
 
                     let charToShow = cipherChar;
                     let isReal = false;
@@ -144,21 +152,10 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                     } else if (isOrange) {
                         charToShow = realChar;
                         isReal = true; // Orange letters participate in "Real" styling
-                    } else if (hintLevel >= 2) {
-                        const shouldReveal = Math.random() < 0.7;
-                        if (shouldReveal) {
-                            charToShow = realChar;
-                            isReal = true;
-                        } else {
-                            // Hidden: Force Special Char
-                            if (!SPECIAL_CHARS.has(cipherChar)) {
-                                charToShow = SPECIAL_CHARS_ARRAY[Math.floor(Math.random() * SPECIAL_CHARS_ARRAY.length)];
-                            } else {
-                                charToShow = cipherChar;
-                            }
-                            isReal = false;
-                        }
                     } else {
+                        // Level 0/1 (and Level 2+): Use CipherText (stable)
+                        // This ensures Hint 2 respects the server-side generated cipherText (66% reveal)
+                        // and Reshuffle only changes positions, not content.
                         // Level 0/1: Standard Cipher
                         const isCipherSpecial = SPECIAL_CHARS.has(cipherChar);
                         charToShow = cipherChar;
@@ -179,7 +176,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                     // Force lock first char
                     baseItems[0].locked = true;
                     baseItems[0].isReal = true;
-                    baseItems[0].char = text[0]; // Ensure it's real char
+                    baseItems[0].char = textChars[0]; // Ensure it's real char
                 }
 
                 // Initial shuffle
@@ -215,17 +212,26 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
 
             // Standard Morph Animation (Level 1 or Solve)
             if (!scrambleItems) {
+                // ... (Morph animation is complex to fix for surrogate pairs perfectly without rewrite, 
+                // but usually fine as it just slices. If display is surrogate-aware it works best, 
+                // but keeping simple for now as scramble was the main issue).
                 const steps = Math.max(text.length, cipherRef.current.length);
                 const stepDuration = Math.max(30, Math.min(100, 1000 / steps));
 
                 for (let i = 0; i <= steps; i++) {
                     if (isCancelled) return;
-
+                    // WARNING: Slice on string with surrogate pairs might split index. 
+                    // Ideally we used array slice and join.
+                    // But for 'text', we know length.
                     if (visible) {
-                        setDisplay(text.slice(0, i) + cipherRef.current.slice(i));
+                        // setDisplay(text.slice(0, i) + cipherRef.current.slice(i));
+                        // SAFE implementation:
+                        const p1 = textChars.slice(0, i).join('');
+                        const p2 = [...cipherRef.current].slice(i).join('');
+                        setDisplay(p1 + p2);
                     } else {
-                        const targetPart = target.slice(0, i);
-                        const startPart = start.slice(i);
+                        const targetPart = [...target].slice(0, i).join('');
+                        const startPart = [...start].slice(i).join('');
                         setDisplay(targetPart + startPart);
                     }
 
@@ -246,16 +252,23 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
     useEffect(() => {
         if (visible) return;
 
-        const currentCipher = cipherText || '';
-        const prevCipher = prevCipherRef.current;
+        // Use arrays for comparison to handle surrogate pairs
+        const currentCipherChars = [...(cipherText || '')];
+        const prevCipherChars = [...prevCipherRef.current];
+        // Note: textChars matches `text` from outer scope, but careful with deps if extracted. 
+        // We can just re-spread here to be safe and local.
+        const currentTextChars = [...text];
 
-        if (currentCipher !== prevCipher) {
+        const currentCipherStr = cipherText || '';
+        const prevCipherStr = prevCipherRef.current;
+
+        if (currentCipherStr !== prevCipherStr) {
             const newChanged = new Set<number>();
-            const len = Math.max(currentCipher.length, prevCipher.length);
+            const len = Math.max(currentCipherChars.length, prevCipherChars.length);
             for (let i = 0; i < len; i++) {
-                const charNow = currentCipher[i] || '';
-                const charPrev = prevCipher[i] || '';
-                if (charNow !== charPrev && charNow === text[i]) {
+                const charNow = currentCipherChars[i] || '';
+                const charPrev = prevCipherChars[i] || '';
+                if (charNow !== charPrev && charNow === currentTextChars[i]) {
                     newChanged.add(i);
                 }
             }
@@ -265,7 +278,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                 const timer = setTimeout(() => setChangedIndices(new Set()), 1000);
                 return () => clearTimeout(timer);
             }
-            prevCipherRef.current = currentCipher;
+            prevCipherRef.current = currentCipherStr;
         }
     }, [cipherText, visible, text]);
 
@@ -362,11 +375,16 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
         );
     }
 
+    // Standard Render (No Scramble) - Use Array Map to handle surrogate pairs
+    const displayChars = [...display];
+
     return (
         <motion.span className={`${className} break-words inline-flex flex-wrap ${(visible || hintLevel >= 1 || isSolving) ? '[&>span:first-child]:uppercase' : ''} ${isSolving ? 'gap-1' : ''}`}>
             {showColons && <span className="mr-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
-            {[...display].map((char, i) => {
-                const isPositionalMatch = char === text[i];
+            {displayChars.map((char, i) => {
+                // textChars[i] correct? YES if displayChars and textChars are aligned by code point.
+                // Assuming display matches length of text in code points.
+                const isPositionalMatch = char === textChars[i];
                 const isSpecial = SPECIAL_CHARS.has(char);
 
                 const isGreen = greenIndices.has(i);
@@ -376,13 +394,13 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                 let colorClass = '';
 
                 if (!visible) {
-                    if (isGreen && text[i]) {
-                        renderChar = text[i];
+                    if (isGreen && textChars[i]) {
+                        renderChar = textChars[i];
                         isEffectiveMatch = true;
                         colorClass = 'text-green-600 dark:text-green-400';
-                    } else if (text[i] && revealedChars.has(text[i].toLowerCase())) {
+                    } else if (textChars[i] && revealedChars.has(textChars[i].toLowerCase())) {
                         // Orange
-                        renderChar = text[i];
+                        renderChar = textChars[i];
                         isEffectiveMatch = true;
                         colorClass = 'text-orange-500 dark:text-orange-400';
                     } else {

@@ -1,4 +1,4 @@
-import { CIPHER_SIGNS } from './gameConfig';
+import { CIPHER_SIGNS, GAME_CONFIG } from './gameConfig';
 
 export const calculateMessageValue = (content: string): number => {
     // Base value 10 + 1 point per character
@@ -117,8 +117,8 @@ export const generateCipherString = (content: string, level: number, isDaily: bo
     // Level 2+: Scramble + Reveal 70%
     if (level >= 2) {
         // 1. Determine which indices are "exposed" letters
-        // We want 70% of the letters to be real letters from the message
-        const targetCount = Math.floor(indices.length * 0.70);
+        // We want 66% of the letters to be real letters from the message
+        const targetCount = Math.ceil(indices.length * GAME_CONFIG.PERCENT_REVEALED_SHUFFLE_HINT);
 
         // We already have index 0
         const pool = indices.filter(i => !revealedIndices.has(i));
@@ -227,6 +227,28 @@ export const getRevealedCount = (content: string, level: number): number => {
     }
 
     return count;
+};
+
+export const calculateRevealedPercentage = (content: string, guesses: string[]): number => {
+    const indices: number[] = [];
+    const length = content.length;
+    for (let i = 0; i < length; i++) {
+        if (content[i] !== ' ') {
+            indices.push(i);
+        }
+    }
+
+    if (indices.length === 0) return 0;
+
+    const revealedCount = indices.filter(i => {
+        const char = content[i].toLowerCase();
+        // Green logic: correct position match (handled elsewhere usually, but here we just check if ANY guess exposes it)
+        // Actually, CipherText logic says: "If you guessed a letter and it is in the target, show it orange everywhere it appears".
+        // So checking if 'char' is in 'guesses' is sufficient for the "Orange" reveal logic which is the baseline.
+        return guesses.some(g => g.toLowerCase().includes(char));
+    }).length;
+
+    return revealedCount / indices.length;
 };
 
 export const calculateNextTurnUserId = (players: { user_id: string }[], currentUserId: string): string | null => {
