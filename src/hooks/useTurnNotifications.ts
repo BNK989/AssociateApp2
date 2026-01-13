@@ -3,34 +3,38 @@ import { useAuth } from '@/context/AuthProvider';
 import { toast } from "sonner";
 
 export function useTurnNotifications(isMyTurn: boolean, isMyMessageBeingGuessed: boolean = false) {
-    const { profile } = useAuth();
-    const audioRef = useRef<HTMLAudioElement | null>(null);
+    const { profile, loading: authLoading } = useAuth();
+    const startSoundRef = useRef<HTMLAudioElement | null>(null);
+    const turnSoundRef = useRef<HTMLAudioElement | null>(null);
     const titleIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const originalTitleRef = useRef<string>('');
     const prevTurnRef = useRef<boolean>(false);
     const prevMessageGuessedRef = useRef<boolean>(false);
     const hasRequestedPermission = useRef<boolean>(false);
+    const hasPlayedStartSound = useRef<boolean>(false);
 
     // Initialize Audio
     useEffect(() => {
         if (typeof window !== 'undefined') {
-            audioRef.current = new Audio('/sounds/notifications/chime-alert-demo.mp3');
-            audioRef.current.onerror = (e) => console.warn("Audio load error:", e);
+            startSoundRef.current = new Audio('/sounds/notifications/chime-alert-demo.mp3');
+            startSoundRef.current.onerror = (e) => console.warn("Start Audio load error:", e);
+
+            turnSoundRef.current = new Audio('/sounds/notifications/chime1.mp3');
+            turnSoundRef.current.onerror = (e) => console.warn("Turn Audio load error:", e);
         }
 
         // Unlock audio on first user interaction
         const unlockAudio = () => {
-            if (audioRef.current) {
-                audioRef.current.play().then(() => {
-                    audioRef.current?.pause();
-                    audioRef.current!.currentTime = 0;
-                }).catch(() => {
-                    // Ignore error if it fails (still no interaction?)
-                });
-            }
-            window.removeEventListener('click', unlockAudio);
-            window.removeEventListener('keydown', unlockAudio);
-            window.removeEventListener('touchstart', unlockAudio);
+            const unlock = (audio: HTMLAudioElement | null) => {
+                if (audio) {
+                    audio.play().then(() => {
+                        audio.pause();
+                        audio.currentTime = 0;
+                    }).catch(() => { /* ignore */ });
+                }
+            };
+            unlock(startSoundRef.current);
+            unlock(turnSoundRef.current);
         };
 
         window.addEventListener('click', unlockAudio);
@@ -43,6 +47,24 @@ export function useTurnNotifications(isMyTurn: boolean, isMyMessageBeingGuessed:
             window.removeEventListener('touchstart', unlockAudio);
         };
     }, []);
+
+    // Play Start Sound (When Ready)
+    useEffect(() => {
+        // Wait for auth to load so we respect user preferences
+        if (!authLoading && startSoundRef.current && !hasPlayedStartSound.current) {
+            if (profile?.settings?.enable_audio_chime !== false) {
+                hasPlayedStartSound.current = true;
+                startSoundRef.current.play().catch(e => {
+                    console.log('Start sound autoplay blocked or failed:', e);
+                });
+            } else {
+                // If loaded and disabled, mark as played so we don't play it later if they enable it mid-session (unless intent is otherwise)
+                // Actually if they enable it later, we don't want "Start Game" sound to play suddenly.
+                hasPlayedStartSound.current = true;
+            }
+        }
+    }, [authLoading, profile]);
+
 
     // Request Notification Permission
     useEffect(() => {
@@ -117,7 +139,8 @@ export function useTurnNotifications(isMyTurn: boolean, isMyMessageBeingGuessed:
 
         // 1. Audio Chime
         if (profile?.settings?.enable_audio_chime !== false) {
-            audioRef.current?.play().catch(err => console.error("Audio play failed:", err));
+            // Use turn sound for both turn and guess alerts
+            turnSoundRef.current?.play().catch(err => console.error("Audio play failed:", err));
         }
 
         // 2. System Notification

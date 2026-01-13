@@ -1,11 +1,15 @@
 import React from 'react';
-import { X, Trophy, MessageSquare, Info, Users, HelpCircle, ChevronRight, ChevronDown, Check, User, Share } from 'lucide-react';
+import { X, Trophy, MessageSquare, Info, Users, HelpCircle, ChevronRight, ChevronDown, Check, User, Share, Settings, Volume2, VolumeX, Moon, Sun } from 'lucide-react';
 import { GameState, Player } from '@/hooks/useGameLogic';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from 'sonner';
 import { cn } from "@/lib/utils";
+import { useAuth } from '@/context/AuthProvider';
+import { useTheme } from 'next-themes';
+import { supabase } from '@/lib/supabase';
+import { Switch } from "../ui/switch";
 
 type InfoScreenProps = {
     game: GameState;
@@ -17,7 +21,45 @@ type InfoScreenProps = {
     solvedCount?: number;
 };
 
-export function InfoScreen({ game, players, user, onClose, theme, date, solvedCount }: InfoScreenProps) {
+export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, date, solvedCount }: InfoScreenProps) {
+    const { profile, refreshProfile } = useAuth();
+    const { theme, setTheme } = useTheme();
+    const [updating, setUpdating] = React.useState(false);
+
+    const toggleAudio = async (checked: boolean) => {
+        if (!user || updating) return;
+        setUpdating(true);
+        // Optimistic update handled by switch state if wired to profile, but profile update is async.
+        // We'll trust fast server response or just let it lag slightly.
+        try {
+            const { error } = await supabase.from('profiles').update({
+                settings: { ...profile?.settings, enable_audio_chime: checked }
+            }).eq('id', user.id);
+
+            if (error) throw error;
+            await refreshProfile();
+            toast.success(`Audio ${checked ? 'enabled' : 'disabled'}`);
+        } catch (e) {
+            console.error(e);
+            toast.error("Failed to update settings");
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const toggleTheme = async (checked: boolean) => {
+        const newTheme = checked ? 'dark' : 'light';
+        setTheme(newTheme);
+
+        if (user) {
+            await supabase.from('profiles').update({
+                settings: { ...profile?.settings, theme: newTheme }
+            }).eq('id', user.id);
+            // No need to refresh immediately for visual change since useTheme handles it, but good for persistence
+            refreshProfile();
+        }
+    };
+
     // Clean up instructions text
     const instructions = [
         {
@@ -43,7 +85,7 @@ export function InfoScreen({ game, players, user, onClose, theme, date, solvedCo
     ];
 
     // Determine if Daily Game
-    const isDaily = !!theme;
+    const isDaily = !!dailyTheme;
 
     // Daily Game Instructions
     const dailyInstructions = [
@@ -81,7 +123,7 @@ export function InfoScreen({ game, players, user, onClose, theme, date, solvedCo
 
     const handleShare = async () => {
         if (!isDaily || !date) return;
-        const text = `Daily Chain ${date}\nScore: ${myScore}\nTheme: ${theme}\n\nPlay at: ${window.location.origin}/daily`;
+        const text = `Daily Chain ${date}\nScore: ${myScore}\nTheme: ${dailyTheme}\n\nPlay at: ${window.location.origin}/daily`;
 
         try {
             if (navigator.share) {
@@ -120,7 +162,7 @@ export function InfoScreen({ game, players, user, onClose, theme, date, solvedCo
                         {isDaily ? (
                             <span className="flex flex-col items-start leading-tight">
                                 <span className="text-xs uppercase text-purple-600 dark:text-purple-400 font-extrabold tracking-wider">{date}</span>
-                                <span className="text-lg">{theme}</span>
+                                <span className="text-lg">{dailyTheme}</span>
                             </span>
                         ) : (
                             <>
@@ -251,6 +293,46 @@ export function InfoScreen({ game, players, user, onClose, theme, date, solvedCo
                         </div>
                     </div>
 
+                    {/* Settings Section */}
+                    <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 border border-gray-100 dark:border-gray-800 space-y-4">
+                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+                            <Settings className="w-4 h-4" /> Preferences
+                        </h3>
+
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-full text-purple-600 dark:text-purple-400">
+                                    {profile?.settings?.enable_audio_chime !== false ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-bold text-gray-900 dark:text-white">Game Sounds</span>
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">Play chimes for turns</span>
+                                </div>
+                            </div>
+                            <Switch
+                                checked={profile?.settings?.enable_audio_chime !== false}
+                                onCheckedChange={toggleAudio}
+                                disabled={updating}
+                            />
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full text-blue-600 dark:text-blue-400">
+                                    {theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-bold text-gray-900 dark:text-white">Dark Mode</span>
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">Adjust appearance</span>
+                                </div>
+                            </div>
+                            <Switch
+                                checked={theme === 'dark'}
+                                onCheckedChange={(checked: boolean) => toggleTheme(checked)}
+                            />
+                        </div>
+                    </div>
+
                     <div className="pt-8 space-y-3">
                         {isDaily && (
                             <Button
@@ -270,6 +352,6 @@ export function InfoScreen({ game, players, user, onClose, theme, date, solvedCo
 
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
