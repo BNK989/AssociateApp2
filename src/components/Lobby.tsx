@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, MessageSquarePlus, Sparkles, Calendar, CheckCircle, ArrowRight } from 'lucide-react';
+import { Plus, MessageSquarePlus, Sparkles, Calendar, CheckCircle, ArrowRight, Loader2 } from 'lucide-react';
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -67,6 +67,7 @@ export default function Lobby() {
 
     const [showTutorial, setShowTutorial] = useState(false);
     const [isDailyCompleted, setIsDailyCompleted] = useState(false);
+    const [isDailyLoading, setIsDailyLoading] = useState(false);
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -393,7 +394,11 @@ export default function Lobby() {
                         {/* Daily Challenge Card */}
                         <div className="mb-8 p-1">
                             <button
-                                onClick={() => router.push('/daily')}
+                                onClick={() => {
+                                    setIsDailyLoading(true);
+                                    router.push('/daily');
+                                }}
+                                disabled={isDailyLoading}
                                 className={`w-full group relative overflow-hidden rounded-2xl border transition-all duration-300 transform hover:scale-[1.01] hover:shadow-xl text-left cursor-pointer
                         ${isDailyCompleted
                                         ? 'bg-secondary/50 border-border opacity-80'
@@ -415,8 +420,12 @@ export default function Lobby() {
                                         </div>
                                     </div>
                                     {!isDailyCompleted && (
-                                        <div className="bg-white/80 dark:bg-white/10 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity transform group-hover:translate-x-1">
-                                            <ArrowRight className="w-5 h-5 text-orange-600 dark:text-amber-400" />
+                                        <div className="bg-white/80 dark:bg-white/10 p-2 rounded-full transition-opacity transform group-hover:translate-x-1">
+                                            {isDailyLoading ? (
+                                                <Loader2 className="w-5 h-5 text-orange-600 dark:text-amber-400 animate-spin" />
+                                            ) : (
+                                                <ArrowRight className="w-5 h-5 text-orange-600 dark:text-amber-400" />
+                                            )}
                                         </div>
                                     )}
                                 </div>

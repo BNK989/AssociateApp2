@@ -487,7 +487,7 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
         const remaining = messages.filter(m => !m.is_solved && m.id !== targetMessage.id && (m.strikes || 0) < 3).length;
         if (remaining === 0) {
             setGameOver(true);
-            toast.success("Daily Challenge Completed!");
+
         }
 
         setInput('');
@@ -542,7 +542,7 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
                 const remaining = messages.filter(m => !m.is_solved && m.id !== targetMessage.id && (m.strikes || 0) < 3).length;
                 if (remaining === 0) {
                     setGameOver(true);
-                    toast.success("Daily Challenge Completed!");
+
 
                     // Track Completion
                     posthog.capture('daily_game_completed', {

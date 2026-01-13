@@ -8,11 +8,13 @@ import AuthForm from './AuthForm';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Calendar, CheckCircle, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
 function DailyChallengeButton() {
     const [isCompleted, setIsCompleted] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
         // Simple client-side check for today's completion
@@ -24,30 +26,40 @@ function DailyChallengeButton() {
         }
     }, []);
 
+    const handleClick = () => {
+        setIsLoading(true);
+        router.push('/daily');
+    };
+
     return (
-        <Link href="/daily">
-            <Button
-                size="lg"
-                className={`group relative overflow-hidden transition-all duration-300 ${isCompleted
-                    ? 'bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border'
-                    : 'bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-lg hover:shadow-orange-500/25 border-0 ring-2 ring-orange-400/20'
-                    }`}
-            >
-                {isCompleted ? (
-                    <>
-                        <CheckCircle className="w-5 h-5 mr-2 text-green-500" />
-                        Daily Completed
-                    </>
-                ) : (
-                    <>
-                        <Calendar className="w-5 h-5 mr-2" />
-                        Play Daily Challenge
-                        <ArrowRight className="w-4 h-4 ml-2 opacity-70 group-hover:translate-x-1 transition-transform" />
-                        <span className="absolute inset-0 rounded-md ring-2 ring-white/20 group-hover:ring-white/40 transition-all" />
-                    </>
-                )}
-            </Button>
-        </Link>
+        <Button
+            size="lg"
+            onClick={handleClick}
+            disabled={isLoading}
+            className={`group relative overflow-hidden transition-all duration-300 ${isCompleted
+                ? 'bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border'
+                : 'bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-lg hover:shadow-orange-500/25 border-0 ring-2 ring-orange-400/20'
+                }`}
+        >
+            {isLoading ? (
+                <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Loading...
+                </>
+            ) : isCompleted ? (
+                <>
+                    <CheckCircle className="w-5 h-5 mr-2 text-green-500" />
+                    Daily Completed
+                </>
+            ) : (
+                <>
+                    <Calendar className="w-5 h-5 mr-2" />
+                    Play Daily Challenge
+                    <ArrowRight className="w-4 h-4 ml-2 opacity-70 group-hover:translate-x-1 transition-transform" />
+                    <span className="absolute inset-0 rounded-md ring-2 ring-white/20 group-hover:ring-white/40 transition-all" />
+                </>
+            )}
+        </Button>
     );
 }
 
@@ -115,6 +127,15 @@ export default function LandingPage() {
                         className="flex flex-col sm:flex-row items-center gap-4 justify-center"
                     >
                         <DailyChallengeButton />
+                        <Button
+                            variant="outline"
+                            size="lg"
+                            onClick={() => document.getElementById('auth-form')?.scrollIntoView({ behavior: 'smooth' })}
+                            className="bg-transparent border-primary/20 hover:bg-primary/5 hover:border-primary/40 text-foreground min-w-[200px]"
+                        >
+                            <span className="mr-2">Login / Sign Up</span>
+                            <ArrowRight className="w-4 h-4 opacity-70" />
+                        </Button>
                     </motion.div>
 
                     <motion.div
