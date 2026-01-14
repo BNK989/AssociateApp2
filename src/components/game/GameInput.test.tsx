@@ -38,6 +38,7 @@ vi.mock('@/lib/gameConfig', () => ({
 
 vi.mock('@/lib/gameLogic', () => ({
     calculateMessageValue: () => 100,
+    calculateRevealedPercentage: () => 0,
     HINT_COSTS: {
         TIER_1: 0.1,
         TIER_2: 0.1,
@@ -53,6 +54,10 @@ vi.mock('@/components/ui/tooltip', () => ({
     TooltipTrigger: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
+
+vi.mock('next-intl', () => ({
+    useTranslations: () => (key: string) => key,
+}));
 
 vi.mock('@/components/ui/badge', () => ({
     Badge: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,

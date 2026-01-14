@@ -10,13 +10,13 @@ import {
     ContextMenuItem,
     ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { formatDistanceToNow } from "date-fns";
 import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
     TooltipTrigger
 } from "@/components/ui/tooltip";
+import { useTranslations, useFormatter } from "next-intl";
 
 type Game = {
     id: string;
@@ -57,6 +57,8 @@ export default function GameCard({
 }: GameCardProps) {
     const { user } = useAuth();
     const router = useRouter();
+    const t = useTranslations('Lobby.game_card');
+    const format = useFormatter();
 
     const getInitials = (name: string) => {
         return name?.slice(0, 2).toUpperCase() || '??';
@@ -71,12 +73,12 @@ export default function GameCard({
         : `Game #${game.id.slice(0, 4)}`;
 
     const lastActivity = game.last_activity_at
-        ? formatDistanceToNow(new Date(game.last_activity_at), { addSuffix: true })
-        : formatDistanceToNow(new Date(game.created_at), { addSuffix: true });
+        ? format.relativeTime(new Date(game.last_activity_at), new Date())
+        : format.relativeTime(new Date(game.created_at), new Date());
 
     const messageProgress = game.message_count !== undefined
         ? `${game.message_count}/${game.max_messages}`
-        : `${game.max_messages} max`;
+        : `${game.max_messages} ${t('max')}`;
 
     const isMyTurn = game.current_turn_user_id === user?.id && game.status !== 'completed';
 
@@ -90,14 +92,14 @@ export default function GameCard({
                     {/* Status Badge */}
                     <div className="flex justify-between items-start mb-3">
                         <span className={`text-xs px-2 py-1 rounded uppercase font-bold tracking-wide ${game.status === 'solving' ? 'bg-purple-900/80 text-purple-200 border border-purple-700' :
-                                game.status === 'completed' ? 'bg-green-900/80 text-green-200 border border-green-700' :
-                                    'bg-blue-900/80 text-blue-200 border border-blue-700'
+                            game.status === 'completed' ? 'bg-green-900/80 text-green-200 border border-green-700' :
+                                'bg-blue-900/80 text-blue-200 border border-blue-700'
                             }`}>
-                            {game.status}
+                            {t(`status.${game.status}` as any)}
                         </span>
                         {isMyTurn && (
                             <span className="bg-green-500 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full shadow-lg animate-pulse ml-2">
-                                Your Turn
+                                {t('your_turn')}
                             </span>
                         )}
                     </div>
@@ -111,15 +113,15 @@ export default function GameCard({
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <span className="hover:text-gray-300 transition-colors">Last moved {lastActivity}</span>
+                                        <span className="hover:text-gray-300 transition-colors">{t('last_moved')} {lastActivity}</span>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                        <p>{new Date(game.last_activity_at || game.created_at).toLocaleString()}</p>
+                                        <p>{format.dateTime(new Date(game.last_activity_at || game.created_at), { dateStyle: 'medium', timeStyle: 'short' })}</p>
                                     </TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
                             <span>•</span>
-                            <span className="font-mono">{messageProgress} msgs</span>
+                            <span className="font-mono">{messageProgress} {t('msgs')}</span>
                         </div>
                     </div>
 
@@ -157,21 +159,21 @@ export default function GameCard({
                                     e.stopPropagation();
                                     router.push(`/game/${game.id}`);
                                 }}>
-                                    View
+                                    {t('buttons.view')}
                                 </Button>
                             ) : game.status === 'solving' ? (
                                 <Button size="sm" className="h-7 text-xs bg-purple-600 hover:bg-purple-700" onClick={(e) => {
                                     e.stopPropagation();
                                     router.push(`/game/${game.id}`);
                                 }}>
-                                    Solve
+                                    {t('buttons.solve')}
                                 </Button>
                             ) : (
                                 <Button size="sm" variant="outline" className="h-7 text-xs border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-300 dark:hover:bg-purple-900/20" onClick={(e) => {
                                     e.stopPropagation();
                                     router.push(`/game/${game.id}`);
                                 }}>
-                                    Play
+                                    {t('buttons.play')}
                                 </Button>
                             )}
                         </div>
@@ -180,13 +182,13 @@ export default function GameCard({
             </ContextMenuTrigger>
 
             <ContextMenuContent className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
-                <ContextMenuItem onClick={() => onArchive(game.id)}>Archive Game</ContextMenuItem>
-                <ContextMenuItem onClick={() => onLeave(game.id)} className="text-red-500 focus:text-red-500">Leave Game</ContextMenuItem>
+                <ContextMenuItem onClick={() => onArchive(game.id)}>{t('menu.archive')}</ContextMenuItem>
+                <ContextMenuItem onClick={() => onLeave(game.id)} className="text-red-500 focus:text-red-500">{t('menu.leave')}</ContextMenuItem>
                 {isAdmin && (
                     <>
                         <div className="h-px bg-gray-200 dark:bg-gray-800 my-1" />
-                        <ContextMenuItem onClick={() => onDelete?.(game.id)} className="text-red-600 font-bold">Admin: Delete</ContextMenuItem>
-                        <ContextMenuItem onClick={() => onReset?.(game.id)} className="text-orange-600 font-bold">Admin: Reset</ContextMenuItem>
+                        <ContextMenuItem onClick={() => onDelete?.(game.id)} className="text-red-600 font-bold">{t('menu.admin_delete')}</ContextMenuItem>
+                        <ContextMenuItem onClick={() => onReset?.(game.id)} className="text-orange-600 font-bold">{t('menu.admin_reset')}</ContextMenuItem>
                     </>
                 )}
             </ContextMenuContent>

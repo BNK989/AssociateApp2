@@ -66,15 +66,18 @@ describe('Game Logic', () => {
         it('should return EXACT length at level 1 and reveal first char', () => {
             // Level 1 reveals length + first char
             const cipher = generateCipherString(input, 1);
-            expect(cipher.length).toBe(input.length);
-            expect(cipher[0]).toBe(input[0]);
+            expect([...cipher].length).toBe([...input].length);
+            // First char should match (assuming first char of input is length 1)
+            // But just in case, use substring/slice carefully if input was special.
+            // For "Hello World", it's fine.
+            expect(cipher.codePointAt(0)).toBe(input.codePointAt(0));
         });
 
         it('should reveal 66% at level 2', () => {
             const longInput = "AAAAA AAAAA AAAAA"; // 17 chars (14 non-space)
             const cipher = generateCipherString(longInput, 2);
 
-            expect(cipher.length).toBe(longInput.length);
+            expect([...cipher].length).toBe([...longInput].length);
             // In Scramble mode, index 0 is not guaranteed to be 'A' positionally.
             // But we should find at least the expected number of A's in the string.
 
@@ -92,7 +95,7 @@ describe('Game Logic', () => {
             const shortInput = "ABC"; // 3 chars
             const cipher = generateCipherString(shortInput, 2);
 
-            expect(cipher.length).toBe(3);
+            expect([...cipher].length).toBe(3);
             // 3 * 0.66 = 1.98 -> ceil is 2.
             let lettersFound = 0;
             if (shortInput.includes(cipher[0])) lettersFound++;
@@ -110,7 +113,8 @@ describe('Game Logic', () => {
         it('should return EXACT length for Daily Game at level 0', () => {
             const input = "Hello";
             const cipher = generateCipherString(input, 0, true);
-            expect(cipher.length).toBe(input.length);
+            // Use spread to count code points (handle surrogate pairs)
+            expect([...cipher].length).toBe([...input].length);
         });
 
         it('should generate cipher string for level 2 (scramble) with pinned first letter', () => {
@@ -118,7 +122,7 @@ describe('Game Logic', () => {
             const cipher = generateCipherString(content, 2);
 
             // Length should match
-            expect(cipher.length).toBe(content.length);
+            expect([...cipher].length).toBe([...content].length);
 
             // First letter should be PINNED (Hint 1 logic preserved)
             expect(cipher[0]).toBe('a');

@@ -1,13 +1,21 @@
 import { createServerClient } from "@supabase/ssr";
-import { NextResponse, type NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
+import createMiddleware from 'next-intl/middleware';
+import { defineRouting } from 'next-intl/routing';
+
+export const routing = defineRouting({
+    locales: ['en', 'he'],
+    defaultLocale: 'en',
+    localePrefix: 'as-needed'
+});
+
+const intlMiddleware = createMiddleware(routing);
 
 export async function proxy(request: NextRequest) {
-    let response = NextResponse.next({
-        request: {
-            headers: request.headers,
-        },
-    });
+    // 1. Run next-intl middleware first to handle routing and locals
+    let response = intlMiddleware(request);
 
+    // 2. Run Supabase auth logic
     try {
         const supabase = createServerClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -21,9 +29,7 @@ export async function proxy(request: NextRequest) {
                         cookiesToSet.forEach(({ name, value, options }) =>
                             request.cookies.set(name, value)
                         );
-                        response = NextResponse.next({
-                            request,
-                        });
+                        // Update the response from intlMiddleware
                         cookiesToSet.forEach(({ name, value, options }) =>
                             response.cookies.set(name, value, options)
                         );
@@ -32,12 +38,10 @@ export async function proxy(request: NextRequest) {
             }
         );
 
-        // Refresh session if expired - required for Server Components
-        // https://supabase.com/docs/guides/auth/server-side/nextjs
+        // Refresh session if expired
         await supabase.auth.getUser();
 
     } catch (err) {
-        // If auth fails or env vars missing, don't crash the whole app
         console.error("Proxy auth error:", err);
     }
 
@@ -46,14 +50,8 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
     matcher: [
-        /*
-         * Match all request paths except:
-         * - _next/static (static files)
-         * - _next/image (image optimization files)
-         * - favicon.ico (favicon file)
-         * - images - .svg, .png, .jpg, .jpeg, .gif, .webp
-         * Feel free to modify this pattern to include more paths.
-         */
-        "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+        '/',
+        '/(he|en)/:path*',
+        "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
     ],
 };

@@ -1,0 +1,464 @@
+{
+    "Common": {
+        "switch_language": "Switch Language"
+    },
+    "GameRoom": {
+        "Header": {
+            "solve": "Solve",
+            "solving": "Solving...",
+            "today_theme": "Today's Theme",
+            "back_confirm_title": "Leave Game?",
+            "back_confirm_msg": "You will not be able to return to this game.",
+            "leave_perm": "Leave Game (Permanent)",
+            "go_home": "Go Home (Keep Game Open)",
+            "cancel": "Cancel",
+            "switch_solving": "Switch to Solving?",
+            "agreed": "Agreed",
+            "confirmed": "Confirmed",
+            "confirm": "Confirm",
+            "deny": "Deny"
+        },
+        "Input": {
+            "placeholder": "Type a message...",
+            "placeholder_solving_me": "It's your word! You have {seconds}s to reveal it!",
+            "placeholder_solving_other": "{user} is revealing their word... ({seconds}s)",
+            "placeholder_solving_single": "Guess the word...",
+            "placeholder_free": "Author left! Free for all to guess!",
+            "placeholder_turn_me": "It's your turn!",
+            "placeholder_turn_other": "It is {user}'s turn",
+            "hint_1": "1st",
+            "reveal_len": "Reveal Length",
+            "hint_2": "Reveal 1st + 25%",
+            "hint_ai": "AI Hint",
+            "cost_pts": "{cost} pts",
+            "cost_deducted": "Deducted from word value",
+            "give_up": "Give Up",
+            "counter_remain": "{count} guesses remain",
+            "counter_last": "last guess",
+            "free_for_all": "FREE FOR ALL",
+            "toast_max_length": "Message cannot exceed {max} characters"
+        },
+        "Chat": {
+            "start_random": "Start with Random Word",
+            "start_type": "OR TYPE BELOW",
+            "start_title": "Start the Game!",
+            "start_desc": "Be the first to send a message or start with a random word.",
+            "consulting_ai": "Consulting AI...",
+            "shuffle": "Shuffle letters",
+            "solved": "Solved",
+            "word_lost": "Word Lost",
+            "menu": {
+                "hide": "Hide Content",
+                "reveal": "Reveal Content",
+                "delete": "Delete Message",
+                "test_end": "Test End Sequence",
+                "test_scramble": "Test Scramble Effect",
+                "reset": "Reset Game (Debug)"
+            },
+            "warning_last": "Last message!",
+            "warning_switch": "{count} messages until switching to solve",
+            "you_joined": "You joined the game",
+            "player_joined": "Player {user} joined the game",
+            "system_solving_mode": "Solving Mode Activated 🥳 Decipher the past messages",
+            "counter_remain": "{count} guesses remain",
+            "counter_last": "Last guess!",
+            "float_solved": "<stealer>{stealer}</stealer> solved <author>{author}</author>'s text",
+            "float_solved_you": "<stealer>{stealer}</stealer> solved your text",
+            "toast_daily_limit": "Daily AI Hint limit reached",
+            "toast_word_lost": "Lost word: {word}",
+            "toast_reset_success": "Game reset to initial state"
+        },
+        "Loading": {
+            "app_name": "Associate",
+            "loading_alt": "Loading...",
+            "text": "Loading Game..."
+        },
+        "Info": {
+            "title": "Game Info",
+            "scores_title": "Scores",
+            "team_pot": "Team Pot",
+            "your_score": "Your Score",
+            "solved": "Solved",
+            "players_title": "Players",
+            "you_tag": "YOU",
+            "status_left": "Left Game",
+            "status_active": "Active",
+            "how_to_play_title": "How to Play",
+            "read_instructions": "Read Instructions",
+            "instructions_dialog_title": "Game Instructions",
+            "preferences_title": "Preferences",
+            "sounds_title": "Game Sounds",
+            "sounds_desc": "Play chimes for turns",
+            "dark_mode_title": "Dark Mode",
+            "dark_mode_desc": "Switch between light and dark themes",
+            "language_title": "Language",
+            "language_desc": "Change app language",
+            "share_results": "Share Results",
+            "back_to_game": "Back to Game",
+            "toast_audio_enabled": "Audio enabled",
+            "toast_audio_disabled": "Audio disabled",
+            "toast_settings_fail": "Failed to update settings",
+            "toast_copied": "Copied to clipboard!",
+            "toast_copy_fail": "Failed to copy to clipboard",
+            "toast_share_fail": "Failed to share results",
+            "daily_share_text": "Daily Chain {date}\nScore: {score}\nTheme: {theme}\n\nPlay at: {url}",
+            "Classic": {
+                "overview": {
+                    "title": "Game Overview",
+                    "text": "This is a text-based game to check how well you know each other and each other's associations. We play in two parts:"
+                },
+                "phase1": {
+                    "title": "Phase 1: Chatting",
+                    "text": "In the first part, we text similar to how you would in other chatting apps."
+                },
+                "phase2": {
+                    "title": "Phase 2: Solving",
+                    "text": "In the second part, we'll try to guess what was the previous word. Each player gets 10 seconds to guess their own previous word text. After 10 seconds, it's a free-for-all and any player can guess!"
+                },
+                "hints": {
+                    "title": "Hints",
+                    "text": "If you don't know the word, hints are available: 1) Word length, 2) Reveal letters, 3) AI context clue. Careful: 3 incorrect guesses exposes the word!"
+                },
+                "winning": {
+                    "title": "Winning",
+                    "text": "The goal is to win by getting the most texts correct in a row."
+                }
+            },
+            "Daily": {
+                "folder": {
+                    "title": "Daily Challenge Folder",
+                    "text": "Welcome to the Daily Chain! Each day brings a new theme and a set of words to solve."
+                },
+                "how_to": {
+                    "title": "How to Play",
+                    "text": "Guess the hidden words related to today's theme. The words are chained together by association."
+                },
+                "scoring": {
+                    "title": "Scoring",
+                    "text": "Solve words with fewer hints for more points. Maintain a streak of correct guesses to multiply your score!"
+                },
+                "winning": {
+                    "title": "Winning",
+                    "text": "Complete all words to finish the daily challenge. Come back tomorrow for a new one!"
+                }
+            }
+        },
+        "EndGame": {
+            "title": "Well Played!",
+            "subtitle": "Game Completed",
+            "stat_messages": "Messages",
+            "stat_team_bank": "Team Bank",
+            "stat_points_accumulated": "Points accumulated",
+            "scoreboard_title": "Final Scoreboard",
+            "btn_share": "Share Results",
+            "btn_back": "Back to Lobby",
+            "share_title": "Associate Game Results",
+            "copied": "Results copied to clipboard!",
+            "share_fail": "Failed to share results",
+            "pts": "pts",
+            "share_team_bank": "Team Bank",
+            "share_top_score": "Top Score",
+            "share_leaderboard": "Leaderboard",
+            "play_at": "Play at"
+        },
+        "Errors": {
+            "not_found": "Game not found",
+            "left_success": "You have left the game.",
+            "left_fail": "Failed to leave game."
+        }
+    },
+    "HomePage": {
+        "title": "Associate",
+        "login": "Log In",
+        "hero": {
+            "badge": "✨ The Ultimate Social Word Game",
+            "title_line1": "Think Together.",
+            "title_line2": "Win Together.",
+            "description": "Join the ultimate real-time word association game. If you love <none>Connections</none>, <wordle>Wordle</wordle>, or <codenames>Codenames</codenames>, you'll be addicted to Associ8. Connect words, steal points, and race to victory with friends.",
+            "login_button": "Login / Sign Up",
+            "daily_button": "Play Daily Challenge",
+            "daily_loading": "Loading...",
+            "daily_completed": "Daily Completed"
+        },
+        "auth_form": {
+            "title": "Get Started",
+            "subtitle": "Jump right into the action"
+        },
+        "demo": {
+            "hint": "Hint: Use one word to describe 'Summer'",
+            "success": "Nice! +10 Points",
+            "lobby": "Lobby #12"
+        },
+        "footer": "© {year} Associate Game. All rights reserved."
+    },
+    "NavBar": {
+        "login": "Log In",
+        "logout": "Log out",
+        "preferences": "Preferences",
+        "guest_badge": "Guest",
+        "guest_message": "Sign up to save progress",
+        "theme_toggle": "Toggle theme"
+    },
+    "Auth": {
+        "tabs": {
+            "login": "Account Access",
+            "guest": "Guest Mode"
+        },
+        "google_login": "Sign in with Google",
+        "divider": "Or continue with email",
+        "email_label": "Email address",
+        "magic_link_button": "Send Magic Link",
+        "guest_info": "Guest accounts are temporary. Sign up to save your stats and progress.",
+        "guest_username_label": "Choose a Username",
+        "guest_button": "Play as Guest",
+        "guest_disabled": "Guest mode is currently disabled by the administrator.",
+        "check_email": "Check your email for the login link!",
+        "trouble_login": "Trouble logging in?",
+        "clear_data": "Clear app data",
+        "clear_data_confirm": "This will clear your local cookies and cache to resolve login issues. Continue?"
+    },
+    "Footer": {
+        "copyright": "© {year} Associate Game. All rights reserved.",
+        "privacy": "Privacy Policy",
+        "terms": "Terms of Service",
+        "thank_you": "Thank You",
+        "suggestion": "Have a suggestion?"
+    },
+    "Feedback": {
+        "button": "Feedback",
+        "title": "Send Feedback",
+        "description": "Help us improve the game. Report bugs, suggest features, or just say hi.",
+        "labels": {
+            "name": "Name (Optional)",
+            "email": "Email (Optional)",
+            "type": "Type",
+            "message": "Message"
+        },
+        "placeholders": {
+            "name": "Your name",
+            "email": "you@example.com",
+            "type": "Select a type",
+            "message": "Tell us what you think..."
+        },
+        "types": {
+            "bug": "Bug Report",
+            "feature": "Feature Request",
+            "general": "General Feedback",
+            "other": "Other"
+        },
+        "submit": "Send Feedback",
+        "success": "Feedback sent! Thank you.",
+        "error": "Failed to send feedback. Please try again."
+    },
+    "Privacy": {
+        "title": "Privacy Policy",
+        "last_updated": "Last updated: {date}",
+        "sections": {
+            "1": {
+                "title": "1. Information We Collect",
+                "content": "We collect minimal information necessary to provide the Word Association Game service. This includes your email address (if you provide it for feedback or authentication) and game data generated during your play sessions. We may also collect technical data using third-party tools to ensure reliability."
+            },
+            "2": {
+                "title": "2. How We Use Your Information",
+                "content": "We use your information to:",
+                "list": {
+                    "1": "Provide and maintain the game service.",
+                    "2": "Improve game mechanics and user experience.",
+                    "3": "Respond to your feedback and requests.",
+                    "4": "Analyze usage patterns and debug issues.",
+                    "5": "Future marketing and promotional activities."
+                }
+            },
+            "3": {
+                "title": "3. Data Security",
+                "content": "We implement appropriate security measures to protect your personal information. However, no method of transmission over the Internet is 100% secure."
+            },
+            "4": {
+                "title": "4. Analytics and Third-Party Tools",
+                "content": "We use PostHog and other third-party services for analytics, debugging, and to maintain service reliability. We reserve the right to use collected data for any purpose, including but not limited to marketing and service improvements, without limitation."
+            },
+            "5": {
+                "title": "5. Cookies",
+                "content": "We use essential cookies to maintain your session and game state. We may also use cookies from third-party services (like PostHog) to track usage behavior."
+            }
+        }
+    },
+    "Terms": {
+        "title": "Terms of Service",
+        "last_updated": "Last updated: {date}",
+        "sections": {
+            "1": {
+                "title": "1. Acceptance of Terms",
+                "content": "By accessing or using the Word Association Game, you agree to be bound by these Terms of Service."
+            },
+            "2": {
+                "title": "2. User Conduct",
+                "content": "You agree to use the service only for lawful purposes and in a way that does not infringe the rights of, restrict or inhibit anyone else's use and enjoyment of the service.",
+                "content_part2": "Harassment, hate speech, and abusive behavior in game chats will not be tolerated."
+            },
+            "3": {
+                "title": "3. Disclaimer",
+                "content": "The game is provided \"as is\" without any representations or warranties, express or implied."
+            },
+            "4": {
+                "title": "4. Changes to Terms",
+                "content": "We reserve the right to modify these terms at any time. We will notify users of any significant changes."
+            }
+        }
+    },
+    "ThankYou": {
+        "title": "Thank You!",
+        "message": "We rely on players like you to make this game better. Thank you for playing and being part of our community.",
+        "special_thanks": "Special thanks to my siblings <maya>Maya</maya> and <tom>Tom</tom>, who gave me the idea for this game which we've played well in the past.",
+        "home_button": "Return Home"
+    },
+    "Lobby": {
+        "title": "Your Games",
+        "new_game": "New Game",
+        "past_games": "Past Games",
+        "daily": {
+            "title": "Daily Challenge",
+            "completed": "Daily Challenge Completed",
+            "description": "Solve the daily word chain to win points!",
+            "completed_description": "Great job! Come back tomorrow for a new chain."
+        },
+        "empty": {
+            "title": "Start Your First Game!",
+            "description": "Create a game to start associating words with your friends. Test your connection and see who knows who best!",
+            "button": "Create Game"
+        },
+        "create_dialog": {
+            "title": "Create New Game",
+            "description": "Configure game settings before starting.",
+            "game_length": "Game Length (Total Messages)",
+            "max_messages": "Max {count} messages",
+            "note": "* Once the limit is reached, the game will automatically switch to Solving Mode.",
+            "cancel": "Cancel",
+            "submit": "Start Game",
+            "creating": "Creating..."
+        },
+        "leave_dialog": {
+            "title": "Leave Game",
+            "description": "Are you sure you want to leave this game? You won't be able to rejoin unless invited again.",
+            "cancel": "Cancel",
+            "submit": "Leave Game",
+            "leaving": "Leaving..."
+        },
+        "game_card": {
+            "status": {
+                "texting": "Texting",
+                "solving": "Solving",
+                "completed": "Completed",
+                "archived": "Archived"
+            },
+            "your_turn": "Your Turn",
+            "last_moved": "Last moved",
+            "msgs": "msgs",
+            "max": "max",
+            "buttons": {
+                "view": "View",
+                "solve": "Solve",
+                "play": "Play"
+            },
+            "menu": {
+                "archive": "Archive Game",
+                "leave": "Leave Game",
+                "admin_delete": "Admin: Delete",
+                "admin_reset": "Admin: Reset"
+            }
+        },
+        "toasts": {
+            "left_success": "Left game successfully",
+            "left_error": "Failed to leave game",
+            "archived_error": "Failed to archive game",
+            "deleted_success": "Game deleted",
+            "deleted_error": "Failed to delete game",
+            "reset_success": "Game reset successfully",
+            "reset_error": "Failed to reset game",
+            "load_error": "Failed to load games: {message}",
+            "create_error": "Failed to create game"
+        }
+    },
+    "Onboarding": {
+        "welcome": {
+            "title": "Welcome to Associate!",
+            "description": "The game where great minds think alike. Test your connection with friends in this word association game."
+        },
+        "phase1": {
+            "title": "Phase 1: Chatting",
+            "description": "Start by texting naturally with your friends. The goal is to build up a conversation context."
+        },
+        "phase2": {
+            "title": "Phase 2: Solving",
+            "description": "Guess the previous word! Hints are available if you get stuck, but be careful - too many wrong guesses will reveal the word."
+        },
+        "ready": {
+            "title": "Ready to Play?",
+            "description": "Create a new game and invite your friends to get started!"
+        },
+        "next": "Next",
+        "lets_go": "Let's Go!"
+    },
+    "Invite": {
+        "button": "Invite",
+        "title": "Invite Players",
+        "search_placeholder": "Search username...",
+        "no_users": "No users found.",
+        "suggestions": "Suggestions",
+        "joined": "Joined",
+        "sent": "Sent",
+        "or_link": "Or invite via link",
+        "copy_link": "Copy Link",
+        "share": "Share",
+        "done": "Done",
+        "toasts": {
+            "invite_error": "Failed to send invite",
+            "link_copied": "Link copied to clipboard!"
+        }
+    },
+    "Notifications": {
+        "title": "Notifications",
+        "empty": "No new notifications",
+        "dismiss_all": "Dismiss All",
+        "invite": "{username} invited you to play Game #{gameId}",
+        "invited_you": "invited you to play!",
+        "accept": "Accept",
+        "decline": "Decline",
+        "dismiss": "Dismiss",
+        "toasts": {
+            "joined": "Joined game!",
+            "join_error": "Failed to join game",
+            "declined": "Invite declined",
+            "dismiss_all_success": "All notifications dismissed",
+            "dismiss_all_error": "Failed to dismiss notifications"
+        }
+    },
+    "Settings": {
+        "title": "Settings",
+        "display_name": "Display Name",
+        "avatar": "Avatar",
+        "no_img": "No Img",
+        "upload_avatar": "Upload Avatar",
+        "uploading": "Uploading...",
+        "upload_hint": "Max 2MB. Auto-resized to 256x256.",
+        "theme": "Theme",
+        "language": "Language",
+        "theme_options": {
+            "system": "System",
+            "dark": "Dark",
+            "light": "Light"
+        },
+        "notifications": "Notifications",
+        "system_notifications": "System Notifications",
+        "audio_chime": "Audio Chime",
+        "tab_title_flash": "Tab Title Flash",
+        "save_changes": "Save Changes",
+        "saving": "Saving...",
+        "upload_success": "Avatar uploaded successfully! Don't forget to save.",
+        "upload_error": "Error uploading avatar: {message}",
+        "upload_error_generic": "An error occurred during upload",
+        "update_error": "Error updating profile",
+        "update_success": "Profile updated!",
+        "permission_denied": "Permission denied. Please enable notifications in your browser settings."
+    }
+}

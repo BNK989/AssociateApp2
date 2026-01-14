@@ -23,6 +23,7 @@ import { FloatingMessage, AnimationData } from './FloatingMessage';
 import { GameBackground } from './GameBackground';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Shuffle, X, Check } from "lucide-react";
+import { useTranslations } from 'next-intl';
 
 type ChatAreaProps = {
     messages: Message[];
@@ -57,6 +58,7 @@ export function ChatArea({
     onTestEndSequence,
     onResetGame
 }: ChatAreaProps) {
+    const t = useTranslations('GameRoom.Chat');
     const containerRef = useRef<HTMLDivElement>(null);
     const { isAdmin } = useAdmin();
     const [revealedMessages, setRevealedMessages] = useState<Record<string, boolean>>({});
@@ -131,12 +133,19 @@ export function ChatArea({
         setTimeout(() => {
             if (game.status === 'solving' && targetMessage) {
                 const targetEl = document.getElementById(`msg-${targetMessage.id}`);
+                const solvedEl = justSolvedData?.id ? document.getElementById(`msg-${justSolvedData.id}`) : null;
+
                 if (targetEl && containerRef.current) {
                     // Calculate position to show message at bottom of visible area (above input)
-                    // Input area + padding is roughly 120px + 20px gap
-                    // Input area is roughly 60px, but now we are just scrolling relative to this container
                     const bottomPadding = 20;
-                    const elementBottom = targetEl.offsetTop + targetEl.offsetHeight;
+                    let elementBottom = targetEl.offsetTop + targetEl.offsetHeight;
+
+                    // If the just solved message is BELOW the target (typical in bottom-up solving),
+                    // we want to keep it in view so the user sees what they just solved.
+                    if (solvedEl && solvedEl.offsetTop > targetEl.offsetTop) {
+                        elementBottom = solvedEl.offsetTop + solvedEl.offsetHeight;
+                    }
+
                     const containerHeight = containerRef.current.clientHeight;
 
                     const scrollTo = elementBottom - containerHeight + bottomPadding;
@@ -276,19 +285,19 @@ export function ChatArea({
                 {messages.filter(m => m.type !== 'system').length === 0 && onStartRandom && (
                     <div className="flex-1 flex flex-col items-center justify-center gap-4 min-h-[50vh] animate-in fade-in zoom-in duration-500">
                         <div className="text-center space-y-2 opacity-80">
-                            <p className="text-xl font-bold text-gray-700 dark:text-gray-300">Start the Game!</p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Be the first to send a message or start with a random word.</p>
+                            <p className="text-xl font-bold text-gray-700 dark:text-gray-300">{t('start_title')}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{t('start_desc')}</p>
                         </div>
                         <button
                             onClick={onStartRandom}
                             className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-full shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
                         >
-                            <span>🎲</span> Start with Random Word
+                            <span>🎲</span> {t('start_random')}
                         </button>
                         {/* Or Separator */}
                         <div className="flex items-center gap-3 w-1/2 opacity-50">
                             <div className="h-px bg-gray-400 flex-1" />
-                            <span className="text-xs font-mono text-gray-500">OR TYPE BELOW</span>
+                            <span className="text-xs font-mono text-gray-500">{t('start_type')}</span>
                             <div className="h-px bg-gray-400 flex-1" />
                         </div>
                     </div>
@@ -334,10 +343,21 @@ export function ChatArea({
                         <div key={msg.id}>
                             {msg.type === 'system' ? (
                                 <div className="flex justify-center animate-in fade-in zoom-in duration-300">
+
                                     <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700 shadow-sm">
-                                        {msg.user_id === user?.id && msg.content.includes('joined the game')
-                                            ? 'You joined the game'
-                                            : msg.content}
+                                        {(() => {
+                                            if (msg.user_id === user?.id && msg.content.includes('joined the game')) {
+                                                return t('you_joined');
+                                            }
+                                            const joinMatch = msg.content.match(/^Player (.+) joined the game$/);
+                                            if (joinMatch) {
+                                                return t('player_joined', { user: joinMatch[1] });
+                                            }
+                                            if (msg.content.includes('Solving Mode Activated')) {
+                                                return t('system_solving_mode');
+                                            }
+                                            return msg.content;
+                                        })()}
                                     </span>
                                 </div>
                             ) : (
@@ -382,7 +402,7 @@ export function ChatArea({
                                                             layout: { duration: 0.3, type: "spring", bounce: 0 },
                                                             opacity: { duration: 0.2 }
                                                         }}
-                                                        className={`absolute bottom-0.5 left-1 z-10 ${(msg.hint_level === 3 || msg.ai_hint) ? 'scale-75 origin-bottom-left' : ''}`}
+                                                        className={`absolute bottom-0.5 left-1 z-10 rtl:right-1 rtl:left-auto ${(msg.hint_level === 3 || msg.ai_hint) ? 'scale-75 origin-bottom-left rtl:origin-bottom-right' : ''}`}
                                                     >
                                                         <TooltipProvider delayDuration={0}>
                                                             <Tooltip>
@@ -409,7 +429,7 @@ export function ChatArea({
                                                                     </div>
                                                                 </TooltipTrigger>
                                                                 <TooltipContent side="left" className="text-xs px-2 py-1">
-                                                                    <p>Shuffle letters</p>
+                                                                    <p>{t('shuffle')}</p>
                                                                 </TooltipContent>
                                                             </Tooltip>
                                                         </TooltipProvider>
@@ -421,16 +441,16 @@ export function ChatArea({
                                                     <motion.div
                                                         initial={{ opacity: 0, scale: 0.5 }}
                                                         animate={{ opacity: 1, scale: 1 }}
-                                                        className="absolute bottom-1 right-1 flex items-center gap-1 z-10"
+                                                        className="absolute bottom-1 right-1 flex items-center gap-1 z-10 rtl:left-1 rtl:right-auto"
                                                     >
                                                         {isCorrect ? (
                                                             // Success State
-                                                            <div className="flex items-center text-green-500 dark:text-green-400 opacity-90" title="Solved">
+                                                            <div className="flex items-center text-green-500 dark:text-green-400 opacity-90" title={t('solved')}>
                                                                 <Check className="w-4 h-4" />
                                                             </div>
                                                         ) : isFailed ? (
                                                             // Failed State: Just the X, no text or frame
-                                                            <div className="flex items-center text-gray-400 dark:text-gray-500 opacity-80" title="Word Lost">
+                                                            <div className="flex items-center text-gray-400 dark:text-gray-500 opacity-80" title={t('word_lost')}>
                                                                 <X className="w-4 h-4" />
                                                             </div>
                                                         ) : (
@@ -465,7 +485,7 @@ export function ChatArea({
                                                                         transition={{ delay: 3, duration: 0.8, ease: "easeInOut" }}
                                                                         className="overflow-hidden whitespace-nowrap text-[10px] font-medium text-gray-600 dark:text-gray-300 select-none"
                                                                     >
-                                                                        {strikes === 1 ? "2 guesses remain" : "last guess"}
+                                                                        {strikes === 1 ? t('counter_remain', { count: 2 }) : t('counter_last')}
                                                                     </motion.span>
                                                                 )}
                                                             </div>
@@ -492,7 +512,7 @@ export function ChatArea({
                                                                 <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                                                                 <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                                                                 <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                                                                <span className="ml-1">Consulting AI...</span>
+                                                                <span className="ml-1">{t('consulting_ai')}</span>
                                                             </div>
                                                         ) : (
                                                             <div className="flex items-start gap-1.5 animate-in fade-in duration-300">
@@ -513,7 +533,7 @@ export function ChatArea({
                                     {isAdmin && (
                                         <ContextMenuContent className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white">
                                             <ContextMenuItem onClick={() => handleAdminAction('show_content', msg.id)} className="cursor-pointer">
-                                                {revealedMessages[msg.id] ? 'Hide Content' : 'Reveal Content'}
+                                                {revealedMessages[msg.id] ? t('menu.hide') : t('menu.reveal')}
                                             </ContextMenuItem>
                                             <ContextMenuSub>
                                                 <ContextMenuSubTrigger disabled className="cursor-not-allowed text-gray-400">Trigger Hint (Disabled)</ContextMenuSubTrigger>
@@ -526,7 +546,7 @@ export function ChatArea({
                                                 onClick={() => handleAdminAction('delete', msg.id)}
                                                 className="text-red-600 focus:bg-gray-800 focus:text-red-500 cursor-pointer font-bold"
                                             >
-                                                Delete Message
+                                                {t('menu.delete')}
                                             </ContextMenuItem>
                                             {onTestEndSequence && (
                                                 <>
@@ -535,7 +555,7 @@ export function ChatArea({
                                                         onClick={() => onTestEndSequence()}
                                                         className="text-purple-600 focus:bg-gray-800 focus:text-purple-500 cursor-pointer font-bold"
                                                     >
-                                                        Test End Sequence
+                                                        {t('menu.test_end')}
                                                     </ContextMenuItem>
                                                 </>
                                             )}
@@ -543,7 +563,7 @@ export function ChatArea({
                                                 onClick={() => setScrambleTriggerMap(prev => ({ ...prev, [msg.id]: Date.now() }))}
                                                 className="text-blue-600 focus:bg-gray-800 focus:text-blue-500 cursor-pointer font-bold"
                                             >
-                                                Test Scramble Effect
+                                                {t('menu.test_scramble')}
                                             </ContextMenuItem>
                                             {onResetGame && (
                                                 <ContextMenuItem
@@ -554,7 +574,7 @@ export function ChatArea({
                                                     }}
                                                     className="text-orange-600 focus:bg-gray-800 focus:text-orange-500 cursor-pointer font-bold"
                                                 >
-                                                    Reset Game (Debug)
+                                                    {t('menu.reset')}
                                                 </ContextMenuItem>
                                             )}
                                         </ContextMenuContent>
@@ -567,7 +587,7 @@ export function ChatArea({
                                 showMessageWarning && (
                                     <div className="flex justify-center my-4 animate-in fade-in slide-in-from-bottom-2">
                                         <span className="bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-xs px-3 py-1 rounded-full shadow-sm font-medium border border-gray-200 dark:border-gray-700">
-                                            {messagesLeft === 1 ? 'Last message!' : `${messagesLeft} messages until switching to solve`}
+                                            {messagesLeft === 1 ? t('warning_last') : t('warning_switch', { count: messagesLeft })}
                                         </span>
                                     </div>
                                 )

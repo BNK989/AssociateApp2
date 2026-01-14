@@ -44,10 +44,27 @@ const formSchema = z.object({
     }),
 });
 
+
+import { useTranslations } from "next-intl";
+
 export function FeedbackForm() {
+    const t = useTranslations('Feedback');
     const [open, setOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const supabase = createClient();
+
+    // Define schema with translations
+    const formSchema = z.object({
+        name: z.string().optional(),
+        email: z.string()
+            .email(t('labels.email') + " invalid") // Simple fallback or add validation key
+            .optional()
+            .or(z.literal("")),
+        type: z.enum(["bug", "feature_request", "general", "other"]),
+        message: z.string().min(5, {
+            message: t('error'), // Reusing error or need specific "too short" key. Let's use generic for now or add one.
+        }),
+    });
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -84,12 +101,12 @@ export function FeedbackForm() {
                 console.error("Failed to send email notification:", fnError);
             }
 
-            toast.success("Feedback sent! Thank you.");
+            toast.success(t('success'));
             setOpen(false);
             form.reset();
         } catch (error) {
             console.error("Error sending feedback:", error);
-            toast.error("Failed to send feedback. Please try again.");
+            toast.error(t('error'));
         } finally {
             setIsSubmitting(false);
         }
@@ -99,15 +116,14 @@ export function FeedbackForm() {
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button variant="outline" size="sm">
-                    Feedback
+                    {t('button')}
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Send Feedback</DialogTitle>
+                    <DialogTitle>{t('title')}</DialogTitle>
                     <DialogDescription>
-                        Help us improve the game. Report bugs, suggest features, or just say
-                        hi.
+                        {t('description')}
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
@@ -118,9 +134,9 @@ export function FeedbackForm() {
                                 name="name"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Name (Optional)</FormLabel>
+                                        <FormLabel>{t('labels.name')}</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Your name" {...field} />
+                                            <Input placeholder={t('placeholders.name')} {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -131,9 +147,9 @@ export function FeedbackForm() {
                                 name="email"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Email (Optional)</FormLabel>
+                                        <FormLabel>{t('labels.email')}</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="you@example.com" {...field} />
+                                            <Input placeholder={t('placeholders.email')} {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -146,21 +162,21 @@ export function FeedbackForm() {
                             name="type"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Type</FormLabel>
+                                    <FormLabel>{t('labels.type')}</FormLabel>
                                     <Select
                                         onValueChange={field.onChange}
                                         defaultValue={field.value}
                                     >
                                         <FormControl>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Select a type" />
+                                                <SelectValue placeholder={t('placeholders.type')} />
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            <SelectItem value="bug">Bug Report</SelectItem>
-                                            <SelectItem value="feature_request">Feature Request</SelectItem>
-                                            <SelectItem value="general">General Feedback</SelectItem>
-                                            <SelectItem value="other">Other</SelectItem>
+                                            <SelectItem value="bug">{t('types.bug')}</SelectItem>
+                                            <SelectItem value="feature_request">{t('types.feature')}</SelectItem>
+                                            <SelectItem value="general">{t('types.general')}</SelectItem>
+                                            <SelectItem value="other">{t('types.other')}</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />
@@ -173,11 +189,11 @@ export function FeedbackForm() {
                             name="message"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Message</FormLabel>
+                                    <FormLabel>{t('labels.message')}</FormLabel>
                                     <FormControl>
                                         <Textarea
-                                            placeholder="Tell us what you think..."
-                                            className="resize-none"
+                                            placeholder={t('placeholders.message')}
+                                            className="resize-none text-start"
                                             rows={4}
                                             {...field}
                                         />
@@ -190,7 +206,7 @@ export function FeedbackForm() {
                         <DialogFooter>
                             <Button type="submit" disabled={isSubmitting}>
                                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Send Feedback
+                                {t('submit')}
                             </Button>
                         </DialogFooter>
                     </form>

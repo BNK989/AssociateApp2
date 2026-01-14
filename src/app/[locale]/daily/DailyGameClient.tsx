@@ -49,10 +49,13 @@ const MY_PROFILE = {
     avatar_url: 'https://api.dicebear.com/9.x/thumbs/svg?seed=guest',
 };
 
+import { useTranslations } from 'next-intl';
+
 export default function DailyGameClient({ dailyWords, date, theme, initialHints }: DailyGameClientProps) {
     const router = useRouter();
     const { user: authUser, session, loading: authLoading } = useAuth();
     const posthog = usePostHog();
+    const t = useTranslations('GameRoom.Chat'); // Hook for translations
     const viewportHeight = useVisualViewport();
     const hasTrackedEntrance = useRef(false);
 
@@ -453,7 +456,7 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
                         } else {
                             const err = await res.json();
                             if (err.error === 'Limit reached for this game' || err.error === 'Daily IP limit reached') {
-                                toast.error("Daily AI Hint limit reached");
+                                toast.error(t('toast_daily_limit'));
                             }
                         }
                     }
@@ -573,7 +576,7 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
                 setTimeout(() => setShakeMessageId(null), 500);
 
                 if (newStrikes >= 3) {
-                    toast.error(`Lost word: ${targetMessage.content}`);
+                    toast.error(t('toast_word_lost', { word: targetMessage.content }));
                 } else {
                     // toast.error(`Incorrect! Strike ${newStrikes}/3`);
                 }
@@ -629,7 +632,7 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
         setShowSummary(false);
         setInput('');
 
-        toast.success("Game reset to initial state");
+        toast.success(t('toast_reset_success'));
     };
 
     return (

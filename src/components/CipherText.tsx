@@ -28,6 +28,10 @@ interface ScrambleItem {
 export function CipherText({ text, cipherText, visible, className = '', isSolving = false, hintLevel = 0, forceScramble, guesses = [] }: CipherTextProps) {
     const cipherRef = useRef<string>('');
 
+    // Detect direction based on text logic (Hebrew range)
+    const isRtl = /[\u0590-\u05FF]/.test(text);
+    const dir = isRtl ? 'rtl' : 'ltr';
+
     // Initialize cipher string lazily, but PREFER cipherText if available
     if (!cipherRef.current) {
         if (cipherText) {
@@ -93,7 +97,10 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
         }
     }, [cipherText, visible, scrambleItems]);
 
+    const guessesKey = guesses.join(',');
+
     useEffect(() => {
+        // ... (existing effect logic is fine, just changing dependency)
         if (isFirstRender.current) {
             isFirstRender.current = false;
             return;
@@ -243,7 +250,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
 
         animate();
         return () => { isCancelled = true; };
-    }, [visible, text, cipherText, hintLevel, forceScramble, guesses]); // Added guesses dependency
+    }, [visible, text, cipherText, hintLevel, forceScramble, guessesKey]); // Added guesses dependency
 
     // Track changes
     const prevCipherRef = useRef(cipherText || '');
@@ -334,7 +341,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
 
     if (scrambleItems) {
         return (
-            <motion.span className={`${className} break-words inline-flex flex-wrap gap-1`}>
+            <motion.span dir={dir} className={`${className} break-words inline-flex flex-wrap gap-1`}>
                 {showColons && <span className="mr-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
                 {scrambleItems.map((item, i) => {
                     const shouldFloat = item.isReal && !visible;
@@ -379,7 +386,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
     const displayChars = [...display];
 
     return (
-        <motion.span className={`${className} break-words inline-flex flex-wrap ${(visible || hintLevel >= 1 || isSolving) ? '[&>span:first-child]:uppercase' : ''} ${isSolving ? 'gap-1' : ''}`}>
+        <motion.span dir={dir} className={`${className} break-words inline-flex flex-wrap ${(visible || hintLevel >= 1 || isSolving) ? '[&>span:first-child]:uppercase' : ''} ${isSolving ? 'gap-1' : ''}`}>
             {showColons && <span className="mr-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
             {displayChars.map((char, i) => {
                 // textChars[i] correct? YES if displayChars and textChars are aligned by code point.
@@ -413,7 +420,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
 
                 if (visible) {
                     return (
-                        <span key={i} className={isPositionalMatch ? '' : 'text-green-500 opacity-70'}>
+                        <span key={i} className={`${char === ' ' ? 'whitespace-pre' : ''} ${isPositionalMatch ? '' : 'text-green-500 opacity-70'}`}>
                             {char}
                         </span>
                     );
@@ -428,7 +435,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                         custom={isEffectiveMatch ? i : isEffectiveMatch}
                         animate={isJustRevealed ? "pop" : (hintLevel >= 2 && isEffectiveMatch && !visible) ? "float" : undefined}
                         variants={isJustRevealed ? popVariant : floatVariant as any}
-                        className={`inline-block ${isEffectiveMatch
+                        className={`inline-block ${char === ' ' ? 'whitespace-pre' : ''} ${isEffectiveMatch
                             ? `font-bold drop-shadow-[0_0_2px_rgba(255,255,255,0.5)] ${colorClass || 'text-inherit'} ${(hintLevel >= 2 && !visible) ? 'mx-0.5' : ''}`
                             : `${colorClass}`
                             }`}

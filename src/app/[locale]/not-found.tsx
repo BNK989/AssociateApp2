@@ -1,8 +1,7 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, Link } from '../../navigation';
 import { FileQuestion } from 'lucide-react';
 
 export default function NotFound() {

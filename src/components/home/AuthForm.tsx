@@ -11,8 +11,13 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/context/AuthProvider';
 import { clearAuthCookies } from '@/app/actions/auth';
+import { useTranslations, useLocale } from 'next-intl';
 
 export default function AuthForm() {
+    const t = useTranslations('Auth');
+    const locale = useLocale();
+    const isRtl = locale === 'he';
+    const dir = isRtl ? 'rtl' : 'ltr';
     const [loadingMethod, setLoadingMethod] = useState<string | null>(null);
     const [message, setMessage] = useState('');
     const [guestUsername, setGuestUsername] = useState('');
@@ -61,8 +66,7 @@ export default function AuthForm() {
         if (error) {
             setMessage(error.message);
         } else {
-            setMessage('Check your email for the login link!');
-            setMessage('Check your email for the login link!');
+            setMessage(t('check_email'));
         }
         setLoadingMethod(null);
     };
@@ -117,13 +121,13 @@ export default function AuthForm() {
             setLoadingMethod(null); // Only set loading false on error, otherwise we want to show loading until redirect/reload
             // If it's the "Anonymous sign-ins are disabled" error, we should probably tell the user.
             if (err.message && err.message.includes("Anonymous")) {
-                setMessage("Guest mode is currently disabled by the administrator.");
+                setMessage(t('guest_disabled'));
             }
         }
     };
 
     const handleClearData = async () => {
-        if (window.confirm("This will clear your local cookies and cache to resolve login issues. Continue?")) {
+        if (window.confirm(t('clear_data_confirm'))) {
             // Client side clear
             localStorage.clear();
             sessionStorage.clear();
@@ -146,10 +150,10 @@ export default function AuthForm() {
 
     return (
         <div className="w-full max-w-md mx-auto space-y-6">
-            <Tabs defaultValue="login" className="w-full">
+            <Tabs defaultValue="login" className="w-full" dir={dir}>
                 <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="login">Account Access</TabsTrigger>
-                    <TabsTrigger value="guest">Guest Mode</TabsTrigger>
+                    <TabsTrigger value="login">{t('tabs.login')}</TabsTrigger>
+                    <TabsTrigger value="guest">{t('tabs.guest')}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="login" className="space-y-4 py-4">
@@ -181,7 +185,7 @@ export default function AuthForm() {
                                 />
                             </svg>
                         )}
-                        Sign in with Google
+                        {t('google_login')}
                     </Button>
 
                     <div className="relative">
@@ -190,14 +194,14 @@ export default function AuthForm() {
                         </div>
                         <div className="relative flex justify-center text-xs uppercase">
                             <span className="bg-background px-2 text-muted-foreground">
-                                Or continue with email
+                                {t('divider')}
                             </span>
                         </div>
                     </div>
 
                     <form onSubmit={handleEmailLogin} className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="email">Email address</Label>
+                            <Label htmlFor="email">{t('email_label')}</Label>
                             <Input
                                 id="email"
                                 type="email"
@@ -206,23 +210,24 @@ export default function AuthForm() {
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
                                 disabled={loadingMethod !== null}
+                                className="text-start"
                             />
                         </div>
                         <Button type="submit" className="w-full" disabled={loadingMethod !== null}>
-                            {loadingMethod === 'email' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
-                            Send Magic Link
+                            {loadingMethod === 'email' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4 rtl:ml-2 rtl:mr-0" />}
+                            {t('magic_link_button')}
                         </Button>
                     </form>
                 </TabsContent>
 
                 <TabsContent value="guest" className="space-y-4 py-4">
                     <div className="bg-muted/50 p-4 rounded-lg text-sm text-muted-foreground mb-4">
-                        <p>Guest accounts are temporary. Sign up to save your stats and progress.</p>
+                        <p>{t('guest_info')}</p>
                     </div>
 
                     <form onSubmit={handleGuestLogin} className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="username">Choose a Username</Label>
+                            <Label htmlFor="username">{t('guest_username_label')}</Label>
                             <Input
                                 id="username"
                                 type="text"
@@ -233,11 +238,12 @@ export default function AuthForm() {
                                 minLength={3}
                                 maxLength={20}
                                 disabled={loadingMethod !== null}
+                                className="text-start"
                             />
                         </div>
                         <Button type="submit" variant="secondary" className="w-full" disabled={loadingMethod !== null || !guestUsername.trim()}>
-                            {loadingMethod === 'guest' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <User className="mr-2 h-4 w-4" />}
-                            Play as Guest
+                            {loadingMethod === 'guest' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <User className="mr-2 h-4 w-4 rtl:ml-2 rtl:mr-0" />}
+                            {t('guest_button')}
                         </Button>
                     </form>
                 </TabsContent>
@@ -252,13 +258,13 @@ export default function AuthForm() {
 
             <div className="text-center pt-8 border-t border-gray-100 dark:border-gray-800">
                 <p className="text-xs text-muted-foreground">
-                    Trouble logging in?{' '}
+                    {t('trouble_login')}{' '}
                     <button
                         onClick={handleClearData}
                         className="underline hover:text-primary transition-colors focus:outline-none"
                         type="button"
                     >
-                        Clear app data
+                        {t('clear_data')}
                     </button>
                 </p>
             </div>

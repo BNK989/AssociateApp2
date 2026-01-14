@@ -55,7 +55,9 @@ export function useTurnNotifications(isMyTurn: boolean, isMyMessageBeingGuessed:
             if (profile?.settings?.enable_audio_chime !== false) {
                 hasPlayedStartSound.current = true;
                 startSoundRef.current.play().catch(e => {
-                    console.log('Start sound autoplay blocked or failed:', e);
+                    if (e.name !== 'NotAllowedError' && e.name !== 'NotSupportedError') {
+                        console.log('Start sound autoplay blocked or failed:', e);
+                    }
                 });
             } else {
                 // If loaded and disabled, mark as played so we don't play it later if they enable it mid-session (unless intent is otherwise)
@@ -140,7 +142,11 @@ export function useTurnNotifications(isMyTurn: boolean, isMyMessageBeingGuessed:
         // 1. Audio Chime
         if (profile?.settings?.enable_audio_chime !== false) {
             // Use turn sound for both turn and guess alerts
-            turnSoundRef.current?.play().catch(err => console.error("Audio play failed:", err));
+            turnSoundRef.current?.play().catch(err => {
+                if (err.name !== 'NotAllowedError' && err.name !== 'NotSupportedError') {
+                    console.error("Audio play failed:", err);
+                }
+            });
         }
 
         // 2. System Notification

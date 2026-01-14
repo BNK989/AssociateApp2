@@ -194,6 +194,7 @@ example chain: engineering, design, blueprint, component, part, fastener, bolt, 
 - [ ] improve layout on mobile - messages scroll out of view (Gerrit reported via iphone)
 - [ ] fix the admin get hints option to work 
 - [ ] when game is generated sometimes the create game button does not work, the create button is stuck, after selecting game type (i.e short, medium etc.) - fix this
+- [x] in sending mode (classic) the char counter in the input field turns red after a number of characters is reached, this should not happen - sending mode counter should not change colors.
 - [x] classic game: any player should be able to start the game (this was once an option but some how it does not work now)
 - [x] when giving up (white flag) or when guessing the word wrong 3 time reaviling the word but gettin no points, we should NOT show the floating message "[player_name] solved [player_name] text"
 - [x] when an invitation is sent via share link the exepting user (checked for logged in guest user) get stuck on "Checking credentials ... Please wait while we connect you to the game ..." - fix this

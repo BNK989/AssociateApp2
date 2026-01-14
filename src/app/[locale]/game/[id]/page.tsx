@@ -16,9 +16,12 @@ import { useVisualViewport } from '@/hooks/useVisualViewport';
 
 import { toast } from "sonner";
 
+import { useTranslations } from 'next-intl';
+
 export default function GameRoom() {
     const { id } = useParams();
     const router = useRouter();
+    const t = useTranslations('GameRoom.Errors');
     const gameId = Array.isArray(id) ? id[0] : id;
     const viewportHeight = useVisualViewport();
 

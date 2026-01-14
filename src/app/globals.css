@@ -43,6 +43,12 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* RTL Font Usage (Hebrew) - Prioritize Rubik */
+/* RTL Font Usage (Hebrew) - Prioritize Rubik */
+html[dir="rtl"] body {
+  font-family: var(--font-rubik), var(--font-geist-sans), var(--font-noto-symbols), sans-serif;
+}
+
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);

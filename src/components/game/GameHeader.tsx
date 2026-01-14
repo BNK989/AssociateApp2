@@ -7,6 +7,7 @@ import { InvitePlayer } from '@/components/InvitePlayer';
 import { GameState, Player, Message } from '@/hooks/useGameLogic';
 import { Progress } from "@/components/ui/progress";
 import { InfoScreen } from './InfoScreen';
+import { useTranslations } from 'next-intl';
 
 type GameHeaderProps = {
     game: GameState;
@@ -60,6 +61,7 @@ export function GameHeader({
     showTutorial
 }: GameHeaderProps) {
     const router = useRouter();
+    const t = useTranslations('GameRoom.Header');
 
     const getInitials = (name: string) => {
         return name
@@ -236,7 +238,7 @@ export function GameHeader({
                                 transition={{ delay: 0.2, duration: 0.5 }}
                                 className="text-xl md:text-2xl text-gray-200 font-medium mb-3 tracking-wide"
                             >
-                                Today&apos;s Theme
+                                {t('today_theme')}
                             </motion.span>
                             <motion.span
                                 layoutId="theme-text"
@@ -254,19 +256,19 @@ export function GameHeader({
 
             {/* Main Header Row */}
             <div className="p-2 flex justify-between items-center relative">
-                <div className={`flex items-center gap-3 ${theme ? 'flex-1 min-w-0 mr-4' : 'w-1/3'}`}>
+                <div className={`flex items-center gap-3 ${theme ? 'flex-1 min-w-0 me-4' : 'w-1/3'}`}>
                     <button
                         onClick={handleBackClick}
-                        className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-900 dark:text-white shrink-0"
-                        aria-label="Back to Lobby"
+                        className="p-2 -ms-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-900 dark:text-white shrink-0"
+                        aria-label={t('go_home')}
                     >
-                        <ArrowLeft className="w-5 h-5" />
+                        <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
                     </button>
 
                     {/* Avatar Stack */}
                     {!hideAvatars && (
                         <div
-                            className="flex items-center -space-x-2 mr-2 cursor-pointer hover:opacity-80 transition-opacity overflow-hidden"
+                            className="flex items-center -space-x-2 ms-2 cursor-pointer hover:opacity-80 transition-opacity overflow-hidden"
                             onClick={() => setShowInfo(true)}
                         >
                             {sortedPlayers.map((player) => (
@@ -284,14 +286,14 @@ export function GameHeader({
                     {/* Theme Title (Daily Game) - In Flow */}
                     {theme && !showWelcome && (
                         <div
-                            className="flex flex-col items-start ml-1 cursor-pointer hover:opacity-70 transition-opacity min-w-0"
+                            className="flex flex-col items-start ms-1 cursor-pointer hover:opacity-70 transition-opacity min-w-0"
                             onClick={() => setShowInfo(true)}
                         >
                             <motion.span
                                 layoutId="theme-label"
                                 className="text-[10px] uppercase font-black text-amber-500/90 tracking-widest leading-none mb-0.5"
                             >
-                                Today&apos;s Theme
+                                {t('today_theme')}
                             </motion.span>
                             <motion.span
                                 layoutId="theme-text"
@@ -307,7 +309,7 @@ export function GameHeader({
 
                 {/* Score & Bank (Updated) */}
                 <div
-                    className={`flex items-center justify-end gap-2 sm:gap-4 ml-2 mr-3 cursor-pointer hover:opacity-80 transition-opacity ${theme ? 'shrink-0' : 'w-1/3'}`}
+                    className={`flex items-center justify-end gap-2 sm:gap-4 ms-2 me-3 cursor-pointer hover:opacity-80 transition-opacity ${theme ? 'shrink-0' : 'w-1/3'}`}
                     onClick={() => setShowInfo(true)}
                 >
                     {/* Bank / Pot */}
@@ -321,7 +323,7 @@ export function GameHeader({
 
                         {/* Message Counter */}
                         {game.status !== 'solving' && maxMessages && (
-                            <div className="ml-2 flex items-center bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full text-[10px] text-gray-500 font-mono">
+                            <div className="ms-2 flex items-center bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full text-[10px] text-gray-500 font-mono">
                                 {messageCount}/{maxMessages}
                             </div>
                         )}
@@ -336,7 +338,7 @@ export function GameHeader({
                             <div className={`flex items-center gap-1.5 font-bold transition-all duration-300 ${isLeader ? 'text-amber-500 dark:text-amber-400' : 'text-blue-600 dark:text-blue-400'}`}>
                                 <div className="relative">
                                     <Star className={`w-4 h-4 ${isLeader ? 'fill-current' : ''}`} />
-                                    {isLeader && <Crown className="absolute -top-3 -right-2 w-3 h-3 text-amber-500 animate-bounce" />}
+                                    {isLeader && <Crown className="absolute -top-3 -end-2 w-3 h-3 text-amber-500 animate-bounce" />}
                                 </div>
                                 <span className={`text-lg transition-all duration-300 ${displayScore !== myScore ? 'scale-125 text-green-500' : ''}`}>
                                     {displayScore}
@@ -357,7 +359,7 @@ export function GameHeader({
                                     disabled={isProposing}
                                     className="px-3 py-1 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-wait rounded text-xs font-bold text-white transition-colors"
                                 >
-                                    {isProposing ? '...' : 'Solve'}
+                                    {isProposing ? '...' : t('solve')}
                                 </button>
                             )}
                         </>
@@ -368,7 +370,7 @@ export function GameHeader({
             {/* Stats Bar (Moved Below) - Only show in solving mode */}
             {game.status === 'solving' && (
                 <div className="flex justify-between items-center px-4 py-1.5 bg-gray-50 dark:bg-gray-950/50 text-xs border-t border-gray-100 dark:border-gray-800">
-                    <div className="flex items-center gap-2 flex-1 mr-4">
+                    <div className="flex items-center gap-2 flex-1 me-4">
                         <div className="relative w-full">
                             <Progress value={isFeverMode ? 100 : teamFlowProgress} className={`h-1.5 ${isFeverMode ? 'animate-pulse' : ''}`} />
                             {isFeverMode && (
@@ -388,11 +390,11 @@ export function GameHeader({
 
             {/* Proposal Popup */}
             {game.solving_proposal_created_at && (
-                <div className="absolute top-full left-0 w-full bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-2 flex justify-between items-center z-10 shadow-lg text-gray-900 dark:text-white">
+                <div className="absolute top-full start-0 w-full bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-2 flex justify-between items-center z-10 shadow-lg text-gray-900 dark:text-white">
                     <div className="flex flex-col">
-                        <span className="text-sm font-bold">Switch to Solving?</span>
+                        <span className="text-sm font-bold">{t('switch_solving')}</span>
                         <span className="text-xs opacity-70">
-                            {game.solve_proposal_confirmations?.length || 0}/{players.filter(p => !p.has_left).length} Agreed ({proposalTimeLeft}s)
+                            {game.solve_proposal_confirmations?.length || 0}/{players.filter(p => !p.has_left).length} {t('agreed')} ({proposalTimeLeft}s)
                         </span>
                     </div>
                     <div className="flex gap-2">
@@ -401,21 +403,21 @@ export function GameHeader({
                                 disabled
                                 className="px-3 py-1 bg-gray-400 dark:bg-gray-600 rounded text-xs font-bold text-white cursor-not-allowed"
                             >
-                                Confirmed
+                                {t('confirmed')}
                             </button>
                         ) : (
                             <button
                                 onClick={onConfirmSolving}
                                 className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-xs font-bold text-white transition-colors"
                             >
-                                Confirm
+                                {t('confirm')}
                             </button>
                         )}
                         <button
                             onClick={onDenySolving}
                             className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-xs font-bold text-white transition-colors"
                         >
-                            Deny
+                            {t('deny')}
                         </button>
                     </div>
                 </div>
@@ -427,9 +429,9 @@ export function GameHeader({
                 showLeaveConfirm && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
                         <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-xl max-w-xs w-full border border-gray-200 dark:border-gray-800">
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Leave Game?</h3>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{t('back_confirm_title')}</h3>
                             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                                You will not be able to return to this game.
+                                {t('back_confirm_msg')}
                             </p>
                             <div className="flex flex-col gap-2 w-full">
                                 <button
@@ -439,7 +441,7 @@ export function GameHeader({
                                     }}
                                     className="w-full px-4 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded"
                                 >
-                                    Leave Game (Permanent)
+                                    {t('leave_perm')}
                                 </button>
                                 <button
                                     onClick={(e) => {
@@ -449,7 +451,7 @@ export function GameHeader({
                                     }}
                                     className="w-full px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
                                 >
-                                    Go Home (Keep Game Open)
+                                    {t('go_home')}
                                 </button>
                                 <button
                                     onClick={(e) => {
@@ -458,7 +460,7 @@ export function GameHeader({
                                     }}
                                     className="w-full px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                                 >
-                                    Cancel
+                                    {t('cancel')}
                                 </button>
                             </div>
                         </div>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
     Dialog,
     DialogContent,
@@ -17,29 +18,30 @@ type OnboardingTutorialProps = {
 
 export function OnboardingTutorial({ open, onComplete }: OnboardingTutorialProps) {
     const [step, setStep] = useState(0);
+    const t = useTranslations('Onboarding');
 
     const steps = [
         {
-            title: "Welcome to Associate!",
-            description: "The game where great minds think alike. Test your connection with friends in this word association game.",
+            title: t('welcome.title'),
+            description: t('welcome.description'),
             icon: <Zap className="w-12 h-12 text-yellow-500" />,
             color: "bg-yellow-50 dark:bg-yellow-900/20",
         },
         {
-            title: "Phase 1: Chatting",
-            description: "Start by texting naturally with your friends. The goal is to build up a conversation context.",
+            title: t('phase1.title'),
+            description: t('phase1.description'),
             icon: <MessageSquare className="w-12 h-12 text-blue-500" />,
             color: "bg-blue-50 dark:bg-blue-900/20",
         },
         {
-            title: "Phase 2: Solving",
-            description: "Guess the previous word! Hints are available if you get stuck, but be careful - too many wrong guesses will reveal the word.",
+            title: t('phase2.title'),
+            description: t('phase2.description'),
             icon: <Zap className="w-12 h-12 text-purple-500" />,
             color: "bg-purple-50 dark:bg-purple-900/20",
         },
         {
-            title: "Ready to Play?",
-            description: "Create a new game and invite your friends to get started!",
+            title: t('ready.title'),
+            description: t('ready.description'),
             icon: <Trophy className="w-12 h-12 text-green-500" />,
             color: "bg-green-50 dark:bg-green-900/20",
         }
@@ -91,9 +93,9 @@ export function OnboardingTutorial({ open, onComplete }: OnboardingTutorialProps
                         className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold h-12 text-lg"
                     >
                         {isLastStep ? (
-                            <span className="flex items-center gap-2">Let's Go! <Zap className="w-4 h-4" /></span>
+                            <span className="flex items-center gap-2">{t('lets_go')} <Zap className="w-4 h-4" /></span>
                         ) : (
-                            <span className="flex items-center gap-2">Next <ArrowRight className="w-4 h-4" /></span>
+                            <span className="flex items-center gap-2">{t('next')} <ArrowRight className="w-4 h-4 rtl:rotate-180" /></span>
                         )}
                     </Button>
                 </DialogFooter>

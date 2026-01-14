@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations, useLocale } from 'next-intl';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthProvider';
 import { NotificationCenter } from './NotificationCenter';
@@ -21,6 +22,9 @@ import { useTheme } from 'next-themes';
 import { usePathname } from 'next/navigation';
 
 export function NavBar() {
+    const t = useTranslations('NavBar');
+    const locale = useLocale();
+    const dir = locale === 'he' ? 'rtl' : 'ltr';
     const { user, profile, refreshProfile } = useAuth();
     const { setTheme, resolvedTheme } = useTheme();
     const pathname = usePathname();
@@ -91,14 +95,14 @@ export function NavBar() {
                 <div className="flex items-center gap-4">
                     <NotificationCenter />
 
-                    <div className="flex items-center gap-3 pl-4 border-l border-gray-200 dark:border-gray-800">
-                        <DropdownMenu>
+                    <div className="flex items-center gap-3 ps-4 border-s border-gray-200 dark:border-gray-800">
+                        <DropdownMenu dir={dir}>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                                     <Avatar className="h-8 w-8 border border-gray-200 dark:border-gray-700">
                                         <AvatarImage src={profile?.avatar_url} alt={profile?.username} />
                                         <AvatarFallback className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-white text-xs">
-                                            {getInitials(profile?.username || user?.user_metadata?.username || 'Guest')}
+                                            {getInitials(profile?.username || user?.user_metadata?.username || t('guest_badge'))}
                                         </AvatarFallback>
                                     </Avatar>
                                 </Button>
@@ -108,15 +112,15 @@ export function NavBar() {
                                     <div className="flex items-center justify-between gap-4">
                                         <div className="flex flex-col space-y-1">
                                             <div className="flex items-center gap-2">
-                                                <p className="text-sm font-medium leading-none">{profile?.username || user?.user_metadata?.username || 'Guest'}</p>
+                                                <p className="text-sm font-medium leading-none">{profile?.username || user?.user_metadata?.username || t('guest_badge')}</p>
                                                 {user.is_anonymous && (
                                                     <span className="text-[10px] bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/20 px-1.5 py-0.5 rounded uppercase font-bold tracking-wide">
-                                                        Guest
+                                                        {t('guest_badge')}
                                                     </span>
                                                 )}
                                             </div>
                                             <p className="text-xs leading-none text-gray-500 dark:text-gray-400">
-                                                {user.is_anonymous ? 'Sign up to save progress' : user.email}
+                                                {user.is_anonymous ? t('guest_message') : user.email}
                                             </p>
                                         </div>
                                         <Button
@@ -134,14 +138,14 @@ export function NavBar() {
                                             ) : (
                                                 <Moon className="h-4 w-4" />
                                             )}
-                                            <span className="sr-only">Toggle theme</span>
+                                            <span className="sr-only">{t('theme_toggle')}</span>
                                         </Button>
                                     </div>
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-800" />
                                 <DropdownMenuItem asChild className="focus:bg-gray-100 dark:focus:bg-gray-800 cursor-pointer">
                                     <Link href="/settings">
-                                        Preferences
+                                        {t('preferences')}
                                     </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-800" />
@@ -149,8 +153,8 @@ export function NavBar() {
                                     className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-gray-100 dark:focus:bg-gray-800 cursor-pointer"
                                     onClick={handleSignOut}
                                 >
-                                    <LogOut className="mr-2 h-4 w-4" />
-                                    <span>Log out</span>
+                                    <LogOut className="me-2 h-4 w-4" />
+                                    <span>{t('logout')}</span>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>

@@ -1,8 +1,11 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from 'next-intl/plugin';
+import { withPostHogConfig } from "@posthog/nextjs-config";
+
+const withNextIntl = createNextIntlPlugin();
 
 const nextConfig: NextConfig = {
   // Allow all local origins for dev testing on mobile
-
   allowedDevOrigins: [
     "localhost:3000",
     "local-origin.dev",
@@ -15,9 +18,7 @@ const nextConfig: NextConfig = {
   },
 };
 
-import { withPostHogConfig } from "@posthog/nextjs-config";
-
-export default withPostHogConfig(nextConfig, {
+export default withPostHogConfig(withNextIntl(nextConfig), {
   personalApiKey: process.env.SOURCE_MAP_UPLOAD || 'skipped',
   envId: '266458',
   host: 'https://us.i.posthog.com',

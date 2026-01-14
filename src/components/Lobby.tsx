@@ -48,11 +48,14 @@ type Game = {
     fever_mode_remaining: number;
 };
 
+import { useTranslations } from "next-intl";
+
 export default function Lobby() {
     const { user, profile, refreshProfile } = useAuth();
     const { isAdmin } = useAdmin();
     const router = useRouter();
     const posthog = usePostHog();
+    const t = useTranslations('Lobby');
 
     const [activeGames, setActiveGames] = useState<Game[]>([]);
     const [completedGames, setCompletedGames] = useState<Game[]>([]);
@@ -124,7 +127,7 @@ export default function Lobby() {
             if (error) {
                 console.error('Error fetching games:', error);
                 console.error('Error details:', JSON.stringify(error, null, 2));
-                toast.error("Failed to load games: " + error.message);
+                toast.error(t('toasts.load_error', { message: error.message }));
                 setGamesLoading(false);
                 return;
             }
@@ -306,12 +309,12 @@ export default function Lobby() {
             // Optimistic update
             setActiveGames(prev => prev.filter(g => g.id !== gameId));
             setCompletedGames(prev => prev.filter(g => g.id !== gameId));
-            toast.success("Left game successfully");
+            toast.success(t('toasts.left_success'));
             setGameToLeave(null);
 
         } catch (error) {
             console.error('Error leaving game:', error);
-            toast.error("Failed to leave game");
+            toast.error(t('toasts.left_error'));
         } finally {
             setLeaving(false);
         }
@@ -326,7 +329,7 @@ export default function Lobby() {
 
         if (error) {
             console.error('Error archiving game:', error);
-            alert('Failed to archive game');
+            toast.error(t('toasts.archived_error'));
         } else {
             setActiveGames(prev => prev.filter(g => g.id !== gameId));
             setCompletedGames(prev => prev.filter(g => g.id !== gameId));
@@ -343,9 +346,9 @@ export default function Lobby() {
 
         if (error) {
             console.error('Error deleting game:', error);
-            toast.error('Failed to delete game');
+            toast.error(t('toasts.deleted_error'));
         } else {
-            toast.success('Game deleted');
+            toast.success(t('toasts.deleted_success'));
             setActiveGames(prev => prev.filter(g => g.id !== gameId));
             setCompletedGames(prev => prev.filter(g => g.id !== gameId));
         }
@@ -360,10 +363,10 @@ export default function Lobby() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'reset_game' })
             });
-            toast.success('Game reset successfully');
+            toast.success(t('toasts.reset_success'));
         } catch (error) {
             console.error('Error resetting game:', error);
-            toast.error('Failed to reset game');
+            toast.error(t('toasts.reset_error'));
         }
     };
 
@@ -372,14 +375,14 @@ export default function Lobby() {
             {/* Active Games Section */}
             <section>
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-purple-400">Your Games</h2>
+                    <h2 className="text-2xl font-bold text-purple-400">{t('title')}</h2>
                     <Button
                         onClick={() => setIsCreateOpen(true)}
                         disabled={creating}
                         className="bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 transition-all duration-300 transform hover:-translate-y-0.5"
                     >
                         <Plus className="w-4 h-4 mr-2" />
-                        New Game
+                        {t('new_game')}
                     </Button>
                 </div>
 
@@ -399,7 +402,7 @@ export default function Lobby() {
                                     router.push('/daily');
                                 }}
                                 disabled={isDailyLoading}
-                                className={`w-full group relative overflow-hidden rounded-2xl border transition-all duration-300 transform hover:scale-[1.01] hover:shadow-xl text-left cursor-pointer
+                                className={`w-full group relative overflow-hidden rounded-2xl border transition-all duration-300 transform hover:scale-[1.01] hover:shadow-xl text-start cursor-pointer
                         ${isDailyCompleted
                                         ? 'bg-secondary/50 border-border opacity-80'
                                         : 'bg-gradient-to-r from-amber-100 to-orange-100 dark:bg-none dark:bg-gray-900/40 border-orange-200 dark:border-amber-500/20'
@@ -412,19 +415,19 @@ export default function Lobby() {
                                         </div>
                                         <div>
                                             <h3 className={`text-lg font-bold ${isDailyCompleted ? 'text-muted-foreground' : 'text-orange-900 dark:text-amber-100'}`}>
-                                                {isDailyCompleted ? 'Daily Challenge Completed' : 'Daily Challenge'}
+                                                {isDailyCompleted ? t('daily.completed') : t('daily.title')}
                                             </h3>
                                             <p className={`text-sm ${isDailyCompleted ? 'text-muted-foreground' : 'text-orange-700 dark:text-gray-400'}`}>
-                                                {isDailyCompleted ? 'Great job! Come back tomorrow for a new chain.' : 'Solve the daily word chain to win points!'}
+                                                {isDailyCompleted ? t('daily.completed_description') : t('daily.description')}
                                             </p>
                                         </div>
                                     </div>
                                     {!isDailyCompleted && (
-                                        <div className="bg-white/80 dark:bg-white/10 p-2 rounded-full transition-opacity transform group-hover:translate-x-1">
+                                        <div className="bg-white/80 dark:bg-white/10 p-2 rounded-full transition-opacity transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1">
                                             {isDailyLoading ? (
                                                 <Loader2 className="w-5 h-5 text-orange-600 dark:text-amber-400 animate-spin" />
                                             ) : (
-                                                <ArrowRight className="w-5 h-5 text-orange-600 dark:text-amber-400" />
+                                                <ArrowRight className="w-5 h-5 text-orange-600 dark:text-amber-400 rtl:rotate-180" />
                                             )}
                                         </div>
                                     )}
@@ -456,10 +459,10 @@ export default function Lobby() {
                                     <MessageSquarePlus className="w-12 h-12 text-purple-600 dark:text-purple-400" />
                                 </div>
                                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                                    Start Your First Game!
+                                    {t('empty.title')}
                                 </h3>
                                 <p className="text-gray-500 dark:text-gray-400 max-w-md mb-8 leading-relaxed">
-                                    Create a game to start associating words with your friends. Test your connection and see who knows who best!
+                                    {t('empty.description')}
                                 </p>
                                 <Button
                                     onClick={() => setIsCreateOpen(true)}
@@ -467,7 +470,7 @@ export default function Lobby() {
                                     className="text-lg px-8 py-6 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-xl shadow-purple-500/20 hover:shadow-purple-500/40 transition-all duration-300 transform hover:scale-105"
                                 >
                                     <Sparkles className="w-5 h-5 mr-2" />
-                                    Create Game
+                                    {t('empty.button')}
                                 </Button>
                             </div>
                         )}
@@ -478,7 +481,7 @@ export default function Lobby() {
             {/* Completed Games Section */}
             {completedGames.length > 0 && (
                 <section>
-                    <h2 className="text-2xl font-bold text-green-400 mb-6">Past Games</h2>
+                    <h2 className="text-2xl font-bold text-green-400 mb-6">{t('past_games')}</h2>
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {completedGames.map((game) => (
                             <GameCard
@@ -498,15 +501,15 @@ export default function Lobby() {
             <Dialog open={!!gameToLeave} onOpenChange={(open) => !open && setGameToLeave(null)}>
                 <DialogContent className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white">
                     <DialogHeader>
-                        <DialogTitle>Leave Game</DialogTitle>
+                        <DialogTitle>{t('leave_dialog.title')}</DialogTitle>
                         <DialogDescription className="text-gray-400">
-                            Are you sure you want to leave this game? You won&apos;t be able to rejoin unless invited again.
+                            {t('leave_dialog.description')}
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
-                        <Button variant="ghost" onClick={() => setGameToLeave(null)} disabled={leaving}>Cancel</Button>
+                        <Button variant="ghost" onClick={() => setGameToLeave(null)} disabled={leaving}>{t('leave_dialog.cancel')}</Button>
                         <Button variant="destructive" onClick={confirmLeave} disabled={leaving}>
-                            {leaving ? 'Leaving...' : 'Leave Game'}
+                            {leaving ? t('leave_dialog.leaving') : t('leave_dialog.submit')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -516,14 +519,14 @@ export default function Lobby() {
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                 <DialogContent className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Create New Game</DialogTitle>
+                        <DialogTitle>{t('create_dialog.title')}</DialogTitle>
                         <DialogDescription className="text-gray-400">
-                            Configure game settings before starting.
+                            {t('create_dialog.description')}
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="py-4">
-                        <Label className="text-base font-semibold mb-3 block">Game Length (Total Messages)</Label>
+                        <Label className="text-base font-semibold mb-3 block">{t('create_dialog.game_length')}</Label>
                         <div className="grid grid-cols-2 gap-3">
                             {GAME_MODES.map((mode) => (
                                 <button
@@ -540,20 +543,20 @@ export default function Lobby() {
                                         {mode.name}
                                     </div>
                                     <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                        Max {mode.limit} messages
+                                        {t('create_dialog.max_messages', { count: mode.limit })}
                                     </div>
                                 </button>
                             ))}
                         </div>
                         <div className="mt-4 text-xs text-gray-400 bg-gray-50 dark:bg-gray-800/50 p-3 rounded">
-                            * Once the limit is reached, the game will automatically switch to Solving Mode.
+                            {t('create_dialog.note')}
                         </div>
                     </div>
 
                     <DialogFooter>
-                        <Button variant="ghost" onClick={() => setIsCreateOpen(false)} disabled={creating}>Cancel</Button>
+                        <Button variant="ghost" onClick={() => setIsCreateOpen(false)} disabled={creating}>{t('create_dialog.cancel')}</Button>
                         <Button onClick={createGame} disabled={creating} className="bg-purple-600 hover:bg-purple-700 text-white">
-                            {creating ? 'Creating...' : 'Start Game'}
+                            {creating ? t('create_dialog.creating') : t('create_dialog.submit')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

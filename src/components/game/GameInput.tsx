@@ -8,6 +8,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from 'react';
 import { GAME_CONFIG } from '@/lib/gameConfig';
 import { toast } from "sonner";
+import { useTranslations } from 'next-intl';
 
 type GameInputProps = {
     game: GameState;
@@ -42,6 +43,7 @@ export function GameInput({
     isSinglePlayer = false,
     onGiveUp
 }: GameInputProps) {
+    const t = useTranslations('GameRoom.Input');
 
     // Determine who has the "turn"
     let activePlayerId = game.current_turn_user_id;
@@ -57,32 +59,32 @@ export function GameInput({
     const isFreeForAll = isSinglePlayer || solvingTimeLeft === 0 || targetPlayerHasLeft;
 
     // Determine Placeholder Text
-    let placeholderText = "Type a message...";
+    let placeholderText = t('placeholder');
     if (game.status === 'solving') {
         if (isSinglePlayer) {
-            placeholderText = "Guess the word...";
+            placeholderText = t('placeholder_solving_single');
         } else if (isFreeForAll) {
             if (isMyTurn) {
                 // Should technically be impossible if I left, but handle gracefully
-                placeholderText = "Anyone can guess your text";
+                placeholderText = t('placeholder_solving_single');
             } else {
                 const authorName = targetPlayer?.profiles?.username || 'Author';
                 if (targetPlayerHasLeft) {
-                    placeholderText = `${authorName} left! Free for all to guess!`;
+                    placeholderText = t('placeholder_free');
                 } else {
-                    placeholderText = `Guess ${authorName}'s text!`;
+                    placeholderText = t('placeholder_solving_other', { user: authorName, seconds: solvingTimeLeft ?? 0 });
                 }
             }
         } else if (isMyTurn) {
-            placeholderText = `It's your word! You have ${solvingTimeLeft}s to reveal it!`;
+            placeholderText = t('placeholder_solving_me', { seconds: solvingTimeLeft ?? 0 });
         } else {
-            placeholderText = `${targetPlayer?.profiles?.username || 'Author'} is revealing their word... (${solvingTimeLeft}s)`;
+            placeholderText = t('placeholder_solving_other', { user: targetPlayer?.profiles?.username || 'Author', seconds: solvingTimeLeft ?? 0 });
         }
     } else {
         if (isMyTurn) {
-            placeholderText = "It's your turn!";
+            placeholderText = t('placeholder_turn_me');
         } else {
-            placeholderText = `It is ${targetPlayer?.profiles?.username || 'someone else'}'s turn`;
+            placeholderText = t('placeholder_turn_other', { user: targetPlayer?.profiles?.username || 'someone else' });
         }
     }
 
@@ -119,19 +121,19 @@ export function GameInput({
 
     let nextCost = 0;
     let nextLabel = "";
-    let buttonText: React.ReactNode = "1ˢᵗ";
+    let buttonText: React.ReactNode = t('hint_1');
 
     if (effectiveLevel === 0) {
         nextCost = Math.ceil(wordValue * HINT_COSTS.TIER_1); // 10%
-        nextLabel = "Reveal Length";
-        buttonText = "1ˢᵗ";
+        nextLabel = t('reveal_len');
+        buttonText = t('hint_1');
     } else if (effectiveLevel === 1) {
         nextCost = Math.ceil(wordValue * HINT_COSTS.TIER_2); // 10%
-        nextLabel = "Reveal 1st + 25%";
+        nextLabel = t('hint_2');
         buttonText = <Shuffle className="h-3 w-3" />;
     } else if (effectiveLevel === 2) {
         nextCost = Math.ceil(wordValue * HINT_COSTS.TIER_3); // 40%
-        nextLabel = "AI Hint";
+        nextLabel = t('hint_ai');
         buttonText = "AI";
     }
 
@@ -259,7 +261,7 @@ export function GameInput({
                 if (onGiveUp) onGiveUp();
             }}
             className="h-10 w-10 flex flex-col items-center justify-center rounded-lg transition-colors bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Give Up"
+            title={t('give_up')}
         >
             <span className="text-lg leading-none">🏳️</span>
         </button>
@@ -279,10 +281,10 @@ export function GameInput({
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: 10 }}
-                                className="absolute -top-3 right-14 z-10"
+                                className="absolute -top-3 end-14 z-10"
                             >
                                 <Badge variant="subtle" className="shadow-sm">
-                                    FREE FOR ALL
+                                    {t('free_for_all')}
                                 </Badge>
                             </motion.div>
                         )}
@@ -297,8 +299,8 @@ export function GameInput({
                                     <TooltipContent side="top" align="start">
                                         <div className="text-xs space-y-1">
                                             <p className="font-bold">{nextLabel}</p>
-                                            <p className="text-muted-foreground">Cost: <span className="text-red-500 dark:text-red-400">-{nextCost} pts</span></p>
-                                            <p className="text-[10px] text-muted-foreground opacity-70">Deducted from word value</p>
+                                            <p className="text-muted-foreground">{t('cost_pts', { cost: -nextCost })}</p>
+                                            <p className="text-[10px] text-muted-foreground opacity-70">{t('cost_deducted')}</p>
                                         </div>
                                     </TooltipContent>
                                 </Tooltip>
@@ -317,7 +319,7 @@ export function GameInput({
                             onChange={(e) => {
                                 const val = e.target.value;
                                 if (val.length > GAME_CONFIG.MESSAGE_MAX_LENGTH) {
-                                    toast.error(`Message cannot exceed ${GAME_CONFIG.MESSAGE_MAX_LENGTH} characters`);
+                                    toast.error(t('toast_max_length', { max: GAME_CONFIG.MESSAGE_MAX_LENGTH }));
                                     import("sonner").then(mod => mod.toast.dismiss()); // optional cleanup
                                     return;
                                 }
@@ -330,11 +332,11 @@ export function GameInput({
                             onFocus={handleInteraction}
                             disabled={isInputDisabled}
                             placeholder={placeholderText}
-                            className={`h-10 w-full px-3 py-2 pr-14 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none transition-colors ${game.status === 'solving' ? 'border-purple-500' : ''} ${isInputDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={`h-10 w-full px-3 py-2 pe-14 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none transition-colors ${game.status === 'solving' ? 'border-purple-500' : ''} ${isInputDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
                         {/* Character Counter */}
                         {(input.length > 0 || (game.status === 'solving' && targetMessage && (isSinglePlayer || currentLevel >= 1))) && (
-                            <div className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium select-none pointer-events-none transition-colors ${targetMessage && input.replace(/\s/g, '').length > targetMessage.content.replace(/\s/g, '').length
+                            <div className={`absolute end-3 top-1/2 -translate-y-1/2 text-xs font-medium select-none pointer-events-none transition-colors ${game.status === 'solving' && targetMessage && input.replace(/\s/g, '').length > targetMessage.content.replace(/\s/g, '').length
                                 ? 'text-red-500 dark:text-red-400'
                                 : 'text-gray-400 dark:text-gray-500'
                                 }`}>
@@ -352,7 +354,7 @@ export function GameInput({
                         onMouseDown={(e) => e.preventDefault()}
                         className={`h-10 w-10 flex items-center justify-center rounded-lg text-white font-bold shrink-0 transition-colors ${game.status === 'solving' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-green-600 hover:bg-green-700'} ${isSubmitDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
-                        {sending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5 ml-0.5" />}
+                        {sending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5 rtl:-scale-x-100" />}
                     </button>
                 </form>
             </TooltipProvider>

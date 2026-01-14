@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthProvider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ function InvitePlayerContent({ gameId, players }: { gameId: string; players: Pla
     const searchParams = useSearchParams();
     const router = useRouter();
     const pathname = usePathname();
+    const t = useTranslations('Invite');
 
     useEffect(() => {
         const action = searchParams.get('action');
@@ -80,7 +82,7 @@ function InvitePlayerContent({ gameId, players }: { gameId: string; players: Pla
 
         if (error) {
             console.error('Error sending invite:', error);
-            toast.error("Failed to send invite");
+            toast.error(t('toasts.invite_error'));
         } else {
             setInvited(prev => new Set(prev).add(receiverId));
         }
@@ -95,27 +97,27 @@ function InvitePlayerContent({ gameId, players }: { gameId: string; players: Pla
             <DialogTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-2">
                     <UserPlus className="w-4 h-4" />
-                    Invite
+                    {t('button')}
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px] bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white">
                 <DialogHeader>
-                    <DialogTitle>Invite Players</DialogTitle>
+                    <DialogTitle>{t('title')}</DialogTitle>
                 </DialogHeader>
 
                 <div className="mb-4">
                     <Input
-                        placeholder="Search username..."
+                        placeholder={t('search_placeholder')}
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
-                        className="mb-2"
+                        className="mb-2 text-start"
                     />
                     <div className="h-64 border border-gray-200 dark:border-gray-700 rounded-md overflow-y-auto p-1">
                         {results.length === 0 ? (
-                            <div className="py-6 text-center text-sm text-gray-500">No users found.</div>
+                            <div className="py-6 text-center text-sm text-gray-500">{t('no_users')}</div>
                         ) : (
                             <div className="space-y-1">
-                                <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">Suggestions</div>
+                                <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">{t('suggestions')}</div>
                                 {results.map((profile) => (
                                     <div
                                         key={profile.id}
@@ -138,15 +140,15 @@ function InvitePlayerContent({ gameId, players }: { gameId: string; players: Pla
                                         </div>
                                         {players.some(p => p.user_id === profile.id) ? (
                                             <span className="text-blue-500 flex items-center gap-1 text-xs font-bold">
-                                                <Check className="w-3 h-3" /> Joined
+                                                <Check className="w-3 h-3" /> {t('joined')}
                                             </span>
                                         ) : invited.has(profile.id) ? (
                                             <span className="text-green-500 flex items-center gap-1 text-xs">
-                                                <Check className="w-3 h-3" /> Sent
+                                                <Check className="w-3 h-3" /> {t('sent')}
                                             </span>
                                         ) : (
                                             <Button size="sm" variant="ghost" className="h-6 text-xs">
-                                                Invite
+                                                {t('button')}
                                             </Button>
                                         )}
                                     </div>
@@ -162,7 +164,7 @@ function InvitePlayerContent({ gameId, players }: { gameId: string; players: Pla
                             <span className="w-full border-t border-gray-200 dark:border-gray-700" />
                         </div>
                         <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-white dark:bg-gray-900 px-2 text-gray-500">Or invite via link</span>
+                            <span className="bg-white dark:bg-gray-900 px-2 text-gray-500">{t('or_link')}</span>
                         </div>
                     </div>
 
@@ -177,11 +179,11 @@ function InvitePlayerContent({ gameId, players }: { gameId: string; players: Pla
                                         link += `?invitedBy=${encodeURIComponent(profile.username)}`;
                                     }
                                     navigator.clipboard.writeText(link);
-                                    toast.success("Link copied to clipboard!");
+                                    toast.success(t('toasts.link_copied'));
                                 }}
                             >
                                 <Link className="w-4 h-4" />
-                                <span className="text-xs">Copy Link</span>
+                                <span className="text-xs">{t('copy_link')}</span>
                             </Button>
 
                             {typeof navigator !== 'undefined' && navigator.share && (
@@ -201,14 +203,14 @@ function InvitePlayerContent({ gameId, players }: { gameId: string; players: Pla
                                     }}
                                 >
                                     <Share2 className="w-4 h-4" />
-                                    <span className="text-xs">Share</span>
+                                    <span className="text-xs">{t('share')}</span>
                                 </Button>
                             )}
                         </div>
                     </div>
 
                     <Button onClick={() => setOpen(false)} className="w-full">
-                        Done
+                        {t('done')}
                     </Button>
                 </div>
             </DialogContent>

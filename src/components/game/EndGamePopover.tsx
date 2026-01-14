@@ -15,6 +15,7 @@ import { Trophy, MessageSquare, Share2 } from "lucide-react";
 import confetti from 'canvas-confetti';
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
+import { useTranslations } from 'next-intl';
 
 type EndGamePopoverProps = {
     open: boolean;
@@ -27,7 +28,7 @@ type EndGamePopoverProps = {
 };
 
 export function EndGamePopover({ open, onClose, players, messages, gameId, gameHandle, teamPot }: EndGamePopoverProps) {
-
+    const t = useTranslations('GameRoom.EndGame');
     const [internalOpen, setInternalOpen] = useState(open);
 
     useEffect(() => {
@@ -78,9 +79,9 @@ export function EndGamePopover({ open, onClose, players, messages, gameId, gameH
     // Share Functionality
     const handleShare = async () => {
         let shareBody = `Associate Game #${gameHandle || '?'}\n`;
-        shareBody += `💰 Team Bank: ${teamPot}\n`;
-        shareBody += `🏆 Top Score: ${sortedPlayers[0]?.score || 0}\n\n`;
-        shareBody += `Leaderboard:\n`;
+        shareBody += `💰 ${t('share_team_bank')}: ${teamPot}\n`;
+        shareBody += `🏆 ${t('share_top_score')}: ${sortedPlayers[0]?.score || 0}\n\n`;
+        shareBody += `${t('share_leaderboard')}:\n`;
 
         sortedPlayers.slice(0, 3).forEach((p, i) => {
             const medals = ['🥇', '🥈', '🥉'];
@@ -88,7 +89,7 @@ export function EndGamePopover({ open, onClose, players, messages, gameId, gameH
         });
 
         // For clipboard, we still append the link so it's a complete message
-        const finalShareText = `${shareBody}\nPlay at: ${window.location.origin}`;
+        const finalShareText = `${shareBody}\n${t('play_at')}: ${window.location.origin}`;
 
         try {
             if (navigator.share) {
@@ -99,16 +100,16 @@ export function EndGamePopover({ open, onClose, players, messages, gameId, gameH
                 });
             } else {
                 await navigator.clipboard.writeText(finalShareText);
-                toast.success("Results copied to clipboard!");
+                toast.success(t('share_success'));
             }
         } catch (error) {
             console.error('Error sharing:', error);
             // Fallback for desktop Safari/Firefox if share fails or is denied
             try {
                 await navigator.clipboard.writeText(finalShareText);
-                toast.success("Results copied to clipboard!");
+                toast.success(t('share_success'));
             } catch (clipboardError) {
-                toast.error("Failed to share results");
+                toast.error(t('share_fail'));
             }
         }
     };
@@ -118,10 +119,10 @@ export function EndGamePopover({ open, onClose, players, messages, gameId, gameH
             <DialogContent className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle className="text-center text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
-                        Well Played!
+                        {t('title')}
                     </DialogTitle>
                     <DialogDescription className="text-center text-gray-400 text-lg">
-                        Game Completed
+                        {t('subtitle')}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -129,25 +130,25 @@ export function EndGamePopover({ open, onClose, players, messages, gameId, gameH
                     {/* Top Stats Row */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="flex flex-col items-center justify-center p-3 bg-gray-100 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
-                            <span className="text-gray-400 text-xs uppercase tracking-wider">Messages</span>
+                            <span className="text-gray-400 text-xs uppercase tracking-wider">{t('stat_messages')}</span>
                             <div className="flex items-center gap-2 mt-1">
-                                <MessageSquare className="w-5 h-5 text-blue-400" />
+                                <MessageSquare className="w-5 h-5 text-blue-400 rtl:scale-x-[-1]" />
                                 <span className="text-2xl font-bold text-gray-900 dark:text-white">{totalMessages}</span>
                             </div>
                         </div>
                         <div className="flex flex-col items-center justify-center p-3 bg-gray-100 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
-                            <span className="text-gray-400 text-xs uppercase tracking-wider">Team Bank</span>
+                            <span className="text-gray-400 text-xs uppercase tracking-wider">{t('stat_team_bank')}</span>
                             <div className="flex items-center gap-2 mt-1">
                                 <span className="text-2xl">💰</span>
                                 <span className="text-2xl font-bold text-gray-900 dark:text-white">{teamPot}</span>
                             </div>
-                            <span className="text-[10px] text-gray-500 truncate max-w-full px-2">Points accumulated</span>
+                            <span className="text-[10px] text-gray-500 truncate max-w-full px-2">{t('stat_points_accumulated')}</span>
                         </div>
                     </div>
 
                     {/* Leaderboard (Score) */}
                     <div className="space-y-3">
-                        <h4 className="text-sm font-medium text-gray-400 uppercase tracking-wider text-center">Final Scoreboard</h4>
+                        <h4 className="text-sm font-medium text-gray-400 uppercase tracking-wider text-center">{t('scoreboard_title')}</h4>
                         <div className="space-y-2">
                             {sortedPlayers.map((player, index) => {
                                 return (
@@ -162,7 +163,7 @@ export function EndGamePopover({ open, onClose, players, messages, gameId, gameH
                                                     <AvatarFallback className="bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200">{getInitials(player.profiles?.username || '')}</AvatarFallback>
                                                 </Avatar>
                                                 {index === 0 && (
-                                                    <div className="absolute -top-2 -right-2 bg-yellow-500 text-white p-1 rounded-full shadow-sm">
+                                                    <div className="absolute -top-2 -right-2 rtl:-right-auto rtl:-left-2 bg-yellow-500 text-white p-1 rounded-full shadow-sm">
                                                         <Trophy className="w-3 h-3" />
                                                     </div>
                                                 )}
@@ -173,11 +174,11 @@ export function EndGamePopover({ open, onClose, players, messages, gameId, gameH
                                                 </span>
                                             </div>
                                         </div>
-                                        <div className="flex flex-col items-end">
+                                        <div className="flex flex-col items-end rtl:items-start">
                                             <span className={`text-xl font-bold ${index === 0 ? 'text-yellow-600 dark:text-yellow-500' : 'text-gray-700 dark:text-gray-300'}`}>
                                                 {player.score}
                                             </span>
-                                            <span className="text-[10px] text-gray-400">pts</span>
+                                            <span className="text-[10px] text-gray-400">{t('pts')}</span>
                                         </div>
                                     </div>
                                 );
@@ -191,15 +192,15 @@ export function EndGamePopover({ open, onClose, players, messages, gameId, gameH
                         onClick={handleShare}
                         className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-2 px-8 rounded-full shadow-lg transform transition hover:scale-105 flex items-center justify-center gap-2"
                     >
-                        <Share2 className="w-4 h-4" />
-                        Share Results
+                        <Share2 className="w-4 h-4 rtl:ml-2 rtl:scale-x-[-1]" />
+                        {t('btn_share')}
                     </Button>
                     <Button
                         onClick={onClose}
                         variant="outline"
                         className="w-full sm:w-auto border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full"
                     >
-                        Back to Lobby
+                        {t('btn_back')}
                     </Button>
                 </DialogFooter>
             </DialogContent>

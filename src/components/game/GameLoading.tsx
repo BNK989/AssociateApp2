@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
+import { useTranslations } from 'next-intl';
 
 export function GameLoading() {
+    const t = useTranslations('GameRoom.Loading');
     return (
         <div className="flex flex-col items-center justify-center h-[100dvh] bg-white dark:bg-gray-900 gap-8">
             <div className="relative">
@@ -21,7 +23,7 @@ export function GameLoading() {
                 {/* Icon Image */}
                 <motion.img
                     src="/icon-192x192.png"
-                    alt="Loading..."
+                    alt={t('loading_alt')}
                     className="w-24 h-24 rounded-2xl relative z-10"
                     animate={{
                         y: [-10, 10, -10],
@@ -36,7 +38,7 @@ export function GameLoading() {
 
             <div className="flex flex-col items-center gap-2">
                 <h2 className="text-xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
-                    Associate
+                    {t('app_name')}
                 </h2>
                 <div className="flex gap-1.5">
                     {[0, 1, 2].map((i) => (

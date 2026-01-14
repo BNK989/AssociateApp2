@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Trophy, MessageSquare, Info, Users, HelpCircle, ChevronRight, ChevronDown, Check, User, Share, Settings, Volume2, VolumeX, Moon, Sun } from 'lucide-react';
+import { X, Trophy, MessageSquare, Info, Users, HelpCircle, ChevronRight, ChevronDown, Check, User, Share, Settings, Volume2, VolumeX, Moon, Sun, Globe } from 'lucide-react';
 import { GameState, Player } from '@/hooks/useGameLogic';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ import { useAuth } from '@/context/AuthProvider';
 import { useTheme } from 'next-themes';
 import { supabase } from '@/lib/supabase';
 import { Switch } from "../ui/switch";
+import { useTranslations } from 'next-intl';
+import { LanguagePicker } from '../LanguagePicker';
 
 type InfoScreenProps = {
     game: GameState;
@@ -22,6 +24,7 @@ type InfoScreenProps = {
 };
 
 export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, date, solvedCount }: InfoScreenProps) {
+    const t = useTranslations('GameRoom.Info');
     const { profile, refreshProfile } = useAuth();
     const { theme, setTheme } = useTheme();
     const [updating, setUpdating] = React.useState(false);
@@ -38,10 +41,10 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
 
             if (error) throw error;
             await refreshProfile();
-            toast.success(`Audio ${checked ? 'enabled' : 'disabled'}`);
+            toast.success(checked ? t('toast_audio_enabled') : t('toast_audio_disabled'));
         } catch (e) {
             console.error(e);
-            toast.error("Failed to update settings");
+            toast.error(t('toast_settings_fail'));
         } finally {
             setUpdating(false);
         }
@@ -63,24 +66,24 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
     // Clean up instructions text
     const instructions = [
         {
-            title: "Game Overview",
-            text: "This is a text-based game to check how well you know each other and each other's associations. We play in two parts:"
+            title: t('Classic.overview.title'),
+            text: t('Classic.overview.text')
         },
         {
-            title: "Phase 1: Chatting",
-            text: "In the first part, we text similar to how you would in other chatting apps."
+            title: t('Classic.phase1.title'),
+            text: t('Classic.phase1.text')
         },
         {
-            title: "Phase 2: Solving",
-            text: "In the second part, we'll try to guess what was the previous word. Each player gets 10 seconds to guess their own previous word text. After 10 seconds, it's a free-for-all and any player can guess!"
+            title: t('Classic.phase2.title'),
+            text: t('Classic.phase2.text')
         },
         {
-            title: "Hints",
-            text: "If you don't know the word, hints are available: 1) Word length, 2) Reveal letters, 3) AI context clue. Careful: 3 incorrect guesses exposes the word!"
+            title: t('Classic.hints.title'),
+            text: t('Classic.hints.text')
         },
         {
-            title: "Winning",
-            text: "The goal is to win by getting the most texts correct in a row."
+            title: t('Classic.winning.title'),
+            text: t('Classic.winning.text')
         }
     ];
 
@@ -90,20 +93,20 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
     // Daily Game Instructions
     const dailyInstructions = [
         {
-            title: "Daily Challenge Folder",
-            text: "Welcome to the Daily Chain! Each day brings a new theme and a set of words to solve."
+            title: t('Daily.folder.title'),
+            text: t('Daily.folder.text')
         },
         {
-            title: "How to Play",
-            text: "Guess the hidden words related to today's theme. The words are chained together by association."
+            title: t('Daily.how_to.title'),
+            text: t('Daily.how_to.text')
         },
         {
-            title: "Scoring",
-            text: "Solve words with fewer hints for more points. Maintain a streak of correct guesses to multiply your score!"
+            title: t('Daily.scoring.title'),
+            text: t('Daily.scoring.text')
         },
         {
-            title: "Winning",
-            text: "Complete all words to finish the daily challenge. Come back tomorrow for a new one!"
+            title: t('Daily.winning.title'),
+            text: t('Daily.winning.text')
         }
     ];
 
@@ -123,7 +126,7 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
 
     const handleShare = async () => {
         if (!isDaily || !date) return;
-        const text = `Daily Chain ${date}\nScore: ${myScore}\nTheme: ${dailyTheme}\n\nPlay at: ${window.location.origin}/daily`;
+        const text = t('daily_share_text', { date, score: myScore, theme: dailyTheme, url: `${window.location.origin}/daily` });
 
         try {
             if (navigator.share) {
@@ -135,9 +138,9 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                 const { copyToClipboard } = await import('@/lib/utils');
                 const success = await copyToClipboard(text);
                 if (success) {
-                    toast.success("Copied to clipboard!");
+                    toast.success(t('toast_copied'));
                 } else {
-                    toast.error("Failed to copy to clipboard");
+                    toast.error(t('toast_copy_fail'));
                 }
             }
         } catch (error) {
@@ -146,9 +149,9 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
             const { copyToClipboard } = await import('@/lib/utils');
             const success = await copyToClipboard(text);
             if (success) {
-                toast.success("Copied to clipboard!");
+                toast.success(t('toast_copied'));
             } else {
-                toast.error("Failed to share results");
+                toast.error(t('toast_share_fail'));
             }
         }
     };
@@ -167,7 +170,7 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                         ) : (
                             <>
                                 <Info className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                                Game Info
+                                {t('title')}
                             </>
                         )}
                     </h2>
@@ -186,23 +189,23 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                     {/* Score Section */}
                     <div className="space-y-3">
                         <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
-                            <Trophy className="w-4 h-4" /> Scores
+                            <Trophy className="w-4 h-4" /> {t('scores_title')}
                         </h3>
                         <div className={`grid ${isDaily ? 'grid-cols-2' : 'grid-cols-2'} gap-3`}>
                             {!isDaily && (
                                 <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-xl border border-purple-100 dark:border-purple-800/50 flex flex-col items-center justify-center text-center">
-                                    <span className="text-xs text-purple-600 dark:text-purple-400 font-bold uppercase mb-1">Team Pot</span>
+                                    <span className="text-xs text-purple-600 dark:text-purple-400 font-bold uppercase mb-1">{t('team_pot')}</span>
                                     <span className="text-3xl font-black text-purple-700 dark:text-purple-300">{game.team_pot || 0}</span>
                                 </div>
                             )}
                             <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800/50 flex flex-col items-center justify-center text-center">
-                                <span className="text-xs text-blue-600 dark:text-blue-400 font-bold uppercase mb-1">Your Score</span>
+                                <span className="text-xs text-blue-600 dark:text-blue-400 font-bold uppercase mb-1">{t('your_score')}</span>
                                 <span className="text-3xl font-black text-blue-700 dark:text-blue-300">{myScore}</span>
                             </div>
 
                             {isDaily && (
                                 <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-xl border border-green-100 dark:border-green-800/50 flex flex-col items-center justify-center text-center">
-                                    <span className="text-xs text-green-600 dark:text-green-400 font-bold uppercase mb-1">Solved</span>
+                                    <span className="text-xs text-green-600 dark:text-green-400 font-bold uppercase mb-1">{t('solved')}</span>
                                     <span className="text-3xl font-black text-green-700 dark:text-green-300">
                                         {solvedCount || 0}<span className="text-lg opacity-50">/{game.max_messages || 0}</span>
                                     </span>
@@ -215,7 +218,7 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                     {!isDaily && (
                         <div className="space-y-3">
                             <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
-                                <Users className="w-4 h-4" /> Players
+                                <Users className="w-4 h-4" /> {t('players_title')}
                             </h3>
                             <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800 shadow-sm">
                                 {sortedPlayers.map((player) => {
@@ -234,11 +237,11 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                                                 <div className="flex flex-col">
                                                     <span className="text-sm font-bold flex items-center gap-1.5">
                                                         {player.profiles?.username}
-                                                        {isMe && <span className="text-[10px] bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 px-1.5 py-0.5 rounded-full font-bold">YOU</span>}
+                                                        {isMe && <span className="text-[10px] bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 px-1.5 py-0.5 rounded-full font-bold">{t('you_tag')}</span>}
                                                         {isLeader && <Trophy className="w-3 h-3 text-amber-500 fill-amber-500" />}
                                                     </span>
                                                     <span className="text-xs text-gray-500 dark:text-gray-400">
-                                                        {player.has_left ? 'Left Game' : 'Active'}
+                                                        {player.has_left ? t('status_left') : t('status_active')}
                                                     </span>
                                                 </div>
                                             </div>
@@ -255,15 +258,15 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                     {/* How to Play Section */}
                     <div className="space-y-3">
                         <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
-                            <HelpCircle className="w-4 h-4" /> How to Play
+                            <HelpCircle className="w-4 h-4" /> {t('how_to_play_title')}
                         </h3>
 
                         <div className="space-y-2">
                             <Dialog>
                                 <DialogTrigger asChild>
                                     <Button className="w-full justify-between" variant="outline">
-                                        <span>Read Instructions</span>
-                                        <ChevronRight className="w-4 h-4 text-gray-400" />
+                                        <span>{t('read_instructions')}</span>
+                                        <ChevronRight className="w-4 h-4 text-gray-400 rtl:rotate-180" />
                                     </Button>
                                 </DialogTrigger>
                                 <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
@@ -271,7 +274,7 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                                         <DialogHeader>
                                             <DialogTitle className="flex items-center gap-2 text-xl font-bold text-purple-600 dark:text-purple-400 mb-4">
                                                 <HelpCircle className="w-6 h-6" />
-                                                <span>Game Instructions</span>
+                                                <span>{t('instructions_dialog_title')}</span>
                                             </DialogTitle>
                                         </DialogHeader>
 
@@ -296,7 +299,7 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                     {/* Settings Section */}
                     <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 border border-gray-100 dark:border-gray-800 space-y-4">
                         <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
-                            <Settings className="w-4 h-4" /> Preferences
+                            <Settings className="w-4 h-4" /> {t('preferences_title')}
                         </h3>
 
                         <div className="flex items-center justify-between">
@@ -305,8 +308,8 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                                     {profile?.settings?.enable_audio_chime !== false ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-sm font-bold text-gray-900 dark:text-white">Game Sounds</span>
-                                    <span className="text-xs text-gray-500 dark:text-gray-400">Play chimes for turns</span>
+                                    <span className="text-sm font-bold text-gray-900 dark:text-white">{t('sounds_title')}</span>
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">{t('sounds_desc')}</span>
                                 </div>
                             </div>
                             <Switch
@@ -322,8 +325,8 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                                     {theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-sm font-bold text-gray-900 dark:text-white">Dark Mode</span>
-                                    <span className="text-xs text-gray-500 dark:text-gray-400">Adjust appearance</span>
+                                    <span className="text-sm font-bold text-gray-900 dark:text-white">{t('dark_mode_title')}</span>
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">{t('dark_mode_desc')}</span>
                                 </div>
                             </div>
                             <Switch
@@ -331,7 +334,21 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                                 onCheckedChange={(checked: boolean) => toggleTheme(checked)}
                             />
                         </div>
+
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full text-green-600 dark:text-green-400">
+                                    <Globe className="w-4 h-4" />
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-bold text-gray-900 dark:text-white">{t('language_title')}</span>
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">{t('language_desc')}</span>
+                                </div>
+                            </div>
+                            <LanguagePicker />
+                        </div>
                     </div>
+
 
                     <div className="pt-8 space-y-3">
                         {isDaily && (
@@ -341,17 +358,17 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                                 size="lg"
                                 onClick={handleShare}
                             >
-                                <Share className="w-5 h-5 mr-2" />
-                                Share Results
+                                <Share className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0 rtl:scale-x-[-1]" />
+                                {t('share_results')}
                             </Button>
                         )}
                         <Button className="w-full py-6 text-lg font-bold shadow-lg shadow-purple-500/20" size="lg" onClick={onClose}>
-                            Back to Game
+                            {t('back_to_game')}
                         </Button>
                     </div>
 
                 </div>
             </div>
-        </div >
+        </div>
     );
 }

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthProvider';
 import { useRouter, usePathname } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -40,7 +41,12 @@ type Notification = {
     metadata?: Record<string, unknown>;
 };
 
+import { useTranslations } from 'next-intl';
+
 export function NotificationCenter() {
+    const t = useTranslations('Notifications');
+    const locale = useLocale();
+    const dir = locale === 'he' ? 'rtl' : 'ltr';
     const { user } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
@@ -97,9 +103,9 @@ export function NotificationCenter() {
 
         if (error && error.code !== '23505') {
             console.error("Error joining game:", error);
-            toast.error("Failed to join game");
+            toast.error(t('toasts.join_error'));
         } else {
-            toast.success("Joined game!");
+            toast.success(t('toasts.joined'));
             router.push(`/game/${gameId}`);
             setInvites(prev => prev.filter(i => i.id !== inviteId));
             setIsOpen(false);
@@ -113,7 +119,7 @@ export function NotificationCenter() {
             .eq('id', inviteId);
 
         setInvites(prev => prev.filter(i => i.id !== inviteId));
-        toast.info("Invite declined");
+        toast.info(t('toasts.declined'));
     };
 
     const markAsRead = async (notificationId: string) => {
@@ -136,9 +142,9 @@ export function NotificationCenter() {
 
         if (!error) {
             setNotifications([]);
-            toast.success("All notifications dismissed");
+            toast.success(t('toasts.dismiss_all_success'));
         } else {
-            toast.error("Failed to dismiss notifications");
+            toast.error(t('toasts.dismiss_all_error'));
         }
     };
 
@@ -168,14 +174,14 @@ export function NotificationCenter() {
                     if (window.location.pathname === '/') {
                         setIsOpen(true);
                     } else {
-                        toast.custom((t) => (
+                        toast.custom((toastId) => (
                             <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-lg p-4 shadow-lg w-full flex flex-col gap-3 pointer-events-auto">
                                 <div className="flex justify-between items-start">
                                     <div>
                                         <p className="font-bold text-sm">{senderName}</p>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">invited you to play!</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">{t('invited_you')}</p>
                                     </div>
-                                    <button onClick={() => toast.dismiss(t)} className="text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                                    <button onClick={() => toast.dismiss(toastId)} className="text-gray-400 hover:text-gray-900 dark:hover:text-white">
                                         <X className="w-4 h-4" />
                                     </button>
                                 </div>
@@ -185,10 +191,10 @@ export function NotificationCenter() {
                                         className="flex-1 bg-green-600 hover:bg-green-700 h-8 text-xs"
                                         onClick={() => {
                                             handleAccept(payload.new.id, payload.new.game_id);
-                                            toast.dismiss(t);
+                                            toast.dismiss(toastId);
                                         }}
                                     >
-                                        Accept
+                                        {t('accept')}
                                     </Button>
                                     <Button
                                         size="sm"
@@ -196,10 +202,10 @@ export function NotificationCenter() {
                                         className="flex-1 h-8 text-xs border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
                                         onClick={() => {
                                             handleDecline(payload.new.id);
-                                            toast.dismiss(t);
+                                            toast.dismiss(toastId);
                                         }}
                                     >
-                                        Decline
+                                        {t('decline')}
                                     </Button>
                                 </div>
                             </div>
@@ -239,7 +245,7 @@ export function NotificationCenter() {
     const totalCount = invites.length + notifications.length;
 
     return (
-        <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+        <DropdownMenu open={isOpen} onOpenChange={setIsOpen} dir={dir}>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
                     <Bell className="w-5 h-5" />
@@ -252,7 +258,7 @@ export function NotificationCenter() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white max-h-[400px] overflow-y-auto">
                 <div className="flex items-center justify-between px-2 py-1.5">
-                    <DropdownMenuLabel className="p-0">Notifications</DropdownMenuLabel>
+                    <DropdownMenuLabel className="p-0">{t('title')}</DropdownMenuLabel>
                     {notifications.length > 0 && (
                         <Button
                             variant="ghost"
@@ -263,7 +269,7 @@ export function NotificationCenter() {
                                 handleDismissAll();
                             }}
                         >
-                            Dismiss All
+                            {t('dismiss_all')}
                         </Button>
                     )}
                 </div>
@@ -271,7 +277,7 @@ export function NotificationCenter() {
 
                 {totalCount === 0 ? (
                     <div className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                        No new notifications
+                        {t('empty')}
                     </div>
                 ) : (
                     <>
@@ -279,7 +285,11 @@ export function NotificationCenter() {
                         {invites.map((invite) => (
                             <DropdownMenuItem key={invite.id} className="flex flex-col items-start gap-2 p-3 focus:bg-gray-100 dark:focus:bg-gray-800 cursor-default border-b border-gray-200 dark:border-gray-800 last:border-0">
                                 <div className="text-sm">
-                                    <span className="font-bold text-purple-600 dark:text-purple-400">{invite.sender.username}</span> invited you to play <span className="font-bold">Game #{invite.game.id.slice(0, 4)}</span>
+                                    {t.rich('invite', {
+                                        username: () => <span className="font-bold text-purple-600 dark:text-purple-400">{invite.sender.username}</span>,
+                                        gameId: invite.game.id.slice(0, 4),
+                                        span: (chunks) => <span className="font-bold">{chunks}</span>
+                                    })}
                                 </div>
                                 <div className="flex gap-2 w-full mt-1">
                                     <Button
@@ -290,7 +300,7 @@ export function NotificationCenter() {
                                             handleAccept(invite.id, invite.game_id);
                                         }}
                                     >
-                                        <Check className="w-3 h-3 mr-1" /> Accept
+                                        <Check className="w-3 h-3 me-1" /> {t('accept')}
                                     </Button>
                                     <Button
                                         size="sm"
@@ -301,7 +311,7 @@ export function NotificationCenter() {
                                             handleDecline(invite.id);
                                         }}
                                     >
-                                        <X className="w-3 h-3 mr-1" /> Decline
+                                        <X className="w-3 h-3 me-1" /> {t('decline')}
                                     </Button>
                                 </div>
                             </DropdownMenuItem>
@@ -323,7 +333,7 @@ export function NotificationCenter() {
                                             markAsRead(notif.id);
                                         }}
                                     >
-                                        Dismiss
+                                        {t('dismiss')}
                                     </Button>
                                 </div>
                             </DropdownMenuItem>

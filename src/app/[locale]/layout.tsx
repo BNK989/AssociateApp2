@@ -1,6 +1,10 @@
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages } from 'next-intl/server';
+import { notFound } from 'next/navigation';
+import { routing } from '@/proxy';
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Noto_Sans_Symbols_2 } from "next/font/google";
-import "./globals.css";
+import { Geist, Geist_Mono, Noto_Sans_Symbols_2, Rubik } from "next/font/google";
+import "../globals.css";
 import AuthProvider from "@/context/AuthProvider";
 import { NavBar } from "@/components/NavBar";
 import { DynamicToaster } from '@/components/DynamicToaster';
@@ -18,6 +22,11 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const rubik = Rubik({
+  variable: "--font-rubik",
+  subsets: ["hebrew", "latin"],
 });
 
 const notoSymbols = Noto_Sans_Symbols_2({
@@ -74,35 +83,52 @@ export const viewport: Viewport = {
   interactiveWidget: "resizes-content",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
-}: Readonly<{
+  params
+}: {
   children: React.ReactNode;
-}>) {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+
+  // Ensure that the incoming `locale` is valid
+  if (!routing.locales.includes(locale as any)) {
+    notFound();
+  }
+
+  // Providing all messages to the client
+  // side is the easiest way to get started
+  const messages = await getMessages();
+  const isRtl = locale === 'he';
+
   return (
-    <html lang="en" translate="no" suppressHydrationWarning>
+    <html lang={locale} dir={isRtl ? 'rtl' : 'ltr'} translate="no" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${notoSymbols.variable} antialiased bg-background text-foreground flex flex-col min-h-screen`}
+        suppressHydrationWarning
+        className={`${geistSans.variable} ${geistMono.variable} ${rubik.variable} ${notoSymbols.variable} antialiased font-sans bg-background text-foreground flex flex-col min-h-screen`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <PostHogProvider>
-            <AuthProvider>
-              <NavBar />
-              <main className="flex-1 w-full">
-                {children}
-              </main>
-              <SiteFooter />
-              <DynamicToaster />
-              <ServiceWorkerRegister />
-              <SpeedInsights />
-            </AuthProvider>
-          </PostHogProvider>
-        </ThemeProvider>
+        <NextIntlClientProvider messages={messages}>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="light"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <PostHogProvider>
+              <AuthProvider>
+                <NavBar />
+                <main className="flex-1 w-full">
+                  {children}
+                </main>
+                <SiteFooter />
+                <DynamicToaster />
+                <ServiceWorkerRegister />
+                <SpeedInsights />
+              </AuthProvider>
+            </PostHogProvider>
+          </ThemeProvider>
+        </NextIntlClientProvider>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

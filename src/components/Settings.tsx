@@ -1,4 +1,6 @@
 'use client';
+import { useTranslations } from 'next-intl';
+import { LanguagePicker } from '@/components/LanguagePicker';
 
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
@@ -7,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
 export default function Settings() {
+    const t = useTranslations('Settings');
     const { user, profile, refreshProfile } = useAuth();
     const { theme, setTheme } = useTheme();
     // Start with a local state to avoid hydration mismatch initialized to theme
@@ -82,11 +85,11 @@ export default function Settings() {
                 .getPublicUrl(filePath);
 
             setAvatarUrl(publicUrl);
-            setMessage('Avatar uploaded successfully! Don\'t forget to save.');
+            setMessage(t('upload_success'));
 
         } catch (error: any) {
             console.error('Upload error details:', error);
-            let errorMessage = 'An error occurred during upload';
+            let errorMessage = t('upload_error_generic');
 
             if (error instanceof Error) {
                 errorMessage = error.message;
@@ -98,7 +101,7 @@ export default function Settings() {
                 errorMessage = JSON.stringify(error);
             }
 
-            setMessage(`Error uploading avatar: ${errorMessage}`);
+            setMessage(t('upload_error', { message: errorMessage }));
         } finally {
             setUploading(false);
         }
@@ -134,10 +137,10 @@ export default function Settings() {
         const { error } = await supabase.from('profiles').upsert(updates);
 
         if (error) {
-            setMessage('Error updating profile');
+            setMessage(t('update_error'));
             console.error(error);
         } else {
-            setMessage('Profile updated!');
+            setMessage(t('update_success'));
             await refreshProfile();
         }
         setSaving(false);
@@ -147,11 +150,11 @@ export default function Settings() {
 
     return (
         <div className="p-6 max-w-2xl mx-auto">
-            <h1 className="text-3xl font-bold mb-6">Settings</h1>
+            <h1 className="text-3xl font-bold mb-6">{t('title')}</h1>
 
             <div className="space-y-6">
                 <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium">Display Name</label>
+                    <label className="text-sm font-medium">{t('display_name')}</label>
                     <input
                         type="text"
                         value={username}
@@ -160,14 +163,14 @@ export default function Settings() {
                     />
                 </div>
 
-                <label className="text-sm font-medium">Avatar</label>
+                <label className="text-sm font-medium">{t('avatar')}</label>
                 <div className="flex items-center gap-4">
                     <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                         {avatarUrl ? (
                             <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center text-gray-400">
-                                <span className="text-xs">No Img</span>
+                                <span className="text-xs">{t('no_img')}</span>
                             </div>
                         )}
                     </div>
@@ -185,32 +188,37 @@ export default function Settings() {
                             disabled={uploading || saving}
                             className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 transition-colors"
                         >
-                            {uploading ? 'Uploading...' : 'Upload Avatar'}
+                            {uploading ? t('uploading') : t('upload_avatar')}
                         </button>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Max 2MB. Auto-resized to 256x256.
+                            {t('upload_hint')}
                         </p>
                     </div>
                 </div>
 
                 <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium">Theme</label>
+                    <label className="text-sm font-medium">{t('theme')}</label>
                     <select
                         value={theme}
                         onChange={(e) => setTheme(e.target.value)}
                         className="p-2 border rounded bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white"
                     >
-                        <option value="system">System</option>
-                        <option value="dark">Dark</option>
-                        <option value="light">Light</option>
+                        <option value="system">{t('theme_options.system')}</option>
+                        <option value="dark">{t('theme_options.dark')}</option>
+                        <option value="light">{t('theme_options.light')}</option>
                     </select>
                 </div>
 
+                <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium">{t('language')}</label>
+                    <LanguagePicker className="w-full" />
+                </div>
+
                 <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <h2 className="text-lg font-semibold">Notifications</h2>
+                    <h2 className="text-lg font-semibold">{t('notifications')}</h2>
 
                     <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium">System Notifications</label>
+                        <label className="text-sm font-medium">{t('system_notifications')}</label>
                         <input
                             type="checkbox"
                             checked={profile?.settings?.enable_system_notifications ?? true}
@@ -219,7 +227,7 @@ export default function Settings() {
                                     if (e.target.checked && Notification.permission !== 'granted') {
                                         const permission = await Notification.requestPermission();
                                         if (permission !== 'granted') {
-                                            toast.error("Permission denied. Please enable notifications in your browser settings.");
+                                            toast.error(t('permission_denied'));
                                             return;
                                         }
                                     }
@@ -234,7 +242,7 @@ export default function Settings() {
                     </div>
 
                     <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium">Audio Chime</label>
+                        <label className="text-sm font-medium">{t('audio_chime')}</label>
                         <input
                             type="checkbox"
                             checked={profile?.settings?.enable_audio_chime ?? true}
@@ -251,7 +259,7 @@ export default function Settings() {
                     </div>
 
                     <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium">Tab Title Flash</label>
+                        <label className="text-sm font-medium">{t('tab_title_flash')}</label>
                         <input
                             type="checkbox"
                             checked={profile?.settings?.enable_title_flash ?? true}
@@ -273,7 +281,7 @@ export default function Settings() {
                     disabled={saving}
                     className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
                 >
-                    {saving ? 'Saving...' : 'Save Changes'}
+                    {saving ? t('saving') : t('save_changes')}
                 </button>
 
                 {message && <p className="text-sm text-gray-300">{message}</p>}
