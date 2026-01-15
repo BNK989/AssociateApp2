@@ -4,7 +4,7 @@ import createMiddleware from 'next-intl/middleware';
 import { defineRouting } from 'next-intl/routing';
 
 export const routing = defineRouting({
-    locales: ['en', 'he'],
+    locales: ['en', 'he', 'es', 'fr', 'de', 'it', 'pt', 'ja', 'zh', 'ru', 'ar', 'hi', 'tr', 'nl', 'pl', 'sv', 'vi', 'th'],
     defaultLocale: 'en',
     localePrefix: 'as-needed'
 });
@@ -51,7 +51,7 @@ export async function proxy(request: NextRequest) {
 export const config = {
     matcher: [
         '/',
-        '/(he|en)/:path*',
+        '/(he|en|es|fr|de|it|pt|ja|zh|ru|ar|hi|tr|nl|pl|sv|vi|th)/:path*',
         "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
     ],
 };

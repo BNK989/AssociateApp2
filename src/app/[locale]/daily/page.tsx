@@ -5,7 +5,12 @@ import { notFound } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
-export default async function DailyGamePage() {
+export default async function DailyGamePage({
+    params
+}: {
+    params: Promise<{ locale: string }>
+}) {
+    const { locale } = await params;
     const cookieStore = await cookies();
 
     const supabase = createServerClient(
@@ -27,8 +32,7 @@ export default async function DailyGamePage() {
         }
     );
 
-    // Fetch today's daily game
-    // We use a simple query to get the row for today
+    // Fetch today's daily game (Base English Data)
     const { data: dailyGame, error } = await supabase
         .from('daily_games')
         .select('*')
@@ -44,9 +48,6 @@ export default async function DailyGamePage() {
     }
 
     if (error || !dailyGame) {
-        // Fallback or Not Found
-        // For development, we inserted data for today, so it should be there.
-        // If not, we could show a "Come back later" message.
         console.error("Error fetching daily game:", error);
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-4">
@@ -54,6 +55,45 @@ export default async function DailyGamePage() {
                 <p>Come back closer to the start of the day!</p>
             </div>
         );
+    }
+
+    // --- Translation Logic ---
+    const SUPPORTED_DAILY_LOCALES = ['en', 'he'];
+
+    // If locale is NOT supported, we fallback to English content without redirecting
+    // (User sees English UI but stays on /es/daily for example, or we could just show English content)
+    let targetLocale = locale;
+    if (!SUPPORTED_DAILY_LOCALES.includes(locale)) {
+        targetLocale = 'en';
+    }
+
+    if (targetLocale !== 'en' && targetLocale === 'he') {
+        const { getCachedTranslatedDailyGame } = await import('@/lib/dailyTranslation');
+
+        // Use the cache-wrapped translation
+        const translated = await getCachedTranslatedDailyGame(
+            dailyGame.id,
+            dailyGame.words,
+            dailyGame.theme,
+            targetLocale
+        );
+
+        if (translated) {
+            dailyGame.theme = translated.theme;
+            dailyGame.words = translated.words;
+            dailyGame.hints = translated.hints;
+            // Ensure ID doesn't change so local storage tracks stats correctly? 
+            // Actually, we might want SEPARATE stats for Hebrew vs English daily games?
+            // If we keep the SAME ID, the progress "level 1, level 2" is shared.
+            // But the words are different. It might break logic if user switches lang mid-game.
+            // Requirement check: "prefer to not change any db datapoints".
+            // If we use the same ID, the client uses `daily_game_state_YYYY-MM-DD`.
+            // Ideally we suffix the date for storage key in Client if we want separate progress.
+            // But let's stick to the request scope. 
+            // We just serve translated content.
+        } else {
+            console.warn(`Translation to ${targetLocale} failed, falling back to English.`);
+        }
     }
 
     return (

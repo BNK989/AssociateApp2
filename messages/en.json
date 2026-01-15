@@ -140,6 +140,16 @@
                 "winning": {
                     "title": "Winning",
                     "text": "Complete all words to finish the daily challenge. Come back tomorrow for a new one!"
+                },
+                "tutorial": {
+                    "step1_title": "Daily Challenge 📅",
+                    "step1_desc": "Welcome to your daily mental workout! Every day, we release a new chain of a few connected words.",
+                    "step2_title": "Work Backwards ⬆️",
+                    "step2_desc": "The last word is already revealed. Your goal is to guess the word that comes BEFORE it. Solving one word reveals the next one up the chain!",
+                    "step3_title": "Need a Hint? 💡",
+                    "step3_desc": "Stuck on a tricky connection? Tap the bulb icon for a hint. It costs a few points, but it's better than breaking your streak!",
+                    "play_now": "Play Now",
+                    "next": "Next"
                 }
             }
         },

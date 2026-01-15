@@ -10,30 +10,33 @@ import { Button } from "@/components/ui/button";
 import { ArrowUp, Zap, Calendar, ArrowRight, Lightbulb } from 'lucide-react'; // Changed ArrowDown/Up logic to match "Work Backwards"
 import { cn } from "@/lib/utils";
 
+import { useTranslations } from 'next-intl';
+
 type DailyGameTutorialProps = {
     open: boolean;
     onComplete: () => void;
 };
 
 export function DailyGameTutorial({ open, onComplete }: DailyGameTutorialProps) {
+    const t = useTranslations('GameRoom.Info.Daily.tutorial');
     const [step, setStep] = useState(0);
 
     const steps = [
         {
-            title: "Daily Challenge 📅",
-            description: "Welcome to your daily mental workout! Every day, we release a new chain of a few connected words.",
+            title: t('step1_title'),
+            description: t('step1_desc'),
             icon: <Calendar className="w-12 h-12 text-orange-500" />,
             color: "bg-orange-50 dark:bg-orange-900/20",
         },
         {
-            title: "Work Backwards ⬆️",
-            description: "The last word is already revealed. Your goal is to guess the word that comes BEFORE it. Solving one word reveals the next one up the chain!",
+            title: t('step2_title'),
+            description: t('step2_desc'),
             icon: <ArrowUp className="w-12 h-12 text-blue-500" />,
             color: "bg-blue-50 dark:bg-blue-900/20",
         },
         {
-            title: "Need a Hint? 💡",
-            description: "Stuck on a tricky connection? Tap the bulb icon for a hint. It costs a few points, but it's better than breaking your streak!",
+            title: t('step3_title'),
+            description: t('step3_desc'),
             icon: <Lightbulb className="w-12 h-12 text-yellow-500" />,
             color: "bg-yellow-50 dark:bg-yellow-900/20",
         }
@@ -85,9 +88,9 @@ export function DailyGameTutorial({ open, onComplete }: DailyGameTutorialProps) 
                         className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold h-12 text-lg shadow-lg shadow-purple-500/20"
                     >
                         {isLastStep ? (
-                            <span className="flex items-center gap-2">Play Now <Zap className="w-5 h-5" /></span>
+                            <span className="flex items-center gap-2">{t('play_now')} <Zap className="w-5 h-5" /></span>
                         ) : (
-                            <span className="flex items-center gap-2">Next <ArrowRight className="w-5 h-5" /></span>
+                            <span className="flex items-center gap-2">{t('next')} <ArrowRight className="w-5 h-5 rtl:rotate-180" /></span>
                         )}
                     </Button>
                 </DialogFooter>
