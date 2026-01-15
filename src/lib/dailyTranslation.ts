@@ -1,15 +1,27 @@
 import { unstable_cache } from 'next/cache';
+import { AsyncLocalStorage } from 'async_hooks';
 import { GAME_CONFIG } from './gameConfig';
 
 const GEMINI_API_KEY = process.env.GEMINI_KEY;
+
+export const translationContext = new AsyncLocalStorage<{ isPeek: boolean }>();
+const CACHE_MISS_PEEK_ERROR = 'CACHE_MISS_PEEK';
 
 export interface TranslatedGameData {
     theme: string;
     words: string[];
     hints: string[];
+    cachedAt?: string;
 }
 
-async function translateDailyGame(words: string[], theme: string, locale: string): Promise<TranslatedGameData | null> {
+// Internal function to perform the actual translation
+async function translateDailyGame(gameId: string, words: string[], theme: string, locale: string): Promise<TranslatedGameData | null> {
+    // --- Verify Cache Miss & Log ---
+    const context = translationContext.getStore();
+    if (context?.isPeek) {
+        throw new Error(CACHE_MISS_PEEK_ERROR);
+    }
+
     if (!GEMINI_API_KEY) {
         console.warn("GEMINI_KEY not set, skipping translation.");
         return null;
@@ -81,7 +93,23 @@ async function translateDailyGame(words: string[], theme: string, locale: string
             return null;
         }
 
-        return parsed as TranslatedGameData;
+        // --- LOG GENERATION TO DB (Verifiable Proof) ---
+        try {
+            const { createClient } = await import('@supabase/supabase-js');
+            const supabaseAdmin = createClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.SUPABASE_SERVICE_ROLE_KEY!
+            );
+
+            await supabaseAdmin.from('translation_generations').insert({
+                game_id: gameId,
+                locale: locale
+            });
+        } catch (dbError) {
+            console.error("Failed to log translation generation:", dbError);
+        }
+
+        return { ...parsed, cachedAt: new Date().toISOString() } as TranslatedGameData;
 
     } catch (e) {
         console.error("Error translating daily game:", e);
@@ -91,12 +119,15 @@ async function translateDailyGame(words: string[], theme: string, locale: string
 
 export const getCachedTranslatedDailyGame = unstable_cache(
     async (gameId: string, words: string[], theme: string, locale: string) => {
-        console.log(`[Cache Miss] Translating game ${gameId} to ${locale}`);
-        return await translateDailyGame(words, theme, locale);
+        const isPeek = translationContext.getStore()?.isPeek;
+        if (!isPeek) {
+            console.log(`[Cache Miss] Translating game ${gameId} to ${locale}`);
+        }
+        return await translateDailyGame(gameId, words, theme, locale);
     },
     ['daily-translation'], // Revalidation tag
     {
         tags: ['daily-game'], // Additional tags if needed
-        revalidate: false // Cache indefinitely until manually purged or evicted
+        revalidate: 86400 // Cache for 24 hours
     }
 );

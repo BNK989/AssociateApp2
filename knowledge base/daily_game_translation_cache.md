@@ -45,6 +45,14 @@ The implementation leverages **Next.js `unstable_cache`** to memoize the result 
 *   **API Failure**: If Gemini fails or returns invalid JSON, the system logs the error and returns `null`.
 *   **User Experience**: The user is silently served the **English** version as a fallback, ensuring the game is always playable even if translation services are down.
 
+### **Silent Checks (Peeking)**
+*   **Purpose**: The Admin Dashboard needs to know *if* a game is translated without triggering a new translation.
+*   **Mechanism**: Uses `AsyncLocalStorage` (`translationContext`) to pass `isPeek: true`.
+*   **Behavior**:
+    *   `getCachedTranslatedDailyGame` checks the context.
+    *   If `isPeek` is set, `translateDailyGame` **throws a specific error** (`CACHE_MISS_PEEK`) instead of calling the API.
+    *   Logs are suppressed in this mode to avoid noise.
+
 ---
 
 ## 🔄 Process Flow
