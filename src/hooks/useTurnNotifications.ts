@@ -1,9 +1,11 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/context/AuthProvider';
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 export function useTurnNotifications(isMyTurn: boolean, isMyMessageBeingGuessed: boolean = false) {
     const { profile, loading: authLoading } = useAuth();
+    const t = useTranslations('Notifications.toasts');
     const startSoundRef = useRef<HTMLAudioElement | null>(null);
     const turnSoundRef = useRef<HTMLAudioElement | null>(null);
     const titleIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -77,16 +79,16 @@ export function useTurnNotifications(isMyTurn: boolean, isMyMessageBeingGuessed:
             !hasRequestedPermission.current
         ) {
             hasRequestedPermission.current = true;
-            toast("Enable Notifications?", {
-                description: "Get notified when it's your turn even if you're away.",
+            toast(t('permission_title'), {
+                description: t('permission_desc'),
                 // Fix: Ensure text is readable in light mode (often descriptions are too light)
                 descriptionClassName: "!text-zinc-800 dark:!text-zinc-400 font-medium",
                 action: {
-                    label: "Enable",
+                    label: t('permission_action'),
                     onClick: () => {
                         Notification.requestPermission().then((permission) => {
                             if (permission === 'granted') {
-                                toast.success("Notifications enabled!");
+                                toast.success(t('permission_success'));
                             }
                         });
                     }
@@ -94,7 +96,7 @@ export function useTurnNotifications(isMyTurn: boolean, isMyMessageBeingGuessed:
                 duration: 10000,
             });
         }
-    }, []);
+    }, [t]);
 
 
     // Initialize refs on first render

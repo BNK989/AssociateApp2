@@ -165,6 +165,19 @@
             "not_found": "Game not found",
             "left_success": "You have left the game.",
             "left_fail": "Failed to leave game."
+        },
+        "DailyEndGame": {
+            "title": "Daily Challenge Complete!",
+            "subtitle": "You solved all {totalWords} words!",
+            "score_label": "Final Score",
+            "upsell_title": "Play with Friends?",
+            "upsell_text": "Create a free account to host your own games, track stats, and challenge friends!",
+            "sign_up_btn": "Sign Up Free",
+            "share_btn": "Share Result",
+            "home_btn": "Back to Home",
+            "share_text": "Associ8 Daily Challenge 📅 {date}\n🏆 Score: {score} pts\n🧩 Words: {solved}/{total}\n\nCan you beat my score? Play at: {url}",
+            "toast_copied": "Results copied to clipboard!",
+            "toast_share_fail": "Failed to share results"
         }
     },
     "HomePage": {
@@ -430,7 +443,11 @@
             "join_error": "Failed to join game",
             "declined": "Invite declined",
             "dismiss_all_success": "All notifications dismissed",
-            "dismiss_all_error": "Failed to dismiss notifications"
+            "dismiss_all_error": "Failed to dismiss notifications",
+            "permission_title": "Enable Notifications?",
+            "permission_desc": "Get notified when it's your turn even if you're away.",
+            "permission_action": "Enable",
+            "permission_success": "Notifications enabled!"
         }
     },
     "Settings": {

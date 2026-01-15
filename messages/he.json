@@ -165,6 +165,19 @@
             "not_found": "המשחק לא נמצא",
             "left_success": "עזבת את המשחק.",
             "left_fail": "יציאה מהמשחק נכשלה."
+        },
+        "DailyEndGame": {
+            "title": "האתגר היומי הושלם!",
+            "subtitle": "!פתרתם את כל {totalWords} המילים",
+            "score_label": "ניקוד סופי",
+            "upsell_title": "לשחק עם חברים?",
+            "upsell_text": "צרו חשבון בחינם כדי לארח משחקים משלכם, לעקוב אחר סטטיסטיקות ולאתגר חברים!",
+            "sign_up_btn": "הרשמה בחינם",
+            "share_btn": "שתף תוצאות",
+            "home_btn": "חזרה לבית",
+            "share_text": "אתגר יומי Associ8 📅 {date}\n🏆 ניקוד: {score} נק'\n🧩 מילים: {solved}/{total}\n\nנראה אתכם מנצחים אותי? שחקו ב: {url}",
+            "toast_copied": "התוצאות הועתקו ללוח!",
+            "toast_share_fail": "שיתוף התוצאות נכשל"
         }
     },
     "HomePage": {
@@ -430,7 +443,11 @@
             "join_error": "נכשל בהצטרפות למשחק",
             "declined": "הזמנה נדחתה",
             "dismiss_all_success": "כל ההתראות נוקו",
-            "dismiss_all_error": "נכשל בניקוי ההתראות"
+            "dismiss_all_error": "נכשל בניקוי ההתראות",
+            "permission_title": "לאפשר התראות?",
+            "permission_desc": "קבל התראה כשמגיע תורך, גם כשאתה לא במשחק.",
+            "permission_action": "אפשר",
+            "permission_success": "התראות הופעלו!"
         }
     },
     "Settings": {

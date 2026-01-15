@@ -14,6 +14,7 @@ import confetti from 'canvas-confetti';
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 type DailyEndGamePopoverProps = {
     open: boolean;
@@ -25,6 +26,7 @@ type DailyEndGamePopoverProps = {
 
 export function DailyEndGamePopover({ open, score, totalWords, date, onClose }: DailyEndGamePopoverProps) {
     const router = useRouter();
+    const t = useTranslations('GameRoom.DailyEndGame');
     const [internalOpen, setInternalOpen] = useState(open);
 
     useEffect(() => {
@@ -59,25 +61,31 @@ export function DailyEndGamePopover({ open, score, totalWords, date, onClose }: 
     }, [internalOpen, open]);
 
     const handleShare = async () => {
-        const shareText = `Associ8 Daily Challenge 📅 ${date}\n🏆 Score: ${score} pts\n🧩 Words: ${totalWords}/${totalWords}\n\nCan you beat my score? Play at: ${window.location.origin}/daily`;
+        const shareText = t('share_text', {
+            date,
+            score,
+            solved: totalWords,
+            total: totalWords,
+            url: `${window.location.origin}/daily`
+        });
 
         try {
             if (navigator.share) {
                 await navigator.share({
-                    title: 'Associ8 Daily Challenge',
+                    title: t('title'),
                     text: shareText,
                 });
             } else {
                 await navigator.clipboard.writeText(shareText);
-                toast.success("Results copied to clipboard!");
+                toast.success(t('toast_copied'));
             }
         } catch (error) {
             console.error('Error sharing:', error);
             try {
                 await navigator.clipboard.writeText(shareText);
-                toast.success("Results copied to clipboard!");
+                toast.success(t('toast_copied'));
             } catch (clipboardError) {
-                toast.error("Failed to share results");
+                toast.error(t('toast_share_fail'));
             }
         }
     };
@@ -91,10 +99,10 @@ export function DailyEndGamePopover({ open, score, totalWords, date, onClose }: 
             <DialogContent className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle className="text-center text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
-                        Daily Challenge Complete!
+                        {t('title')}
                     </DialogTitle>
                     <DialogDescription className="text-center text-gray-400 text-lg">
-                        You solved all {totalWords} words!
+                        {t('subtitle', { totalWords })}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -102,7 +110,7 @@ export function DailyEndGamePopover({ open, score, totalWords, date, onClose }: 
                     {/* Score Display */}
                     <div className="flex flex-col items-center justify-center p-6 bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/10 dark:to-orange-900/10 rounded-2xl border border-yellow-200 dark:border-yellow-800/30 shadow-inner">
                         <Trophy className="w-12 h-12 text-yellow-500 mb-2 drop-shadow-md" />
-                        <span className="text-gray-500 dark:text-gray-400 text-sm font-medium uppercase tracking-widest">Final Score</span>
+                        <span className="text-gray-500 dark:text-gray-400 text-sm font-medium uppercase tracking-widest">{t('score_label')}</span>
                         <div className="text-5xl font-black text-gray-900 dark:text-white mt-1 tabular-nums tracking-tight">
                             {score}
                         </div>
@@ -116,17 +124,17 @@ export function DailyEndGamePopover({ open, score, totalWords, date, onClose }: 
                         <div className="relative z-10">
                             <h4 className="font-bold text-indigo-900 dark:text-indigo-300 mb-1 flex items-center gap-2">
                                 <Users className="w-4 h-4" />
-                                Play with Friends?
+                                {t('upsell_title')}
                             </h4>
                             <p className="text-sm text-indigo-700 dark:text-indigo-400 mb-3 leading-relaxed">
-                                Create a free account to host your own games, track stats, and challenge friends!
+                                {t('upsell_text')}
                             </p>
                             <Button
                                 onClick={handleSignUp}
                                 size="sm"
                                 className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-md transition-all active:scale-95"
                             >
-                                Sign Up Free <ArrowRight className="w-4 h-4 ml-1" />
+                                {t('sign_up_btn')} <ArrowRight className="w-4 h-4 rtl:rotate-180 ms-1" />
                             </Button>
                         </div>
                     </div>
@@ -138,14 +146,14 @@ export function DailyEndGamePopover({ open, score, totalWords, date, onClose }: 
                         className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-2 px-8 rounded-full shadow-lg transform transition hover:scale-105 flex items-center justify-center gap-2"
                     >
                         <Share2 className="w-4 h-4" />
-                        Share Result
+                        {t('share_btn')}
                     </Button>
                     <Button
                         onClick={onClose}
                         variant="ghost"
                         className="w-full sm:w-auto text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
                     >
-                        Back to Home
+                        {t('home_btn')}
                     </Button>
                 </DialogFooter>
             </DialogContent>
