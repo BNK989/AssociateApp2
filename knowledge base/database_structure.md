@@ -12,7 +12,7 @@ Stores user profile information, linked to the Supabase Auth `users` table.
 | `id` | uuid | - | Primary Key. References `auth.users.id` |
 | `username` | text | - | User's display name |
 | `avatar_url` | text | - | URL to user's avatar image |
-| `settings` | jsonb | `{"theme": "dark", "language": "en", "audio_volume": 1.0}` | User preferences |
+| `settings` | jsonb | `{"theme": "system", "language": "en", "audio_volume": 1.0}` | User preferences |
 | `updated_at` | timestamptz | `now()` | Last update timestamp |
 | `is_admin` | boolean | `false` | Admin status flag |
 | `has_seen_onboarding` | boolean | `false` | Has the user seen the onboarding tour? |
