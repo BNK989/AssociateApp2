@@ -138,6 +138,50 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                 const interval = duration / shuffles;
 
                 // Create stable items from the TARGET string (the Anagram/Cipher mixed)
+                // Create stable items from the TARGET string (the Anagram/Cipher mixed)
+                // NEW: Calculate budgets to prevent surplus letters (e.g. showing 2 'e's when only 1 exists)
+
+                // 1. Identify what is locked/used
+                const usedCounts: Record<string, number> = {};
+                textChars.forEach((char, i) => {
+                    const isGreen = greenIndices.has(i);
+                    const lower = char.toLowerCase();
+                    const isOrange = !isGreen && revealedChars.has(lower);
+
+                    if (isGreen || isOrange) {
+                        usedCounts[lower] = (usedCounts[lower] || 0) + 1;
+                    }
+                });
+
+                // 2. Calculate Remaining Budget (Real letters needed)
+                const targetCounts: Record<string, number> = {};
+                textChars.forEach(c => {
+                    const l = c.toLowerCase();
+                    targetCounts[l] = (targetCounts[l] || 0) + 1;
+                });
+
+                const remainingBudget: Record<string, number> = {};
+                Object.keys(targetCounts).forEach(k => {
+                    remainingBudget[k] = Math.max(0, targetCounts[k] - (usedCounts[k] || 0));
+                });
+
+                // Force output via Error
+                if (!visible && hintLevel >= 2) {
+                    // const debugInfo = {
+                    //    greenIndices: Array.from(greenIndices),
+                    //    revealedChars: Array.from(revealedChars),
+                    //    usedCounts,
+                    //    targetCounts,
+                    //    remainingBudget
+                    // };
+                    // throw new Error(`DEBUG_DUMP: ${JSON.stringify(debugInfo)}`);
+                    // COMMENTED OUT to avoid breaking app if I leave it.
+                    // But for this step I will uncomment it in my mind/tool call.
+
+                    console.error(`DEBUG DUMP: usedCounts=${JSON.stringify(usedCounts)} remainingBudget=${JSON.stringify(remainingBudget)} targetCounts=${JSON.stringify(targetCounts)} greenIndices=${Array.from(greenIndices)}`);
+                }
+
+
                 const baseItems: ScrambleItem[] = targetChars.map((c, i) => {
                     const isGreen = greenIndices.has(i);
                     // Use textChars[i] because i is the character index, not byte index
@@ -163,10 +207,33 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                         // Level 0/1 (and Level 2+): Use CipherText (stable)
                         // This ensures Hint 2 respects the server-side generated cipherText (66% reveal)
                         // and Reshuffle only changes positions, not content.
-                        // Level 0/1: Standard Cipher
-                        const isCipherSpecial = SPECIAL_CHARS.has(cipherChar);
-                        charToShow = cipherChar;
-                        isReal = !isCipherSpecial && text.toLowerCase().includes(cipherChar.toLowerCase());
+                        // BUT: We must filter "Cipher Candidates" to ensure we don't show surplus real letters.
+
+                        const candidate = cipherChar;
+                        const candLower = candidate.toLowerCase();
+                        const isRealCandidate = text.toLowerCase().includes(candLower);
+                        const isCipherSpecial = SPECIAL_CHARS.has(candidate);
+
+                        // If the cipher provides a letter that is in the word...
+                        if (!isCipherSpecial && isRealCandidate) {
+                            // Check if we have budget for it
+                            if ((remainingBudget[candLower] || 0) > 0) {
+                                // ACCEPT: We need this letter
+                                remainingBudget[candLower]--;
+                                charToShow = candidate;
+                                isReal = true;
+                            } else {
+                                // REJECT: Surplus letter. Convert to symbol.
+                                // Pick a random special char that IS NOT in original text if possible, 
+                                // basically just any special char.
+                                charToShow = SPECIAL_CHARS_ARRAY[Math.floor(Math.random() * SPECIAL_CHARS_ARRAY.length)];
+                                isReal = false;
+                            }
+                        } else {
+                            // It's already a symbol or a wrong letter (if that ever happens)
+                            charToShow = candidate;
+                            isReal = !isCipherSpecial && isRealCandidate;
+                        }
                     }
 
                     return {
