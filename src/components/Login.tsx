@@ -5,16 +5,18 @@ import { supabase } from '@/lib/supabase';
 import { useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 
+import { getURL } from '@/lib/utils';
+
 function LoginContent() {
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
     const searchParams = useSearchParams();
-    const origin = (typeof window !== 'undefined' && window.location.origin) ? window.location.origin : process.env.NEXT_PUBLIC_SITE_URL || '';
+    // Use the robust getURL helper
     const next = searchParams.get('next');
 
     // Construct the callback URL
-    let callbackUrl = `${origin}/auth/callback`;
+    let callbackUrl = getURL('/auth/callback');
     if (next) {
         callbackUrl += `?next=${encodeURIComponent(next)}`;
     }

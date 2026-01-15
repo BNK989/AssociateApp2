@@ -173,7 +173,7 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
 
             // Pre-fill AI hint if we are starting at max level
             if (targetHintLevel === 3) {
-                aiHint = `Contains ${word.length} letters. First letter is ${word[0].toUpperCase()}.`;
+                aiHint = t('hint_fallback', { length: word.length, firstLetter: word[0].toUpperCase() });
                 if (initialHints && initialHints[index]) {
                     aiHint = initialHints[index];
                 }
@@ -220,7 +220,7 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
 
             let aiHint = targetMessage.ai_hint;
             if (nextLevel === 3 && !aiHint) {
-                aiHint = `Contains ${targetMessage.content.length} letters. First letter is ${targetMessage.content[0].toUpperCase()}.`;
+                aiHint = t('hint_fallback', { length: targetMessage.content.length, firstLetter: targetMessage.content[0].toUpperCase() });
                 const targetIndex = dailyWords.indexOf(targetMessage.content);
                 if (initialHints && initialHints[targetIndex]) {
                     aiHint = initialHints[targetIndex];
@@ -412,7 +412,7 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
         };
 
         if (nextLevel === 3) {
-            let aiHint = `Contains ${targetMessage.content.length} letters. First letter is ${targetMessage.content[0].toUpperCase()}.`;
+            let aiHint = t('hint_fallback', { length: targetMessage.content.length, firstLetter: targetMessage.content[0].toUpperCase() });
 
             // Use preloaded hints if available
             if (initialHints && Array.isArray(initialHints)) {

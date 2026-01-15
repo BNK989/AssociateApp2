@@ -66,7 +66,8 @@
             "float_solved_you": "<stealer>{stealer}</stealer> פתר את ההודעה שלך",
             "toast_daily_limit": "מגבלת רמזי AI יומית הושגה",
             "toast_word_lost": "הפסדתם מילה: {word}",
-            "toast_reset_success": "המשחק אופס למצב הקודם"
+            "toast_reset_success": "המשחק אופס למצב הקודם",
+            "hint_fallback": "מכיל {length} אותיות. האות הראשונה היא {firstLetter}."
         },
         "Loading": {
             "app_name": "Associate",

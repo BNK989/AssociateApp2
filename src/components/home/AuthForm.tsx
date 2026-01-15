@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/context/AuthProvider';
 import { clearAuthCookies } from '@/app/actions/auth';
+import { getURL } from '@/lib/utils';
 import { useTranslations, useLocale } from 'next-intl';
 
 export default function AuthForm() {
@@ -27,9 +28,8 @@ export default function AuthForm() {
     const { refreshProfile } = useAuth();
 
     // Construct the callback URL
-    const origin = (typeof window !== 'undefined' && window.location.origin) ? window.location.origin : process.env.NEXT_PUBLIC_SITE_URL || '';
     const next = searchParams.get('next');
-    let callbackUrl = `${origin}/auth/callback`;
+    let callbackUrl = getURL('/auth/callback');
     if (next) {
         callbackUrl += `?next=${encodeURIComponent(next)}`;
     }
