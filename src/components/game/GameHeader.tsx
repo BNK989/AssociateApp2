@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Flame, Landmark, Star, Crown } from 'lucide-react';
+import { ArrowLeft, Flame, Landmark, Star, MoreVertical } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -247,16 +247,27 @@ export function GameHeader({
             <AnimatePresence>
                 {showWelcome && theme && (
                     <motion.div
+                        key="welcome-overlay"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        exit={{ opacity: 0, transition: { duration: 0.8 } }}
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md"
+                        exit={{ transition: { duration: 0.8 } }} // Keep overlay alive for 0.8s, don't fade root
+                        className="fixed inset-0 z-50 flex items-center justify-center p-6"
                     >
-                        <div className="flex flex-col items-center p-6">
+                        {/* Backdrop - Fades Out independently */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.8 }}
+                            className="absolute inset-0 bg-black/60 backdrop-blur-md"
+                        />
+
+                        {/* Content */}
+                        <div className="relative z-10 flex flex-col items-center text-center">
                             <motion.span
-                                layoutId="theme-label"
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
                                 transition={{ delay: 0.2, duration: 0.5 }}
                                 className="text-xl md:text-2xl text-gray-200 font-medium mb-3 tracking-wide"
                             >
@@ -264,10 +275,7 @@ export function GameHeader({
                             </motion.span>
                             <motion.span
                                 layoutId="theme-text"
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: 0.8, duration: 0.5 }}
-                                className="text-4xl md:text-5xl font-bold text-white text-center drop-shadow-2xl"
+                                className="text-4xl md:text-5xl font-bold text-white drop-shadow-2xl"
                             >
                                 {theme}
                             </motion.span>
@@ -305,21 +313,14 @@ export function GameHeader({
                     )}
 
                     {/* Theme Title (Daily Game) - In Flow */}
-                    {/* Theme Title (Daily Game) - In Flow */}
-                    {theme && !showWelcome && (
+                    {theme && (
                         <div
-                            className="flex flex-col items-start ms-1 cursor-pointer hover:opacity-70 transition-opacity min-w-0"
+                            className={`flex flex-col items-start ms-1 cursor-pointer hover:opacity-70 transition-opacity min-w-0 flex-1 ${showWelcome ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
                             onClick={() => handleInfoToggle(true)}
                         >
                             <motion.span
-                                layoutId="theme-label"
-                                className="text-[10px] uppercase font-black text-amber-500/90 tracking-widest leading-none mb-0.5"
-                            >
-                                {t('today_theme')}
-                            </motion.span>
-                            <motion.span
                                 layoutId="theme-text"
-                                className="text-sm sm:text-base md:text-lg font-bold text-gray-900 dark:text-white leading-none whitespace-nowrap overflow-hidden text-ellipsis w-full"
+                                className="text-base sm:text-lg md:text-xl font-bold text-gray-900 dark:text-white leading-tight break-words w-full"
                             >
                                 {theme}
                             </motion.span>
@@ -329,48 +330,41 @@ export function GameHeader({
 
 
 
-                {/* Score & Bank (Updated) */}
+                {/* Score & Counter (Vertical Stack) */}
                 <div
-                    className={`flex items-center justify-end gap-2 sm:gap-4 ms-2 me-3 cursor-pointer hover:opacity-80 transition-opacity ${theme ? 'shrink-0' : 'w-1/3'}`}
+                    className="flex flex-col items-end justify-center me-2 leading-none cursor-pointer"
                     onClick={() => handleInfoToggle(true)}
                 >
-                    {/* Bank / Pot */}
-                    <div className="flex items-center gap-1.5 text-purple-600 dark:text-purple-400 font-bold opacity-80 scale-90">
-                        {!hideBank && (
-                            <>
-                                <Landmark className="w-3.5 h-3.5" />
-                                <span className="text-sm">{displayPot}</span>
-                            </>
+                    {/* Top: Score */}
+                    {game.status === 'solving' && (
+                        <div className={`flex items-center gap-1 font-bold transition-all duration-300 ${isLeader ? 'text-amber-500 dark:text-amber-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                            <Star className={`w-3.5 h-3.5 ${isLeader ? 'fill-current' : ''}`} />
+                            <span className={`text-base leading-none transition-all duration-300 ${displayScore !== myScore ? 'scale-125 text-green-500' : ''}`}>
+                                {displayScore}
+                            </span>
+                        </div>
+                    )}
+
+                    {/* Bottom: Counter (or Bank if visible) */}
+                    <div className="flex items-center gap-2 mt-1">
+                        {/* Message Counter */}
+                        {maxMessages && (
+                            <span className="text-[10px] text-gray-400 dark:text-gray-500 font-mono">
+                                {solvedCount || 0}/{maxMessages}
+                            </span>
                         )}
 
-                        {/* Message Counter */}
-                        {game.status !== 'solving' && maxMessages && (
-                            <div className="ms-2 flex items-center bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full text-[10px] text-gray-500 font-mono">
-                                {messageCount}/{maxMessages}
+                        {/* Bank (if enabled) */}
+                        {!hideBank && (
+                            <div className="flex items-center gap-1 text-purple-600 dark:text-purple-400 font-bold opacity-80 text-[10px]">
+                                <Landmark className="w-3 h-3" />
+                                <span>{displayPot}</span>
                             </div>
                         )}
                     </div>
-
-                    {/* Vertical Divider */}
-                    {game.status === 'solving' && (
-                        <>
-                            <div className="w-[1px] h-4 bg-gray-300 dark:bg-gray-700 mx-1" />
-
-                            {/* User Score (Main) */}
-                            <div className={`flex items-center gap-1.5 font-bold transition-all duration-300 ${isLeader ? 'text-amber-500 dark:text-amber-400' : 'text-blue-600 dark:text-blue-400'}`}>
-                                <div className="relative">
-                                    <Star className={`w-4 h-4 ${isLeader ? 'fill-current' : ''}`} />
-                                    {isLeader && <Crown className="absolute -top-3 -end-2 w-3 h-3 text-amber-500 animate-bounce" />}
-                                </div>
-                                <span className={`text-lg transition-all duration-300 ${displayScore !== myScore ? 'scale-125 text-green-500' : ''}`}>
-                                    {displayScore}
-                                </span>
-                            </div>
-                        </>
-                    )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                     {game.status !== 'solving' && (
                         <>
                             {messageCount < 5 ? (
@@ -386,6 +380,18 @@ export function GameHeader({
                             )}
                         </>
                     )}
+
+                    {/* Settings Button (Three Dots) - Always Visible */}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleInfoToggle(true);
+                        }}
+                        className="p-2 -me-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                        aria-label="Settings"
+                    >
+                        <MoreVertical className="w-5 h-5" />
+                    </button>
                 </div>
             </div>
 

@@ -360,8 +360,10 @@ export function GameInput({
             </DropdownMenuTrigger>
             <DropdownMenuContent
                 align="start"
-                onOpenAutoFocus={(e) => e.preventDefault()}
-                onCloseAutoFocus={(e) => e.preventDefault()}
+                // @ts-ignore - Radix prop validation issue
+                onOpenAutoFocus={(e: Event) => e.preventDefault()}
+                // @ts-ignore - Radix prop validation issue
+                onCloseAutoFocus={(e: Event) => e.preventDefault()}
             >
                 {isAutoHintActive && (
                     <DropdownMenuItem onClick={() => onToggleHintPause && onToggleHintPause()}>
