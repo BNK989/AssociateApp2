@@ -4,7 +4,7 @@ import createMiddleware from 'next-intl/middleware';
 import { defineRouting } from 'next-intl/routing';
 
 export const routing = defineRouting({
-    locales: ['en', 'he', 'es', 'fr', 'de', 'it', 'pt', 'ja', 'zh', 'ru', 'ar', 'hi', 'tr', 'nl', 'pl', 'sv', 'vi', 'th'],
+    locales: ['en', 'he', 'es', 'fr', 'de', 'it', 'pt', 'ja', 'zh', 'ru', 'ar', 'hi', 'tr', 'nl', 'pl', 'sv', 'vi', 'th', 'ro'],
     defaultLocale: 'en',
     localePrefix: 'as-needed'
 });

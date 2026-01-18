@@ -58,7 +58,7 @@ export default async function DailyGamePage({
     }
 
     // --- Translation Logic ---
-    const SUPPORTED_DAILY_LOCALES = ['en', 'he'];
+    const SUPPORTED_DAILY_LOCALES = ['en', 'he', 'ar', 'es', 'fr', 'de', 'ro'];
 
     // If locale is NOT supported, we fallback to English content without redirecting
     // (User sees English UI but stays on /es/daily for example, or we could just show English content)
@@ -67,7 +67,7 @@ export default async function DailyGamePage({
         targetLocale = 'en';
     }
 
-    if (targetLocale !== 'en' && targetLocale === 'he') {
+    if (targetLocale !== 'en') {
         const { getCachedTranslatedDailyGame } = await import('@/lib/dailyTranslation');
 
         // Use the cache-wrapped translation

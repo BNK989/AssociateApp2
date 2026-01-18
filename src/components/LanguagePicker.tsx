@@ -47,6 +47,11 @@ export function LanguagePicker({ variant = 'select', className }: LanguagePicker
                 <SelectContent position="popper" align="end">
                     <SelectItem value="en">English</SelectItem>
                     <SelectItem value="he">עברית</SelectItem>
+                    <SelectItem value="ar">العربية</SelectItem>
+                    <SelectItem value="es">Español</SelectItem>
+                    <SelectItem value="fr">Français</SelectItem>
+                    <SelectItem value="de">Deutsch</SelectItem>
+                    <SelectItem value="ro">Română</SelectItem>
                 </SelectContent>
             </Select>
         );
@@ -61,6 +66,11 @@ export function LanguagePicker({ variant = 'select', className }: LanguagePicker
             <SelectContent>
                 <SelectItem value="en">English</SelectItem>
                 <SelectItem value="he">עברית</SelectItem>
+                <SelectItem value="ar">العربية</SelectItem>
+                <SelectItem value="es">Español</SelectItem>
+                <SelectItem value="fr">Français</SelectItem>
+                <SelectItem value="de">Deutsch</SelectItem>
+                <SelectItem value="ro">Română</SelectItem>
             </SelectContent>
         </Select>
     );

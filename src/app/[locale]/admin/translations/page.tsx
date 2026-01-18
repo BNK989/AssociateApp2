@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
-import { getCachedTranslatedDailyGame, translationContext } from '@/lib/dailyTranslation';
+import { getCachedTranslatedDailyGame, translationContext, TranslatedGameData } from '@/lib/dailyTranslation';
 import {
     Table,
     TableBody,
@@ -72,35 +72,42 @@ export default async function AdminTranslationsPage({
         console.warn("Could not fetch generation logs (Table might be missing):", e);
     }
 
+    const TARGET_LOCALES = ['he', 'ar', 'es', 'fr', 'de', 'ro'];
+
     // 4. Translation Check & Combine
     const processedGames = await Promise.all((games || []).map(async (game) => {
-        // Check Hebrew translation
-        // Use translationContext to set isPeek: true, so we don't trigger new translations
-        let translated = null;
-        try {
-            await translationContext.run({ isPeek: true }, async () => {
-                translated = await getCachedTranslatedDailyGame(
-                    game.id,
-                    game.words,
-                    game.theme,
-                    'he'
-                );
-            });
-        } catch (e: any) {
-            // If it's the specific peek error, we know it's a MISS
-            if (e.message !== 'CACHE_MISS_PEEK') {
-                console.error("Unexpected error in translation check:", e);
-            }
-            // Otherwise it remains null (Missing)
-        }
+        const translations: Record<string, { available: boolean, theme: string | null, generationCount: number }> = {};
 
-        const logsForGame = generationLogs.filter(l => l.game_id === game.id && l.locale === 'he');
+        for (const locale of TARGET_LOCALES) {
+            // Check translation
+            let translated: TranslatedGameData | null = null;
+            try {
+                await translationContext.run({ isPeek: true }, async () => {
+                    translated = await getCachedTranslatedDailyGame(
+                        game.id,
+                        game.words,
+                        game.theme,
+                        locale
+                    );
+                });
+            } catch (e: any) {
+                if (e.message !== 'CACHE_MISS_PEEK') {
+                    console.error(`Unexpected error in ${locale} translation check:`, e);
+                }
+            }
+
+            const logsForGame = generationLogs.filter(l => l.game_id === game.id && l.locale === locale);
+
+            translations[locale] = {
+                available: !!translated,
+                theme: translated?.theme || null,
+                generationCount: logsForGame.length
+            };
+        }
 
         return {
             ...game,
-            hebrewTranslation: translated,
-            generationCount: logsForGame.length,
-            lastGeneratedAt: logsForGame.length > 0 ? logsForGame[0].generated_at : null // Assuming ordered or just take first
+            translations
         };
     }));
 
@@ -108,7 +115,7 @@ export default async function AdminTranslationsPage({
         <div className="container mx-auto py-10">
             <Card>
                 <CardHeader>
-                    <CardTitle>Daily Game Translation Cache Status (Hebrew)</CardTitle>
+                    <CardTitle>Daily Game Translation Cache Status</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <Table>
@@ -116,58 +123,40 @@ export default async function AdminTranslationsPage({
                         <TableHeader>
                             <TableRow>
                                 <TableHead className="w-[100px]">Date</TableHead>
-                                <TableHead>ID</TableHead>
                                 <TableHead>Theme (EN)</TableHead>
-                                <TableHead>Status (HE)</TableHead>
-                                <TableHead>Cached At</TableHead>
-                                <TableHead>Expires At (~)</TableHead>
-                                <TableHead>Generations (DB)</TableHead>
-                                <TableHead>Theme (HE)</TableHead>
+                                {TARGET_LOCALES.map(lang => (
+                                    <TableHead key={lang} className="text-center uppercase">{lang}</TableHead>
+                                ))}
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {processedGames.map((game) => {
-                                const isAvailable = !!game.hebrewTranslation;
-
-                                let cachedAt = '-';
-                                let expiresAt = '-';
-
-                                if (game.hebrewTranslation?.cachedAt) {
-                                    const cachedDate = new Date(game.hebrewTranslation.cachedAt);
-                                    cachedAt = cachedDate.toLocaleString();
-
-                                    // Calculate expiry: cachedAt + 24 hours
-                                    const expiryDate = new Date(cachedDate.getTime() + 86400 * 1000);
-                                    expiresAt = expiryDate.toLocaleString();
-                                } else if (isAvailable) {
-                                    cachedAt = 'Unknown / Pre-existing';
-                                    expiresAt = 'Unknown';
-                                }
-
-                                return (
-                                    <TableRow key={game.id}>
-                                        <TableCell className="font-medium">{game.play_date}</TableCell>
-                                        <TableCell className="font-mono text-xs text-muted-foreground">{game.id.substring(0, 8)}...</TableCell>
-                                        <TableCell>{game.theme}</TableCell>
-                                        <TableCell>
-                                            {isAvailable ?
-                                                <Badge variant="default" className="bg-green-600 hover:bg-green-700">Available</Badge> :
-                                                <Badge variant="secondary">Missing</Badge>
-                                            }
-                                        </TableCell>
-                                        <TableCell className="text-sm">{cachedAt}</TableCell>
-                                        <TableCell className="text-sm text-muted-foreground">{expiresAt}</TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <span className={`font-bold ${game.generationCount > 1 ? 'text-red-500' : (game.generationCount === 1 ? 'text-green-600' : 'text-gray-400')}`}>
-                                                    {game.generationCount}
-                                                </span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell dir="rtl">{game.hebrewTranslation?.theme || '-'}</TableCell>
-                                    </TableRow>
-                                );
-                            })}
+                            {processedGames.map((game) => (
+                                <TableRow key={game.id}>
+                                    <TableCell className="font-medium">
+                                        <div>{game.play_date}</div>
+                                        <div className="text-xs text-muted-foreground font-mono">{game.id.substring(0, 8)}</div>
+                                    </TableCell>
+                                    <TableCell>{game.theme}</TableCell>
+                                    {TARGET_LOCALES.map(lang => {
+                                        const status = game.translations[lang];
+                                        return (
+                                            <TableCell key={lang} className="text-center">
+                                                <div className="flex flex-col items-center gap-1">
+                                                    {status.available ?
+                                                        <Badge variant="default" className="bg-green-600 hover:bg-green-700">OK</Badge> :
+                                                        <Badge variant="secondary">Missing</Badge>
+                                                    }
+                                                    {status.generationCount > 0 && (
+                                                        <span className="text-[10px] text-muted-foreground" title="Generations">
+                                                            Gen: {status.generationCount}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                        );
+                                    })}
+                                </TableRow>
+                            ))}
                         </TableBody>
                     </Table>
                 </CardContent>

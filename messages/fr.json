@@ -1,0 +1,495 @@
+{
+    "Common": {
+        "switch_language": "Changer de langue"
+    },
+    "GameRoom": {
+        "Header": {
+            "solve": "Résoudre",
+            "solving": "Résolution...",
+            "today_theme": "Thème du Jour",
+            "back_confirm_title": "Quitter le jeu ?",
+            "back_confirm_msg": "Vous ne pourrez pas revenir dans ce jeu.",
+            "leave_perm": "Quitter le jeu (Permanent)",
+            "go_home": "Aller à l'accueil (Garder le jeu)",
+            "cancel": "Annuler",
+            "switch_solving": "Passer à la résolution ?",
+            "agreed": "Accepté",
+            "confirmed": "Confirmé",
+            "confirm": "Confirmer",
+            "deny": "Refuser"
+        },
+        "Input": {
+            "placeholder": "Tapez un message...",
+            "placeholder_solving_me": "C'est votre mot ! Vous avez {seconds}s pour le révéler !",
+            "placeholder_solving_other": "{user} révèle son mot... ({seconds}s)",
+            "placeholder_solving_single": "Devinez le mot...",
+            "placeholder_free": "L'auteur est parti ! Tout le monde peut deviner !",
+            "placeholder_turn_me": "C'est votre tour !",
+            "placeholder_turn_other": "C'est le tour de {user}",
+            "hint_1": "1er",
+            "reveal_len": "Révéler la longueur",
+            "hint_2": "Révéler 1er + 25%",
+            "hint_ai": "Indice IA",
+            "cost_pts": "{cost} pts",
+            "cost_deducted": "Déduit de la valeur du mot",
+            "give_up": "Abandonner",
+            "counter_remain": "{count} essais restants",
+            "counter_last": "dernier essai",
+            "free_for_all": "TOUS CONTRE TOUS",
+            "toast_max_length": "Le message ne peut pas dépasser {max} caractères"
+        },
+        "Chat": {
+            "start_random": "Commencer avec un mot aléatoire",
+            "start_type": "OU TAPEZ CI-DESSOUS",
+            "start_title": "Commencez le jeu !",
+            "start_desc": "Soyez le premier à envoyer un message ou commencez avec un mot aléatoire.",
+            "consulting_ai": "Consultation IA...",
+            "shuffle": "Mélanger les lettres",
+            "solved": "Résolu",
+            "word_lost": "Mot Perdu",
+            "menu": {
+                "hide": "Masquer le contenu",
+                "reveal": "Révéler le contenu",
+                "delete": "Supprimer le message",
+                "test_end": "Tester la séquence de fin",
+                "test_scramble": "Tester l'effet de mélange",
+                "reset": "Réinitialiser le jeu (Debug)"
+            },
+            "warning_last": "Dernier message !",
+            "warning_switch": "{count} messages avant de passer à la résolution",
+            "you_joined": "Vous avez rejoint le jeu",
+            "player_joined": "Le joueur {user} a rejoint le jeu",
+            "system_solving_mode": "Mode Résolution Activé 🥳 Déchiffrez les messages passés",
+            "counter_remain": "{count} essais restants",
+            "counter_last": "Dernier essai !",
+            "float_solved": "<stealer>{stealer}</stealer> a résolu le texte de <author>{author}</author>",
+            "float_solved_you": "<stealer>{stealer}</stealer> a résolu votre texte",
+            "toast_daily_limit": "Limite quotidienne d'indices IA atteinte",
+            "toast_word_lost": "Mot perdu : {word}",
+            "toast_reset_success": "Jeu réinitialisé à l'état initial",
+            "hint_fallback": "Contient {length} lettres. La première lettre est {firstLetter}."
+        },
+        "Loading": {
+            "app_name": "Associate",
+            "loading_alt": "Chargement...",
+            "text": "Chargement du jeu..."
+        },
+        "Info": {
+            "title": "Infos du Jeu",
+            "scores_title": "Scores",
+            "team_pot": "Cagnotte d'équipe",
+            "your_score": "Votre Score",
+            "solved": "Résolu",
+            "players_title": "Joueurs",
+            "you_tag": "VOUS",
+            "status_left": "A quitté le jeu",
+            "status_active": "Actif",
+            "how_to_play_title": "Comment Jouer",
+            "read_instructions": "Lire les instructions",
+            "instructions_dialog_title": "Instructions du Jeu",
+            "preferences_title": "Préférences",
+            "sounds_title": "Sons du Jeu",
+            "sounds_desc": "Jouer des sons aux tours",
+            "dark_mode_title": "Mode Sombre",
+            "dark_mode_desc": "Basculer entre les thèmes clair et sombre",
+            "language_title": "Langue",
+            "language_desc": "Changer la langue de l'app",
+            "share_results": "Partager les résultats",
+            "back_to_game": "Retour au jeu",
+            "auto_hint_title": "Indice Auto",
+            "auto_hint_desc": "Révéler les indices automatiquement",
+            "auto_hint_seconds": "Secondes",
+            "toast_audio_enabled": "Audio activé",
+            "toast_audio_disabled": "Audio désactivé",
+            "toast_settings_fail": "Échec de la mise à jour des paramètres",
+            "toast_copied": "Copié dans le presse-papiers !",
+            "toast_copy_fail": "Échec de la copie dans le presse-papiers",
+            "toast_share_fail": "Échec du partage des résultats",
+            "daily_share_text": "Chaîne du Jour {date}\nScore : {score}\nThème : {theme}\n\nJouez sur : {url}",
+            "Classic": {
+                "overview": {
+                    "title": "Aperçu du Jeu",
+                    "text": "C'est un jeu textuel pour voir à quel point vous vous connaissez et vos associations. Nous jouons en deux parties :"
+                },
+                "phase1": {
+                    "title": "Phase 1 : Chat",
+                    "text": "Dans la première partie, nous discutons comme vous le feriez sur d'autres applications de messagerie."
+                },
+                "phase2": {
+                    "title": "Phase 2 : Résolution",
+                    "text": "Dans la deuxième partie, nous essaierons de deviner quel était le mot précédent. Chaque joueur a 10 secondes pour deviner son propre texte précédent. Après 10 secondes, c'est ouvert à tous et n'importe qui peut deviner !"
+                },
+                "hints": {
+                    "title": "Indices",
+                    "text": "Si vous ne connaissez pas le mot, des indices sont disponibles : 1) Longueur du mot, 2) Révéler des lettres, 3) Indice de contexte IA. Attention : 3 mauvaises réponses révèlent le mot !"
+                },
+                "winning": {
+                    "title": "Gagner",
+                    "text": "L'objectif est de gagner en obtenant le plus grand nombre de textes corrects à la suite."
+                }
+            },
+            "Daily": {
+                "folder": {
+                    "title": "Dossier Défi Quotidien",
+                    "text": "Bienvenue dans la Chaîne Quotidienne ! Chaque jour apporte un nouveau thème et une série de mots à résoudre."
+                },
+                "how_to": {
+                    "title": "Comment Jouer",
+                    "text": "Devinez les mots cachés liés au thème du jour. Les mots sont liés les uns aux autres par association."
+                },
+                "scoring": {
+                    "title": "Score",
+                    "text": "Résolvez des mots avec moins d'indices pour plus de points. Maintenez une série de bonnes réponses pour multiplier votre score !"
+                },
+                "winning": {
+                    "title": "Gagner",
+                    "text": "Complétez tous les mots pour terminer le défi quotidien. Revenez demain pour un nouveau défi !"
+                },
+                "tutorial": {
+                    "step1_title": "Défi Quotidien 📅",
+                    "step1_desc": "Bienvenue dans votre entraînement cérébral quotidien ! Chaque jour, nous publions une nouvelle chaîne de quelques mots connectés.",
+                    "step2_title": "Travaillez à Rebours ⬆️",
+                    "step2_desc": "Le dernier mot est déjà révélé. Votre objectif est de deviner le mot qui vient AVANT lui. Résoudre un mot révèle le suivant dans la chaîne !",
+                    "step3_title": "Besoin d'un Indice ? 💡",
+                    "step3_desc": "Coincé sur une connexion délicate ? Appuyez sur l'icône de l'ampoule pour un indice. Cela coûte quelques points, mais c'est mieux que de briser votre série !",
+                    "play_now": "Jouer Maintenant",
+                    "next": "Suivant"
+                }
+            }
+        },
+        "EndGame": {
+            "title": "Bien Joué !",
+            "subtitle": "Jeu Terminé",
+            "stat_messages": "Messages",
+            "stat_team_bank": "Cagnotte d'équipe",
+            "stat_points_accumulated": "Points accumulés",
+            "scoreboard_title": "Tableau de Score Final",
+            "btn_share": "Partager les résultats",
+            "btn_back": "Retour au Lobby",
+            "share_title": "Résultats Jeu Associate",
+            "copied": "Résultats copiés dans le presse-papiers !",
+            "share_fail": "Échec du partage des résultats",
+            "pts": "pts",
+            "share_team_bank": "Cagnotte d'équipe",
+            "share_top_score": "Meilleur Score",
+            "share_leaderboard": "Classement",
+            "play_at": "Jouez sur"
+        },
+        "Errors": {
+            "not_found": "Jeu non trouvé",
+            "left_success": "Vous avez quitté le jeu.",
+            "left_fail": "Échec du départ du jeu."
+        },
+        "DailyEndGame": {
+            "title": "Défi Quotidien Terminé !",
+            "subtitle": "Vous avez résolu les {totalWords} mots !",
+            "score_label": "Score Final",
+            "upsell_title": "Jouer avec des Amis ?",
+            "upsell_text": "Créez un compte gratuit pour héberger vos propres jeux, suivre les statistiques et défier vos amis !",
+            "sign_up_btn": "Inscription Gratuite",
+            "share_btn": "Partager le Résultat",
+            "home_btn": "Retour à l'Accueil",
+            "share_text": "Défi Quotidien Associ8 📅 {date}\n🏆 Score : {score} pts\n🧩 Mots : {solved}/{total}\n\nPouvez-vous battre mon score ? Jouez sur : {url}",
+            "toast_copied": "Résultats copiés dans le presse-papiers !",
+            "toast_share_fail": "Échec du partage des résultats"
+        }
+    },
+    "HomePage": {
+        "title": "Associate",
+        "login": "Connexion",
+        "hero": {
+            "badge": "✨ Le Jeu de Mots Social Ultime",
+            "title_line1": "Pensez Ensemble.",
+            "title_line2": "Gagnez Ensemble.",
+            "description": "Rejoignez le jeu ultime d'association de mots en temps réel. Si vous aimez <none>Connections</none>, <wordle>Wordle</wordle>, ou <codenames>Codenames</codenames>, vous deviendrez accro à Associ8. Connectez des mots, volez des points et faites la course vers la victoire avec des amis.",
+            "login_button": "Entrer / S'inscrire",
+            "daily_button": "Jouer au Défi Quotidien",
+            "daily_loading": "Chargement...",
+            "daily_completed": "Quotidien Terminé"
+        },
+        "auth_form": {
+            "title": "Commencer",
+            "subtitle": "Passez directement à l'action"
+        },
+        "demo": {
+            "hint": "Indice : Utilisez un mot pour décrire 'Été'",
+            "success": "Bien ! +10 Points",
+            "lobby": "Lobby #12"
+        },
+        "footer": "© {year} Jeu Associate. Tous droits réservés."
+    },
+    "NavBar": {
+        "login": "Connexion",
+        "logout": "Déconnexion",
+        "preferences": "Préférences",
+        "guest_badge": "Invité",
+        "guest_message": "Inscrivez-vous pour sauvegarder la progression",
+        "theme_toggle": "Changer de thème"
+    },
+    "Auth": {
+        "tabs": {
+            "login": "Accès Compte",
+            "guest": "Mode Invité"
+        },
+        "google_login": "Se connecter avec Google",
+        "divider": "Ou continuer avec email",
+        "email_label": "Adresse email",
+        "magic_link_button": "Envoyer Lien Magique",
+        "guest_info": "Les comptes invités sont temporaires. Inscrivez-vous pour sauvegarder vos statistiques et votre progression.",
+        "guest_username_label": "Choisissez un Nom d'Utilisateur",
+        "guest_button": "Jouer en tant qu'Invité",
+        "guest_disabled": "Le mode invité est actuellement désactivé par l'administrateur.",
+        "check_email": "Vérifiez votre email pour le lien de connexion !",
+        "trouble_login": "Problèmes de connexion ?",
+        "clear_data": "Effacer les données de l'app",
+        "clear_data_confirm": "Cela effacera vos cookies locaux et votre cache pour résoudre les problèmes de connexion. Continuer ?"
+    },
+    "Footer": {
+        "copyright": "© {year} Jeu Associate. Tous droits réservés.",
+        "privacy": "Politique de Confidentialité",
+        "terms": "Conditions d'Utilisation",
+        "thank_you": "Merci",
+        "suggestion": "Une suggestion ?"
+    },
+    "Feedback": {
+        "button": "Retours",
+        "title": "Envoyer des Retours",
+        "description": "Aidez-nous à améliorer le jeu. Signalez des bugs, suggérez des fonctionnalités ou dites simplement bonjour.",
+        "labels": {
+            "name": "Nom (Optionnel)",
+            "email": "Email (Optionnel)",
+            "type": "Type",
+            "message": "Message"
+        },
+        "placeholders": {
+            "name": "Votre nom",
+            "email": "vous@exemple.com",
+            "type": "Sélectionnez un type",
+            "message": "Dites-nous ce que vous pensez..."
+        },
+        "types": {
+            "bug": "Rapport de Bug",
+            "feature": "Demande de Fonctionnalité",
+            "general": "Retours Généraux",
+            "other": "Autre"
+        },
+        "submit": "Envoyer Retours",
+        "success": "Retours envoyés ! Merci.",
+        "error": "Échec de l'envoi des retours. Veuillez réessayer."
+    },
+    "Privacy": {
+        "title": "Politique de Confidentialité",
+        "last_updated": "Dernière mise à jour : {date}",
+        "sections": {
+            "1": {
+                "title": "1. Informations que nous collectons",
+                "content": "Nous collectons le minimum d'informations nécessaires pour fournir le service du Jeu d'Association de Mots. Cela inclut votre adresse email (si fournie pour les retours ou l'authentification) et les données de jeu générées pendant vos sessions. Nous pouvons également collecter des données techniques à l'aide d'outils tiers pour assurer la fiabilité."
+            },
+            "2": {
+                "title": "2. Comment nous utilisons vos informations",
+                "content": "Nous utilisons vos informations pour :",
+                "list": {
+                    "1": "Fournir et maintenir le service du jeu.",
+                    "2": "Améliorer les mécanismes du jeu et l'expérience utilisateur.",
+                    "3": "Répondre à vos retours et demandes.",
+                    "4": "Analyser les modèles d'utilisation et déboguer les problèmes.",
+                    "5": "Activités marketing et promotionnelles futures."
+                }
+            },
+            "3": {
+                "title": "3. Sécurité des Données",
+                "content": "Nous mettons en œuvre des mesures de sécurité appropriées pour protéger vos informations personnelles. Cependant, aucune méthode de transmission sur Internet n'est 100% sécurisée."
+            },
+            "4": {
+                "title": "4. Analytique et Outils Tiers",
+                "content": "Nous utilisons PostHog et d'autres services tiers pour l'analytique, le débogage et pour maintenir la fiabilité du service. Nous nous réservons le droit d'utiliser les données collectées à toute fin, y compris mais sans s'y limiter au marketing et aux améliorations de service, sans limitation."
+            },
+            "5": {
+                "title": "5. Cookies",
+                "content": "Nous utilisons des cookies essentiels pour maintenir votre session et l'état du jeu. Nous pouvons également utiliser des cookies de services tiers (comme PostHog) pour suivre le comportement d'utilisation."
+            }
+        }
+    },
+    "Terms": {
+        "title": "Conditions d'Utilisation",
+        "last_updated": "Dernière mise à jour : {date}",
+        "sections": {
+            "1": {
+                "title": "1. Acceptation des Conditions",
+                "content": "En accédant ou en utilisant le Jeu d'Association de Mots, vous acceptez d'être lié par ces Conditions d'Utilisation."
+            },
+            "2": {
+                "title": "2. Conduite de l'Utilisateur",
+                "content": "Vous acceptez d'utiliser le service uniquement à des fins légales et d'une manière qui n'enfreint pas les droits, ne restreint pas ou n'empêche pas l'utilisation et la jouissance du service par toute autre personne.",
+                "content_part2": "Le harcèlement, les discours de haine et les comportements abusifs dans les chats du jeu ne seront pas tolérés."
+            },
+            "3": {
+                "title": "3. Avis de Non-responsabilité",
+                "content": "Le jeu est fourni \"tel quel\" sans aucune représentation ou garantie, expresse ou implicite."
+            },
+            "4": {
+                "title": "4. Changements des Conditions",
+                "content": "Nous nous réservons le droit de modifier ces conditions à tout moment. Nous informerons les utilisateurs de tout changement significatif."
+            }
+        }
+    },
+    "ThankYou": {
+        "title": "Merci !",
+        "message": "Nous comptons sur des joueurs comme vous pour améliorer ce jeu. Merci de jouer et de faire partie de notre communauté.",
+        "special_thanks": "Un merci spécial à mes frères et sœurs <maya>Maya</maya> et <tom>Tom</tom>, qui m'ont donné l'idée de ce jeu auquel nous avons beaucoup joué par le passé.",
+        "home_button": "Retour Accueil"
+    },
+    "Lobby": {
+        "title": "Vos Jeux",
+        "new_game": "Nouveau Jeu",
+        "past_games": "Jeux Passés",
+        "daily": {
+            "title": "Défi Quotidien",
+            "completed": "Défi Quotidien Terminé",
+            "description": "Résolvez la chaîne de mots quotidienne pour gagner des points !",
+            "completed_description": "Beau travail ! Revenez demain pour une nouvelle chaîne."
+        },
+        "empty": {
+            "title": "Commencez Votre Premier Jeu !",
+            "description": "Créez un jeu pour commencer à associer des mots avec vos amis. Testez votre connexion et voyez qui connaît le mieux qui !",
+            "button": "Créer un Jeu"
+        },
+        "create_dialog": {
+            "title": "Créer Nouveau Jeu",
+            "description": "Configurez les paramètres du jeu avant de commencer.",
+            "game_length": "Durée du Jeu (Total Messages)",
+            "max_messages": "Max {count} messages",
+            "note": "* Une fois la limite atteinte, le jeu passera automatiquement en Mode Résolution.",
+            "cancel": "Annuler",
+            "submit": "Commencer le Jeu",
+            "creating": "Création..."
+        },
+        "leave_dialog": {
+            "title": "Quitter le Jeu",
+            "description": "Êtes-vous sûr de vouloir quitter ce jeu ? Vous ne pourrez pas rejoindre à moins d'être invité à nouveau.",
+            "cancel": "Annuler",
+            "submit": "Quitter le Jeu",
+            "leaving": "Départ..."
+        },
+        "game_card": {
+            "status": {
+                "texting": "Messagerie",
+                "solving": "Résolution",
+                "completed": "Terminé",
+                "archived": "Archivé"
+            },
+            "your_turn": "Votre Tour",
+            "last_moved": "Dernier mouvement",
+            "msgs": "msgs",
+            "max": "max",
+            "buttons": {
+                "view": "Voir",
+                "solve": "Résoudre",
+                "play": "Jouer"
+            },
+            "menu": {
+                "archive": "Archiver le Jeu",
+                "leave": "Quitter le Jeu",
+                "admin_delete": "Admin : Supprimer",
+                "admin_reset": "Admin : Réinitialiser"
+            }
+        },
+        "toasts": {
+            "left_success": "Vous avez quitté le jeu avec succès",
+            "left_error": "Échec du départ du jeu",
+            "archived_error": "Échec de l'archivage du jeu",
+            "deleted_success": "Jeu supprimé",
+            "deleted_error": "Échec de la suppression du jeu",
+            "reset_success": "Jeu réinitialisé avec succès",
+            "reset_error": "Échec de la réinitialisation du jeu",
+            "load_error": "Échec du chargement des jeux : {message}",
+            "create_error": "Échec de la création du jeu"
+        }
+    },
+    "Onboarding": {
+        "welcome": {
+            "title": "Bienvenue sur Associate !",
+            "description": "Le jeu où les grands esprits se rencontrent. Testez votre connexion avec vos amis dans ce jeu d'association de mots."
+        },
+        "phase1": {
+            "title": "Phase 1 : Chat",
+            "description": "Commencez par discuter naturellement avec vos amis. L'objectif est de construire un contexte de conversation."
+        },
+        "phase2": {
+            "title": "Phase 2 : Résolution",
+            "description": "Devinez le mot précédent ! Des indices sont disponibles si vous êtes bloqué, mais attention - trop de mauvaises réponses révéleront le mot."
+        },
+        "ready": {
+            "title": "Prêt à Jouer ?",
+            "description": "Créez un nouveau jeu et invitez vos amis pour commencer !"
+        },
+        "next": "Suivant",
+        "lets_go": "C'est parti !"
+    },
+    "Invite": {
+        "button": "Inviter",
+        "title": "Inviter des Joueurs",
+        "search_placeholder": "Rechercher un utilisateur...",
+        "no_users": "Aucun utilisateur trouvé.",
+        "suggestions": "Suggestions",
+        "joined": "Rejoint",
+        "sent": "Envoyé",
+        "or_link": "Ou inviter via lien",
+        "copy_link": "Copier le Lien",
+        "share": "Partager",
+        "done": "Fait",
+        "toasts": {
+            "invite_error": "Échec de l'envoi de l'invitation",
+            "link_copied": "Lien copié dans le presse-papiers !"
+        }
+    },
+    "Notifications": {
+        "title": "Notifications",
+        "empty": "Aucune nouvelle notification",
+        "dismiss_all": "Tout Effacer",
+        "invite": "{username} vous a invité à jouer au Jeu #{gameId}",
+        "invited_you": "vous a invité à jouer !",
+        "accept": "Accepter",
+        "decline": "Refuser",
+        "dismiss": "Masquer",
+        "toasts": {
+            "joined": "Vous avez rejoint le jeu !",
+            "join_error": "Échec de l'adhésion au jeu",
+            "declined": "Invitation refusée",
+            "dismiss_all_success": "Toutes les notifications effacées",
+            "dismiss_all_error": "Échec de l'effacement des notifications",
+            "permission_title": "Activer les Notifications ?",
+            "permission_desc": "Recevez une notification quand c'est votre tour même si vous êtes absent.",
+            "permission_action": "Activer",
+            "permission_success": "Notifications activées !"
+        }
+    },
+    "Settings": {
+        "title": "Paramètres",
+        "display_name": "Nom d'Affichage",
+        "avatar": "Avatar",
+        "no_img": "Pas d'Img",
+        "upload_avatar": "Télécharger Avatar",
+        "uploading": "Téléchargement...",
+        "upload_hint": "Max 2MB. Redimensionnement auto à 256x256.",
+        "theme": "Thème",
+        "language": "Langue",
+        "theme_options": {
+            "system": "Système",
+            "dark": "Sombre",
+            "light": "Clair"
+        },
+        "notifications": "Notifications",
+        "system_notifications": "Notifications Système",
+        "audio_chime": "Carillon Audio",
+        "tab_title_flash": "Clignotement Titre Onglet",
+        "save_changes": "Sauvegarder",
+        "saving": "Sauvegarde...",
+        "upload_success": "Avatar téléchargé avec succès ! N'oubliez pas de sauvegarder.",
+        "upload_error": "Erreur téléchargement avatar : {message}",
+        "upload_error_generic": "Une erreur est survenue pendant le téléchargement",
+        "update_error": "Erreur mise à jour profil",
+        "update_success": "Profil mis à jour !",
+        "permission_denied": "Permission refusée. Veuillez activer les notifications dans les paramètres de votre navigateur."
+    }
+}

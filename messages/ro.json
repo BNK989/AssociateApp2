@@ -1,0 +1,495 @@
+{
+    "Common": {
+        "switch_language": "Schimbă Limba"
+    },
+    "GameRoom": {
+        "Header": {
+            "solve": "Rezolvă",
+            "solving": "Rezolvare...",
+            "today_theme": "Tema de Azi",
+            "back_confirm_title": "Părăsești jocul?",
+            "back_confirm_msg": "Nu te vei mai putea întoarce la acest joc.",
+            "leave_perm": "Părăsești Jocul (Permanent)",
+            "go_home": "Acasă (Păstrează Jocul)",
+            "cancel": "Anulează",
+            "switch_solving": "Treci la Rezolvare?",
+            "agreed": "De acord",
+            "confirmed": "Confirmat",
+            "confirm": "Confirmă",
+            "deny": "Refuză"
+        },
+        "Input": {
+            "placeholder": "Scrie un mesaj...",
+            "placeholder_solving_me": "Cuvântul tău! Ai {seconds}s să-l dezvălui!",
+            "placeholder_solving_other": "{user} își dezvăluie cuvântul... ({seconds}s)",
+            "placeholder_solving_single": "Ghicește cuvântul...",
+            "placeholder_free": "Autorul a plecat! Oricine poate ghici!",
+            "placeholder_turn_me": "Este rândul tău!",
+            "placeholder_turn_other": "Este rândul lui {user}",
+            "hint_1": "Primul",
+            "reveal_len": "Dezvăluie Lungimea",
+            "hint_2": "Dezvăluie Primul + 25%",
+            "hint_ai": "Indiciu AI",
+            "cost_pts": "{cost} pct",
+            "cost_deducted": "Dedus din valoarea cuvântului",
+            "give_up": "Renunță",
+            "counter_remain": "{count} încercări rămase",
+            "counter_last": "ultima încercare",
+            "free_for_all": "TOȚI PENTRU TOȚI",
+            "toast_max_length": "Mesajul nu poate depăși {max} caractere"
+        },
+        "Chat": {
+            "start_random": "Începe cu Cuvânt Aleatoriu",
+            "start_type": "SAU SCRIE MAI JOS",
+            "start_title": "Începe Jocul!",
+            "start_desc": "Fii primul care trimite un mesaj sau începe cu un cuvânt aleatoriu.",
+            "consulting_ai": "Consult AI...",
+            "shuffle": "Amestecă literele",
+            "solved": "Rezolvat",
+            "word_lost": "Cuvânt Pierdut",
+            "menu": {
+                "hide": "Ascunde Conținut",
+                "reveal": "Dezvăluie Conținut",
+                "delete": "Șterge Mesaj",
+                "test_end": "Testează Secvența de Final",
+                "test_scramble": "Testează Efectul de Amestecare",
+                "reset": "Resetează Joc (Debug)"
+            },
+            "warning_last": "Ultimul mesaj!",
+            "warning_switch": "{count} mesaje până la trecerea la rezolvare",
+            "you_joined": "Te-ai alăturat jocului",
+            "player_joined": "Jucătorul {user} s-a alăturat jocului",
+            "system_solving_mode": "Mod Rezolvare Activat 🥳 Descifrează mesajele anterioare",
+            "counter_remain": "{count} încercări rămase",
+            "counter_last": "Ultima încercare!",
+            "float_solved": "<stealer>{stealer}</stealer> a rezolvat textul lui <author>{author}</author>",
+            "float_solved_you": "<stealer>{stealer}</stealer> a rezolvat textul tău",
+            "toast_daily_limit": "Limită zilnică de indicii AI atinsă",
+            "toast_word_lost": "Cuvânt pierdut: {word}",
+            "toast_reset_success": "Joc resetat la starea inițială",
+            "hint_fallback": "Conține {length} litere. Prima literă este {firstLetter}."
+        },
+        "Loading": {
+            "app_name": "Associate",
+            "loading_alt": "Se încarcă...",
+            "text": "Se încarcă Jocul..."
+        },
+        "Info": {
+            "title": "Info Joc",
+            "scores_title": "Scoruri",
+            "team_pot": "Pot Echipă",
+            "your_score": "Scorul Tău",
+            "solved": "Rezolvat",
+            "players_title": "Jucători",
+            "you_tag": "TU",
+            "status_left": "A părăsit jocul",
+            "status_active": "Activ",
+            "how_to_play_title": "Cum se joacă",
+            "read_instructions": "Citește Instrucțiuni",
+            "instructions_dialog_title": "Instrucțiuni Joc",
+            "preferences_title": "Preferințe",
+            "sounds_title": "Sunete Joc",
+            "sounds_desc": "Redă sunete la rând",
+            "dark_mode_title": "Mod Întunecat",
+            "dark_mode_desc": "Comută între temă luminoasă și întunecată",
+            "language_title": "Limbă",
+            "language_desc": "Schimbă limba aplicației",
+            "share_results": "Partajează Rezultate",
+            "back_to_game": "Înapoi la Joc",
+            "auto_hint_title": "Indiciu Auto",
+            "auto_hint_desc": "Dezvăluie indiciile automat",
+            "auto_hint_seconds": "Secunde",
+            "toast_audio_enabled": "Audio activat",
+            "toast_audio_disabled": "Audio dezactivat",
+            "toast_settings_fail": "Actualizare setări eșuată",
+            "toast_copied": "Copiat în clipboard!",
+            "toast_copy_fail": "Copiere în clipboard eșuată",
+            "toast_share_fail": "Partajare rezultate eșuată",
+            "daily_share_text": "Lanțul Zilnic {date}\nScor: {score}\nTemă: {theme}\n\nJoacă la: {url}",
+            "Classic": {
+                "overview": {
+                    "title": "Prezentare Generală",
+                    "text": "Acesta este un joc text pentru a vedea cât de bine vă cunoașteți și asocierile voastre. Jucăm în două părți:"
+                },
+                "phase1": {
+                    "title": "Faza 1: Chat",
+                    "text": "În prima parte, discutăm similar cum ați face-o pe alte aplicații de mesagerie."
+                },
+                "phase2": {
+                    "title": "Faza 2: Rezolvare",
+                    "text": "În a doua parte, vom încerca să ghicim care a fost cuvântul anterior. Fiecare jucător are 10 secunde să-și ghicească propriul text anterior. După 10 secunde, este liber pentru toți și oricine poate ghici!"
+                },
+                "hints": {
+                    "title": "Indicii",
+                    "text": "Dacă nu știți cuvântul, indicii sunt disponibile: 1) Lungimea cuvântului, 2) Dezvăluie litere, 3) Indiciu context AI. Atenție: 3 încercări greșite dezvăluie cuvântul!"
+                },
+                "winning": {
+                    "title": "Câștigare",
+                    "text": "Scopul este să câștigi obținând cele mai multe texte corecte la rând."
+                }
+            },
+            "Daily": {
+                "folder": {
+                    "title": "Dosar Provocare Zilnică",
+                    "text": "Bine ați venit la Lanțul Zilnic! Fiecare zi aduce o temă nouă și un set de cuvinte de rezolvat."
+                },
+                "how_to": {
+                    "title": "Cum se joacă",
+                    "text": "Ghicește cuvintele ascunse legate de tema de azi. Cuvintele sunt legate între ele prin asociere."
+                },
+                "scoring": {
+                    "title": "Scor",
+                    "text": "Rezolvă cuvinte cu mai puține indicii pentru mai multe puncte. Menține o serie de răspunsuri corecte pentru a-ți multiplica scorul!"
+                },
+                "winning": {
+                    "title": "Câștigare",
+                    "text": "Completează toate cuvintele pentru a termina provocarea zilnică. Revino mâine pentru o nouă provocare!"
+                },
+                "tutorial": {
+                    "step1_title": "Provocare Zilnică 📅",
+                    "step1_desc": "Bine ai venit la antrenamentul tău mental zilnic! În fiecare zi, lansăm un lanț nou de câteva cuvinte conectate.",
+                    "step2_title": "Lucrează Înapoi ⬆️",
+                    "step2_desc": "Ultimul cuvânt este deja dezvăluit. Scopul tău este să ghicești cuvântul care vine ÎNAINTEA lui. Rezolvarea unui cuvânt îl dezvăluie pe următorul din lanț!",
+                    "step3_title": "Ai nevoie de un Indiciu? 💡",
+                    "step3_desc": "Blocat la o conexiune dificilă? Apasă pe iconița bec pentru un indiciu. Costă câteva puncte, dar e mai bine decât să-ți strici seria!",
+                    "play_now": "Joacă Acum",
+                    "next": "Următorul"
+                }
+            }
+        },
+        "EndGame": {
+            "title": "Bine Jucat!",
+            "subtitle": "Joc Completat",
+            "stat_messages": "Mesaje",
+            "stat_team_bank": "Pot Echipă",
+            "stat_points_accumulated": "Puncte acumulate",
+            "scoreboard_title": "Tabelă Scor Final",
+            "btn_share": "Partajează Rezultate",
+            "btn_back": "Înapoi la Lobby",
+            "share_title": "Rezultate Joc Associate",
+            "copied": "Rezultate copiate în clipboard!",
+            "share_fail": "Partajare rezultate eșuată",
+            "pts": "pct",
+            "share_team_bank": "Pot Echipă",
+            "share_top_score": "Scor Maxim",
+            "share_leaderboard": "Clasament",
+            "play_at": "Joacă la"
+        },
+        "Errors": {
+            "not_found": "Jocul nu a fost găsit",
+            "left_success": "Ai părăsit jocul.",
+            "left_fail": "Părăsirea jocului a eșuat."
+        },
+        "DailyEndGame": {
+            "title": "Provocare Zilnică Completă!",
+            "subtitle": "Ai rezolvat toate cele {totalWords} cuvinte!",
+            "score_label": "Scor Final",
+            "upsell_title": "Joci cu Prieteni?",
+            "upsell_text": "Creează un cont gratuit pentru a găzdui propriile jocuri, a urmări statistici și a provoca prieteni!",
+            "sign_up_btn": "Înregistrare Gratuită",
+            "share_btn": "Partajează Rezultat",
+            "home_btn": "Înapoi Acasă",
+            "share_text": "Provocare Zilnică Associ8 📅 {date}\n🏆 Scor: {score} pct\n🧩 Cuvinte: {solved}/{total}\n\nPoți să-mi bați scorul? Joacă la: {url}",
+            "toast_copied": "Rezultate copiate în clipboard!",
+            "toast_share_fail": "Partajare rezultate eșuată"
+        }
+    },
+    "HomePage": {
+        "title": "Associate",
+        "login": "Autentificare",
+        "hero": {
+            "badge": "✨ Jocul Social Suprem de Cuvinte",
+            "title_line1": "Gândiți Împreună.",
+            "title_line2": "Câștigați Împreună.",
+            "description": "Alătură-te jocului suprem de asociere de cuvinte în timp real. Dacă îți place <none>Connections</none>, <wordle>Wordle</wordle>, sau <codenames>Codenames</codenames>, vei deveni dependent de Associ8. Conectează cuvinte, fură puncte și întrece-te spre victorie cu prietenii.",
+            "login_button": "Intră / Înregistrare",
+            "daily_button": "Joacă Provocarea Zilnică",
+            "daily_loading": "Se încarcă...",
+            "daily_completed": "Zilnic Completat"
+        },
+        "auth_form": {
+            "title": "Începe",
+            "subtitle": "Sari direct în acțiune"
+        },
+        "demo": {
+            "hint": "Indiciu: Folosește un cuvânt pentru a descrie 'Vară'",
+            "success": "Bine! +10 Puncte",
+            "lobby": "Lobby #12"
+        },
+        "footer": "© {year} Associate Game. Toate drepturile rezervate."
+    },
+    "NavBar": {
+        "login": "Autentificare",
+        "logout": "Deconectare",
+        "preferences": "Preferințe",
+        "guest_badge": "Oaspete",
+        "guest_message": "Înregistrează-te pentru a salva progresul",
+        "theme_toggle": "Schimbă tema"
+    },
+    "Auth": {
+        "tabs": {
+            "login": "Acces Cont",
+            "guest": "Mod Oaspete"
+        },
+        "google_login": "Autentificare cu Google",
+        "divider": "Sau continuă cu email",
+        "email_label": "Adresă de email",
+        "magic_link_button": "Trimite Link Magic",
+        "guest_info": "Conturile de oaspete sunt temporare. Înregistrează-te pentru a salva statisticile și progresul.",
+        "guest_username_label": "Alege un Nume de Utilizator",
+        "guest_button": "Joacă ca Oaspete",
+        "guest_disabled": "Modul oaspete este momentan dezactivat de administrator.",
+        "check_email": "Verifică emailul pentru linkul de autentificare!",
+        "trouble_login": "Probleme la autentificare?",
+        "clear_data": "Șterge datele aplicației",
+        "clear_data_confirm": "Acest lucru va șterge cookie-urile locale și cache-ul pentru a rezolva problemele de autentificare. Continui?"
+    },
+    "Footer": {
+        "copyright": "© {year} Associate Game. Toate drepturile rezervate.",
+        "privacy": "Politică de Confidențialitate",
+        "terms": "Termeni de Serviciu",
+        "thank_you": "Mulțumesc",
+        "suggestion": "Ai o sugestie?"
+    },
+    "Feedback": {
+        "button": "Feedback",
+        "title": "Trimite Feedback",
+        "description": "Ajută-ne să îmbunătățim jocul. Raportează bug-uri, sugerează funcții sau doar spune salut.",
+        "labels": {
+            "name": "Nume (Opțional)",
+            "email": "Email (Opțional)",
+            "type": "Tip",
+            "message": "Mesaj"
+        },
+        "placeholders": {
+            "name": "Numele tău",
+            "email": "tu@exemplu.com",
+            "type": "Alege un tip",
+            "message": "Spune-ne ce crezi..."
+        },
+        "types": {
+            "bug": "Raport de Bug",
+            "feature": "Cerere de Funcție",
+            "general": "Feedback General",
+            "other": "Altele"
+        },
+        "submit": "Trimite Feedback",
+        "success": "Feedback trimis! Mulțumesc.",
+        "error": "Trimitere feedback eșuată. Te rog încearcă din nou."
+    },
+    "Privacy": {
+        "title": "Politică de Confidențialitate",
+        "last_updated": "Ultima actualizare: {date}",
+        "sections": {
+            "1": {
+                "title": "1. Informații pe care le colectăm",
+                "content": "Colectăm minimul de informații necesare pentru a oferi serviciul Jocului de Asociere de Cuvinte. Aceasta include adresa ta de email (dacă este furnizată pentru feedback sau autentificare) și datele de joc generate în timpul sesiunilor tale. De asemenea, putem colecta date tehnice folosind instrumente terțe pentru a asigura fiabilitatea."
+            },
+            "2": {
+                "title": "2. Cum folosim informațiile tale",
+                "content": "Folosim informațiile tale pentru:",
+                "list": {
+                    "1": "A oferi și menține serviciul de joc.",
+                    "2": "A îmbunătăți mecanica jocului și experiența utilizatorului.",
+                    "3": "A răspunde la feedback-ul și cererile tale.",
+                    "4": "A analiza modelele de utilizare și a depana probleme.",
+                    "5": "Viitoare activități de marketing și promovare."
+                }
+            },
+            "3": {
+                "title": "3. Securitatea Datelor",
+                "content": "Implementăm măsuri de securitate adecvate pentru a proteja informațiile tale personale. Cu toate acestea, nicio metodă de transmitere prin Internet nu este 100% sigură."
+            },
+            "4": {
+                "title": "4. Analiză și Instrumente Terțe",
+                "content": "Folosim PostHog și alte servicii terțe pentru analiză, depanare și pentru a menține fiabilitatea serviciului. Ne rezervăm dreptul de a folosi datele colectate în orice scop, inclusiv, dar fără a se limita la marketing și îmbunătățiri ale serviciului, fără limitare."
+            },
+            "5": {
+                "title": "5. Cookie-uri",
+                "content": "Folosim cookie-uri esențiale pentru a menține sesiunea ta și starea jocului. De asemenea, putem folosi cookie-uri de la servicii terțe (cum ar fi PostHog) pentru a urmări comportamentul de utilizare."
+            }
+        }
+    },
+    "Terms": {
+        "title": "Termeni de Serviciu",
+        "last_updated": "Ultima actualizare: {date}",
+        "sections": {
+            "1": {
+                "title": "1. Acceptarea Termenilor",
+                "content": "Prin accesarea sau utilizarea Jocului de Asociere de Cuvinte, ești de acord să respecți acești Termeni de Serviciu."
+            },
+            "2": {
+                "title": "2. Conduita Utilizatorului",
+                "content": "Ești de acord să folosești serviciul doar în scopuri legale și într-un mod care nu încalcă drepturile, nu restricționează sau inhibă utilizarea și bucuria oricărei alte persoane de serviciu.",
+                "content_part2": "Hărțuirea, discursul instigator la ură și comportamentul abuziv în chat-urile jocului nu vor fi tolerate."
+            },
+            "3": {
+                "title": "3. Exonerare de Răspundere",
+                "content": "Jocul este furnizat \"ca atare\" fără nicio declarație sau garanție, expresă sau implicită."
+            },
+            "4": {
+                "title": "4. Modificări ale Termenilor",
+                "content": "Ne rezervăm dreptul de a modifica acești termeni în orice moment. Vom notifica utilizatorii cu privire la orice schimbări semnificative."
+            }
+        }
+    },
+    "ThankYou": {
+        "title": "Mulțumesc!",
+        "message": "Ne bazăm pe jucători ca tine pentru a face acest joc mai bun. Mulțumesc că joci și că faci parte din comunitatea noastră.",
+        "special_thanks": "Mulțumiri speciale fraților mei <maya>Maya</maya> și <tom>Tom</tom>, care mi-au dat ideea pentru acest joc pe care l-am jucat mult în trecut.",
+        "home_button": "Înapoi Acasă"
+    },
+    "Lobby": {
+        "title": "Jocurile Tale",
+        "new_game": "Joc Nou",
+        "past_games": "Jocuri Trecute",
+        "daily": {
+            "title": "Provocare Zilnică",
+            "completed": "Provocare Zilnică Completă",
+            "description": "Rezolvă lanțul de cuvinte zilnic pentru a câștiga puncte!",
+            "completed_description": "Treabă bună! Revino mâine pentru un nou lanț."
+        },
+        "empty": {
+            "title": "Începe Primul Tău Joc!",
+            "description": "Creează un joc pentru a începe să asociezi cuvinte cu prietenii tăi. Testează-vă conexiunea și vezi cine cunoaște pe cine cel mai bine!",
+            "button": "Creează Joc"
+        },
+        "create_dialog": {
+            "title": "Creează Joc Nou",
+            "description": "Configurează setările jocului înainte de a începe.",
+            "game_length": "Lungime Joc (Total Mesaje)",
+            "max_messages": "Max {count} mesaje",
+            "note": "* Odată atinsă limita, jocul va trece automat în Modul Rezolvare.",
+            "cancel": "Anulează",
+            "submit": "Începe Joc",
+            "creating": "Se creează..."
+        },
+        "leave_dialog": {
+            "title": "Părăsește Jocul",
+            "description": "Ești sigur că vrei să părăsești acest joc? Nu te vei mai putea alătura decât dacă ești invitat din nou.",
+            "cancel": "Anulează",
+            "submit": "Părăsește Jocul",
+            "leaving": "Se părăsește..."
+        },
+        "game_card": {
+            "status": {
+                "texting": "Scriere",
+                "solving": "Rezolvare",
+                "completed": "Completat",
+                "archived": "Arhivat"
+            },
+            "your_turn": "Rândul Tău",
+            "last_moved": "Ultima mutare",
+            "msgs": "msj",
+            "max": "max",
+            "buttons": {
+                "view": "Vezi",
+                "solve": "Rezolvă",
+                "play": "Joacă"
+            },
+            "menu": {
+                "archive": "Arhivează Joc",
+                "leave": "Părăsește Joc",
+                "admin_delete": "Admin: Șterge",
+                "admin_reset": "Admin: Resetează"
+            }
+        },
+        "toasts": {
+            "left_success": "Ai părăsit jocul cu succes",
+            "left_error": "Eșec la părăsirea jocului",
+            "archived_error": "Eșec la arhivarea jocului",
+            "deleted_success": "Joc șters",
+            "deleted_error": "Eșec la ștergerea jocului",
+            "reset_success": "Joc resetat cu succes",
+            "reset_error": "Eșec la resetarea jocului",
+            "load_error": "Eșec la încărcarea jocurilor: {message}",
+            "create_error": "Eșec la crearea jocului"
+        }
+    },
+    "Onboarding": {
+        "welcome": {
+            "title": "Bine ai venit la Associate!",
+            "description": "Jocul unde mințile mari gândesc la fel. Testează-ți conexiunea cu prietenii în acest joc de asociere de cuvinte."
+        },
+        "phase1": {
+            "title": "Faza 1: Chat",
+            "description": "Începe prin a discuta natural cu prietenii tăi. Scopul este de a construi context pentru o conversație."
+        },
+        "phase2": {
+            "title": "Faza 2: Rezolvare",
+            "description": "Ghicește cuvântul anterior! Indicii sunt disponibile dacă ești blocat, dar atenție - prea multe ghiciri greșite vor dezvălui cuvântul."
+        },
+        "ready": {
+            "title": "Gata de Joacă?",
+            "description": "Creează un joc nou și invită-ți prietenii pentru a începe!"
+        },
+        "next": "Următorul",
+        "lets_go": "Să mergem!"
+    },
+    "Invite": {
+        "button": "Invită",
+        "title": "Invită Jucători",
+        "search_placeholder": "Caută nume de utilizator...",
+        "no_users": "Niciun utilizator găsit.",
+        "suggestions": "Sugestii",
+        "joined": "Alăturat",
+        "sent": "Trimis",
+        "or_link": "Sau invită prin link",
+        "copy_link": "Copiază Link",
+        "share": "Partajează",
+        "done": "Gata",
+        "toasts": {
+            "invite_error": "Eșec la trimiterea invitației",
+            "link_copied": "Link copiat în clipboard!"
+        }
+    },
+    "Notifications": {
+        "title": "Notificări",
+        "empty": "Nicio notificare nouă",
+        "dismiss_all": "Șterge Tot",
+        "invite": "{username} te-a invitat să joci Jocul #{gameId}",
+        "invited_you": "te-a invitat să joci!",
+        "accept": "Acceptă",
+        "decline": "Refuză",
+        "dismiss": "Respinge",
+        "toasts": {
+            "joined": "Te-ai alăturat jocului!",
+            "join_error": "Eșec la alăturarea în joc",
+            "declined": "Invitație refuzată",
+            "dismiss_all_success": "Toate notificările șterse",
+            "dismiss_all_error": "Eșec la ștergerea notificărilor",
+            "permission_title": "Activezi Notificările?",
+            "permission_desc": "Primește o notificare când este rândul tău chiar dacă ești plecat.",
+            "permission_action": "Activează",
+            "permission_success": "Notificări activate!"
+        }
+    },
+    "Settings": {
+        "title": "Setări",
+        "display_name": "Nume Afișat",
+        "avatar": "Avatar",
+        "no_img": "Fără Img",
+        "upload_avatar": "Încarcă Avatar",
+        "uploading": "Se încarcă...",
+        "upload_hint": "Max 2MB. Redimensionare auto la 256x256.",
+        "theme": "Temă",
+        "language": "Limbă",
+        "theme_options": {
+            "system": "Sistem",
+            "dark": "Întunecat",
+            "light": "Luminos"
+        },
+        "notifications": "Notificări",
+        "system_notifications": "Notificări Sistem",
+        "audio_chime": "Clopoțel Audio",
+        "tab_title_flash": "Clipire Titlu Tab",
+        "save_changes": "Salvează Modificări",
+        "saving": "Se salvează...",
+        "upload_success": "Avatar încărcat cu succes! Nu uita să salvezi.",
+        "upload_error": "Eroare la încărcarea avatarului: {message}",
+        "upload_error_generic": "A apărut o eroare în timpul încărcării",
+        "update_error": "Eroare la actualizarea profilului",
+        "update_success": "Profil actualizat!",
+        "permission_denied": "Permisiune refuzată. Te rog activează notificările în setările browserului tău."
+    }
+}

@@ -100,7 +100,7 @@ export default async function RootLayout({
   // Providing all messages to the client
   // side is the easiest way to get started
   const messages = await getMessages();
-  const isRtl = locale === 'he';
+  const isRtl = locale === 'he' || locale === 'ar';
 
   return (
     <html lang={locale} dir={isRtl ? 'rtl' : 'ltr'} translate="no" suppressHydrationWarning>
