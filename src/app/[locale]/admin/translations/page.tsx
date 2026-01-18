@@ -82,14 +82,15 @@ export default async function AdminTranslationsPage({
             // Check translation
             let translated: TranslatedGameData | null = null;
             try {
-                await translationContext.run({ isPeek: true }, async () => {
-                    translated = await getCachedTranslatedDailyGame(
+                // Use the return value to help TS correctly infer the type
+                translated = await translationContext.run({ isPeek: true }, async () => {
+                    return await getCachedTranslatedDailyGame(
                         game.id,
                         game.words,
                         game.theme,
                         locale
                     );
-                });
+                }) as TranslatedGameData | null;
             } catch (e: any) {
                 if (e.message !== 'CACHE_MISS_PEEK') {
                     console.error(`Unexpected error in ${locale} translation check:`, e);
@@ -100,7 +101,7 @@ export default async function AdminTranslationsPage({
 
             translations[locale] = {
                 available: !!translated,
-                theme: translated?.theme || null,
+                theme: (translated as TranslatedGameData | null)?.theme || null,
                 generationCount: logsForGame.length
             };
         }

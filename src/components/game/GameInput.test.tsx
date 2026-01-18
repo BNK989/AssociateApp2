@@ -8,6 +8,11 @@ vi.mock('lucide-react', () => ({
     Send: () => <div data-testid="send-icon" />,
     Loader2: () => <div data-testid="loader-icon" />,
     Shuffle: () => <div data-testid="shuffle-icon" />,
+    Pause: () => <div data-testid="pause-icon" />,
+    Play: () => <div data-testid="play-icon" />,
+    Settings: () => <div data-testid="settings-icon" />,
+    Flag: () => <div data-testid="flag-icon" />,
+    Clock: () => <div data-testid="clock-icon" />,
 }));
 
 // Mock Framer Motion
@@ -17,6 +22,7 @@ vi.mock('framer-motion', () => ({
             <button onClick={onClick} disabled={disabled}>{children}</button>
         ),
         div: ({ children, className }: any) => <div className={className}>{children}</div>,
+        rect: ({ className }: any) => <rect className={className} />,
     },
     AnimatePresence: ({ children }: any) => <div>{children}</div>,
 }));
@@ -63,6 +69,13 @@ vi.mock('@/components/ui/badge', () => ({
     Badge: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
+vi.mock('@/components/ui/dropdown-menu', () => ({
+    DropdownMenu: ({ children }: any) => <div>{children}</div>,
+    DropdownMenuTrigger: ({ children }: any) => <div>{children}</div>,
+    DropdownMenuContent: ({ children }: any) => <div>{children}</div>,
+    DropdownMenuItem: ({ children, onClick }: any) => <div onClick={onClick}>{children}</div>,
+}));
+
 describe('GameInput Character Counter', () => {
     const mockSetInput = vi.fn();
     const mockOnSendMessage = vi.fn();
@@ -97,10 +110,11 @@ describe('GameInput Character Counter', () => {
     it('displays character count ignoring spaces for input', () => {
         render(<GameInput {...defaultProps} input="a b c" />); // 5 chars, 3 non-space
 
-        expect(screen.getByText(/3/)).toBeTruthy();
+        const counter = screen.getByTestId('char-counter');
+        expect(counter.textContent).toContain('3');
 
         // Should NOT show / 10 yet
-        const fullCount = screen.queryByText(/\/ 10/);
+        const fullCount = screen.queryByTestId('char-total');
         expect(fullCount).toBeNull();
     });
 
@@ -114,9 +128,10 @@ describe('GameInput Character Counter', () => {
         render(<GameInput {...props} />);
 
         // Target 'Hello World' has 10 non-space characters.
-        // Should show "5 / 10"
-        expect(screen.getByText(/5/)).toBeTruthy();
-        expect(screen.getByText(/\/ 10/)).toBeTruthy();
+        const counter = screen.getByTestId('char-counter');
+        expect(counter.textContent).toContain('5');
+        const total = screen.getByTestId('char-total');
+        expect(total.textContent).toContain('/ 10');
     });
 
     it('displays target message count ignoring spaces when hint level >= 1', () => {
@@ -132,8 +147,10 @@ describe('GameInput Character Counter', () => {
         render(<GameInput {...props} />);
 
         // Target 'Hello World' has 10 non-space characters.
-        expect(screen.getByText(/4/)).toBeTruthy();
-        expect(screen.getByText(/\/ 10/)).toBeTruthy();
+        const counter = screen.getByTestId('char-counter');
+        expect(counter.textContent).toContain('4');
+        const total = screen.getByTestId('char-total');
+        expect(total.textContent).toContain('/ 10');
     });
 
     it('turns red when input length exceeds target length (ignoring spaces)', () => {
@@ -146,17 +163,14 @@ describe('GameInput Character Counter', () => {
         render(<GameInput {...props} />);
 
         // 15 / 10
-        // Find the element containing "15" and check its parent or itself for class
-        // "15" is text node in the div. " / 10" is span.
-        // getByText(/15/) returns the div because "15" is direct child (sort of) or the text node
-        // Actually getByText(/15/) likely returns the DIV.
-
-        const counterDiv = screen.getByText(/15/);
+        const counterDiv = screen.getByTestId('char-counter');
+        expect(counterDiv.textContent).toContain('15');
         expect(counterDiv.className).toContain('text-red-500');
     });
 
     it('ignores multiple spaces', () => {
         render(<GameInput {...defaultProps} input="  a  b  " />); // 2 non-space chars
-        expect(screen.getByText(/2/)).toBeTruthy();
+        const counter = screen.getByTestId('char-counter');
+        expect(counter.textContent).toContain('2');
     });
 });

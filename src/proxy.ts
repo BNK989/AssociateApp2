@@ -52,6 +52,6 @@ export const config = {
     matcher: [
         '/',
         '/(he|en|es|fr|de|it|pt|ja|zh|ru|ar|hi|tr|nl|pl|sv|vi|th)/:path*',
-        "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp3|wav|ogg|json)$).*)",
+        "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp3|wav|ogg|json|js)$).*)",
     ],
 };

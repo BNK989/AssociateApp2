@@ -468,13 +468,15 @@ export function GameInput({
                         />
                         {/* Character Counter */}
                         {(input.length > 0 || (game.status === 'solving' && targetMessage && (isSinglePlayer || currentLevel >= 1))) && (
-                            <div className={`absolute end-3 top-1/2 -translate-y-1/2 text-xs font-medium select-none pointer-events-none transition-colors ${game.status === 'solving' && targetMessage && input.replace(/\s/g, '').length > targetMessage.content.replace(/\s/g, '').length
-                                ? 'text-red-500 dark:text-red-400'
-                                : 'text-gray-400 dark:text-gray-500'
-                                }`}>
+                            <div
+                                data-testid="char-counter"
+                                className={`absolute end-3 top-1/2 -translate-y-1/2 text-xs font-medium select-none pointer-events-none transition-colors ${game.status === 'solving' && targetMessage && input.replace(/\s/g, '').length > targetMessage.content.replace(/\s/g, '').length
+                                    ? 'text-red-500 dark:text-red-400'
+                                    : 'text-gray-400 dark:text-gray-500'
+                                    }`}>
                                 {input.replace(/\s/g, '').length}
                                 {(isSinglePlayer || currentLevel >= 1) && targetMessage && (
-                                    <span className="opacity-70"> / {targetMessage.content.replace(/\s/g, '').length}</span>
+                                    <span data-testid="char-total" className="opacity-70"> / {targetMessage.content.replace(/\s/g, '').length}</span>
                                 )}
                             </div>
                         )}
