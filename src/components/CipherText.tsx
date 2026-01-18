@@ -165,22 +165,6 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                     remainingBudget[k] = Math.max(0, targetCounts[k] - (usedCounts[k] || 0));
                 });
 
-                // Force output via Error
-                if (!visible && hintLevel >= 2) {
-                    // const debugInfo = {
-                    //    greenIndices: Array.from(greenIndices),
-                    //    revealedChars: Array.from(revealedChars),
-                    //    usedCounts,
-                    //    targetCounts,
-                    //    remainingBudget
-                    // };
-                    // throw new Error(`DEBUG_DUMP: ${JSON.stringify(debugInfo)}`);
-                    // COMMENTED OUT to avoid breaking app if I leave it.
-                    // But for this step I will uncomment it in my mind/tool call.
-
-                    console.error(`DEBUG DUMP: usedCounts=${JSON.stringify(usedCounts)} remainingBudget=${JSON.stringify(remainingBudget)} targetCounts=${JSON.stringify(targetCounts)} greenIndices=${Array.from(greenIndices)}`);
-                }
-
 
                 const baseItems: ScrambleItem[] = targetChars.map((c, i) => {
                     const isGreen = greenIndices.has(i);

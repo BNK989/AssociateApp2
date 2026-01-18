@@ -15,6 +15,7 @@ import { useVisualViewport } from '@/hooks/useVisualViewport';
 import { DailyEndGamePopover } from '@/components/game/DailyEndGamePopover';
 import { DailyGameTutorial } from '@/components/game/DailyGameTutorial';
 import { GAME_CONFIG } from '@/lib/gameConfig';
+import { supabase } from '@/lib/supabase';
 
 type DailyGameClientProps = {
     dailyWords: string[];
@@ -58,6 +59,7 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
     const t = useTranslations('GameRoom.Chat'); // Hook for translations
     const viewportHeight = useVisualViewport();
     const hasTrackedEntrance = useRef(false);
+    const prevTargetIdRef = useRef<string | null>(null);
 
     // Feature Flag: Auto Hint Level
     const autoHintPayload = useFeatureFlagPayload('dailygame-auto-hint-level');
@@ -92,6 +94,101 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
     const [gameOver, setGameOver] = useState(false);
     const [showSummary, setShowSummary] = useState(false);
 
+    // Auto-Hint State
+    const [isInfoOpen, setIsInfoOpen] = useState(false);
+    const [autoHintEnabled, setAutoHintEnabled] = useState(GAME_CONFIG.DEFAULT_AUTO_HINT_ENABLED);
+    const [autoHintDuration, setAutoHintDuration] = useState(GAME_CONFIG.DEFAULT_AUTO_HINT_DURATION);
+    const [autoHintTimer, setAutoHintTimer] = useState(0);
+    const [isHintPaused, setIsHintPaused] = useState(false);
+
+    // Helper to calculate progress (0-100)
+    const autoHintProgress = autoHintDuration > 0 ? ((autoHintDuration - autoHintTimer) / autoHintDuration) * 100 : 0;
+
+    const getTargetMessage = () => {
+        const reversed = [...messages].reverse();
+        return reversed.find(m => !m.is_solved && (m.strikes || 0) < 3);
+    };
+
+    const targetMessage = getTargetMessage();
+
+    // Load Settings
+    useEffect(() => {
+        const loadSettings = async () => {
+            if (authUser) {
+                // Fetch from Supabase profile if possible, or assume InfoScreen will update context/profile eventually?
+                // For direct access, we query profiles table.
+                const { data } = await supabase.from('profiles').select('settings').eq('id', authUser.id).single();
+                if (data?.settings) {
+                    setAutoHintEnabled(data.settings.auto_hint_enabled ?? GAME_CONFIG.DEFAULT_AUTO_HINT_ENABLED);
+                    setAutoHintDuration(data.settings.auto_hint_duration ?? GAME_CONFIG.DEFAULT_AUTO_HINT_DURATION);
+                }
+            } else {
+                const localSettings = localStorage.getItem('daily_game_settings');
+                if (localSettings) {
+                    try {
+                        const parsed = JSON.parse(localSettings);
+                        setAutoHintEnabled(parsed.auto_hint_enabled ?? GAME_CONFIG.DEFAULT_AUTO_HINT_ENABLED);
+                        setAutoHintDuration(parsed.auto_hint_duration ?? GAME_CONFIG.DEFAULT_AUTO_HINT_DURATION);
+                    } catch (e) { }
+                }
+            }
+        };
+        loadSettings();
+    }, [authUser]);
+
+    // Timer Logic
+    useEffect(() => {
+        // Reset timer if target changes or game over
+        // We now use the derived targetMessage from outer scope
+
+        if (!targetMessage || gameOver || !autoHintEnabled || autoHintDuration <= 0) {
+            setAutoHintTimer(autoHintDuration > 0 ? autoHintDuration : 0);
+            prevTargetIdRef.current = null;
+            return;
+        }
+
+        // Detect Target Change -> Reset Timer
+        if (targetMessage.id !== prevTargetIdRef.current) {
+            setAutoHintTimer(autoHintDuration);
+            prevTargetIdRef.current = targetMessage.id;
+        }
+
+        if (isHintPaused) return;
+
+        // If target exists and not paused, tick
+        const interval = setInterval(() => {
+            setAutoHintTimer(prev => {
+                if (prev <= 1) {
+                    // Trigger Hint!
+                    clearInterval(interval);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [targetMessage, gameOver, autoHintEnabled, isHintPaused, autoHintDuration]); // Depend on targetMessage object to catch updates
+
+    // Auto-Reveal Effect
+    useEffect(() => {
+        if (autoHintTimer === 0 && autoHintEnabled && !isHintPaused && !gameOver) {
+            const currentTarget = messages.slice().reverse().find(m => !m.is_solved && (m.strikes || 0) < 3);
+            if (currentTarget) {
+                // Check if we can hint
+                if ((currentTarget.hint_level || 0) < 3) {
+                    // Call handleGetHint
+                    handleGetHint();
+                    // Reset timer
+                    setAutoHintTimer(autoHintDuration);
+                }
+            }
+        }
+    }, [autoHintTimer, autoHintEnabled, isHintPaused, gameOver]); // messages? No, handleGetHint uses current state or ref.
+    // Actually handleGetHint relies on `targetMessage` which is derived from `messages`.
+    // It's safe to call it.
+
+
     // Inputs
     const [input, setInput] = useState('');
     const [sending, setSending] = useState(false);
@@ -101,23 +198,37 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    // Check Tutorial Logic
-    useEffect(() => {
-        const seen = localStorage.getItem('daily_tutorial_seen');
-        if (!seen) {
-            // Defer update to avoid synchronous render warning? 
-            // Actually, setting state in useEffect IS the way to trigger re-render after mount.
-            // The warning "Calling setState synchronously within an effect" usually refers to *direct* calls?
-            // "Effect callbacks are synchronous to prevent race conditions."
-            // Wait, useEffect is executed AFTER render. setState there triggers re-render.
-            // Maybe strict mode is complaining about something else?
-            // The error message was: "Calling setState synchronously within an effect can trigger cascading renders"
-            // Let's wrapping it in a requestAnimationFrame or setTimeout keeps it out of the immediate flow if needed,
-            // but usually this pattern is fine. 
-            // However, to satisfy the specific linter configuration here:
-            requestAnimationFrame(() => setShowTutorial(true));
+    // Load Settings
+    const loadSettings = async () => {
+        if (authUser) {
+            const { data } = await supabase.from('profiles').select('settings').eq('id', authUser.id).single();
+            if (data?.settings) {
+                setAutoHintEnabled(data.settings.auto_hint_enabled ?? GAME_CONFIG.DEFAULT_AUTO_HINT_ENABLED);
+                setAutoHintDuration(data.settings.auto_hint_duration ?? GAME_CONFIG.DEFAULT_AUTO_HINT_DURATION);
+            }
+        } else {
+            const localSettings = localStorage.getItem('daily_game_settings');
+            // Also check for legacy or default
+            if (localSettings) {
+                try {
+                    const parsed = JSON.parse(localSettings);
+                    setAutoHintEnabled(parsed.auto_hint_enabled ?? GAME_CONFIG.DEFAULT_AUTO_HINT_ENABLED);
+                    setAutoHintDuration(parsed.auto_hint_duration ?? GAME_CONFIG.DEFAULT_AUTO_HINT_DURATION);
+                } catch (e) { }
+            }
         }
-    }, []);
+    };
+
+    useEffect(() => {
+        loadSettings();
+    }, [authUser]);
+
+    // Reload settings when Info Screen closes to capture changes
+    useEffect(() => {
+        if (!isInfoOpen) {
+            loadSettings();
+        }
+    }, [isInfoOpen]);
 
     const handleTutorialComplete = () => {
         setShowTutorial(false);
@@ -342,12 +453,7 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
         }
     ];
 
-    const getTargetMessage = () => {
-        const reversed = [...messages].reverse();
-        return reversed.find(m => !m.is_solved && (m.strikes || 0) < 3);
-    };
 
-    const targetMessage = getTargetMessage();
 
     // Auto-scroll to target message
     useEffect(() => {
@@ -380,6 +486,12 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
             nextLevel = 2;
         }
 
+        // Configurable Reveal Type: "ALL" -> Reveal ALL hints at once (Jump straight to Level 3)
+        // This overrides any previous logic (e.g. smart skip) and applies regardless of current level (0, 1, or 2)
+        if (GAME_CONFIG.DEFAULT_AUTO_HINT_REVEAL_TYPE === 'ALL') {
+            nextLevel = 3;
+        }
+
         // Hint 2 Skip: If ALREADY >66% revealed, skip Hint 2 (Scramble) and go straight to Hint 3 (AI)
         // because Hint 2 would be redundant/useless.
         if ((currentLevel === 1 || nextLevel === 2) && nextLevel !== 3) {
@@ -400,9 +512,11 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
         // It is applied in handleSolve or similar.
 
         // Generate new Cipher (Static Fallback)
-        // Only regenerate for Level 1 and 2. Level 3 should preserve the visual state.
-        const newCipherText = nextLevel < 3
-            ? generateCipherString(targetMessage.content, nextLevel, true)
+        // If jumping to Level 3 (AI) from regular levels, ensures we apply the Level 2 (Scramble) visuals if not already there.
+        const shouldGenerateLevel2Visuals = nextLevel === 3 && currentLevel < 2;
+
+        const newCipherText = (nextLevel < 3 || shouldGenerateLevel2Visuals)
+            ? generateCipherString(targetMessage.content, Math.min(nextLevel, 2), true)
             : (targetMessage.cipher_text || generateCipherString(targetMessage.content, 2, true));
 
         // Update Message
@@ -663,6 +777,8 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
                 date={date}
                 solvedCount={messages.filter(m => m.is_solved).length}
                 showTutorial={showTutorial}
+                externalShowInfo={isInfoOpen}
+                onInfoToggle={setIsInfoOpen}
                 onWelcomeComplete={() => {
                     if (!GAME_CONFIG.DAILY_GAME_ANIMATE_START_MESSAGE) return;
 
@@ -733,6 +849,12 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
                 isEmpty={false}
                 isSinglePlayer={true}
                 onGiveUp={handleGiveUp}
+                autoHintProgress={autoHintProgress}
+                autoHintSecondsLeft={autoHintTimer}
+                isAutoHintActive={autoHintEnabled && !gameOver && !!targetMessage && autoHintDuration > 0}
+                isHintPaused={isHintPaused}
+                onToggleHintPause={() => setIsHintPaused(prev => !prev)}
+                onOpenSettings={() => setIsInfoOpen(true)}
             />
 
             {/* Daily End Game Popover */}

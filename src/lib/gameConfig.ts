@@ -23,6 +23,10 @@ export const GAME_CONFIG = {
   ENABLE_TYPING_INDICATORS: true,
   DAILY_GAME_ANIMATE_START_MESSAGE: true,
   PERCENT_REVEALED_SHUFFLE_HINT: 0.66,
+  // Auto Hint Defaults
+  DEFAULT_AUTO_HINT_ENABLED: true,
+  DEFAULT_AUTO_HINT_DURATION: 7, // seconds
+  DEFAULT_AUTO_HINT_REVEAL_TYPE: "ALL", // "ALL" | "SCRAMBLE" | "AI"
 };
 
 export const CIPHER_SIGNS = [...'⊗⊕⊖⊙⊚⊛⊠⌖⌂⌁⌇⌖⌂⌁🜁🜂🜄🜃🜁🜄🜂◆◇▲▼○●⬡⬢⬟░▲●★☆☉✵✶∝∞∧∨∩∪∴∵∶∷✷✸✹✺✱✲✢✣✤✥✦❈❉❊❋❀❁❂❃❖❘❙❚✦✧✩✪✫✬✭✮✯♃♄♅♆♇☉☾☽☿🜚🜛🜜🜝🜞🜟🜓🜔🜕🜖🜗🜘🜌🜅🜆🜇🜈🜉🜊🜋🜍🜎🜏🜐🜑'];

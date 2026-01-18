@@ -33,6 +33,9 @@ type GameHeaderProps = {
     solvedCount?: number;
     onWelcomeComplete?: () => void;
     showTutorial?: boolean;
+    // External Control for InfoScreen
+    externalShowInfo?: boolean;
+    onInfoToggle?: (open: boolean) => void;
 };
 
 export function GameHeader({
@@ -58,7 +61,9 @@ export function GameHeader({
     date,
     solvedCount,
     onWelcomeComplete,
-    showTutorial
+    showTutorial,
+    externalShowInfo,
+    onInfoToggle
 }: GameHeaderProps) {
     const router = useRouter();
     const t = useTranslations('GameRoom.Header');
@@ -164,7 +169,24 @@ export function GameHeader({
 
     const [isProposing, setIsProposing] = React.useState(false);
     const [showLeaveConfirm, setShowLeaveConfirm] = React.useState(false); // New State
-    const [showInfo, setShowInfo] = React.useState(false);
+    const [internalShowInfo, setInternalShowInfo] = React.useState(false);
+
+    // Derived state for Info Screen visibility
+    const isInfoOpen = externalShowInfo !== undefined ? externalShowInfo : internalShowInfo;
+
+    const handleInfoToggle = (open: boolean) => {
+        if (onInfoToggle) {
+            onInfoToggle(open);
+        } else {
+            setInternalShowInfo(open);
+        }
+    };
+
+    // Better Approach:
+    // If externalShowInfo is provided, we assume the parent handles the state.
+    // BUT we need to trigger the parent to change it.
+    // Let's change the interface to `onInfoToggle: (open: boolean) => void`.
+
 
     const handleBackClick = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -269,7 +291,7 @@ export function GameHeader({
                     {!hideAvatars && (
                         <div
                             className="flex items-center -space-x-2 ms-2 cursor-pointer hover:opacity-80 transition-opacity overflow-hidden"
-                            onClick={() => setShowInfo(true)}
+                            onClick={() => handleInfoToggle(true)}
                         >
                             {sortedPlayers.map((player) => (
                                 <Avatar key={player.user_id} className={`w-8 h-8 border-2 border-white dark:border-gray-900 ${player.user_id === activePlayerId ? 'z-10' : ''} ${player.has_left ? 'opacity-40 grayscale' : ''}`}>
@@ -287,7 +309,7 @@ export function GameHeader({
                     {theme && !showWelcome && (
                         <div
                             className="flex flex-col items-start ms-1 cursor-pointer hover:opacity-70 transition-opacity min-w-0"
-                            onClick={() => setShowInfo(true)}
+                            onClick={() => handleInfoToggle(true)}
                         >
                             <motion.span
                                 layoutId="theme-label"
@@ -310,7 +332,7 @@ export function GameHeader({
                 {/* Score & Bank (Updated) */}
                 <div
                     className={`flex items-center justify-end gap-2 sm:gap-4 ms-2 me-3 cursor-pointer hover:opacity-80 transition-opacity ${theme ? 'shrink-0' : 'w-1/3'}`}
-                    onClick={() => setShowInfo(true)}
+                    onClick={() => handleInfoToggle(true)}
                 >
                     {/* Bank / Pot */}
                     <div className="flex items-center gap-1.5 text-purple-600 dark:text-purple-400 font-bold opacity-80 scale-90">
@@ -469,13 +491,13 @@ export function GameHeader({
             }
             {/* Info Screen Overlay */}
             {
-                showInfo && (
+                isInfoOpen && (
                     <div onClick={(e) => e.stopPropagation()}>
                         <InfoScreen
                             game={game}
                             players={players}
                             user={user}
-                            onClose={() => setShowInfo(false)}
+                            onClose={() => handleInfoToggle(false)}
                             theme={theme}
                             date={date}
                             solvedCount={solvedCount}

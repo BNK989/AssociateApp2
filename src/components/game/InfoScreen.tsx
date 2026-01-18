@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Trophy, MessageSquare, Info, Users, HelpCircle, ChevronRight, ChevronDown, Check, User, Share, Settings, Volume2, VolumeX, Moon, Sun, Globe } from 'lucide-react';
+import { Share, Trophy, HelpCircle, Volume2, VolumeX, Moon, Sun, Globe, Zap, Clock, X, ChevronRight, Settings, Users, Loader2, Info } from 'lucide-react';
 import { GameState, Player } from '@/hooks/useGameLogic';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,8 @@ import { supabase } from '@/lib/supabase';
 import { Switch } from "../ui/switch";
 import { useTranslations } from 'next-intl';
 import { LanguagePicker } from '../LanguagePicker';
+import { GAME_CONFIG } from '@/lib/gameConfig';
+import { Input } from "@/components/ui/input";
 
 type InfoScreenProps = {
     game: GameState;
@@ -25,19 +27,93 @@ type InfoScreenProps = {
 
 export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, date, solvedCount }: InfoScreenProps) {
     const t = useTranslations('GameRoom.Info');
-    const { profile, refreshProfile } = useAuth();
+    const { user: authUser, profile, refreshProfile } = useAuth();
     const { theme, setTheme } = useTheme();
     const [updating, setUpdating] = React.useState(false);
 
+    // Auto Hint State
+    const [autoHintEnabled, setAutoHintEnabled] = React.useState(GAME_CONFIG.DEFAULT_AUTO_HINT_ENABLED);
+    // Separate local state for input to allow empty string/typing
+    const [durationInput, setDurationInput] = React.useState(GAME_CONFIG.DEFAULT_AUTO_HINT_DURATION.toString());
+
+    // Initial load sync
+    React.useEffect(() => {
+        if (authUser && profile?.settings) {
+            setAutoHintEnabled(profile.settings.auto_hint_enabled ?? GAME_CONFIG.DEFAULT_AUTO_HINT_ENABLED);
+            const duration = profile.settings.auto_hint_duration ?? GAME_CONFIG.DEFAULT_AUTO_HINT_DURATION;
+            setDurationInput(duration.toString());
+        } else {
+            // Guest / LocalStorage
+            try {
+                const localSettings = localStorage.getItem('daily_game_settings');
+                if (localSettings) {
+                    const parsed = JSON.parse(localSettings);
+                    setAutoHintEnabled(parsed.auto_hint_enabled ?? GAME_CONFIG.DEFAULT_AUTO_HINT_ENABLED);
+                    if (parsed.auto_hint_duration !== undefined) {
+                        setDurationInput(parsed.auto_hint_duration.toString());
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to parse local settings", e);
+            }
+        }
+    }, [authUser, profile]);
+
+    // Local Update - No Side Effects
+    const updateAutoHintSettings = (enabled: boolean, durationStr: string) => {
+        setAutoHintEnabled(enabled);
+        setDurationInput(durationStr);
+    };
+
+    // Save Logic (Triggered on Close)
+    const saveSettings = async () => {
+        const duration = parseInt(durationInput);
+        const isValid = !isNaN(duration) && duration >= 0 && duration <= 99;
+        const valToSave = isValid ? duration : (durationInput === '' ? 0 : GAME_CONFIG.DEFAULT_AUTO_HINT_DURATION);
+
+        if (authUser) {
+            setUpdating(true);
+            try {
+                const { error } = await supabase.from('profiles').update({
+                    settings: {
+                        ...profile?.settings,
+                        auto_hint_enabled: autoHintEnabled,
+                        auto_hint_duration: valToSave
+                    }
+                }).eq('id', authUser.id);
+
+                if (error) throw error;
+                await refreshProfile();
+            } catch (e: any) {
+                console.error("Settings save error:", e);
+                // Silent fail or toast
+            } finally {
+                setUpdating(false);
+            }
+        } else {
+            // Guest Mode
+            const settings = {
+                auto_hint_enabled: autoHintEnabled,
+                auto_hint_duration: valToSave
+            };
+            localStorage.setItem('daily_game_settings', JSON.stringify(settings));
+        }
+    };
+
+    const handleClose = () => {
+        saveSettings();
+        onClose();
+    };
+
     const toggleAudio = async (checked: boolean) => {
-        if (!user || updating) return;
+        if (!authUser || updating) return;
         setUpdating(true);
         // Optimistic update handled by switch state if wired to profile, but profile update is async.
         // We'll trust fast server response or just let it lag slightly.
         try {
             const { error } = await supabase.from('profiles').update({
                 settings: { ...profile?.settings, enable_audio_chime: checked }
-            }).eq('id', user.id);
+            }).eq('id', authUser.id);
 
             if (error) throw error;
             await refreshProfile();
@@ -54,10 +130,10 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
         const newTheme = checked ? 'dark' : 'light';
         setTheme(newTheme);
 
-        if (user) {
+        if (authUser) {
             await supabase.from('profiles').update({
                 settings: { ...profile?.settings, theme: newTheme }
-            }).eq('id', user.id);
+            }).eq('id', authUser.id);
             // No need to refresh immediately for visual change since useTheme handles it, but good for persistence
             refreshProfile();
         }
@@ -177,7 +253,7 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                 </div>
                 <div className="flex gap-2">
 
-                    <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full h-8 w-8 hover:bg-gray-200 dark:hover:bg-gray-800">
+                    <Button variant="ghost" size="icon" onClick={handleClose} className="rounded-full h-8 w-8 hover:bg-gray-200 dark:hover:bg-gray-800">
                         <X className="w-5 h-5" />
                     </Button>
                 </div>
@@ -302,6 +378,62 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                             <Settings className="w-4 h-4" /> {t('preferences_title')}
                         </h3>
 
+                        {/* 1. Auto Hint Settings */}
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-full text-amber-600 dark:text-amber-400">
+                                    <Clock className="w-4 h-4" />
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-bold text-gray-900 dark:text-white">{t('auto_hint_title')}</span>
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">{t('auto_hint_desc')}</span>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="relative w-16">
+                                    <Input
+                                        type="text"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
+                                        maxLength={2}
+                                        value={durationInput}
+                                        disabled={!autoHintEnabled}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (val === '' || /^\d+$/.test(val)) {
+                                                updateAutoHintSettings(autoHintEnabled, val);
+                                            }
+                                        }}
+                                        className="h-8 text-center pr-1 pl-1"
+                                    />
+                                    <span className="absolute -bottom-4 left-0 right-0 text-[9px] text-center text-gray-400">{t('auto_hint_seconds')}</span>
+                                </div>
+                                <Switch
+                                    checked={autoHintEnabled}
+                                    onCheckedChange={(checked) => updateAutoHintSettings(checked, durationInput)}
+                                    disabled={updating}
+                                />
+                            </div>
+                        </div>
+
+                        {/* 2. Dark Mode */}
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full text-blue-600 dark:text-blue-400">
+                                    {theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-bold text-gray-900 dark:text-white">{t('dark_mode_title')}</span>
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">{t('dark_mode_desc')}</span>
+                                </div>
+                            </div>
+                            <Switch
+                                checked={theme === 'dark'}
+                                onCheckedChange={(checked: boolean) => toggleTheme(checked)}
+                            />
+                        </div>
+
+                        {/* 3. Game Sounds */}
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-full text-purple-600 dark:text-purple-400">
@@ -319,22 +451,7 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                             />
                         </div>
 
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full text-blue-600 dark:text-blue-400">
-                                    {theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-sm font-bold text-gray-900 dark:text-white">{t('dark_mode_title')}</span>
-                                    <span className="text-xs text-gray-500 dark:text-gray-400">{t('dark_mode_desc')}</span>
-                                </div>
-                            </div>
-                            <Switch
-                                checked={theme === 'dark'}
-                                onCheckedChange={(checked: boolean) => toggleTheme(checked)}
-                            />
-                        </div>
-
+                        {/* 4. Language */}
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full text-green-600 dark:text-green-400">
@@ -362,7 +479,7 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                                 {t('share_results')}
                             </Button>
                         )}
-                        <Button className="w-full py-6 text-lg font-bold shadow-lg shadow-purple-500/20" size="lg" onClick={onClose}>
+                        <Button className="w-full py-6 text-lg font-bold shadow-lg shadow-purple-500/20" size="lg" onClick={handleClose}>
                             {t('back_to_game')}
                         </Button>
                     </div>

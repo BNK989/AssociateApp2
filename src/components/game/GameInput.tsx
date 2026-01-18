@@ -1,11 +1,12 @@
 import { GameState, Player, Message } from '@/hooks/useGameLogic';
 import { User } from '@supabase/supabase-js';
 import { calculateMessageValue, HINT_COSTS, calculateRevealedPercentage } from '@/lib/gameLogic';
-import { Send, Loader2, Shuffle } from "lucide-react";
+import { Send, Loader2, Shuffle, Pause, Play, Settings as SettingsIcon, Flag, Clock } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { GAME_CONFIG } from '@/lib/gameConfig';
 import { toast } from "sonner";
 import { useTranslations } from 'next-intl';
@@ -25,6 +26,13 @@ type GameInputProps = {
     onTyping?: () => void; // New prop for triggering broadcast
     isSinglePlayer?: boolean;
     onGiveUp?: () => void;
+    // Auto Hint Props
+    autoHintProgress?: number; // 0 to 100
+    autoHintSecondsLeft?: number;
+    isAutoHintActive?: boolean;
+    isHintPaused?: boolean;
+    onToggleHintPause?: () => void;
+    onOpenSettings?: () => void;
 };
 
 export function GameInput({
@@ -41,7 +49,13 @@ export function GameInput({
     isEmpty = false,
     onTyping,
     isSinglePlayer = false,
-    onGiveUp
+    onGiveUp,
+    autoHintProgress = 0,
+    autoHintSecondsLeft = 0,
+    isAutoHintActive = false,
+    isHintPaused = false,
+    onToggleHintPause,
+    onOpenSettings
 }: GameInputProps) {
     const t = useTranslations('GameRoom.Input');
 
@@ -137,6 +151,15 @@ export function GameInput({
         buttonText = "AI";
     }
 
+    // If Reveal Type is ALL, we jump 0->3, so we shouldn't show intermediate icons (Shuffle/AI).
+    // Always show generic Hint text/icon until maxed.
+    if (GAME_CONFIG.DEFAULT_AUTO_HINT_REVEAL_TYPE === 'ALL' && effectiveLevel < 3) {
+        buttonText = null;
+    }
+
+    // Dropdown Control
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
     // Auto-show tooltip logic
     const [isTooltipOpen, setIsTooltipOpen] = useState(false);
     const [hasInteracted, setHasInteracted] = useState(false);
@@ -184,7 +207,8 @@ export function GameInput({
         setAnimationStage('idle');
 
         // Only run animation logic if it's my turn/free for all, message is unsolved, and hints aren't maxed
-        if (game.status !== 'solving' || !targetMessage || isMaxHints || (!isMyTurn && !isFreeForAll)) return;
+        // AND auto-hint is NOT active (no need to nudge if it's happening automatically)
+        if (game.status !== 'solving' || !targetMessage || isMaxHints || (!isMyTurn && !isFreeForAll) || isAutoHintActive) return;
 
         const gentleTimer = setTimeout(() => {
             setAnimationStage('gentle');
@@ -225,30 +249,136 @@ export function GameInput({
         }
     };
 
+    const ProgressBorder = isAutoHintActive && !isMaxHints && !sending ? (
+        <div className="absolute inset-0 pointer-events-none rounded-lg overflow-hidden">
+            <svg className="h-full w-full" viewBox="0 0 40 40">
+                <rect
+                    x="1" y="1" width="38" height="38" rx="7" ry="7"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    className="text-purple-500/30"
+                />
+                <motion.rect
+                    x="1" y="1" width="38" height="38" rx="7" ry="7"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    className="text-purple-600 dark:text-purple-400"
+                    strokeDasharray="140" // Approx perimeter
+                    strokeDashoffset={140 * (1 - autoHintProgress / 100)}
+                    initial={{ strokeDashoffset: 140 }}
+                    animate={{ strokeDashoffset: 140 * (1 - autoHintProgress / 100) }}
+                    transition={{ duration: 1, ease: "linear" }}
+                />
+            </svg>
+        </div>
+    ) : null;
+
+    // Long Press Logic using Refs
+    const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+    const isLongPress = useRef(false);
+
+    const handlePointerDown = (e: React.PointerEvent) => {
+        if (e.button !== 2) e.preventDefault(); // Keep focus
+        isLongPress.current = false;
+        longPressTimer.current = setTimeout(() => {
+            isLongPress.current = true;
+            handleInteraction();
+            setIsDropdownOpen(true);
+        }, 500); // 500ms for long press
+    };
+
+    const handlePointerUp = () => {
+        if (longPressTimer.current) {
+            clearTimeout(longPressTimer.current);
+            longPressTimer.current = null;
+        }
+    };
+
     const HintButton = (
-        <motion.button
-            type="button"
-            disabled={(!isMyTurn && !isFreeForAll) || sending}
-            variants={jumpAndVibrate}
-            animate={animationStage}
-            whileTap={{ scale: 0.9 }}
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={(e) => {
-                e.preventDefault();
-                handleInteraction();
-                onGetHint();
-            }}
-            onContextMenu={(e) => {
-                // Mobile long press simulation
-                e.preventDefault();
-            }}
-            className="h-10 w-10 flex flex-col items-center justify-center rounded-lg transition-colors bg-secondary text-secondary-foreground hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-            <span className="text-sm leading-none mb-0.5">
-                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : "💡"}
-            </span>
-            <span className="text-[10px] font-bold leading-none">{buttonText}</span>
-        </motion.button>
+        <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen} modal={false}>
+            <DropdownMenuTrigger asChild>
+                <div className="relative">
+                    <motion.button
+                        type="button"
+                        disabled={(!isMyTurn && !isFreeForAll) || sending}
+                        variants={jumpAndVibrate}
+                        animate={animationStage}
+                        whileTap={{ scale: 0.9 }}
+                        onPointerDown={handlePointerDown}
+                        onPointerUp={handlePointerUp}
+                        onPointerLeave={handlePointerUp}
+                        onTap={() => {
+                            if (!isLongPress.current) {
+                                handleInteraction();
+                                onGetHint();
+                            }
+                        }}
+                        onContextMenu={(e) => {
+                            e.preventDefault();
+                            handleInteraction();
+                            setIsDropdownOpen(true);
+                        }}
+                        className="h-10 w-10 relative flex flex-col items-center justify-center rounded-lg transition-colors bg-secondary text-secondary-foreground hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {ProgressBorder}
+                        <span className="text-sm leading-none mb-0.5 z-10">
+                            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : "💡"}
+                        </span>
+                        <span className="text-[10px] font-bold leading-none z-10">{buttonText}</span>
+                    </motion.button>
+
+                    {/* Auto Hint Badge / Pause Toggle */}
+                    {isAutoHintActive && !isMaxHints && (
+                        <div
+                            className="absolute -top-3 -right-3 z-20 cursor-pointer"
+                            onPointerDown={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                            }}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault(); // Extra safety
+                                if (onToggleHintPause) onToggleHintPause();
+                            }}
+                        >
+                            <Badge variant={isHintPaused ? "destructive" : "secondary"} className="px-1 py-0 h-4 min-w-[32px] flex items-center justify-center gap-0.5 text-[9px] shadow-sm hover:scale-110 transition-transform bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-800 text-foreground">
+                                {isHintPaused ? (
+                                    <Play className="w-2.5 h-2.5 text-green-600 animate-pulse" />
+                                ) : (
+                                    <>
+                                        <span className="font-mono font-bold leading-none">{autoHintSecondsLeft}</span>
+                                        <div className="h-2 w-[1px] bg-border mx-0.5" />
+                                        <Pause className="w-2.5 h-2.5 text-muted-foreground" />
+                                    </>
+                                )}
+                            </Badge>
+                        </div>
+                    )}
+                </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+                align="start"
+                onOpenAutoFocus={(e) => e.preventDefault()}
+                onCloseAutoFocus={(e) => e.preventDefault()}
+            >
+                {isAutoHintActive && (
+                    <DropdownMenuItem onClick={() => onToggleHintPause && onToggleHintPause()}>
+                        {isHintPaused ? <Play className="w-4 h-4 mr-2" /> : <Pause className="w-4 h-4 mr-2" />}
+                        {isHintPaused ? "Resume Auto Hint" : "Pause Auto Hint"}
+                    </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onClick={() => onGiveUp && onGiveUp()} className="text-red-600 focus:text-red-600">
+                    <Flag className="w-4 h-4 mr-2" />
+                    {t('give_up')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onOpenSettings && onOpenSettings()}>
+                    <SettingsIcon className="w-4 h-4 mr-2" />
+                    Settings
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
     );
 
     const GiveUpButton = (
