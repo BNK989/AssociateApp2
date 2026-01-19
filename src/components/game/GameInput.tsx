@@ -406,7 +406,15 @@ export function GameInput({
             onTouchStart={handleInteraction}
         >
             <TooltipProvider>
-                <form onSubmit={onSendMessage} className="flex gap-2 items-center relative">
+                <form onSubmit={onSendMessage} autoComplete="off" className="flex gap-2 items-center relative">
+                    {/* Hidden input to disable autofill on mobile */}
+                    <input
+                        type="text" // Must be text type to 'catch' the focus/autofill
+                        name="hidden-autofill-bait"
+                        autoComplete="new-password"
+                        tabIndex={-1}
+                        className="fixed top-0 left-0 w-1 h-1 opacity-0 pointer-events-none"
+                    />
                     <AnimatePresence>
                         {game.status === 'solving' && isFreeForAll && !isSinglePlayer && (
                             <motion.div
@@ -446,8 +454,17 @@ export function GameInput({
 
                     <div className="relative flex-1">
                         <input
+                            id="game-message-input"
+                            name="game-message-input"
                             type="text"
+                            inputMode="text"
                             value={input}
+                            autoComplete="one-time-code"
+                            autoCorrect="off"
+                            autoCapitalize="off"
+                            spellCheck="false"
+                            data-lpignore="true"
+                            data-1p-ignore="true"
                             onChange={(e) => {
                                 const val = e.target.value;
                                 if (val.length > GAME_CONFIG.MESSAGE_MAX_LENGTH) {
