@@ -454,12 +454,11 @@ export function GameInput({
 
                     <div className="relative flex-1">
                         <input
-                            id="game-message-input"
-                            name="game-message-input"
+                            id="q_search_8x"
+                            name="q_search_8x"
                             type="text"
-                            inputMode="text"
                             value={input}
-                            autoComplete="one-time-code"
+                            autoComplete="off"
                             autoCorrect="off"
                             autoCapitalize="off"
                             spellCheck="false"
