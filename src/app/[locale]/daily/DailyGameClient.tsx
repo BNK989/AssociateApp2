@@ -51,12 +51,23 @@ const MY_PROFILE = {
 };
 
 import { useTranslations } from 'next-intl';
+import { WalkthroughProvider, useWalkthrough, WalkthroughStep } from '@/components/ui/walkthrough';
 
-export default function DailyGameClient({ dailyWords, date, theme, initialHints }: DailyGameClientProps) {
+export default function DailyGameClient(props: DailyGameClientProps) {
+    return (
+        <WalkthroughProvider>
+            <DailyGameBoard {...props} />
+        </WalkthroughProvider>
+    );
+}
+
+function DailyGameBoard({ dailyWords, date, theme, initialHints }: DailyGameClientProps) {
     const router = useRouter();
-    const { user: authUser, session, loading: authLoading } = useAuth();
+    const { user: authUser, session, loading: authLoading, profile } = useAuth();
     const posthog = usePostHog();
-    const t = useTranslations('GameRoom.Chat'); // Hook for translations
+    const t = useTranslations('GameRoom.Chat');
+    const tTour = useTranslations('GameRoom.Info.Daily.tutorial');
+    const { startTour } = useWalkthrough();
     const viewportHeight = useVisualViewport();
     const hasTrackedEntrance = useRef(false);
     const prevTargetIdRef = useRef<string | null>(null);
@@ -66,6 +77,20 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
     const initialHintCount = typeof autoHintPayload === 'object' && autoHintPayload !== null && 'initialHintCount' in autoHintPayload
         ? (autoHintPayload as { initialHintCount: number }).initialHintCount
         : 0;
+
+
+    // Audio Refs
+    const successAudioRef = useRef<HTMLAudioElement | null>(null);
+
+    useEffect(() => {
+        // Preload Success Audio
+        if (typeof window !== 'undefined') {
+            const audio = new Audio('/sounds/notifications/correct-choice.mp3');
+            audio.volume = 0.6;
+            audio.preload = 'auto';
+            successAudioRef.current = audio;
+        }
+    }, []);
 
     useEffect(() => {
         console.log('[DailyGame] Feature Flag DEBUG:', {
@@ -100,6 +125,49 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
     const [autoHintDuration, setAutoHintDuration] = useState(GAME_CONFIG.DEFAULT_AUTO_HINT_DURATION);
     const [autoHintTimer, setAutoHintTimer] = useState(0);
     const [isHintPaused, setIsHintPaused] = useState(false);
+
+    const handleRestartTutorial = () => {
+        localStorage.removeItem('daily_tutorial_seen');
+        startTour([
+            {
+                id: 'step-intro',
+                targetId: '',
+                title: tTour('step1_title'),
+                content: tTour('step1_desc'),
+                position: 'center'
+            },
+            {
+                id: 'step-input',
+                targetId: 'game-input-area',
+                title: tTour('step2_title'),
+                content: tTour('step2_desc'),
+                position: 'top'
+            },
+            {
+                id: 'step-colors',
+                targetId: 'msg-msg-' + (dailyWords.length - 2).toString(),
+                title: tTour('step3_title'),
+                content: tTour('step3_desc'),
+                position: 'top'
+            },
+            {
+                id: 'step-hint',
+                targetId: 'hint-button-trigger',
+                title: tTour('step4_title'),
+                content: tTour('step4_desc'),
+                position: 'top'
+            }
+        ], {
+            onComplete: () => {
+                localStorage.setItem('daily_tutorial_seen', 'true');
+                posthog.capture('daily_tutorial_restarted_completed', { date });
+            },
+            onSkip: () => {
+                localStorage.setItem('daily_tutorial_seen', 'true');
+                posthog.capture('daily_tutorial_restarted_skipped', { date });
+            }
+        });
+    };
 
     // Helper to calculate progress (0-100)
     const autoHintProgress = autoHintDuration > 0 ? ((autoHintDuration - autoHintTimer) / autoHintDuration) * 100 : 0;
@@ -222,6 +290,81 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
     useEffect(() => {
         loadSettings();
     }, [authUser]);
+
+    // Walkthrough Logic
+    useEffect(() => {
+        const checkAndStartTour = async () => {
+            // 1. Check LocalStorage (Fastest)
+            const localSeen = localStorage.getItem('daily_tutorial_seen');
+            if (localSeen === 'true') return;
+
+            // 2. Check Supabase (if logged in)
+            if (authUser) {
+                const { data } = await supabase.from('profiles').select('settings').eq('id', authUser.id).single();
+                if (data?.settings?.daily_tutorial_seen) {
+                    // Sync to local
+                    localStorage.setItem('daily_tutorial_seen', 'true');
+                    return;
+                }
+            }
+
+            // 3. Start Tour
+            // Wait a moment for UI to settle
+            setTimeout(() => {
+                startTour([
+                    {
+                        id: 'step-intro',
+                        targetId: '', // Empty string to indicate no specific target
+                        title: tTour('step1_title'),
+                        content: tTour('step1_desc'),
+                        position: 'bottom'
+                    },
+                    {
+                        id: 'step-input',
+                        targetId: 'game-input-area', // Need to add this ID to GameInput
+                        title: tTour('step2_title'),
+                        content: tTour('step2_desc'),
+                        position: 'top'
+                    },
+                    // We need a dummy message to point to for "Colors"
+                    // If no message exists yet, we should probably skip this or point to input
+                    {
+                        id: 'step-colors',
+                        targetId: 'msg-msg-' + (dailyWords.length - 2).toString(), // Target the first unsolved message
+                        title: tTour('step3_title'),
+                        content: tTour('step3_desc'),
+                        position: 'top'
+                    },
+                    {
+                        id: 'step-hint',
+                        targetId: 'hint-button-trigger', // Need to add this ID to GameInput (Hint Trigger)
+                        title: tTour('step4_title'),
+                        content: tTour('step4_desc'),
+                        position: 'top',
+                        onNext: () => {
+                            // Mark as seen on completion
+                            localStorage.setItem('daily_tutorial_seen', 'true');
+                            if (authUser) {
+                                const updateSettings = async () => {
+                                    // Get current settings first to merge
+                                    const { data } = await supabase.from('profiles').select('settings').eq('id', authUser.id).single();
+                                    const currentSettings = data?.settings || {};
+                                    await supabase.from('profiles').update({
+                                        settings: { ...currentSettings, daily_tutorial_seen: true }
+                                    }).eq('id', authUser.id);
+                                };
+                                updateSettings();
+                            }
+                        }
+                    }
+                ]);
+            }, 1000);
+        };
+
+        if (!authLoading && dailyWords.length > 0) {
+            checkAndStartTour();
+        }
+    }, [authLoading, authUser, startTour, dailyWords, tTour]);
 
     // Reload settings when Info Screen closes to capture changes
     useEffect(() => {
@@ -622,6 +765,27 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
             setSending(false);
 
             if (isMatch) {
+                // Check Audio Setting (Auth vs Guest)
+                let audioEnabled = true;
+                if (profile?.settings?.enable_audio_chime !== undefined) {
+                    audioEnabled = profile.settings.enable_audio_chime;
+                } else {
+                    try {
+                        const local = localStorage.getItem('daily_game_settings');
+                        if (local) {
+                            const parsed = JSON.parse(local);
+                            if (parsed.enable_audio_chime !== undefined) {
+                                audioEnabled = parsed.enable_audio_chime;
+                            }
+                        }
+                    } catch (e) { }
+                }
+
+                if (audioEnabled && successAudioRef.current) {
+                    successAudioRef.current.currentTime = 0;
+                    successAudioRef.current.play().catch(e => console.warn("Audio play failed", e));
+                }
+
                 const baseValue = calculateMessageValue(targetMessage.content);
 
                 // Deductions based on hint level
@@ -777,6 +941,7 @@ export default function DailyGameClient({ dailyWords, date, theme, initialHints 
                 date={date}
                 solvedCount={messages.filter(m => m.is_solved).length}
                 showTutorial={showTutorial}
+                onRestartTutorial={handleRestartTutorial}
                 externalShowInfo={isInfoOpen}
                 onInfoToggle={setIsInfoOpen}
                 onWelcomeComplete={() => {

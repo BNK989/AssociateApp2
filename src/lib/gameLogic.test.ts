@@ -54,10 +54,12 @@ describe('Game Logic', () => {
             const minLen = Math.max(4, Math.floor(len / 2));
             const maxLen = Math.min(25, len * 2);
 
-            expect(cipher.length).toBeGreaterThanOrEqual(minLen);
-            expect(cipher.length).toBeLessThanOrEqual(maxLen);
+            const cipherLen = [...cipher].length;
 
-            if (cipher.length === input.length) {
+            expect(cipherLen).toBeGreaterThanOrEqual(minLen);
+            expect(cipherLen).toBeLessThanOrEqual(maxLen);
+
+            if (cipherLen === input.length) {
                 // Statistically possible but checking it differs
                 // expect(cipher).not.toBe(input); 
             }

@@ -2,6 +2,12 @@
     "Common": {
         "switch_language": "Switch Language"
     },
+    "Walkthrough": {
+        "next": "Next",
+        "back": "Back",
+        "finish": "Finish",
+        "skip": "Skip"
+    },
     "GameRoom": {
         "Header": {
             "solve": "Solve",
@@ -85,6 +91,7 @@
             "status_left": "Left Game",
             "status_active": "Active",
             "how_to_play_title": "How to Play",
+            "restart_tutorial": "Restart Tutorial",
             "read_instructions": "Read Instructions",
             "instructions_dialog_title": "Game Instructions",
             "preferences_title": "Preferences",
@@ -147,11 +154,15 @@
                 },
                 "tutorial": {
                     "step1_title": "Daily Challenge 📅",
-                    "step1_desc": "Welcome to your daily mental workout! Every day, we release a new chain of a few connected words.",
-                    "step2_title": "Work Backwards ⬆️",
-                    "step2_desc": "The last word is already revealed. Your goal is to guess the word that comes BEFORE it. Solving one word reveals the next one up the chain!",
-                    "step3_title": "Need a Hint? 💡",
-                    "step3_desc": "Stuck on a tricky connection? Tap the bulb icon for a hint. It costs a few points, but it's better than breaking your streak!",
+                    "step1_desc": "Welcome to your daily mental workout! Every day, we release a new chain of meaningful words.",
+                    "step2_title": "Guess the Word",
+                    "step2_desc": "Type in your guess here. You have 3 tries per word.",
+                    "step3_title": "Colors Meaning",
+                    "step3_desc": "Green letters are in the correct position. Orange letters are in the word but wrong spot. You are always solving the message with the colorful border.",
+                    "step4_title": "Need a Hint? 💡",
+                    "step4_desc": "Stuck? Tap 💡 for a hint or 🏳️ to giveup the current text. You can reveal length, letters, or ask AI.",
+                    "step5_title": "Shuffle",
+                    "step5_desc": "Tap the shuffle icon to rearrange the letters for a fresh perspective.",
                     "play_now": "Play Now",
                     "next": "Next"
                 }

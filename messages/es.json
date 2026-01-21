@@ -153,9 +153,14 @@
                     "step3_title": "¿Necesitas una Pista? 💡",
                     "step3_desc": "¿Atascado en una conexión difícil? Toca el icono de la bombilla para una pista. ¡Cuesta algunos puntos, pero es mejor que romper tu racha!",
                     "play_now": "Jugar Ahora",
-                    "next": "Siguiente"
+                    "next": "Siguiente",
+                    "step4_title": "Need a Hint? 💡",
+                    "step4_desc": "Stuck? Tap 💡 for a hint or 🏳️ to giveup the current text. You can reveal length, letters, or ask AI.",
+                    "step5_title": "Shuffle",
+                    "step5_desc": "Tap the shuffle icon to rearrange the letters for a fresh perspective."
                 }
-            }
+            },
+            "restart_tutorial": "Restart Tutorial"
         },
         "EndGame": {
             "title": "¡Bien Jugado!",
@@ -491,5 +496,11 @@
         "update_error": "Error actualizando perfil",
         "update_success": "¡Perfil actualizado!",
         "permission_denied": "Permiso denegado. Por favor habilita notificaciones en la configuración de tu navegador."
+    },
+    "Walkthrough": {
+        "next": "Next",
+        "back": "Back",
+        "finish": "Finish",
+        "skip": "Skip"
     }
 }

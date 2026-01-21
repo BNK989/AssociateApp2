@@ -153,9 +153,14 @@
                     "step3_title": "تحتاج تلميحاً؟ 💡",
                     "step3_desc": "عالق في اتصال معقد؟ اضغط على أيقونة المصباح للحصول على تلميح. يكلف بضع نقاط، لكنه أفضل من كسر سلسلتك!",
                     "play_now": "العب الآن",
-                    "next": "التالي"
+                    "next": "التالي",
+                    "step4_title": "Need a Hint? 💡",
+                    "step4_desc": "Stuck? Tap 💡 for a hint or 🏳️ to giveup the current text. You can reveal length, letters, or ask AI.",
+                    "step5_title": "Shuffle",
+                    "step5_desc": "Tap the shuffle icon to rearrange the letters for a fresh perspective."
                 }
-            }
+            },
+            "restart_tutorial": "Restart Tutorial"
         },
         "EndGame": {
             "title": "أحسنت اللعب!",
@@ -491,5 +496,11 @@
         "update_error": "خطأ في تحديث الملف الشخصي",
         "update_success": "تم تحديث الملف الشخصي!",
         "permission_denied": "تم رفض الإذن. يرجى تفعيل الإشعارات في إعدادات المتصفح."
+    },
+    "Walkthrough": {
+        "next": "Next",
+        "back": "Back",
+        "finish": "Finish",
+        "skip": "Skip"
     }
 }

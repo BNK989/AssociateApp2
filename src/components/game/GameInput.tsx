@@ -321,6 +321,7 @@ export function GameInput({
                             setIsDropdownOpen(true);
                         }}
                         className="h-10 w-10 relative flex flex-col items-center justify-center rounded-lg transition-colors bg-secondary text-secondary-foreground hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+                        id="hint-button-trigger"
                     >
                         {ProgressBorder}
                         <span className="text-sm leading-none mb-0.5 z-10">
@@ -394,6 +395,7 @@ export function GameInput({
             }}
             className="h-10 w-10 flex flex-col items-center justify-center rounded-lg transition-colors bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
             title={t('give_up')}
+            id="hint-button-trigger"
         >
             <span className="text-lg leading-none">🏳️</span>
         </button>
@@ -452,60 +454,62 @@ export function GameInput({
                         GiveUpButton
                     )}
 
-                    <div className="relative flex-1">
-                        <input
-                            id="q_search_8x"
-                            name="q_search_8x"
-                            type="text"
-                            value={input}
-                            autoComplete="off"
-                            autoCorrect="off"
-                            autoCapitalize="off"
-                            spellCheck="false"
-                            data-lpignore="true"
-                            data-1p-ignore="true"
-                            onChange={(e) => {
-                                const val = e.target.value;
-                                if (val.length > GAME_CONFIG.MESSAGE_MAX_LENGTH) {
-                                    toast.error(t('toast_max_length', { max: GAME_CONFIG.MESSAGE_MAX_LENGTH }));
-                                    import("sonner").then(mod => mod.toast.dismiss()); // optional cleanup
-                                    return;
-                                }
-                                setInput(val);
-                                handleInteraction();
-                                if (onTyping && val.length > 0) {
-                                    onTyping();
-                                }
-                            }}
-                            onFocus={handleInteraction}
-                            disabled={isInputDisabled}
-                            placeholder={placeholderText}
-                            className={`h-10 w-full px-3 py-2 pe-14 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none transition-colors ${game.status === 'solving' ? 'border-purple-500' : ''} ${isInputDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        />
-                        {/* Character Counter */}
-                        {(input.length > 0 || (game.status === 'solving' && targetMessage && (isSinglePlayer || currentLevel >= 1))) && (
-                            <div
-                                data-testid="char-counter"
-                                className={`absolute end-3 top-1/2 -translate-y-1/2 text-xs font-medium select-none pointer-events-none transition-colors ${game.status === 'solving' && targetMessage && input.replace(/\s/g, '').length > targetMessage.content.replace(/\s/g, '').length
-                                    ? 'text-red-500 dark:text-red-400'
-                                    : 'text-gray-400 dark:text-gray-500'
-                                    }`}>
-                                {input.replace(/\s/g, '').length}
-                                {(isSinglePlayer || currentLevel >= 1) && targetMessage && (
-                                    <span data-testid="char-total" className="opacity-70"> / {targetMessage.content.replace(/\s/g, '').length}</span>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                    <div id="game-input-area" className="flex gap-2 flex-1">
+                        <div className="relative flex-1">
+                            <input
+                                id="q_search_8x"
+                                name="q_search_8x"
+                                type="text"
+                                value={input}
+                                autoComplete="off"
+                                autoCorrect="off"
+                                autoCapitalize="off"
+                                spellCheck="false"
+                                data-lpignore="true"
+                                data-1p-ignore="true"
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val.length > GAME_CONFIG.MESSAGE_MAX_LENGTH) {
+                                        toast.error(t('toast_max_length', { max: GAME_CONFIG.MESSAGE_MAX_LENGTH }));
+                                        import("sonner").then(mod => mod.toast.dismiss()); // optional cleanup
+                                        return;
+                                    }
+                                    setInput(val);
+                                    handleInteraction();
+                                    if (onTyping && val.length > 0) {
+                                        onTyping();
+                                    }
+                                }}
+                                onFocus={handleInteraction}
+                                disabled={isInputDisabled}
+                                placeholder={placeholderText}
+                                className={`h-10 w-full px-3 py-2 pe-14 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none transition-colors ${game.status === 'solving' ? 'border-purple-500' : ''} ${isInputDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            />
+                            {/* Character Counter */}
+                            {(input.length > 0 || (game.status === 'solving' && targetMessage && (isSinglePlayer || currentLevel >= 1))) && (
+                                <div
+                                    data-testid="char-counter"
+                                    className={`absolute end-3 top-1/2 -translate-y-1/2 text-xs font-medium select-none pointer-events-none transition-colors ${game.status === 'solving' && targetMessage && input.replace(/\s/g, '').length > targetMessage.content.replace(/\s/g, '').length
+                                        ? 'text-red-500 dark:text-red-400'
+                                        : 'text-gray-400 dark:text-gray-500'
+                                        }`}>
+                                    {input.replace(/\s/g, '').length}
+                                    {(isSinglePlayer || currentLevel >= 1) && targetMessage && (
+                                        <span data-testid="char-total" className="opacity-70"> / {targetMessage.content.replace(/\s/g, '').length}</span>
+                                    )}
+                                </div>
+                            )}
+                        </div>
 
-                    <button
-                        type="submit"
-                        disabled={isSubmitDisabled}
-                        onMouseDown={(e) => e.preventDefault()}
-                        className={`h-10 w-10 flex items-center justify-center rounded-lg text-white font-bold shrink-0 transition-colors ${game.status === 'solving' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-green-600 hover:bg-green-700'} ${isSubmitDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    >
-                        {sending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5 rtl:-scale-x-100" />}
-                    </button>
+                        <button
+                            type="submit"
+                            disabled={isSubmitDisabled}
+                            onMouseDown={(e) => e.preventDefault()}
+                            className={`h-10 w-10 flex items-center justify-center rounded-lg text-white font-bold shrink-0 transition-colors ${game.status === 'solving' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-green-600 hover:bg-green-700'} ${isSubmitDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                            {sending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5 rtl:-scale-x-100" />}
+                        </button>
+                    </div>
                 </form>
             </TooltipProvider>
         </div>

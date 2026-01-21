@@ -142,7 +142,25 @@ export function useTurnNotifications(isMyTurn: boolean, isMyMessageBeingGuessed:
         console.log(`${type} Notification Triggered!`);
 
         // 1. Audio Chime
-        if (profile?.settings?.enable_audio_chime !== false) {
+        let audioEnabled = true;
+        if (profile?.settings?.enable_audio_chime !== undefined) {
+            audioEnabled = profile.settings.enable_audio_chime;
+        } else {
+            // Guest Check
+            try {
+                if (typeof window !== 'undefined') {
+                    const local = localStorage.getItem('daily_game_settings');
+                    if (local) {
+                        const parsed = JSON.parse(local);
+                        if (parsed.enable_audio_chime !== undefined) {
+                            audioEnabled = parsed.enable_audio_chime;
+                        }
+                    }
+                }
+            } catch (e) { }
+        }
+
+        if (audioEnabled) {
             // Use turn sound for both turn and guess alerts
             turnSoundRef.current?.play().catch(err => {
                 if (err.name !== 'NotAllowedError' && err.name !== 'NotSupportedError') {

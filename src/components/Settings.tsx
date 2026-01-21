@@ -7,6 +7,7 @@ import { useTheme } from 'next-themes';
 import { useAuth } from '@/context/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { Volume2 } from 'lucide-react';
 
 export default function Settings() {
     const t = useTranslations('Settings');
@@ -242,16 +243,32 @@ export default function Settings() {
                     </div>
 
                     <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium">{t('audio_chime')}</label>
+                        <div className="flex items-center gap-2">
+                            <label className="text-sm font-medium">{t('audio_chime')}</label>
+                            <Volume2
+                                className="w-4 h-4 text-gray-400 cursor-pointer hover:text-purple-600 transition-colors active:scale-95"
+                                onClick={() => {
+                                    new Audio('/sounds/notifications/chime1.mp3').play().catch(console.error);
+                                }}
+                            />
+                        </div>
                         <input
                             type="checkbox"
                             checked={profile?.settings?.enable_audio_chime ?? true}
                             onChange={async (e) => {
                                 if (user) {
+                                    const enabled = e.target.checked;
                                     const { error } = await supabase.from('profiles').update({
-                                        settings: { ...profile?.settings, enable_audio_chime: e.target.checked }
+                                        settings: { ...profile?.settings, enable_audio_chime: enabled }
                                     }).eq('id', user.id);
-                                    if (!error) refreshProfile();
+
+                                    if (!error) {
+                                        refreshProfile();
+                                        if (enabled) {
+                                            const audio = new Audio('/sounds/notifications/chime1.mp3');
+                                            audio.play().catch(e => console.error('Audio play failed', e));
+                                        }
+                                    }
                                 }
                             }}
                             className="w-4 h-4"

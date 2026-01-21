@@ -153,9 +153,14 @@
                     "step3_title": "Ai nevoie de un Indiciu? 💡",
                     "step3_desc": "Blocat la o conexiune dificilă? Apasă pe iconița bec pentru un indiciu. Costă câteva puncte, dar e mai bine decât să-ți strici seria!",
                     "play_now": "Joacă Acum",
-                    "next": "Următorul"
+                    "next": "Următorul",
+                    "step4_title": "Need a Hint? 💡",
+                    "step4_desc": "Stuck? Tap 💡 for a hint or 🏳️ to giveup the current text. You can reveal length, letters, or ask AI.",
+                    "step5_title": "Shuffle",
+                    "step5_desc": "Tap the shuffle icon to rearrange the letters for a fresh perspective."
                 }
-            }
+            },
+            "restart_tutorial": "Restart Tutorial"
         },
         "EndGame": {
             "title": "Bine Jucat!",
@@ -491,5 +496,11 @@
         "update_error": "Eroare la actualizarea profilului",
         "update_success": "Profil actualizat!",
         "permission_denied": "Permisiune refuzată. Te rog activează notificările în setările browserului tău."
+    },
+    "Walkthrough": {
+        "next": "Next",
+        "back": "Back",
+        "finish": "Finish",
+        "skip": "Skip"
     }
 }

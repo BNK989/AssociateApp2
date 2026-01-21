@@ -36,6 +36,7 @@ type GameHeaderProps = {
     // External Control for InfoScreen
     externalShowInfo?: boolean;
     onInfoToggle?: (open: boolean) => void;
+    onRestartTutorial?: () => void;
 };
 
 export function GameHeader({
@@ -63,7 +64,8 @@ export function GameHeader({
     onWelcomeComplete,
     showTutorial,
     externalShowInfo,
-    onInfoToggle
+    onInfoToggle,
+    onRestartTutorial
 }: GameHeaderProps) {
     const router = useRouter();
     const t = useTranslations('GameRoom.Header');
@@ -241,6 +243,7 @@ export function GameHeader({
 
     return (
         <header
+            id="daily-game-header"
             className={`relative shrink-0 z-20 w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 transition-colors duration-500 ${isFeverMode ? 'dark:bg-orange-950/30' : ''}`}
         >
             {/* Welcome Overlay (Center Screen) */}
@@ -507,6 +510,7 @@ export function GameHeader({
                             theme={theme}
                             date={date}
                             solvedCount={solvedCount}
+                            onRestartTutorial={onRestartTutorial}
                         />
                     </div>
                 )

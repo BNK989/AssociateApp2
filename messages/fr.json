@@ -153,9 +153,14 @@
                     "step3_title": "Besoin d'un Indice ? 💡",
                     "step3_desc": "Coincé sur une connexion délicate ? Appuyez sur l'icône de l'ampoule pour un indice. Cela coûte quelques points, mais c'est mieux que de briser votre série !",
                     "play_now": "Jouer Maintenant",
-                    "next": "Suivant"
+                    "next": "Suivant",
+                    "step4_title": "Need a Hint? 💡",
+                    "step4_desc": "Stuck? Tap 💡 for a hint or 🏳️ to giveup the current text. You can reveal length, letters, or ask AI.",
+                    "step5_title": "Shuffle",
+                    "step5_desc": "Tap the shuffle icon to rearrange the letters for a fresh perspective."
                 }
-            }
+            },
+            "restart_tutorial": "Restart Tutorial"
         },
         "EndGame": {
             "title": "Bien Joué !",
@@ -491,5 +496,11 @@
         "update_error": "Erreur mise à jour profil",
         "update_success": "Profil mis à jour !",
         "permission_denied": "Permission refusée. Veuillez activer les notifications dans les paramètres de votre navigateur."
+    },
+    "Walkthrough": {
+        "next": "Next",
+        "back": "Back",
+        "finish": "Finish",
+        "skip": "Skip"
     }
 }

@@ -153,9 +153,14 @@
                     "step3_title": "Brauchst du einen Hinweis? 💡",
                     "step3_desc": "Hängst du an einer kniffligen Verbindung fest? Tippe auf das Glühbirnen-Symbol für einen Hinweis. Es kostet ein paar Punkte, aber besser als deine Serie zu brechen!",
                     "play_now": "Jetzt spielen",
-                    "next": "Weiter"
+                    "next": "Weiter",
+                    "step4_title": "Need a Hint? 💡",
+                    "step4_desc": "Stuck? Tap 💡 for a hint or 🏳️ to giveup the current text. You can reveal length, letters, or ask AI.",
+                    "step5_title": "Shuffle",
+                    "step5_desc": "Tap the shuffle icon to rearrange the letters for a fresh perspective."
                 }
-            }
+            },
+            "restart_tutorial": "Restart Tutorial"
         },
         "EndGame": {
             "title": "Gut gespielt!",
@@ -491,5 +496,11 @@
         "update_error": "Fehler beim Aktualisieren des Profils",
         "update_success": "Profil aktualisiert!",
         "permission_denied": "Erlaubnis verweigert. Bitte aktiviere Benachrichtigungen in deinen Browsereinstellungen."
+    },
+    "Walkthrough": {
+        "next": "Next",
+        "back": "Back",
+        "finish": "Finish",
+        "skip": "Skip"
     }
 }

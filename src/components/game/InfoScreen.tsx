@@ -23,9 +23,10 @@ type InfoScreenProps = {
     theme?: string;
     date?: string;
     solvedCount?: number;
+    onRestartTutorial?: () => void;
 };
 
-export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, date, solvedCount }: InfoScreenProps) {
+export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, date, solvedCount, onRestartTutorial }: InfoScreenProps) {
     const t = useTranslations('GameRoom.Info');
     const { user: authUser, profile, refreshProfile } = useAuth();
     const { theme, setTheme } = useTheme();
@@ -35,6 +36,7 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
     const [autoHintEnabled, setAutoHintEnabled] = React.useState(GAME_CONFIG.DEFAULT_AUTO_HINT_ENABLED);
     // Separate local state for input to allow empty string/typing
     const [durationInput, setDurationInput] = React.useState(GAME_CONFIG.DEFAULT_AUTO_HINT_DURATION.toString());
+    const [audioEnabled, setAudioEnabled] = React.useState<boolean>(true);
 
     // Initial load sync
     React.useEffect(() => {
@@ -42,6 +44,7 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
             setAutoHintEnabled(profile.settings.auto_hint_enabled ?? GAME_CONFIG.DEFAULT_AUTO_HINT_ENABLED);
             const duration = profile.settings.auto_hint_duration ?? GAME_CONFIG.DEFAULT_AUTO_HINT_DURATION;
             setDurationInput(duration.toString());
+            setAudioEnabled(profile.settings.enable_audio_chime !== false);
         } else {
             // Guest / LocalStorage
             try {
@@ -51,6 +54,9 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                     setAutoHintEnabled(parsed.auto_hint_enabled ?? GAME_CONFIG.DEFAULT_AUTO_HINT_ENABLED);
                     if (parsed.auto_hint_duration !== undefined) {
                         setDurationInput(parsed.auto_hint_duration.toString());
+                    }
+                    if (parsed.enable_audio_chime !== undefined) {
+                        setAudioEnabled(parsed.enable_audio_chime);
                     }
                 }
             } catch (e) {
@@ -106,23 +112,44 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
     };
 
     const toggleAudio = async (checked: boolean) => {
-        if (!authUser || updating) return;
-        setUpdating(true);
-        // Optimistic update handled by switch state if wired to profile, but profile update is async.
-        // We'll trust fast server response or just let it lag slightly.
-        try {
-            const { error } = await supabase.from('profiles').update({
-                settings: { ...profile?.settings, enable_audio_chime: checked }
-            }).eq('id', authUser.id);
+        setAudioEnabled(checked);
 
-            if (error) throw error;
-            await refreshProfile();
-            toast.success(checked ? t('toast_audio_enabled') : t('toast_audio_disabled'));
-        } catch (e) {
-            console.error(e);
-            toast.error(t('toast_settings_fail'));
-        } finally {
-            setUpdating(false);
+        if (authUser) {
+            if (updating) return;
+            setUpdating(true);
+            try {
+                const { error } = await supabase.from('profiles').update({
+                    settings: { ...profile?.settings, enable_audio_chime: checked }
+                }).eq('id', authUser.id);
+
+                if (error) throw error;
+                await refreshProfile();
+            } catch (e) {
+                console.error(e);
+                toast.error(t('toast_settings_fail'));
+                // Revert check if failed? For now just stay optimistic
+            } finally {
+                setUpdating(false);
+            }
+        } else {
+            // Guest Mode
+            try {
+                const localSettings = localStorage.getItem('daily_game_settings');
+                let newSettings = {};
+                if (localSettings) {
+                    try {
+                        newSettings = JSON.parse(localSettings);
+                    } catch (e) { }
+                }
+                // @ts-ignore
+                newSettings.enable_audio_chime = checked;
+                localStorage.setItem('daily_game_settings', JSON.stringify(newSettings));
+            } catch (e) { console.error(e) }
+        }
+
+        if (checked) {
+            const audio = new Audio('/sounds/notifications/chime1.mp3');
+            audio.play().catch(e => console.error('Audio play failed', e));
         }
     };
 
@@ -397,7 +424,13 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                         {/* 3. Game Sounds */}
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-full text-purple-600 dark:text-purple-400">
+                                <div
+                                    className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-full text-purple-600 dark:text-purple-400 cursor-pointer hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors active:scale-95"
+                                    onClick={() => {
+                                        const audio = new Audio('/sounds/notifications/chime1.mp3');
+                                        audio.play().catch(e => console.error('Audio play failed', e));
+                                    }}
+                                >
                                     {profile?.settings?.enable_audio_chime !== false ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
                                 </div>
                                 <div className="flex flex-col">
@@ -406,7 +439,7 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                                 </div>
                             </div>
                             <Switch
-                                checked={profile?.settings?.enable_audio_chime !== false}
+                                checked={audioEnabled}
                                 onCheckedChange={toggleAudio}
                                 disabled={updating}
                             />
@@ -429,13 +462,13 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
 
 
 
-                    {/* How to Play Button (Moved Here) */}
-                    <div className="pt-2">
+                    {/* Buttons Row: How to Play + Restart Tutorial */}
+                    <div className="flex items-center gap-2 pt-2">
                         <Dialog>
                             <DialogTrigger asChild>
                                 <Button
                                     variant="secondary"
-                                    className="w-full justify-between h-12 bg-gray-900 text-white hover:bg-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100 border border-gray-800 dark:border-gray-700 shadow-sm"
+                                    className="flex-1 justify-between h-12 bg-gray-900 text-white hover:bg-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100 border border-gray-800 dark:border-gray-700 shadow-sm px-4"
                                 >
                                     <div className="flex items-center gap-2">
                                         <HelpCircle className="w-5 h-5" />
@@ -464,6 +497,36 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                                 </div>
                             </DialogContent>
                         </Dialog>
+
+                        {isDaily && onRestartTutorial && (
+                            <Button
+                                variant="outline"
+                                className="flex-1 justify-center h-12 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 px-3"
+                                onClick={() => {
+                                    onClose(); // Close info screen
+                                    setTimeout(() => onRestartTutorial(), 100); // Slight delay for smooth transition
+                                }}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="18"
+                                        height="18"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        className="w-4 h-4 rtl:scale-x-[-1]"
+                                    >
+                                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                                        <path d="M3 3v5h5" />
+                                    </svg>
+                                    <span className="font-bold text-sm">{t('restart_tutorial')}</span>
+                                </div>
+                            </Button>
+                        )}
                     </div>
 
                     <div className="space-y-3">
