@@ -99,6 +99,7 @@
             "auto_hint_title": "Auto-Hinweis",
             "auto_hint_desc": "Hinweise automatisch aufdecken",
             "auto_hint_seconds": "Sekunden",
+            "auto_hint_immediate": "Instant",
             "toast_audio_enabled": "Audio aktiviert",
             "toast_audio_disabled": "Audio deaktiviert",
             "toast_settings_fail": "Einstellungen konnten nicht aktualisiert werden",

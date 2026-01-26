@@ -99,6 +99,7 @@
             "auto_hint_title": "تلميح تلقائي",
             "auto_hint_desc": "كشف التلميحات تلقائياً",
             "auto_hint_seconds": "ثوانٍ",
+            "auto_hint_immediate": "Instant",
             "toast_audio_enabled": "تم تفعيل الصوت",
             "toast_audio_disabled": "تم تعطيل الصوت",
             "toast_settings_fail": "فشل تحديث الإعدادات",

@@ -99,6 +99,7 @@
             "auto_hint_title": "Auto Pista",
             "auto_hint_desc": "Revelar pistas automáticamente",
             "auto_hint_seconds": "Segundos",
+            "auto_hint_immediate": "Instant",
             "toast_audio_enabled": "Audio habilitado",
             "toast_audio_disabled": "Audio deshabilitado",
             "toast_settings_fail": "Error al actualizar ajustes",

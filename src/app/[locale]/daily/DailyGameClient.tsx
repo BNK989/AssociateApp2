@@ -204,22 +204,57 @@ function DailyGameBoard({ dailyWords, date, theme, initialHints }: DailyGameClie
         loadSettings();
     }, [authUser]);
 
+    const instantLoopTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
     // Timer Logic
     useEffect(() => {
         // Reset timer if target changes or game over
         // We now use the derived targetMessage from outer scope
 
-        if (!targetMessage || gameOver || !autoHintEnabled || autoHintDuration <= 0) {
+        if (!targetMessage || gameOver || !autoHintEnabled) {
+            // If disabled or non-existent, reset to 0 or paused state
             setAutoHintTimer(autoHintDuration > 0 ? autoHintDuration : 0);
             prevTargetIdRef.current = null;
+            if (instantLoopTimeoutRef.current) {
+                clearTimeout(instantLoopTimeoutRef.current);
+                instantLoopTimeoutRef.current = null;
+            }
             return;
         }
 
-        // Detect Target Change -> Reset Timer
+        // Detect Target Change OR Duration Change -> Reset Timer
+        // We want to reset IF:
+        // 1. Target ID Changed
+        // 2. Duration CHANGED (User updated settings)
+        // BUT: If strict equality on duration fails (e.g. 0 -> 10), we reset.
+        // Wait, if we are in the middle of a countdown (e.g. 5s left of 10s) and user changes to 20s, do we reset to 20? Yes.
+        // If user changes to Instant (0s), do we reset? Yes.
+
+        // We track prev duration to know if it changed
+        // Actually, just checking if target changed OR if current timer > new duration (clamp) OR just mostly syncing.
+        // Simplest: If target changed, definite reset.
         if (targetMessage.id !== prevTargetIdRef.current) {
             setAutoHintTimer(autoHintDuration);
             prevTargetIdRef.current = targetMessage.id;
+            // Clear any pending instant loop
+            if (instantLoopTimeoutRef.current) {
+                clearTimeout(instantLoopTimeoutRef.current);
+                instantLoopTimeoutRef.current = null;
+            }
         }
+
+        // If Duration is 0 (Instant) and we aren't in the loop/timer is > 0, we should force it to 0 to kickoff the loop.
+        // But the loop handles 0.1 -> 0.
+        // If user switches 10 -> 0. autoHintTimer might be 7. 
+        // We need to force it to 0 if duration is 0.
+        /* 
+           Crucial Check: If the settings changed to "Instant" but the timer is still ticking down from the old duration,
+           we need to preemptively set it to 0.
+        */
+        if (autoHintDuration <= 0 && autoHintTimer > 0.1) {
+            setAutoHintTimer(0);
+        }
+
 
         if (isHintPaused) return;
 
@@ -236,7 +271,7 @@ function DailyGameBoard({ dailyWords, date, theme, initialHints }: DailyGameClie
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [targetMessage, gameOver, autoHintEnabled, isHintPaused, autoHintDuration]); // Depend on targetMessage object to catch updates
+    }, [targetMessage, gameOver, autoHintEnabled, isHintPaused, autoHintDuration]);
 
     // Auto-Reveal Effect
     useEffect(() => {
@@ -247,12 +282,32 @@ function DailyGameBoard({ dailyWords, date, theme, initialHints }: DailyGameClie
                 if ((currentTarget.hint_level || 0) < 3) {
                     // Call handleGetHint
                     handleGetHint();
+
                     // Reset timer
-                    setAutoHintTimer(autoHintDuration);
+                    if (autoHintDuration <= 0) {
+                        // "Instant" Mode: Short delay then re-trigger
+                        // We toggle to a small non-zero value (0.1) then back to 0 to ensure the useEffect fires again
+                        setAutoHintTimer(0.1);
+
+                        // Clear prev
+                        if (instantLoopTimeoutRef.current) clearTimeout(instantLoopTimeoutRef.current);
+
+                        instantLoopTimeoutRef.current = setTimeout(() => {
+                            setAutoHintTimer(0);
+                            instantLoopTimeoutRef.current = null;
+                        }, 500);
+                    } else {
+                        // Normal Reset
+                        setAutoHintTimer(autoHintDuration);
+                        if (instantLoopTimeoutRef.current) {
+                            clearTimeout(instantLoopTimeoutRef.current);
+                            instantLoopTimeoutRef.current = null;
+                        }
+                    }
                 }
             }
         }
-    }, [autoHintTimer, autoHintEnabled, isHintPaused, gameOver]); // messages? No, handleGetHint uses current state or ref.
+    }, [autoHintTimer, autoHintEnabled, isHintPaused, gameOver, targetMessage?.id]);
     // Actually handleGetHint relies on `targetMessage` which is derived from `messages`.
     // It's safe to call it.
 
@@ -920,7 +975,7 @@ function DailyGameBoard({ dailyWords, date, theme, initialHints }: DailyGameClie
         >
             <GameHeader
                 game={gameState}
-                user={MOCK_USER}
+                user={MOCK_USER as any}
                 players={players}
                 loading={false}
                 proposalTimeLeft={null}
@@ -944,6 +999,10 @@ function DailyGameBoard({ dailyWords, date, theme, initialHints }: DailyGameClie
                 onRestartTutorial={handleRestartTutorial}
                 externalShowInfo={isInfoOpen}
                 onInfoToggle={setIsInfoOpen}
+                onAutoHintChange={(enabled, duration) => {
+                    setAutoHintEnabled(enabled);
+                    setAutoHintDuration(duration);
+                }}
                 onWelcomeComplete={() => {
                     if (!GAME_CONFIG.DAILY_GAME_ANIMATE_START_MESSAGE) return;
 

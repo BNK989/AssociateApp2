@@ -1,5 +1,6 @@
 import React from 'react';
-import { Share, Trophy, HelpCircle, Volume2, VolumeX, Moon, Sun, Globe, Zap, Clock, X, ChevronRight, Settings, Users, Loader2, Info } from 'lucide-react';
+import { Share, Trophy, HelpCircle, Volume2, VolumeX, Moon, Sun, Globe, Zap, Clock, X, ChevronRight, Settings, Users, Loader2, Info, Check } from 'lucide-react';
+import { IosTimePicker } from '@/components/ui/time-picker';
 import { GameState, Player } from '@/hooks/useGameLogic';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -24,9 +25,14 @@ type InfoScreenProps = {
     date?: string;
     solvedCount?: number;
     onRestartTutorial?: () => void;
+    onAutoHintChange?: (enabled: boolean, duration: number) => void;
 };
 
-export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, date, solvedCount, onRestartTutorial }: InfoScreenProps) {
+export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, date,
+    solvedCount,
+    onRestartTutorial,
+    onAutoHintChange
+}: InfoScreenProps) {
     const t = useTranslations('GameRoom.Info');
     const { user: authUser, profile, refreshProfile } = useAuth();
     const { theme, setTheme } = useTheme();
@@ -34,16 +40,15 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
 
     // Auto Hint State
     const [autoHintEnabled, setAutoHintEnabled] = React.useState(GAME_CONFIG.DEFAULT_AUTO_HINT_ENABLED);
-    // Separate local state for input to allow empty string/typing
-    const [durationInput, setDurationInput] = React.useState(GAME_CONFIG.DEFAULT_AUTO_HINT_DURATION.toString());
+    const [duration, setDuration] = React.useState(GAME_CONFIG.DEFAULT_AUTO_HINT_DURATION);
+    const [isPickerOpen, setIsPickerOpen] = React.useState(false);
     const [audioEnabled, setAudioEnabled] = React.useState<boolean>(true);
 
     // Initial load sync
     React.useEffect(() => {
         if (authUser && profile?.settings) {
             setAutoHintEnabled(profile.settings.auto_hint_enabled ?? GAME_CONFIG.DEFAULT_AUTO_HINT_ENABLED);
-            const duration = profile.settings.auto_hint_duration ?? GAME_CONFIG.DEFAULT_AUTO_HINT_DURATION;
-            setDurationInput(duration.toString());
+            setDuration(profile.settings.auto_hint_duration ?? GAME_CONFIG.DEFAULT_AUTO_HINT_DURATION);
             setAudioEnabled(profile.settings.enable_audio_chime !== false);
         } else {
             // Guest / LocalStorage
@@ -53,7 +58,7 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                     const parsed = JSON.parse(localSettings);
                     setAutoHintEnabled(parsed.auto_hint_enabled ?? GAME_CONFIG.DEFAULT_AUTO_HINT_ENABLED);
                     if (parsed.auto_hint_duration !== undefined) {
-                        setDurationInput(parsed.auto_hint_duration.toString());
+                        setDuration(parsed.auto_hint_duration);
                     }
                     if (parsed.enable_audio_chime !== undefined) {
                         setAudioEnabled(parsed.enable_audio_chime);
@@ -66,16 +71,15 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
     }, [authUser, profile]);
 
     // Local Update - No Side Effects
-    const updateAutoHintSettings = (enabled: boolean, durationStr: string) => {
+    const updateAutoHintSettings = (enabled: boolean, newDuration: number) => {
         setAutoHintEnabled(enabled);
-        setDurationInput(durationStr);
+        setDuration(newDuration);
+        onAutoHintChange?.(enabled, newDuration);
     };
 
     // Save Logic (Triggered on Close)
     const saveSettings = async () => {
-        const duration = parseInt(durationInput);
-        const isValid = !isNaN(duration) && duration >= 0 && duration <= 99;
-        const valToSave = isValid ? duration : (durationInput === '' ? 0 : GAME_CONFIG.DEFAULT_AUTO_HINT_DURATION);
+        const valToSave = duration;
 
         if (authUser) {
             setUpdating(true);
@@ -367,40 +371,69 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                         </h3>
 
                         {/* 1. Auto Hint Settings */}
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-full text-amber-600 dark:text-amber-400">
-                                    <Clock className="w-4 h-4" />
+                        <div className="flex flex-col gap-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-full text-amber-600 dark:text-amber-400">
+                                        <Clock className="w-4 h-4" />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-gray-900 dark:text-white">{t('auto_hint_title')}</span>
+                                        <span className="text-xs text-gray-500 dark:text-gray-400">{t('auto_hint_desc')}</span>
+                                    </div>
                                 </div>
-                                <div className="flex flex-col">
-                                    <span className="text-sm font-bold text-gray-900 dark:text-white">{t('auto_hint_title')}</span>
-                                    <span className="text-xs text-gray-500 dark:text-gray-400">{t('auto_hint_desc')}</span>
+                                <div className="flex items-center gap-2">
+                                    {autoHintEnabled && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setIsPickerOpen(!isPickerOpen)}
+                                            className={cn(
+                                                "h-7 px-2 text-xs font-bold transition-all duration-200 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800",
+                                                isPickerOpen && "bg-gray-100 dark:bg-gray-800"
+                                            )}
+                                        >
+                                            {duration === 0 ? t('auto_hint_immediate') : `${duration}s`}
+                                            {isPickerOpen ? (
+                                                <X className="w-3 h-3 ml-2 text-gray-500" />
+                                            ) : (
+                                                <ChevronRight className="w-3 h-3 ml-1 transition-transform duration-200" />
+                                            )}
+                                        </Button>
+                                    )}
+                                    <Switch
+                                        checked={autoHintEnabled}
+                                        onCheckedChange={(checked) => {
+                                            updateAutoHintSettings(checked, duration);
+                                            if (!checked) setIsPickerOpen(false);
+                                        }}
+                                        disabled={updating}
+                                    />
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <div className="relative w-16">
-                                    <Input
-                                        type="text"
-                                        inputMode="numeric"
-                                        pattern="[0-9]*"
-                                        maxLength={2}
-                                        value={durationInput}
-                                        disabled={!autoHintEnabled}
-                                        onChange={(e) => {
-                                            const val = e.target.value;
-                                            if (val === '' || /^\d+$/.test(val)) {
-                                                updateAutoHintSettings(autoHintEnabled, val);
-                                            }
-                                        }}
-                                        className="h-8 text-center pr-1 pl-1"
-                                    />
-                                    <span className="absolute -bottom-4 left-0 right-0 text-[9px] text-center text-gray-400">{t('auto_hint_seconds')}</span>
+
+                            {/* Foldable Picker */}
+                            <div className={cn(
+                                "grid transition-all duration-300 ease-in-out overflow-hidden",
+                                autoHintEnabled && isPickerOpen ? "grid-rows-[1fr] opacity-100 mt-2" : "grid-rows-[0fr] opacity-0 mt-0"
+                            )}>
+                                <div className="min-h-0 relative">
+                                    <div className="w-full bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden flex flex-col">
+                                        <IosTimePicker
+                                            key={isPickerOpen ? 'open' : 'closed'}
+                                            value={duration}
+                                            onChange={(val) => updateAutoHintSettings(true, val)}
+                                            immediateLabel={t('auto_hint_immediate')}
+                                            height={120}
+                                        />
+                                        <div
+                                            className="h-8 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-100 dark:border-gray-800 flex items-center justify-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                            onClick={() => setIsPickerOpen(false)}
+                                        >
+                                            <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
+                                        </div>
+                                    </div>
                                 </div>
-                                <Switch
-                                    checked={autoHintEnabled}
-                                    onCheckedChange={(checked) => updateAutoHintSettings(checked, durationInput)}
-                                    disabled={updating}
-                                />
                             </div>
                         </div>
 

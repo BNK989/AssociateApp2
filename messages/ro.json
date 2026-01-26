@@ -99,6 +99,7 @@
             "auto_hint_title": "Indiciu Auto",
             "auto_hint_desc": "Dezvăluie indiciile automat",
             "auto_hint_seconds": "Secunde",
+            "auto_hint_immediate": "Instant",
             "toast_audio_enabled": "Audio activat",
             "toast_audio_disabled": "Audio dezactivat",
             "toast_settings_fail": "Actualizare setări eșuată",

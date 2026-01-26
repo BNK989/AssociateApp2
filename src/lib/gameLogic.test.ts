@@ -104,6 +104,9 @@ describe('Game Logic', () => {
             if (shortInput.includes(cipher[1])) lettersFound++;
             if (shortInput.includes(cipher[2])) lettersFound++;
 
+            if (lettersFound < 2) {
+                console.log('FAIL DEBUG:', { cipher, shortInput, lettersFound, config: GAME_CONFIG.PERCENT_REVEALED_SHUFFLE_HINT });
+            }
             expect(lettersFound).toBeGreaterThanOrEqual(2);
         });
 

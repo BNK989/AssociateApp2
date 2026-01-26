@@ -99,6 +99,7 @@
             "auto_hint_title": "Indice Auto",
             "auto_hint_desc": "Révéler les indices automatiquement",
             "auto_hint_seconds": "Secondes",
+            "auto_hint_immediate": "Instant",
             "toast_audio_enabled": "Audio activé",
             "toast_audio_disabled": "Audio désactivé",
             "toast_settings_fail": "Échec de la mise à jour des paramètres",

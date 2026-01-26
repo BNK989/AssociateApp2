@@ -37,6 +37,7 @@ type GameHeaderProps = {
     externalShowInfo?: boolean;
     onInfoToggle?: (open: boolean) => void;
     onRestartTutorial?: () => void;
+    onAutoHintChange?: (enabled: boolean, duration: number) => void;
 };
 
 export function GameHeader({
@@ -65,7 +66,8 @@ export function GameHeader({
     showTutorial,
     externalShowInfo,
     onInfoToggle,
-    onRestartTutorial
+    onRestartTutorial,
+    onAutoHintChange
 }: GameHeaderProps) {
     const router = useRouter();
     const t = useTranslations('GameRoom.Header');
@@ -511,6 +513,7 @@ export function GameHeader({
                             date={date}
                             solvedCount={solvedCount}
                             onRestartTutorial={onRestartTutorial}
+                            onAutoHintChange={onAutoHintChange}
                         />
                     </div>
                 )
