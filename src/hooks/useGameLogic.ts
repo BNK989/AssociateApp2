@@ -39,6 +39,7 @@ export type Message = {
     type?: 'text' | 'system';
     cipher_text?: string;
     ai_hint?: string;
+    connection_score?: number; /* 0.0 - 1.0 */
     solved_by?: string;
     winner_points?: number;
     author_points?: number;

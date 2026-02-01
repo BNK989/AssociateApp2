@@ -41,9 +41,15 @@ export default async function DailyGamePage({
 
     if (dailyGame && (!dailyGame.hints || !Array.isArray(dailyGame.hints))) {
         const { ensureDailyHints } = await import('@/lib/dailyHintUtils');
-        const generatedHints = await ensureDailyHints(dailyGame.id, dailyGame.words, dailyGame.theme);
-        if (generatedHints) {
-            dailyGame.hints = generatedHints;
+        const generatedResult = await ensureDailyHints(dailyGame.id, dailyGame.words, dailyGame.theme);
+        if (generatedResult) {
+            // Handle both legacy (array) and new (object) returns
+            if (Array.isArray(generatedResult)) {
+                dailyGame.hints = generatedResult;
+            } else {
+                dailyGame.hints = generatedResult.hints;
+                dailyGame.connection_scores = generatedResult.connectionScores;
+            }
         }
     }
 
@@ -102,6 +108,7 @@ export default async function DailyGamePage({
             date={dailyGame.play_date}
             theme={dailyGame.theme}
             initialHints={dailyGame.hints}
+            initialConnectionScores={dailyGame.connection_scores}
         />
     );
 }

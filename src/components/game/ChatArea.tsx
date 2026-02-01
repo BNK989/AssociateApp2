@@ -244,6 +244,49 @@ export function ChatArea({
         prevStatusRef.current = game.status;
     }, [game.status]);
 
+    // Measure target message width for compact link indicator
+    const [activeBubbleWidth, setActiveBubbleWidth] = useState<number>(0);
+
+    useEffect(() => {
+        if (game.status !== 'solving' || !targetMessage?.id) {
+            return;
+        }
+
+        const bubbleId = `msg-bubble-${targetMessage.id}`;
+        const updateWidth = () => {
+            const el = document.getElementById(bubbleId);
+            if (el) {
+                setActiveBubbleWidth(el.offsetWidth);
+            }
+        };
+
+        // Initial measure with a micro-delay to ensure DOM is ready
+        const timeoutId = setTimeout(() => {
+            updateWidth();
+
+            const el = document.getElementById(bubbleId);
+            if (!el) return;
+
+            const observer = new ResizeObserver((entries) => {
+                for (const entry of entries) {
+                    // Use borderBoxSize if available to include padding/border, matching offsetWidth
+                    if (entry.borderBoxSize && entry.borderBoxSize.length > 0) {
+                        setActiveBubbleWidth(entry.borderBoxSize[0].inlineSize);
+                    } else {
+                        setActiveBubbleWidth((entry.target as HTMLElement).offsetWidth);
+                    }
+                }
+            });
+
+            observer.observe(el);
+
+            // cleanup observer when effect re-runs or unmounts
+            return () => observer.disconnect();
+        }, 0);
+
+        return () => clearTimeout(timeoutId);
+    }, [targetMessage?.id, game.status]);
+
     const hasTextMessages = messages.filter(m => m.type !== 'system').length > 0;
 
     const TypingIndicatorsBlock = (
@@ -375,6 +418,7 @@ export function ChatArea({
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div
+                                                id={`msg-bubble-${msg.id}`}
                                                 onClick={(e) => {
                                                     if (msg.hint_level >= 2 && !isVisible && !revealedMessages[msg.id]) {
                                                         e.stopPropagation();
@@ -393,6 +437,25 @@ export function ChatArea({
                                                     guesses={msg.guesses || []}
                                                     forceScramble={scrambleTriggerMap[msg.id]}
                                                 />
+                                                {/* Connection Score Indicator (Context Signal) */}
+                                                {game.status === 'solving' && targetMessage?.id === msg.id && typeof msg.connection_score === 'number' && (
+                                                    <div className="absolute -top-3 left-2 z-10 rtl:right-2 rtl:left-auto flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 animate-in fade-in slide-in-from-bottom-2">
+                                                        {/* Signal Icons based on score */}
+                                                        {msg.connection_score >= 0.85 ? (
+                                                            <span className="text-green-500 text-[10px]" title={t('link_strong')}>●●●</span>
+                                                        ) : msg.connection_score >= 0.60 ? (
+                                                            <span className="text-yellow-500 text-[10px]" title={t('link_medium')}>●●○</span>
+                                                        ) : (
+                                                            <span className="text-red-500 text-[10px]" title={t('link_weak')}>●○○</span>
+                                                        )}
+                                                        {!((activeBubbleWidth > 0 && activeBubbleWidth < 120)) && (
+                                                            <span className="text-[10px] uppercase font-bold text-gray-400 select-none">
+                                                                {msg.connection_score >= 0.85 ? t('link_strong') : msg.connection_score >= 0.60 ? t('link_medium') : t('link_weak')}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
+
                                                 {(msg.hint_level >= 2 && !isVisible && !revealedMessages[msg.id]) ? (
                                                     <motion.div
                                                         layout

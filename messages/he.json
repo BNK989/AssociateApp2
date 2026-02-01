@@ -73,7 +73,10 @@
             "toast_daily_limit": "מגבלת רמזי AI יומית הושגה",
             "toast_word_lost": "הפסדתם מילה: {word}",
             "toast_reset_success": "המשחק אופס למצב הקודם",
-            "hint_fallback": "מכיל {length} אותיות. האות הראשונה היא {firstLetter}."
+            "hint_fallback": "מכיל {length} אותיות. האות הראשונה היא {firstLetter}.",
+            "link_strong": "קשר חזק",
+            "link_medium": "קשר רופף",
+            "link_weak": "קשר חלש"
         },
         "Loading": {
             "app_name": "Associate",

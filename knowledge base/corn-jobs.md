@@ -39,7 +39,17 @@ The system relies on Postgres Cron Jobs (`pg_cron`) running in the background.
 | :--- | :--- | :--- | :--- |
 | `daily-cleanup` | `0 3 * * *` (3:00 AM) | `SELECT cleanup_games_logic()` | Archives inactive games (>72h) and deletes old ones (>7d). |
 | `delete-guest-users` | `0 4 * * *` (4:00 AM) | `SELECT delete_expired_guests()` | Deletes anonymous guest accounts older than 24 hours. |
-| `generate-daily-hints` | `0 1 * * *` (1:00 AM) | `net.http_post(...)` | Generates AI hints for upcoming daily games (2-day lookahead). |
+| `generate-daily-hints` | `0 1 * * *` (1:00 AM) | `net.http_post(...)` | Generates AI hints and **connection scores** for upcoming daily games. Uses `gemma-3-12b-it`. |
+
+### Hint Generation Logic (Edge Function)
+*   **Model**: `gemma-3-12b-it` (Google Gemini)
+*   **Flow**: **Upwards** (From Last Word to First Word).
+    *   The game is played from the bottom (Index N, revealed) to the top (Index 0, goal).
+    *   **Context**: For `Word[i]`, the context is the *next* word in the list `Word[i+1]`.
+    *   **Hints**: Hints describe `Word[i]` by relating it to `Word[i+1]` (Context).
+*   **Strict phrasing**: Hints must NOT use meta-phrases like "the next word", "the previous word", etc. They must refer to the context word's concept directly.
+*   **Priority**: Selects games with `play_date` between **Today** and **Today + 3 days**, ordered by date ascending.
+
 
 ### Verification Instructions
 
@@ -79,12 +89,23 @@ You can manually trigger the logic at any time to verify it works or to see imme
     ```
     *Expect return:* `void` (No output means success. If it fails, it will show an error).
 
-*   **Test Daily Hint Generation:**
+*   **Test Daily Hint & Score Generation:**
+    
+    **Option A: Via SQL (Production/Supabase Dashboard)**
     ```sql
     select net.http_post(
-        url:='https://pueadfincgiwwylpgxxs.supabase.co/functions/v1/generate-daily-hints',
+        url:='https://<YOUR_PROJECT_ID>.supabase.co/functions/v1/generate-daily-hints',
         headers:='{"Content-Type": "application/json", "Authorization": "Bearer <SERVICE_ROLE_KEY>"}'::jsonb
     ) as request_id;
     ```
-    *Expect return:* A `request_id` (integer). You can check the Edge Function logs in the Supabase Dashboard to see the output.
+    *Expect return:* A `request_id` (integer). Check Edge Function logs for details.
+
+    **Option B: Via Terminal (Local or Remote)**
+    You can trigger the function directly to see the JSON response immediately.
+    ```bash
+    curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/generate-daily-hints' \
+      --header 'Authorization: Bearer <SERVICE_ROLE_KEY>' \
+      --header 'Content-Type: application/json'
+    ```
+    *Expect return:* JSON object `{"processed": [{"id": "...", "status": "updated"}]}` or `{"message": "No games pending generation."}`.
 

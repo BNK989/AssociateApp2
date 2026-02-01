@@ -22,6 +22,7 @@ type DailyGameClientProps = {
     date: string;
     theme?: string;
     initialHints?: string[] | null;
+    initialConnectionScores?: number[] | null;
 };
 
 // Mock User for Daily Game
@@ -61,7 +62,7 @@ export default function DailyGameClient(props: DailyGameClientProps) {
     );
 }
 
-function DailyGameBoard({ dailyWords, date, theme, initialHints }: DailyGameClientProps) {
+function DailyGameBoard({ dailyWords, date, theme, initialHints, initialConnectionScores }: DailyGameClientProps) {
     const router = useRouter();
     const { user: authUser, session, loading: authLoading, profile } = useAuth();
     const posthog = usePostHog();
@@ -501,6 +502,7 @@ function DailyGameBoard({ dailyWords, date, theme, initialHints }: DailyGameClie
                 hint_level: targetHintLevel,
                 cipher_text: generateCipherString(word, targetHintLevel, true),
                 ai_hint: aiHint,
+                connection_score: initialConnectionScores?.[index] ?? undefined,
                 author_points: 0,
                 winner_points: 0,
                 type: 'text',

@@ -1,7 +1,7 @@
 import { createAdminClient } from './supabase-admin';
 import { GAME_CONFIG } from './gameConfig';
 
-export async function generateDailyHints(words: string[], theme: string): Promise<string[] | null> {
+export async function generateDailyHints(words: string[], theme: string): Promise<{ hints: string[], connectionScores: number[] } | null> {
     const GEMINI_API_KEY = process.env.GEMINI_KEY;
     if (!GEMINI_API_KEY) {
         console.warn("GEMINI_KEY not set, skipping hint generation.");
@@ -9,20 +9,43 @@ export async function generateDailyHints(words: string[], theme: string): Promis
     }
 
     const prompt = `
-    You are generating hints for a word association game.
+    You are generating hints and connection scores for a word association game.
     Theme: "${theme}"
     Words: ${JSON.stringify(words)}
 
-    For EACH word in the list, provide a short, cryptic but helpful hint.
-    The hint must NOT contain the word itself or variations of it.
+    CRITICAL: Understand the Game Flow
+    The words are provided in an array: [Word 0, Word 1, ..., Word N].
+    The game is played **UPWARDS**, from the last word (Word N) to the first (Word 0).
+    - Word N is the starting clue (revealed).
+    - Players guess Word N-1 using Word N as context.
+    - Players guess Word N-2 using Word N-1 as context.
+    - ...
+
+    INSTRUCTIONS:
+    For EACH word in the list, provide:
+    1. A HINT:
+       - For the **Last Word (Word N)**: Provide a standalone definition.
+       - For **All Other Words (Word i)**: The hint MUST describe "Word i" by relating it to the **Next Word in the list (Word i+1)** (which is the context).
+       - **IMPORTANT**: Do NOT use phrases like "the next word", "the previous word", "the word below", or "the following word".
+       - INSTEAD: Refer to the context word (Word i+1) by its meaning or concept, or even explicitly if needed (though subtle is better).
+       - BAD HINT: "The next word is a type of this."
+       - BAD HINT: "Found in the next."
+       - GOOD HINT (Context: Pie): "This round fruit is the main ingredient in that baked pastry." (Target: Apple)
+       - GOOD HINT (Context: Ocean): "These gigantic mammals swim in those deep blue waters." (Target: Whales)
     
-    CRITICAL: Return a JSON array of OBJECTS, where each object has "word" and "hint" properties.
-    Ensure strict alignment with the input list.
+    2. A CONNECTION SCORE (0.0 to 1.0):
+       - Represents the strength of the link between [Word i] and [Word i+1].
+       - 1.0 = Direct, Obvious (Apple -> Pie).
+       - 0.5 = Thematic (Orchard -> Pie).
+       - 0.1 = Weak/Abstract.
+       - For the Last Word, score can be 1.0.
+
+    Return a JSON array of OBJECTS matching the words array order.
     
-    Example output format:
+    Format:
     [
-        { "word": "Apple", "hint": "Red fruit" },
-        { "word": "Banana", "hint": "Yellow curve" }
+        { "word": "Apple", "hint": "The fruit used in the baked dessert below", "score": 0.9 }, 
+        { "word": "Pie", "hint": "A baked pastry dish", "score": 1.0 }
     ]
     `;
 
@@ -58,7 +81,6 @@ export async function generateDailyHints(words: string[], theme: string): Promis
             cleanText = cleanText.replace(/^```/, '').replace(/```$/, '');
         }
 
-        // Find JSON array if surrounded by text
         const firstBracket = cleanText.indexOf('[');
         const lastBracket = cleanText.lastIndexOf(']');
         if (firstBracket !== -1 && lastBracket !== -1) {
@@ -72,46 +94,38 @@ export async function generateDailyHints(words: string[], theme: string): Promis
             return null;
         }
 
-        // Align hints with original words array
-        // We expect [{word: "...", hint: "..."}]
-        // We want to return string[] matching the order of 'words'
-
-        const hintsMap = new Map<string, string>();
+        const hintsMap = new Map<string, { hint: string, score: number }>();
         rawHints.forEach((item: any) => {
             if (item && item.word && item.hint) {
-                // Normalize keys for matching (lowercase?)
-                // Words in game might be Case Sensitive or not, usually we want strict or relaxed.
-                // Let's us lowercase for robustness.
-                hintsMap.set(item.word.toLowerCase().trim(), item.hint);
+                hintsMap.set(item.word.toLowerCase().trim(), {
+                    hint: item.hint,
+                    score: typeof item.score === 'number' ? item.score : 0.5
+                });
             }
         });
 
-        const alignedHints = words.map(originalWord => {
+        const alignedHints: string[] = [];
+        const alignedScores: number[] = [];
+
+        words.forEach(originalWord => {
             const key = originalWord.toLowerCase().trim();
-            // Clean punctuation from key if needed? "Energy." vs "Energy"
-            // Try exact match first
-            if (hintsMap.has(key)) return hintsMap.get(key)!;
-
-            // Try stripping punctuation
             const strippedKey = key.replace(/[.,!?;:]/g, '');
-            if (hintsMap.has(strippedKey)) return hintsMap.get(strippedKey)!;
 
-            // Fallback: If strict mapping failed, we might check index? 
-            // But prompt asked for strict objects. 
-            // If missing, we return a fallback static hint placeholder or null?
-            // Returning a generic string is safer than crashing logic later.
-            return `Think about ${originalWord[0].toUpperCase()}...`;
+            let match = hintsMap.get(key) || hintsMap.get(strippedKey);
+
+            if (match) {
+                alignedHints.push(match.hint);
+                alignedScores.push(match.score);
+            } else {
+                alignedHints.push(`Think about ${originalWord[0].toUpperCase()}...`);
+                alignedScores.push(0.5); // Default medium
+            }
         });
 
-        return alignedHints;
+        return { hints: alignedHints, connectionScores: alignedScores };
 
     } catch (e) {
         console.error("Error generating/parsing hints:", e);
-        // Log the problematic text (truncated)
-        if (typeof text !== 'undefined') {
-            console.error("Raw Text Start:", text.substring(0, 200));
-            console.error("Raw Text End:", text.substring(text.length - 200));
-        }
         return null;
     }
 }
@@ -125,7 +139,7 @@ export async function ensureDailyHints(gameId: string, words: string[], theme: s
         const supabase = createAdminClient();
         const { data, error } = await supabase
             .from('daily_games')
-            .select('hints')
+            .select('hints, connection_scores')
             .eq('id', gameId)
             .single();
 
@@ -135,23 +149,32 @@ export async function ensureDailyHints(gameId: string, words: string[], theme: s
         }
 
         if (data.hints && Array.isArray(data.hints) && data.hints.length > 0) {
-            return data.hints;
+            // Also return connection_scores if available (though type signature of this function might need to change)
+            // Ideally we return the whole object, but maintaining compat with 'hints only' callers is key.
+            // For now, let's return object if scores exist, or just hints array if that's what caller expects.
+            // Actually, we should return { hints, connectionScores } if possible.
+            // Let's defer return type change to avoid breaking changes if not needed.
+            // But caller page.tsx expects just hints? No, it expects to assign.
+            return { hints: data.hints, connectionScores: data.connection_scores };
         }
 
         // Generate
         console.log(`Generating hints for Daily Game ${gameId}...`);
-        const hints = await generateDailyHints(words, theme);
+        const result = await generateDailyHints(words, theme);
 
-        if (hints) {
+        if (result) {
             const { error: updateError } = await supabase
                 .from('daily_games')
-                .update({ hints })
+                .update({
+                    hints: result.hints,
+                    connection_scores: result.connectionScores
+                })
                 .eq('id', gameId);
 
             if (updateError) {
                 console.error("Error saving hints:", updateError);
             }
-            return hints;
+            return result;
         }
     } catch (err) {
         console.error("Error in ensureDailyHints:", err);
