@@ -83,6 +83,10 @@ export const viewport: Viewport = {
   interactiveWidget: "resizes-content",
 };
 
+import { createSupabaseServerClient } from '@/lib/supabase-server';
+
+// ... (existing imports)
+
 export default async function RootLayout({
   children,
   params
@@ -102,6 +106,10 @@ export default async function RootLayout({
   const messages = await getMessages();
   const isRtl = locale === 'he' || locale === 'ar';
 
+  // Fetch session server-side
+  const supabase = await createSupabaseServerClient();
+  const { data: { session } } = await supabase.auth.getSession();
+
   return (
     <html lang={locale} dir={isRtl ? 'rtl' : 'ltr'} translate="no" suppressHydrationWarning>
       <body
@@ -116,7 +124,7 @@ export default async function RootLayout({
             disableTransitionOnChange
           >
             <PostHogProvider>
-              <AuthProvider>
+              <AuthProvider initialSession={session}>
                 <NavBar />
                 <main className="flex-1 w-full">
                   {children}

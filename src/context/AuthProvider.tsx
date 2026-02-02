@@ -27,11 +27,11 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
-export default function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
-    const [session, setSession] = useState<Session | null>(null);
+export default function AuthProvider({ children, initialSession = null }: { children: React.ReactNode; initialSession?: Session | null }) {
+    const [user, setUser] = useState<User | null>(initialSession?.user ?? null);
+    const [session, setSession] = useState<Session | null>(initialSession);
     const [profile, setProfile] = useState<any | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!initialSession);
     const { setTheme } = useTheme();
     const [lastSyncedTheme, setLastSyncedTheme] = useState<string | null>(null);
 
@@ -65,40 +65,51 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         let subscription: any = null;
 
         const init = async () => {
-            const timeoutId = setTimeout(() => {
-                if (mounted) {
-                    console.warn("Auth initialization timed out - forcing app load");
-                    setLoading(false);
-                }
-            }, 2000);
+             // If we have an initial session, ensure we fetch the profile if needed
+             // checking if profile needs to be fetched is handled by the effect dependencies ideally,
+             // but here we just want to ensure subscription is set up.
+            
+            // Note: If initialSession provided, loading starts as false. 
+            // We still need to set up the listener.
 
             try {
-                const { data: { session: initialSession } } = await supabase.auth.getSession();
-                clearTimeout(timeoutId);
-
+                // Only fetch session if we didn't provide one initially or want to verify
+                // But typically for SPA, we trust the initial prop for first render.
+                // However, supabase.auth.getSession() essentially returns the local session.
+                
+                const { data: { session: currentSession } } = await supabase.auth.getSession();
+                
                 if (!mounted) return;
 
-                setSession(initialSession);
-                setUser(initialSession?.user ?? null);
+                // If no initial session was passed, or if the local session differs, update.
+                // Use a simple check or just rely on the listener.
+                // But we must handle the 'loading' state if we started true.
 
-                if (initialSession?.user) {
-                    fetchProfile(initialSession.user.id).catch(console.error);
+                if (!initialSession && !currentSession) {
+                     setLoading(false);
                 }
 
-                setLoading(false);
+                if (initialSession && !profile) {
+                     // We have session but no profile yet (since profile is client-fetch for now)
+                     if (initialSession.user) {
+                         fetchProfile(initialSession.user.id).catch(console.error);
+                     }
+                }
 
-                const { data } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+                // Subscribe to changes
+                const { data } = supabase.auth.onAuthStateChange(async (event, newSession) => {
                     if (!mounted) return;
-                    setSession(currentSession);
-                    setUser(currentSession?.user ?? null);
+                    
+                    setSession(newSession);
+                    setUser(newSession?.user ?? null);
 
-                    if (currentSession?.user) {
-                        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-                            fetchProfile(currentSession.user.id).catch(console.error);
+                    if (newSession?.user) {
+                        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || (event === 'INITIAL_SESSION' && !profile)) {
+                            fetchProfile(newSession.user.id).catch(console.error);
                         }
                     } else {
                         setProfile(null);
-                        setLastSyncedTheme(null); // Reset sync state on logout
+                        setLastSyncedTheme(null);
                     }
                     setLoading(false);
                 });

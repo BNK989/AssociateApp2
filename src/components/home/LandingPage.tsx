@@ -66,10 +66,9 @@ function DailyChallengeButton() {
 }
 
 export default function LandingPage() {
-    const { loading } = useAuth();
+    // Loading state is now handled by the specific buttons/components if needed
+    // or we assume server-side rendering decided we are here.
     const t = useTranslations('HomePage');
-
-    if (loading) return null; // Or a splash screen
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/30 flex flex-col">
