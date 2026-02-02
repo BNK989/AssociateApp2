@@ -110,8 +110,8 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
         }
     };
 
-    const handleClose = () => {
-        saveSettings();
+    const handleClose = async () => {
+        await saveSettings();
         onClose();
     };
 

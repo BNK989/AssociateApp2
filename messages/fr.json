@@ -67,7 +67,10 @@
             "toast_daily_limit": "Limite quotidienne d'indices IA atteinte",
             "toast_word_lost": "Mot perdu : {word}",
             "toast_reset_success": "Jeu réinitialisé à l'état initial",
-            "hint_fallback": "Contient {length} lettres. La première lettre est {firstLetter}."
+            "hint_fallback": "Contient {length} lettres. La première lettre est {firstLetter}.",
+            "link_strong": "Strong Link",
+            "link_medium": "Loose Link",
+            "link_weak": "Weak Link"
         },
         "Loading": {
             "app_name": "Associate",

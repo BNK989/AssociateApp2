@@ -67,7 +67,10 @@
             "toast_daily_limit": "Limită zilnică de indicii AI atinsă",
             "toast_word_lost": "Cuvânt pierdut: {word}",
             "toast_reset_success": "Joc resetat la starea inițială",
-            "hint_fallback": "Conține {length} litere. Prima literă este {firstLetter}."
+            "hint_fallback": "Conține {length} litere. Prima literă este {firstLetter}.",
+            "link_strong": "Strong Link",
+            "link_medium": "Loose Link",
+            "link_weak": "Weak Link"
         },
         "Loading": {
             "app_name": "Associate",
