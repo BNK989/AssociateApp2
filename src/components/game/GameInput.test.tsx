@@ -173,4 +173,11 @@ describe('GameInput Character Counter', () => {
         const counter = screen.getByTestId('char-counter');
         expect(counter.textContent).toContain('2');
     });
+
+    it('calls onSendMessage when Enter is pressed', () => {
+        render(<GameInput {...defaultProps} input="test message" />);
+        const input = screen.getByRole('textbox');
+        fireEvent.keyDown(input, { key: 'Enter', code: 'Enter', charCode: 13 });
+        expect(mockOnSendMessage).toHaveBeenCalled();
+    });
 });

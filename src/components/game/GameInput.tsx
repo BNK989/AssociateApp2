@@ -408,15 +408,7 @@ export function GameInput({
             onTouchStart={handleInteraction}
         >
             <TooltipProvider>
-                <form onSubmit={onSendMessage} autoComplete="off" className="flex gap-2 items-center relative">
-                    {/* Hidden input to disable autofill on mobile */}
-                    <input
-                        type="text" // Must be text type to 'catch' the focus/autofill
-                        name="hidden-autofill-bait"
-                        autoComplete="new-password"
-                        tabIndex={-1}
-                        className="fixed top-0 left-0 w-1 h-1 opacity-0 pointer-events-none"
-                    />
+                <div className="flex gap-2 items-center relative">
                     <AnimatePresence>
                         {game.status === 'solving' && isFreeForAll && !isSinglePlayer && (
                             <motion.div
@@ -457,9 +449,11 @@ export function GameInput({
                     <div id="game-input-area" className="flex gap-2 flex-1">
                         <div className="relative flex-1">
                             <input
-                                id="q_search_8x"
-                                name="q_search_8x"
+                                id="chat_message_input"
+                                name="chat_message_v1"
                                 type="text"
+                                inputMode="text"
+                                enterKeyHint="send"
                                 value={input}
                                 autoComplete="off"
                                 autoCorrect="off"
@@ -467,6 +461,7 @@ export function GameInput({
                                 spellCheck="false"
                                 data-lpignore="true"
                                 data-1p-ignore="true"
+                                data-form-type="other"
                                 onChange={(e) => {
                                     const val = e.target.value;
                                     if (val.length > GAME_CONFIG.MESSAGE_MAX_LENGTH) {
@@ -478,6 +473,12 @@ export function GameInput({
                                     handleInteraction();
                                     if (onTyping && val.length > 0) {
                                         onTyping();
+                                    }
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        onSendMessage(e as any);
                                     }
                                 }}
                                 onFocus={handleInteraction}
@@ -502,7 +503,8 @@ export function GameInput({
                         </div>
 
                         <button
-                            type="submit"
+                            type="button"
+                            onClick={(e) => onSendMessage(e as any)}
                             disabled={isSubmitDisabled}
                             onMouseDown={(e) => e.preventDefault()}
                             className={`h-10 w-10 flex items-center justify-center rounded-lg text-white font-bold shrink-0 transition-colors ${game.status === 'solving' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-green-600 hover:bg-green-700'} ${isSubmitDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -510,7 +512,7 @@ export function GameInput({
                             {sending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5 rtl:-scale-x-100" />}
                         </button>
                     </div>
-                </form>
+                </div>
             </TooltipProvider>
         </div>
     );
