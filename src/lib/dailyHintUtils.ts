@@ -148,7 +148,7 @@ export async function ensureDailyHints(gameId: string, words: string[], theme: s
             return;
         }
 
-        if (data.hints && Array.isArray(data.hints) && data.hints.length > 0) {
+        if (data.hints && Array.isArray(data.hints) && data.hints.length === words.length) {
             // Also return connection_scores if available (though type signature of this function might need to change)
             // Ideally we return the whole object, but maintaining compat with 'hints only' callers is key.
             // For now, let's return object if scores exist, or just hints array if that's what caller expects.

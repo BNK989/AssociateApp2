@@ -39,7 +39,7 @@ export default async function DailyGamePage({
         .eq('play_date', new Date().toISOString().split('T')[0])
         .single();
 
-    if (dailyGame && (!dailyGame.hints || !Array.isArray(dailyGame.hints))) {
+    if (dailyGame && (!dailyGame.hints || !Array.isArray(dailyGame.hints) || dailyGame.hints.length !== dailyGame.words.length)) {
         const { ensureDailyHints } = await import('@/lib/dailyHintUtils');
         const generatedResult = await ensureDailyHints(dailyGame.id, dailyGame.words, dailyGame.theme);
         if (generatedResult) {
