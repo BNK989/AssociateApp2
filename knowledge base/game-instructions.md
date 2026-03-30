@@ -50,3 +50,4 @@ A new unique puzzle drops every day!
 ## ⚠️ Limitations
 
 *   **AI Hints**: Using the 3rd hint (AI-generated) is subject to availability and usage limits (5 per game, 100 per day per IP). Guest users do not have access to AI hints.
+*   **Connection Score Indicator**: The UI element showing the strength of the link between words (e.g., "Loose Link", "Strong Link") in the Daily Game has been temporarily hidden via CSS based on user feedback to streamline the visual experience.

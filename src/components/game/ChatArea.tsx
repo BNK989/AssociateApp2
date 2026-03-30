@@ -437,9 +437,9 @@ export function ChatArea({
                                                     guesses={msg.guesses || []}
                                                     forceScramble={scrambleTriggerMap[msg.id]}
                                                 />
-                                                {/* Connection Score Indicator (Context Signal) */}
+                                                {/* Connection Score Indicator (Context Signal) - Hidden for now based on user feedback */}
                                                 {game.status === 'solving' && targetMessage?.id === msg.id && typeof msg.connection_score === 'number' && (
-                                                    <div className="absolute -top-3 left-2 z-10 rtl:right-2 rtl:left-auto flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 animate-in fade-in slide-in-from-bottom-2">
+                                                    <div className="hidden absolute -top-3 left-2 z-10 rtl:right-2 rtl:left-auto items-center gap-1.5 px-2 py-0.5 rounded-full bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 animate-in fade-in slide-in-from-bottom-2">
                                                         {/* Signal Icons based on score */}
                                                         {msg.connection_score >= 0.85 ? (
                                                             <span className="text-green-500 text-[10px]" title={t('link_strong')}>●●●</span>
