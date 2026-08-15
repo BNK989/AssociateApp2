@@ -9,8 +9,8 @@ export const GAME_CONFIG = {
   STREAK_BONUS_MULTIPLIER: 1.5,
   GUESS_TIMEOUT_SECONDS: 10, // Time before specific turn becomes free-for-all
   GAME_MODE_100_LIMIT: 100,
-  AI_HINT_MODEL: "gemma-3-12b-it", // OG was "gemini-2.5-flash-lite"
-  AI_HINT_BACKUP_MODEL: "gemini-2.0-flash-lite",
+  AI_HINT_MODEL: "gemini-flash-lite-latest", // Updated to latest alias (supports gemma-4-26b-a4b-it / gemini-flash-lite-latest)
+  AI_HINT_BACKUP_MODEL: "gemini-flash-latest",
   SOLVE_PROPOSAL_TIMEOUT_SECONDS: 10, // Time to confirm solve
   SOLVING_MODE_DURATION_SECONDS: 10,  // Time for solving phase
   // Rate Limits

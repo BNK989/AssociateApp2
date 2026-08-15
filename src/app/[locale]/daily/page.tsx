@@ -32,12 +32,20 @@ export default async function DailyGamePage({
         }
     );
 
+    const todayStr = new Date().toISOString().split('T')[0];
+
     // Fetch today's daily game (Base English Data)
-    const { data: dailyGame, error } = await supabase
+    let { data: dailyGame, error } = await supabase
         .from('daily_games')
         .select('*')
-        .eq('play_date', new Date().toISOString().split('T')[0])
+        .eq('play_date', todayStr)
         .single();
+
+    if (error || !dailyGame) {
+        console.warn("No pre-planned daily game found in DB for date:", todayStr, error);
+        const { generateAndStoreDailyGame } = await import('@/lib/dailyGameGenerator');
+        dailyGame = await generateAndStoreDailyGame(todayStr);
+    }
 
     if (dailyGame && (!dailyGame.hints || !Array.isArray(dailyGame.hints) || dailyGame.hints.length !== dailyGame.words.length)) {
         const { ensureDailyHints } = await import('@/lib/dailyHintUtils');
@@ -53,12 +61,12 @@ export default async function DailyGamePage({
         }
     }
 
-    if (error || !dailyGame) {
-        console.error("Error fetching daily game:", error);
+    if (!dailyGame) {
+        console.error("Critical error: Unable to load or generate daily game.");
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-4">
-                <h1 className="text-2xl font-bold mb-4">No Daily Game Found</h1>
-                <p>Come back closer to the start of the day!</p>
+                <h1 className="text-2xl font-bold mb-4">No Daily Game Available</h1>
+                <p>Please try refreshing the page!</p>
             </div>
         );
     }

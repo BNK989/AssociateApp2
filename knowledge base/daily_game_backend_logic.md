@@ -9,10 +9,12 @@ The Daily Game is unique compared to Classic Mode because it is primarily a **Cl
 ### Loading Flow (`src/app/daily/page.tsx`)
 1.  **Server Component Execution**: When a user navigates to `/daily`, the request is handled by a Next.js Server Component.
 2.  **Date & Time**: The server determines the current date (UTC/Server time).
-3.  **Database Query**: The server queries the Supabase `daily_games` table:
+3.  **Database Query & Dynamic Fallback**: The server queries the Supabase `daily_games` table:
     ```sql
     select * from daily_games where play_date = 'YYYY-MM-DD'
     ```
+    - **Pre-Planned**: If a row exists, it loads directly.
+    - **Dynamic AI Fallback (`src/lib/dailyGameGenerator.ts`)**: If no entry exists for today's date, the server dynamically invokes Google Gemini AI to generate a themed word chain (5–6 words), hints, and connection scores. The generated game is immediately saved into `daily_games` for `play_date = YYYY-MM-DD` so all players share the same daily game on that day. If AI is unreachable, a deterministic curated fallback pool is used.
 4.  **Data Injection**: The fetched game data (specifically the `words` array, `theme`, and `date`) is passed as props to the client-side component `DailyGameClient`.
 
 ### The `daily_games` Table
