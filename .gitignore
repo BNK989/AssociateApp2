@@ -46,3 +46,6 @@ next-env.d.ts
 
 # next-agents-md
 .next-docs/
+
+# Claude Code local-only state
+.claude/settings.local.json

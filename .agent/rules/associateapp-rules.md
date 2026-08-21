@@ -10,3 +10,4 @@ trigger: always_on
 6. This project has posthog for analytics and debugging
 7. the folder knowledge base contains info about this app - read it when more context is needed and keep it updated as you make changes
 8. In Next.js 16+, middleware has been officially deprecated and renamed to proxy to better reflect its intended purpose as a network-level routing and modification layer that runs at the edge
+9. The canonical engineering standards for this project live in `CLAUDE.md` at the repo root (typing, file size, icons, RTL, logging, i18n, settings). Read it before making changes; it supersedes this file where they overlap.
