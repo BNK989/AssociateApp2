@@ -13,6 +13,8 @@ import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { PostHogProvider } from "@/app/providers/PostHogProvider";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Suspense } from "react";
+import DebugModeSync from "@/components/settings/DebugModeSync";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -97,7 +99,7 @@ export default async function RootLayout({
   const { locale } = await params;
 
   // Ensure that the incoming `locale` is valid
-  if (!routing.locales.includes(locale as any)) {
+  if (!routing.locales.includes(locale as (typeof routing.locales)[number])) {
     notFound();
   }
 
@@ -125,6 +127,9 @@ export default async function RootLayout({
           >
             <PostHogProvider>
               <AuthProvider initialSession={session}>
+                <Suspense fallback={null}>
+                  <DebugModeSync />
+                </Suspense>
                 <NavBar />
                 <main className="flex-1 w-full">
                   {children}

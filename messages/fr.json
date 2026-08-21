@@ -499,7 +499,10 @@
         "upload_error_generic": "Une erreur est survenue pendant le téléchargement",
         "update_error": "Erreur mise à jour profil",
         "update_success": "Profil mis à jour !",
-        "permission_denied": "Permission refusée. Veuillez activer les notifications dans les paramètres de votre navigateur."
+        "permission_denied": "Permission refusée. Veuillez activer les notifications dans les paramètres de votre navigateur.",
+        "debug_section": "Débogage",
+        "debug_mode": "Mode débogage",
+        "debug_mode_hint": "Émet des diagnostics détaillés dans la console du navigateur. Visible uniquement par les administrateurs ; les joueurs ne voient jamais les journaux."
     },
     "Walkthrough": {
         "next": "Next",

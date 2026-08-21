@@ -499,7 +499,10 @@
         "upload_error_generic": "A apărut o eroare în timpul încărcării",
         "update_error": "Eroare la actualizarea profilului",
         "update_success": "Profil actualizat!",
-        "permission_denied": "Permisiune refuzată. Te rog activează notificările în setările browserului tău."
+        "permission_denied": "Permisiune refuzată. Te rog activează notificările în setările browserului tău.",
+        "debug_section": "Depanare",
+        "debug_mode": "Mod de depanare",
+        "debug_mode_hint": "Emite diagnostice detaliate în consola browserului. Vizibil doar administratorilor; jucătorii nu văd niciodată jurnalele."
     },
     "Walkthrough": {
         "next": "Next",

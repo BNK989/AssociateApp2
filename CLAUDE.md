@@ -184,11 +184,23 @@ Measured 2026-08-21. These predate the rules above; they are exempt from
 
 **Other open items:**
 
-- 59 `any` usages across ~20 files (12 of them in `GameInput.test.tsx`).
+`npm run lint` is currently **red**. Exact counts from ESLint on 2026-08-21:
+
+| Count | Rule | Severity | Note |
+| ---: | :--- | :--- | :--- |
+| 56 | `@typescript-eslint/no-explicit-any` | error | §1 backlog, ~20 files |
+| 40 | `no-restricted-syntax` (RTL) | error | §7 backlog, 15 files, all outside `ui/` |
+| 21 | assorted (`prefer-const`, `ban-ts-comment`, `react-hooks/*`, …) | error | pre-dates these rules |
+| 140 | `no-console` | warn | §8 migration to `src/lib/logger.ts` |
+| 64 | `@typescript-eslint/no-unused-vars` | warn | |
+
+The 40 RTL violations are mostly mechanical (`mr-2` → `me-2`, `ml-2` → `ms-2`),
+but roughly 10 need a design decision rather than a substitution: `left-1/2` used
+with `-translate-x-1/2` for centering, paired `left-auto`/`right-auto` overrides,
+and the `rounded-tl/br/bl-*` chat-bubble corners, which should flip in RTL.
+Those need a Hebrew QA pass before changing (§13).
+
 - 1 non-TS source file: `scripts/debug-profiles.js`.
-- 138 raw `console.*` calls to migrate to the central logger.
-- ~45 physical-direction Tailwind utilities; roughly half are in vendored
-  `src/components/ui/` primitives and exempt under §7.
 - Emojis in ~8 component files and in `messages/*.json` copy (10–13 per locale).
 - Migration history drift: `add_message_type` and `create_translation_generations`
   exist as local files but were applied by hand and are absent from remote history;

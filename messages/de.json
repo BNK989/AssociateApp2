@@ -499,7 +499,10 @@
         "upload_error_generic": "Ein Fehler ist während des Hochladens aufgetreten",
         "update_error": "Fehler beim Aktualisieren des Profils",
         "update_success": "Profil aktualisiert!",
-        "permission_denied": "Erlaubnis verweigert. Bitte aktiviere Benachrichtigungen in deinen Browsereinstellungen."
+        "permission_denied": "Erlaubnis verweigert. Bitte aktiviere Benachrichtigungen in deinen Browsereinstellungen.",
+        "debug_section": "Fehlersuche",
+        "debug_mode": "Debug-Modus",
+        "debug_mode_hint": "Gibt ausführliche Diagnosemeldungen an die Browser-Konsole aus. Nur für Administratoren sichtbar; Spieler sehen niemals Log-Ausgaben."
     },
     "Walkthrough": {
         "next": "Next",

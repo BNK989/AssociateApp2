@@ -499,7 +499,10 @@
         "upload_error_generic": "Ocurrió un error durante la subida",
         "update_error": "Error actualizando perfil",
         "update_success": "¡Perfil actualizado!",
-        "permission_denied": "Permiso denegado. Por favor habilita notificaciones en la configuración de tu navegador."
+        "permission_denied": "Permiso denegado. Por favor habilita notificaciones en la configuración de tu navegador.",
+        "debug_section": "Depuración",
+        "debug_mode": "Modo de depuración",
+        "debug_mode_hint": "Emite diagnósticos detallados en la consola del navegador. Solo visible para administradores; los jugadores nunca ven los registros."
     },
     "Walkthrough": {
         "next": "Next",

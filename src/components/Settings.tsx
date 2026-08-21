@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Volume2 } from 'lucide-react';
+import DebugSettings from '@/components/settings/DebugSettings';
 
 export default function Settings() {
     const t = useTranslations('Settings');
@@ -292,6 +293,8 @@ export default function Settings() {
                         />
                     </div>
                 </div>
+
+                <DebugSettings />
 
                 <button
                     onClick={handleSave}

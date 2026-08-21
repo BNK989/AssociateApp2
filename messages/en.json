@@ -505,6 +505,9 @@
         "upload_error_generic": "An error occurred during upload",
         "update_error": "Error updating profile",
         "update_success": "Profile updated!",
-        "permission_denied": "Permission denied. Please enable notifications in your browser settings."
+        "permission_denied": "Permission denied. Please enable notifications in your browser settings.",
+        "debug_section": "Debugging",
+        "debug_mode": "Debug Mode",
+        "debug_mode_hint": "Emits verbose diagnostics to the browser console. Visible to administrators only; players never see logger output."
     }
 }
