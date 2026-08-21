@@ -132,7 +132,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
             if (display === target && !scrambleItems && !isForced) return;
 
             // PRE-ANIMATION: Scramble Effect for Hint Level 2
-            if ((!visible && hintLevel >= 2) || isForced) {
+            if (!visible && (hintLevel >= 2 || isForced)) {
                 const duration = 600; // time to settle
                 const shuffles = Math.floor(Math.random() * 5) + 2;
                 const interval = duration / shuffles;
@@ -244,6 +244,11 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                 for (let i = 0; i < shuffles; i++) {
                     if (isCancelled) return;
                     await new Promise(r => setTimeout(r, interval));
+                    // Re-check after the wait: the word may have been solved in the
+                    // meantime. Writing scrambleItems now would resurrect the hint view
+                    // after the reveal effect already cleared it, leaving the solved
+                    // word stuck in its hinted form forever.
+                    if (isCancelled) return;
 
                     if (i === shuffles - 1) {
                         // Final step: settle to A RANDOM configuration
@@ -390,7 +395,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
         }
     };
 
-    if (scrambleItems) {
+    if (scrambleItems && !visible) {
         return (
             <motion.span dir={dir} className={`${className} break-words inline-flex flex-wrap gap-1`}>
                 {showColons && <span className="mr-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
