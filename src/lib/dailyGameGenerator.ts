@@ -1,5 +1,8 @@
 import { createAdminClient } from './supabase-admin';
 import { GAME_CONFIG } from './gameConfig';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('daily/generate');
 
 export interface DailyGameData {
     id?: string;
@@ -93,7 +96,7 @@ export function getFallbackDailyGame(dateStr: string): Omit<DailyGameData, 'id' 
 export async function fetchAIGeneratedDailyGame(dateStr: string): Promise<Omit<DailyGameData, 'id' | 'play_date' | 'created_at'> | null> {
     const GEMINI_API_KEY = process.env.GEMINI_KEY;
     if (!GEMINI_API_KEY) {
-        console.warn("GEMINI_KEY not set, using fallback generator.");
+        log.warn('generate', 'GEMINI_KEY not set, using the curated fallback pool');
         return null;
     }
 
@@ -140,7 +143,7 @@ Return ONLY a valid JSON object matching this structure:
             );
 
             if (!response.ok) {
-                console.warn(`Gemini model ${model} returned HTTP ${response.status}`);
+                log.warn('generate', 'Gemini model returned an HTTP error, trying next model', { model, status: response.status });
                 continue;
             }
 
@@ -183,7 +186,7 @@ Return ONLY a valid JSON object matching this structure:
                 };
             }
         } catch (err) {
-            console.warn(`Error generating daily game with model ${model}:`, err);
+            log.warn('generate', 'Model call failed, trying next model', { model }, err);
         }
     }
 
@@ -226,7 +229,7 @@ export async function generateAndStoreDailyGame(dateStr: string): Promise<DailyG
         .single();
 
     if (insertError) {
-        console.warn("Insert conflict or error in generateAndStoreDailyGame, checking if game was created concurrently:", insertError);
+        log.warn('persist', 'Insert conflict, checking whether the game was created concurrently', { play_date: dateStr }, insertError);
         // In case another request created it concurrently, re-fetch
         const { data: reFetchedGame } = await supabase
             .from('daily_games')

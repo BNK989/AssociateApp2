@@ -15,6 +15,9 @@ import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { createLogger, getErrorMessage } from '@/lib/logger';
+
+const log = createLogger('daily/endgame');
 
 type DailyEndGamePopoverProps = {
     open: boolean;
@@ -80,7 +83,7 @@ export function DailyEndGamePopover({ open, score, totalWords, date, onClose }: 
                 toast.success(t('toast_copied'));
             }
         } catch (error) {
-            console.error('Error sharing:', error);
+            log.debug('share', 'Native share was dismissed or failed', { reason: getErrorMessage(error) });
             try {
                 await navigator.clipboard.writeText(shareText);
                 toast.success(t('toast_copied'));

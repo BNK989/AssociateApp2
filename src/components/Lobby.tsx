@@ -49,6 +49,9 @@ type Game = {
 };
 
 import { useTranslations } from "next-intl";
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('lobby');
 
 export default function Lobby() {
     const { user, profile, refreshProfile } = useAuth();
@@ -106,8 +109,7 @@ export default function Lobby() {
 
         const fetchGames = async () => {
             setGamesLoading(true);
-            console.log('Fetching games for user:', user.id);
-            console.log('Supabase client initialized:', !!supabase);
+            log.debug('fetch_games', 'Fetching games for user', { user_id: user.id });
             // Fetch both active and completed in one go or separate if needed complexity
             // We'll fetch all relevant games for the user
             const { data: gamesData, error } = await supabase
@@ -125,14 +127,13 @@ export default function Lobby() {
                 .order('last_activity_at', { ascending: false, nullsFirst: false }); // Sort by activity
 
             if (error) {
-                console.error('Error fetching games:', error);
-                console.error('Error details:', JSON.stringify(error, null, 2));
+                log.error('fetch_games', 'Failed to load games', { user_id: user.id }, error);
                 toast.error(t('toasts.load_error', { message: error.message }));
                 setGamesLoading(false);
                 return;
             }
 
-            console.log('Games fetched:', gamesData?.length);
+            log.debug('fetch_games', 'Games fetched', { user_id: user.id, count: gamesData?.length });
 
             // Transform data to match Game type
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -183,7 +184,7 @@ export default function Lobby() {
 
         // Refetch when window gains focus (fixes back navigation stale state)
         const handleFocus = () => {
-            console.log("Window focused, refreshing lobby...");
+            log.debug('window_focus', 'Window focused, refreshing lobby');
             fetchAll();
         };
         window.addEventListener('focus', handleFocus);
@@ -209,14 +210,14 @@ export default function Lobby() {
             const maxMessages = selectedMode ? selectedMode.limit : 25;
 
             // 1. Create Game
-            console.log('Starting game creation with mode:', selectedModeId, 'maxMessages:', maxMessages);
+            log.debug('create_game', 'Starting game creation', { user_id: user.id, mode: selectedModeId, max_messages: maxMessages });
             const insertPayload = {
                 status: 'texting',
                 mode: 'free',
                 current_turn_user_id: user.id,
                 max_messages: maxMessages
             };
-            console.log('Insert payload:', insertPayload);
+            log.debug('create_game', 'Insert payload prepared', { status: insertPayload.status, current_turn_user_id: insertPayload.current_turn_user_id });
 
             // Wrap in timeout
             const createGamePromise = supabase
@@ -230,11 +231,11 @@ export default function Lobby() {
                 new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Game creation timeout')), 10000))
             ]);
 
-            console.log('Game creation result:', { game, error: gameError });
+            log.debug('create_game', 'Game row insert completed', { game_id: game?.id, failed: !!gameError });
 
             if (gameError) throw gameError;
 
-            console.log('Adding creator as player...', { gameId: game.id, userId: user.id });
+            log.debug('create_game', 'Adding creator as player', { game_id: game.id, user_id: user.id });
 
             // 2. Add Creator as Player
             // 2. Add Creator as Player
@@ -250,11 +251,11 @@ export default function Lobby() {
                 new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Player insertion timeout')), 10000))
             ]);
 
-            console.log('Player addition result:', { playerError });
+            log.debug('create_game', 'Player insert completed', { game_id: game.id, failed: !!playerError });
 
             if (playerError) {
                 // Rollback: Delete the game if player creation failed
-                console.error("Player creation failed, rolling back game...", playerError);
+                log.error('create_game', 'Player creation failed, rolling back game', { game_id: game.id, user_id: user.id }, playerError);
                 await supabase.from('games').delete().eq('id', game.id);
                 throw playerError;
             }
@@ -267,13 +268,13 @@ export default function Lobby() {
 
             setIsCreateOpen(false);
             const targetUrl = `/game/${game.id}?action=invite`;
-            console.log('Redirecting to:', targetUrl);
+            log.debug('create_game', 'Redirecting to new game', { game_id: game.id, target_url: targetUrl });
             router.push(targetUrl);
-            console.log('Router push called');
+            log.debug('create_game', 'Router push called', { game_id: game.id });
 
         } catch (error) {
             const err = error as Error;
-            console.error('Error creating game:', JSON.stringify(err, null, 2));
+            log.error('create_game', 'Game creation failed', { user_id: user.id }, err);
             toast.error(err.message || 'Failed to create game');
             // If it was a timeout, explicitly alter the error message
             if (err.message && err.message.includes('timeout')) {
@@ -313,7 +314,7 @@ export default function Lobby() {
             setGameToLeave(null);
 
         } catch (error) {
-            console.error('Error leaving game:', error);
+            log.error('leave_game', 'Failed to leave game', { game_id: gameToLeave, user_id: user?.id }, error);
             toast.error(t('toasts.left_error'));
         } finally {
             setLeaving(false);
@@ -328,7 +329,7 @@ export default function Lobby() {
             .eq('user_id', user?.id);
 
         if (error) {
-            console.error('Error archiving game:', error);
+            log.error('archive_game', 'Failed to archive game', { game_id: gameId, user_id: user?.id }, error);
             toast.error(t('toasts.archived_error'));
         } else {
             setActiveGames(prev => prev.filter(g => g.id !== gameId));
@@ -345,7 +346,7 @@ export default function Lobby() {
             .eq('id', gameId);
 
         if (error) {
-            console.error('Error deleting game:', error);
+            log.error('delete_game', 'Failed to delete game', { game_id: gameId, user_id: user?.id }, error);
             toast.error(t('toasts.deleted_error'));
         } else {
             toast.success(t('toasts.deleted_success'));
@@ -365,7 +366,7 @@ export default function Lobby() {
             });
             toast.success(t('toasts.reset_success'));
         } catch (error) {
-            console.error('Error resetting game:', error);
+            log.error('reset_game', 'Failed to reset game', { game_id: gameId, user_id: user?.id }, error);
             toast.error(t('toasts.reset_error'));
         }
     };

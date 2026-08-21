@@ -55,6 +55,9 @@ const MY_PROFILE = {
 
 import { useTranslations } from 'next-intl';
 import { WalkthroughProvider, useWalkthrough, WalkthroughStep } from '@/components/ui/walkthrough';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('daily/client');
 
 export default function DailyGameClient(props: DailyGameClientProps) {
     return (
@@ -96,10 +99,10 @@ function DailyGameBoard({ dailyWords, date, theme, initialHints, initialConnecti
     }, []);
 
     useEffect(() => {
-        console.log('[DailyGame] Feature Flag DEBUG:', {
-            payload: autoHintPayload,
-            resolvedCount: initialHintCount,
-            variant: posthog.getFeatureFlag('dailygame-auto-hint-level')
+        log.debug('feature_flag', 'Auto-hint feature flag resolved', {
+            payload: JSON.stringify(autoHintPayload),
+            resolved_count: initialHintCount,
+            variant: String(posthog.getFeatureFlag('dailygame-auto-hint-level')),
         });
     }, [autoHintPayload, initialHintCount, posthog]);
 
@@ -466,7 +469,7 @@ function DailyGameBoard({ dailyWords, date, theme, initialHints, initialConnecti
                     return;
                 }
             } catch (e) {
-                console.error("Failed to parse saved daily game state", e);
+                log.error('restore_state', 'Failed to parse saved daily game state from localStorage', { play_date: date }, e);
             }
         }
 
@@ -777,7 +780,7 @@ function DailyGameBoard({ dailyWords, date, theme, initialHints, initialConnecti
                         }
                     }
                 } catch (e) {
-                    console.error("Failed to fetch AI hint", e);
+                    log.error('fetch_hint', 'Failed to fetch AI hint', { play_date: date }, e);
                 }
             }
 
@@ -842,7 +845,7 @@ function DailyGameBoard({ dailyWords, date, theme, initialHints, initialConnecti
 
                 if (audioEnabled && successAudioRef.current) {
                     successAudioRef.current.currentTime = 0;
-                    successAudioRef.current.play().catch(e => console.warn("Audio play failed", e));
+                    successAudioRef.current.play().catch((e) => log.warn('play_audio', 'Success sound playback failed', undefined, e));
                 }
 
                 const baseValue = calculateMessageValue(targetMessage.content);

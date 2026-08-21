@@ -186,15 +186,15 @@ Measured 2026-08-21. These predate the rules above; they are exempt from
 
 **Other open items:**
 
-`npm run lint` reports **21 errors, 226 warnings**. All 21 errors pre-date the
-rules in this document; the §1 and §7 backlogs are cleared.
+`npm run lint` reports **21 errors, 86 warnings**. All 21 errors pre-date the
+rules in this document; the §1, §7 and §8 backlogs are cleared.
 
 | Count | Rule | Severity | Note |
 | ---: | :--- | :--- | :--- |
 | 0 | `@typescript-eslint/no-explicit-any` | error | cleared 2026-08-21 |
 | 0 | `no-restricted-syntax` (RTL) | error | cleared 2026-08-21, 3 annotated exceptions |
 | 21 | `prefer-const`, `ban-ts-comment`, `react-hooks/*`, `react/no-unescaped-entities`, `no-require-imports` | error | pre-dates these rules |
-| 140 | `no-console` | warn | §8 migration to `src/lib/logger.ts` |
+| 0 | `no-console` | error | cleared 2026-08-21; raised warn -> error |
 | 64 | `@typescript-eslint/no-unused-vars` | warn | |
 | 19 | `react-hooks/exhaustive-deps` | warn | |
 

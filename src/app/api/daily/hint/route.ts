@@ -3,6 +3,9 @@ import type { TablesInsert } from '@/types/database.types';
 import { createClient } from '@supabase/supabase-js';
 import { GAME_CONFIG } from '@/lib/gameConfig';
 import { headers } from 'next/headers';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api/daily/hint');
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -157,7 +160,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ hint });
 
     } catch (error) {
-        console.error("Daily Hint Error:", error);
+        log.error('generate_hint', 'Daily hint request failed', undefined, error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

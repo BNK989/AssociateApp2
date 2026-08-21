@@ -2,6 +2,9 @@ import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 import createMiddleware from 'next-intl/middleware';
 import { defineRouting } from 'next-intl/routing';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('proxy');
 
 export const routing = defineRouting({
     locales: ['en', 'he', 'es', 'fr', 'de', 'it', 'pt', 'ja', 'zh', 'ru', 'ar', 'hi', 'tr', 'nl', 'pl', 'sv', 'vi', 'th', 'ro'],
@@ -42,7 +45,7 @@ export async function proxy(request: NextRequest) {
         await supabase.auth.getUser();
 
     } catch (err) {
-        console.error("Proxy auth error:", err);
+        log.error('auth', 'Proxy auth check failed', undefined, err);
     }
 
     return response;

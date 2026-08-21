@@ -1,7 +1,9 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { getErrorMessage } from '@/lib/logger';
+import { createLogger, getErrorMessage } from '@/lib/logger';
+
+const log = createLogger('api/game/state');
 
 export async function GET(
     request: Request,
@@ -93,7 +95,7 @@ export async function GET(
         });
 
     } catch (err: unknown) {
-        console.error("Game Fetch API Error:", err);
+        log.error('fetch_state', 'Failed to fetch game state', undefined, err);
         return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 });
     }
 }

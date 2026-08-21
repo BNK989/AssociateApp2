@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import type { MessageRow } from '@/types/app';
 import { createClient } from '@supabase/supabase-js';
 import { GAME_CONFIG } from '@/lib/gameConfig';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api/hint');
 
 // Initialize Supabase client for server-side usage
 // Note: We use the service role key if available for bypassing RLS, 
@@ -115,7 +118,7 @@ export async function POST(request: Request) {
 
         // 5. Check for API Key
         if (!GEMINI_API_KEY) {
-            console.warn("GEMINI_API_KEY is missing. Returning mock hint.");
+            log.warn('generate_hint', 'GEMINI_API_KEY is missing, returning a mock hint', { game_id: gameId });
             return NextResponse.json({
                 hint: `[MOCK HINT] The word starts with ${targetMessage.content.charAt(0)}... (Configure GEMINI_API_KEY for real hints)`
             });
@@ -148,7 +151,7 @@ export async function POST(request: Request) {
 
         if (!response.ok) {
             const errorData = await response.json();
-            console.error("Gemini API Error:", errorData);
+            log.error('generate_hint', 'Gemini API returned an error', { game_id: gameId, response: JSON.stringify(errorData).slice(0, 300) });
             return NextResponse.json({ error: 'Failed to generate hint from AI' }, { status: 500 });
         }
 
@@ -158,7 +161,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ hint });
 
     } catch (error) {
-        console.error("API Handler Error:", error);
+        log.error('generate_hint', 'Unhandled error in hint handler', undefined, error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

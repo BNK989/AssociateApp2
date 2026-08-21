@@ -1,6 +1,9 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api/messages/send');
 
 export async function POST(request: Request) {
     const cookieStore = await cookies();
@@ -48,7 +51,7 @@ export async function POST(request: Request) {
         });
 
         if (error) {
-            console.error("Server-side send error:", error);
+            log.error('send_message', 'Server-side message send failed', { game_id: messageData.game_id, user_id: user.id }, error);
             // Check for custom exception message
             if (error.message.includes('already exists')) {
                 return NextResponse.json({ error: error.message }, { status: 400 });
@@ -58,7 +61,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ success: true });
     } catch (err: unknown) {
-        console.error("API Error:", err);
+        log.error('send_message', 'Unhandled error in send handler', undefined, err);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

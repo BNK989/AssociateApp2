@@ -17,6 +17,9 @@ import { useVisualViewport } from '@/hooks/useVisualViewport';
 import { toast } from "sonner";
 
 import { useTranslations } from 'next-intl';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('game/page');
 
 export default function GameRoom() {
     const { id } = useParams();
@@ -78,7 +81,7 @@ export default function GameRoom() {
             toast.success("You have left the game.");
             router.push('/');
         } catch (error) {
-            console.error(error);
+            log.error('leave_game', 'Failed to leave game', { game_id: gameId }, error);
             toast.error("Failed to leave game.");
         }
     };

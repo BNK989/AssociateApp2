@@ -1,6 +1,9 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { type NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('auth/callback');
 
 export async function GET(request: NextRequest) {
     const { searchParams, origin } = new URL(request.url)
@@ -46,7 +49,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.redirect(`${siteUrl}${next}`)
         }
 
-        console.error('Auth error:', error);
+        log.error('exchange_code', 'Failed to exchange auth code for a session', undefined, error);
         return NextResponse.redirect(`${siteUrl}/auth/auth-code-error?error=${encodeURIComponent(error.message)}`)
     }
 

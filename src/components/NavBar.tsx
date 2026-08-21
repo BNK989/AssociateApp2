@@ -20,6 +20,9 @@ import { deleteGuestAccount } from '@/app/actions/auth';
 import { useTheme } from 'next-themes';
 
 import { usePathname } from 'next/navigation';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('navbar');
 
 export function NavBar() {
     const t = useTranslations('NavBar');
@@ -34,7 +37,7 @@ export function NavBar() {
             try {
                 await deleteGuestAccount();
             } catch (e) {
-                console.error("Error calling deleteGuestAccount:", e);
+                log.error('delete_guest', 'Failed to delete guest account', { user_id: user?.id }, e);
             }
         }
         await supabase.auth.signOut();
@@ -70,7 +73,7 @@ export function NavBar() {
                     await refreshProfile();
                 }
             } catch (e) {
-                console.error("Error updating theme preference:", e);
+                log.error('update_theme', 'Failed to save theme preference', { user_id: user?.id }, e);
             }
         }
     };

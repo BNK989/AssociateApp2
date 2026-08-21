@@ -9,7 +9,9 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Volume2 } from 'lucide-react';
 import DebugSettings from '@/components/settings/DebugSettings';
-import { getErrorMessage } from '@/lib/logger';
+import { createLogger, getErrorMessage } from '@/lib/logger';
+
+const log = createLogger('settings');
 
 export default function Settings() {
     const t = useTranslations('Settings');
@@ -91,7 +93,7 @@ export default function Settings() {
             setMessage(t('upload_success'));
 
         } catch (error: unknown) {
-            console.error('Upload error details:', error);
+            log.error('upload_avatar', 'Avatar upload failed', { user_id: user?.id }, error);
             const errorMessage = getErrorMessage(error, t('upload_error_generic'));
 
             setMessage(t('upload_error', { message: errorMessage }));
@@ -131,7 +133,7 @@ export default function Settings() {
 
         if (error) {
             setMessage(t('update_error'));
-            console.error(error);
+            log.error('save_profile', 'Failed to save profile', { user_id: user?.id }, error);
         } else {
             setMessage(t('update_success'));
             await refreshProfile();
@@ -240,7 +242,7 @@ export default function Settings() {
                             <Volume2
                                 className="w-4 h-4 text-gray-400 cursor-pointer hover:text-purple-600 transition-colors active:scale-95"
                                 onClick={() => {
-                                    new Audio('/sounds/notifications/chime1.mp3').play().catch(console.error);
+                                    new Audio('/sounds/notifications/chime1.mp3').play().catch((e) => log.warn('play_audio', 'Chime preview playback failed', undefined, e));
                                 }}
                             />
                         </div>
@@ -258,7 +260,7 @@ export default function Settings() {
                                         refreshProfile();
                                         if (enabled) {
                                             const audio = new Audio('/sounds/notifications/chime1.mp3');
-                                            audio.play().catch(e => console.error('Audio play failed', e));
+                                            audio.play().catch((e) => log.warn('play_audio', 'Chime playback failed', undefined, e));
                                         }
                                     }
                                 }

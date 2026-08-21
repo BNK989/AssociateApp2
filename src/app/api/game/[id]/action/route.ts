@@ -5,7 +5,10 @@ import { NextResponse } from 'next/server';
 import { GAME_CONFIG } from '@/lib/gameConfig';
 import { calculateNextTurnUserId } from '@/lib/gameLogic';
 import { getPostHogServer } from '@/app/posthog-server'; // We might need to move this or duplicate logic if it's not server-ready, but let's assume util usage or implement inline.
-import { getErrorMessage, normalizeError } from '@/lib/logger';
+import { createLogger, normalizeError } from '@/lib/logger';
+
+const log = createLogger('api/game/action');
+const hintLog = log.child('hint');
 // Actually, calculateNextTurnUserId is in lib/gameLogic, let's verify if that file is clean for server usage. It usually is.
 
 
@@ -43,7 +46,7 @@ export async function POST(
         const body = await request.json();
         const { action, payload } = body;
 
-        console.log(`[API] Action received: ${action}`, JSON.stringify(payload || {}));
+        log.debug('receive_action', 'Action received', { game_id: gameId, user_id: user.id, action });
 
         if (action === 'propose_solve') {
             // 1. Initialize Proposal
@@ -275,7 +278,7 @@ export async function POST(
                 if (authorData?.has_left) {
                     isAuthorLeft = true;
                 } else {
-                    console.warn(`[Security] User ${user.id} attempted to solve out of turn. Target Author: ${targetMessage.user_id}`);
+                    log.warn('solve_out_of_turn', 'Rejected solve attempt outside the player turn', { game_id: gameId, user_id: user.id, target_author_id: targetMessage.user_id });
                     return NextResponse.json({ error: 'Not your turn! Wait for Free-for-all.' }, { status: 403 });
                 }
             }
@@ -370,7 +373,7 @@ export async function POST(
                 }).eq('id', gameId);
             }
         } else if (action === 'get_hint') {
-            console.log(`[API] Processing get_hint action for matchId: ${gameId}`);
+            log.debug('get_hint', 'Processing hint request', { game_id: gameId, user_id: user.id });
             const { targetId, nextLevel, newCipherText } = payload;
             let aiHint = null;
 
@@ -422,7 +425,7 @@ export async function POST(
                                 GAME_CONFIG.AI_HINT_BACKUP_MODEL
                             ].filter(Boolean);
 
-                            console.log(`[Hint Debug] Models to try: ${modelsToTry.join(', ')}`);
+                            hintLog.debug('select_models', 'Models to try', { game_id: gameId, models: modelsToTry.join(', ') });
 
                             for (const modelId of modelsToTry) {
                                 try {
@@ -430,7 +433,7 @@ export async function POST(
 
                                     const prompt = `Give a short, cryptic but helpful single-sentence hint for the word or phrase: "${msg.content}". Do not use the word itself. Max 12 words.`;
 
-                                    console.log(`[Hint Debug] Attempting model: ${modelId}`);
+                                    hintLog.debug('call_model', 'Attempting model', { game_id: gameId, model: modelId });
                                     // console.log(`[Hint Debug] Sending request to: ${url.replace(apiKey, 'HIDDEN')}...`);
 
                                     const geminiResponse = await fetch(url, {
@@ -441,17 +444,17 @@ export async function POST(
                                         })
                                     });
 
-                                    console.log(`[Hint Debug] ${modelId} Response Status: ${geminiResponse.status}`);
+                                    hintLog.debug('call_model', 'Model responded', { game_id: gameId, model: modelId, status: geminiResponse.status });
 
                                     if (geminiResponse.ok) {
                                         const data = await geminiResponse.json();
-                                        console.log(`[Hint Debug] Response Data Preview:`, JSON.stringify(data).slice(0, 300));
+                                        hintLog.debug('call_model', 'Response preview', { game_id: gameId, model: modelId, preview: JSON.stringify(data).slice(0, 300) });
 
                                         const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
 
                                         if (candidateText) {
                                             aiHint = candidateText;
-                                            console.log(`[Hint Debug] Success with ${modelId}. Extracted Hint: "${aiHint}"`);
+                                            hintLog.debug('call_model', 'Hint extracted', { game_id: gameId, model: modelId, hint: aiHint });
 
                                             // Track Usage
                                             await adminSupabase.from('api_usage').insert({
@@ -464,26 +467,25 @@ export async function POST(
 
                                             break; // Exit loop on success
                                         } else {
-                                            console.warn(`[Hint Debug] ${modelId} returned valid JSON but no text content.`);
+                                            hintLog.warn('call_model', 'Model returned valid JSON but no text content', { game_id: gameId, model: modelId });
                                         }
                                     } else {
                                         const errorText = await geminiResponse.text();
-                                        console.error(`[Hint Debug] ${modelId} Error Response:`, errorText);
+                                        hintLog.error('call_model', 'Model returned an error response, trying next model', { game_id: gameId, model: modelId, response: errorText.slice(0, 300) });
                                         // Continue to next model
                                     }
                                 } catch (innerErr) {
-                                    console.error(`[Hint Debug] Exception with ${modelId}:`, innerErr);
+                                    hintLog.error('call_model', 'Model call threw, trying next model', { game_id: gameId, model: modelId }, innerErr);
                                 }
                             }
                         } else {
-                            console.error('[Hint Debug] CRITICAL: Missing GEMINI_KEY or GEMINI_API_KEY environment variable!');
+                            hintLog.error('config', 'Missing GEMINI_KEY / GEMINI_API_KEY environment variable, cannot generate AI hints', { game_id: gameId });
                         }
                     } catch (e: unknown) {
-                        console.error('[Hint Debug] Hint Exception:', getErrorMessage(e));
-                        if (e instanceof Error && e.cause) console.error('[Hint Debug] Cause:', e.cause);
+                        hintLog.error('generate', 'Hint generation failed', { game_id: gameId, cause: e instanceof Error && e.cause ? String(e.cause) : undefined }, e);
                     }
                 } else {
-                    console.warn('[Hint Debug] Msg Content missing for targetId:', targetId);
+                    hintLog.warn('generate', 'Message content missing, cannot build a hint', { game_id: gameId, target_id: targetId });
                 }
 
                 // Fallback if AI failed
@@ -560,7 +562,7 @@ export async function POST(
         return NextResponse.json({ success: true });
 
     } catch (err: unknown) {
-        console.error("Action API Error:", err);
+        log.error('handle_action', 'Unhandled error while processing action', { game_id: gameId, user_id: user.id }, err);
         const normalized = normalizeError(err);
         const errorMessage = normalized?.message ?? 'Unknown error';
         // Include full error details if available (e.g. Supabase error hint/details)

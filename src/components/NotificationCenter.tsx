@@ -42,6 +42,9 @@ type Notification = {
 };
 
 import { useTranslations } from 'next-intl';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('notifications');
 
 export function NotificationCenter() {
     const t = useTranslations('Notifications');
@@ -102,7 +105,7 @@ export function NotificationCenter() {
             });
 
         if (error && error.code !== '23505') {
-            console.error("Error joining game:", error);
+            log.error('accept_invite', 'Failed to join game from invite', { game_id: gameId }, error);
             toast.error(t('toasts.join_error'));
         } else {
             toast.success(t('toasts.joined'));

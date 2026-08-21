@@ -1,6 +1,9 @@
 import { unstable_cache } from 'next/cache';
 import { AsyncLocalStorage } from 'async_hooks';
 import { GAME_CONFIG } from './gameConfig';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('daily/translate');
 
 const GEMINI_API_KEY = process.env.GEMINI_KEY;
 
@@ -23,7 +26,7 @@ async function translateDailyGame(gameId: string, words: string[], theme: string
     }
 
     if (!GEMINI_API_KEY) {
-        console.warn("GEMINI_KEY not set, skipping translation.");
+        log.warn('translate', 'GEMINI_KEY not set, skipping translation', { game_id: gameId, locale });
         return null;
     }
 
@@ -68,7 +71,7 @@ async function translateDailyGame(gameId: string, words: string[], theme: string
         );
 
         if (!response.ok) {
-            console.error("Gemini API translation error:", await response.text());
+            log.error('translate', 'Gemini API returned an error', { game_id: gameId, locale, status: response.status, response: (await response.text()).slice(0, 300) });
             return null;
         }
 
@@ -89,7 +92,7 @@ async function translateDailyGame(gameId: string, words: string[], theme: string
 
         // Simple validation
         if (!parsed.theme || !Array.isArray(parsed.words) || !Array.isArray(parsed.hints)) {
-            console.warn("Invalid translation format:", parsed);
+            log.warn('translate', 'Gemini returned an unexpected translation shape', { game_id: gameId, locale });
             return null;
         }
 
@@ -106,13 +109,13 @@ async function translateDailyGame(gameId: string, words: string[], theme: string
                 locale: locale
             });
         } catch (dbError) {
-            console.error("Failed to log translation generation:", dbError);
+            log.error('translate', 'Failed to record translation generation', { game_id: gameId, locale }, dbError);
         }
 
         return { ...parsed, cachedAt: new Date().toISOString() } as TranslatedGameData;
 
     } catch (e) {
-        console.error("Error translating daily game:", e);
+        log.error('translate', 'Translation failed', { game_id: gameId, locale }, e);
         return null;
     }
 }
@@ -121,7 +124,7 @@ export const getCachedTranslatedDailyGame = unstable_cache(
     async (gameId: string, words: string[], theme: string, locale: string) => {
         const isPeek = translationContext.getStore()?.isPeek;
         if (!isPeek) {
-            console.log(`[Cache Miss] Translating game ${gameId} to ${locale}`);
+            log.debug('cache', 'Cache miss, translating daily game', { game_id: gameId, locale });
         }
         return await translateDailyGame(gameId, words, theme, locale);
     },

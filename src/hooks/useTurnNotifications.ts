@@ -2,6 +2,9 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/context/AuthProvider';
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
+import { createLogger, getErrorMessage } from '@/lib/logger';
+
+const log = createLogger('game/notifications');
 
 export function useTurnNotifications(isMyTurn: boolean, isMyMessageBeingGuessed: boolean = false) {
     const { profile, loading: authLoading } = useAuth();
@@ -19,10 +22,10 @@ export function useTurnNotifications(isMyTurn: boolean, isMyMessageBeingGuessed:
     useEffect(() => {
         if (typeof window !== 'undefined') {
             startSoundRef.current = new Audio('/sounds/notifications/chime-alert-demo.mp3');
-            startSoundRef.current.onerror = (e) => console.warn("Start Audio load error:", e);
+            startSoundRef.current.onerror = () => log.warn('load_audio', 'Start sound failed to load', { src: '/sounds/notifications/chime-alert-demo.mp3' });
 
             turnSoundRef.current = new Audio('/sounds/notifications/chime1.mp3');
-            turnSoundRef.current.onerror = (e) => console.warn("Turn Audio load error:", e);
+            turnSoundRef.current.onerror = () => log.warn('load_audio', 'Turn sound failed to load', { src: '/sounds/notifications/chime1.mp3' });
         }
 
         // Unlock audio on first user interaction
@@ -58,7 +61,7 @@ export function useTurnNotifications(isMyTurn: boolean, isMyMessageBeingGuessed:
                 hasPlayedStartSound.current = true;
                 startSoundRef.current.play().catch(e => {
                     if (e.name !== 'NotAllowedError' && e.name !== 'NotSupportedError') {
-                        console.log('Start sound autoplay blocked or failed:', e);
+                        log.debug('play_audio', 'Start sound autoplay blocked or failed', { reason: getErrorMessage(e) });
                     }
                 });
             } else {
@@ -139,7 +142,7 @@ export function useTurnNotifications(isMyTurn: boolean, isMyMessageBeingGuessed:
             ? "Someone finished their turn. You're up!"
             : "Players are trying to guess your message now!";
 
-        console.log(`${type} Notification Triggered!`);
+        log.debug('notify', 'Notification triggered', { type });
 
         // 1. Audio Chime
         let audioEnabled = true;
@@ -164,7 +167,7 @@ export function useTurnNotifications(isMyTurn: boolean, isMyMessageBeingGuessed:
             // Use turn sound for both turn and guess alerts
             turnSoundRef.current?.play().catch(err => {
                 if (err.name !== 'NotAllowedError' && err.name !== 'NotSupportedError') {
-                    console.error("Audio play failed:", err);
+                    log.warn('play_audio', 'Audio playback failed', undefined, err);
                 }
             });
         }

@@ -1,10 +1,13 @@
 import { createAdminClient } from './supabase-admin';
 import { GAME_CONFIG } from './gameConfig';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('daily/hints');
 
 export async function generateDailyHints(words: string[], theme: string): Promise<{ hints: string[], connectionScores: number[] } | null> {
     const GEMINI_API_KEY = process.env.GEMINI_KEY;
     if (!GEMINI_API_KEY) {
-        console.warn("GEMINI_KEY not set, skipping hint generation.");
+        log.warn('generate', 'GEMINI_KEY not set, skipping hint generation', { theme });
         return null;
     }
 
@@ -64,7 +67,7 @@ export async function generateDailyHints(words: string[], theme: string): Promis
         );
 
         if (!response.ok) {
-            console.error("Gemini API error:", await response.text());
+            log.error('generate', 'Gemini API returned an error', { theme, status: response.status, response: (await response.text()).slice(0, 300) });
             return null;
         }
 
@@ -90,7 +93,7 @@ export async function generateDailyHints(words: string[], theme: string): Promis
         const rawHints = JSON.parse(cleanText);
 
         if (!Array.isArray(rawHints)) {
-            console.warn("Generated hints is not an array:", rawHints);
+            log.warn('generate', 'Gemini returned hints that are not an array', { theme, received: typeof rawHints });
             return null;
         }
 
@@ -131,7 +134,7 @@ export async function generateDailyHints(words: string[], theme: string): Promis
         return { hints: alignedHints, connectionScores: alignedScores };
 
     } catch (e) {
-        console.error("Error generating/parsing hints:", e);
+        log.error('generate', 'Failed to generate or parse hints', { theme }, e);
         return null;
     }
 }
@@ -150,7 +153,7 @@ export async function ensureDailyHints(gameId: string, words: string[], theme: s
             .single();
 
         if (error) {
-            console.error("Error checking hints:", error);
+            log.error('ensure', 'Failed to read existing hints', { game_id: gameId }, error);
             return;
         }
 
@@ -165,7 +168,7 @@ export async function ensureDailyHints(gameId: string, words: string[], theme: s
         }
 
         // Generate
-        console.log(`Generating hints for Daily Game ${gameId}...`);
+        log.debug('ensure', 'Generating hints for daily game', { game_id: gameId, theme });
         const result = await generateDailyHints(words, theme);
 
         if (result) {
@@ -178,11 +181,11 @@ export async function ensureDailyHints(gameId: string, words: string[], theme: s
                 .eq('id', gameId);
 
             if (updateError) {
-                console.error("Error saving hints:", updateError);
+                log.error('ensure', 'Failed to save generated hints', { game_id: gameId }, updateError);
             }
             return result;
         }
     } catch (err) {
-        console.error("Error in ensureDailyHints:", err);
+        log.error('ensure', 'Unhandled error while ensuring daily hints', { game_id: gameId }, err);
     }
 }

@@ -13,6 +13,9 @@ import { UserPlus, Check, Link, Share2 } from 'lucide-react';
 import { toast } from "sonner";
 
 import { Player } from '@/hooks/useGameLogic';
+import { createLogger, getErrorMessage } from '@/lib/logger';
+
+const log = createLogger('invite');
 
 type Profile = {
     id: string;
@@ -62,7 +65,7 @@ function InvitePlayerContent({ gameId, players }: { gameId: string; players: Pla
         const { data, error } = await queryBuilder;
 
         if (error) {
-            console.error('Error searching users:', error);
+            log.error('search_users', 'Failed to search users', { game_id: gameId }, error);
         } else {
             setResults(data || []);
         }
@@ -81,7 +84,7 @@ function InvitePlayerContent({ gameId, players }: { gameId: string; players: Pla
             });
 
         if (error) {
-            console.error('Error sending invite:', error);
+            log.error('send_invite', 'Failed to send invite', { game_id: gameId }, error);
             toast.error(t('toasts.invite_error'));
         } else {
             setInvited(prev => new Set(prev).add(receiverId));
@@ -199,7 +202,7 @@ function InvitePlayerContent({ gameId, players }: { gameId: string; players: Pla
                                             title: 'Join my game!',
                                             text: 'Come play with me!',
                                             url: link
-                                        }).catch((err) => console.log('Error sharing:', err));
+                                        }).catch((err) => log.debug('share', 'Native share was dismissed or failed', { game_id: gameId, reason: getErrorMessage(err) }));
                                     }}
                                 >
                                     <Share2 className="w-4 h-4" />

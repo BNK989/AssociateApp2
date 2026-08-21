@@ -13,7 +13,9 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { getErrorMessage } from '@/lib/logger';
+import { createLogger, getErrorMessage } from '@/lib/logger';
+
+const log = createLogger('admin/translations');
 
 export const dynamic = 'force-dynamic';
 
@@ -70,7 +72,7 @@ export default async function AdminTranslationsPage({
             .in('game_id', games?.map(g => g.id) || []);
         generationLogs = logs || [];
     } catch (e) {
-        console.warn("Could not fetch generation logs (Table might be missing):", e);
+        log.warn('fetch_logs', 'Could not fetch translation generation logs, table may be missing', undefined, e);
     }
 
     const TARGET_LOCALES = ['he', 'ar', 'es', 'fr', 'de', 'ro'];
@@ -94,7 +96,7 @@ export default async function AdminTranslationsPage({
                 }) as TranslatedGameData | null;
             } catch (e: unknown) {
                 if (getErrorMessage(e) !== 'CACHE_MISS_PEEK') {
-                    console.error(`Unexpected error in ${locale} translation check:`, e);
+                    log.error('check_translation', 'Unexpected error while checking translation', { locale }, e);
                 }
             }
 

@@ -5,6 +5,9 @@ import { User, Session, Subscription } from '@supabase/supabase-js';
 import type { Profile } from '@/types/app';
 import { supabase } from '@/lib/supabase';
 import { useTheme } from 'next-themes';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('auth');
 
 
 
@@ -45,10 +48,10 @@ export default function AuthProvider({ children, initialSession = null }: { chil
             if (document.visibilityState === 'visible') {
                 const { data, error } = await supabase.auth.getUser();
                 if (error) {
-                    console.log("Session invalid on resume, attempting refresh...");
+                    log.debug('resume_session', 'Session invalid on resume, attempting refresh');
                     await supabase.auth.refreshSession();
                 } else {
-                    console.log("Session verified on resume.");
+                    log.debug('resume_session', 'Session verified on resume');
                 }
             }
         };
@@ -93,7 +96,7 @@ export default function AuthProvider({ children, initialSession = null }: { chil
                 if (initialSession && !profile) {
                      // We have session but no profile yet (since profile is client-fetch for now)
                      if (initialSession.user) {
-                         fetchProfile(initialSession.user.id).catch(console.error);
+                         fetchProfile(initialSession.user.id).catch((e) => log.error('init', 'Failed to fetch profile for initial session', { user_id: initialSession.user.id }, e));
                      }
                 }
 
@@ -106,7 +109,7 @@ export default function AuthProvider({ children, initialSession = null }: { chil
 
                     if (newSession?.user) {
                         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || (event === 'INITIAL_SESSION' && !profile)) {
-                            fetchProfile(newSession.user.id).catch(console.error);
+                            fetchProfile(newSession.user.id).catch((e) => log.error('auth_change', 'Failed to fetch profile after auth state change', { user_id: newSession.user.id }, e));
                         }
                     } else {
                         setProfile(null);
@@ -117,7 +120,7 @@ export default function AuthProvider({ children, initialSession = null }: { chil
                 subscription = data.subscription;
 
             } catch (e) {
-                console.error("Auth init failed", e);
+                log.error('init', 'Auth initialisation failed', undefined, e);
                 if (mounted) setLoading(false);
             }
         };
@@ -147,12 +150,12 @@ export default function AuthProvider({ children, initialSession = null }: { chil
                 .single();
 
             if (error) {
-                console.error('Error fetching profile:', error);
+                log.error('fetch_profile', 'Failed to fetch profile', { user_id: userId }, error);
             } else {
                 setProfile(data);
             }
         } catch (err) {
-            console.error('Unexpected error fetching profile:', err);
+            log.error('fetch_profile', 'Unexpected error fetching profile', { user_id: userId }, err);
         }
     };
 

@@ -16,6 +16,9 @@ import { LanguagePicker } from '../LanguagePicker';
 import { GAME_CONFIG } from '@/lib/gameConfig';
 import { Input } from "@/components/ui/input";
 import type { User } from '@supabase/supabase-js';
+import { createLogger, getErrorMessage } from '@/lib/logger';
+
+const log = createLogger('game/info');
 
 type InfoScreenProps = {
     game: GameState;
@@ -66,7 +69,7 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                     }
                 }
             } catch (e) {
-                console.error("Failed to parse local settings", e);
+                log.error('load_settings', 'Failed to parse local settings from localStorage', undefined, e);
             }
         }
     }, [authUser, profile]);
@@ -96,7 +99,7 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                 if (error) throw error;
                 await refreshProfile();
             } catch (e: unknown) {
-                console.error("Settings save error:", e);
+                log.error('save_settings', 'Failed to save settings', { user_id: authUser?.id }, e);
                 // Silent fail or toast
             } finally {
                 setUpdating(false);
@@ -130,7 +133,7 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                 if (error) throw error;
                 await refreshProfile();
             } catch (e) {
-                console.error(e);
+                log.error('toggle_chime', 'Failed to save audio chime preference', { user_id: authUser.id }, e);
                 toast.error(t('toast_settings_fail'));
                 // Revert check if failed? For now just stay optimistic
             } finally {
@@ -149,12 +152,12 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                 // @ts-ignore
                 newSettings.enable_audio_chime = checked;
                 localStorage.setItem('daily_game_settings', JSON.stringify(newSettings));
-            } catch (e) { console.error(e) }
+            } catch (e) { log.error('toggle_chime', 'Failed to persist guest audio preference to localStorage', undefined, e); }
         }
 
         if (checked) {
             const audio = new Audio('/sounds/notifications/chime1.mp3');
-            audio.play().catch(e => console.error('Audio play failed', e));
+            audio.play().catch((e) => log.warn('play_audio', 'Chime playback failed', undefined, e));
         }
     };
 
@@ -252,7 +255,7 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                 }
             }
         } catch (error) {
-            console.error('Error sharing:', error);
+            log.debug('share', 'Native share was dismissed or failed', { reason: getErrorMessage(error) });
             // Fallback attempt with clipboard if share fails
             const { copyToClipboard } = await import('@/lib/utils');
             const success = await copyToClipboard(text);
@@ -462,7 +465,7 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                                     className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-full text-purple-600 dark:text-purple-400 cursor-pointer hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors active:scale-95"
                                     onClick={() => {
                                         const audio = new Audio('/sounds/notifications/chime1.mp3');
-                                        audio.play().catch(e => console.error('Audio play failed', e));
+                                        audio.play().catch((e) => log.warn('play_audio', 'Chime playback failed', undefined, e));
                                     }}
                                 >
                                     {profile?.settings?.enable_audio_chime !== false ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}

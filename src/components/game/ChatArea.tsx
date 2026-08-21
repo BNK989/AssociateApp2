@@ -24,7 +24,9 @@ import { GameBackground } from './GameBackground';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Shuffle, X, Check } from "lucide-react";
 import { useTranslations } from 'next-intl';
-import { getErrorMessage } from '@/lib/logger';
+import { createLogger, getErrorMessage } from '@/lib/logger';
+
+const log = createLogger('game/chat');
 
 type ChatAreaProps = {
     messages: Message[];
@@ -96,7 +98,7 @@ export function ChatArea({
                 toast.success(`Hint ${hintType} triggered`);
             }
         } catch (error: unknown) {
-            console.error(`Admin action ${action} failed:`, error);
+            log.error('admin_action', 'Admin action failed', { game_id: game?.id, action }, error);
             toast.error(`Action failed: ${getErrorMessage(error)}`);
         }
     };

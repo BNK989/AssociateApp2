@@ -2,6 +2,9 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import DailyGameClient from './DailyGameClient';
 import { notFound } from 'next/navigation';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('daily/page');
 
 export const dynamic = 'force-dynamic';
 
@@ -42,7 +45,7 @@ export default async function DailyGamePage({
         .single();
 
     if (error || !dailyGame) {
-        console.warn("No pre-planned daily game found in DB for date:", todayStr, error);
+        log.warn('load_game', 'No pre-planned daily game found, falling back to generation', { play_date: todayStr }, error);
         const { generateAndStoreDailyGame } = await import('@/lib/dailyGameGenerator');
         dailyGame = await generateAndStoreDailyGame(todayStr);
     }
@@ -62,7 +65,7 @@ export default async function DailyGamePage({
     }
 
     if (!dailyGame) {
-        console.error("Critical error: Unable to load or generate daily game.");
+        log.error('load_game', 'Unable to load or generate a daily game', { play_date: todayStr });
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-4">
                 <h1 className="text-2xl font-bold mb-4">No Daily Game Available</h1>
@@ -106,7 +109,7 @@ export default async function DailyGamePage({
             // But let's stick to the request scope. 
             // We just serve translated content.
         } else {
-            console.warn(`Translation to ${targetLocale} failed, falling back to English.`);
+            log.warn('translate', 'Translation failed, falling back to English', { play_date: todayStr, locale: targetLocale });
         }
     }
 

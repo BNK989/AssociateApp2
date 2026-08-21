@@ -100,12 +100,24 @@ nesting, and the no-DOM guarantee. Inject a transport with `setLogSink()` rather
 than spying on `console`.
 
 ### Enforcement
-`no-console` is wired in [eslint.config.mjs](../eslint.config.mjs), currently at
-`warn` while ~140 pre-existing `console.*` call sites are migrated. `logger.ts`
-itself is exempt — it is the sanctioned transport. Raise to `error` once the
-backlog is cleared.
+`no-console` is wired as an **error** in [eslint.config.mjs](../eslint.config.mjs).
+A raw `console.*` call anywhere in `src/` now fails `npm run lint`.
 
-### Migration status
-The logger is **new and not yet adopted** across the codebase. New and touched
-code should use it; the existing `console.*` calls are tracked in CLAUDE.md's
-Known Debt section and get converted opportunistically.
+Three exemptions:
+- `src/lib/logger.ts` — the sanctioned transport.
+- `scripts/**` — CLI scripts write to stdout by design.
+- `src/**/*.test.{ts,tsx}` — test output is never shipped.
+
+### Scopes in use
+All 140 former `console.*` call sites were migrated on 2026-08-21. Current scopes:
+
+| Area | Scopes |
+| :--- | :--- |
+| Game (classic) | `game`, `game/chat`, `game/info`, `game/page`, `game/endgame`, `game/notifications` |
+| Daily | `daily/client`, `daily/page`, `daily/generate`, `daily/hints`, `daily/translate`, `daily/endgame` |
+| API routes | `api/game/action` (+ `api/game/action/hint`), `api/game/state`, `api/hint`, `api/daily/hint`, `api/messages/send` |
+| Auth | `auth`, `auth/form`, `auth/actions`, `auth/callback` |
+| Other | `lobby`, `join`, `invite`, `navbar`, `settings`, `settings/debug`, `notifications`, `feedback`, `utils`, `proxy`, `service-worker`, `instrumentation`, `posthog/server`, `posthog/client`, `admin/translations` |
+
+When adding a scope, follow the existing shape: `area` or `area/feature`, lower
+kebab-case, matching the module's role rather than its file path.

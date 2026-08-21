@@ -6,6 +6,9 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthProvider';
 import { Loader2 } from 'lucide-react';
 import { toast } from "sonner";
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('join');
 
 function JoinGameContent() {
     const params = useParams();
@@ -57,7 +60,7 @@ function JoinGameContent() {
                 .single();
 
             if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
-                console.error("Error checking player status:", checkError);
+                log.error('check_player', 'Failed to check existing player status', { game_id: gameId }, checkError);
                 throw checkError;
             }
 
@@ -99,7 +102,7 @@ function JoinGameContent() {
                 if (joinError) {
                     // Check for unique violation (code 23505) - means race condition won or user already joined
                     if (joinError.code === '23505') {
-                        console.log("Player already joined (race condition handling)");
+                        log.debug('join_game', 'Player already joined, handling race condition', { game_id: gameId });
                         toast.success("Joined game successfully!");
                     } else {
                         throw joinError;
@@ -123,7 +126,7 @@ function JoinGameContent() {
             router.push(`/game/${gameId}`);
 
         } catch (error) {
-            console.error('Error joining game:', error);
+            log.error('join_game', 'Failed to join game', { game_id: gameId }, error);
             toast.error("Failed to join game. Please try again.");
             setStatus('Failed to join.');
             // Maybe redirect home after a delay?

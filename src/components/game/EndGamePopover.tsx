@@ -16,6 +16,9 @@ import confetti from 'canvas-confetti';
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { useTranslations } from 'next-intl';
+import { createLogger, getErrorMessage } from '@/lib/logger';
+
+const log = createLogger('game/endgame');
 
 type EndGamePopoverProps = {
     open: boolean;
@@ -103,7 +106,7 @@ export function EndGamePopover({ open, onClose, players, messages, gameId, gameH
                 toast.success(t('share_success'));
             }
         } catch (error) {
-            console.error('Error sharing:', error);
+            log.debug('share', 'Native share was dismissed or failed', { reason: getErrorMessage(error) });
             // Fallback for desktop Safari/Firefox if share fails or is denied
             try {
                 await navigator.clipboard.writeText(finalShareText);

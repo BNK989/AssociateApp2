@@ -13,7 +13,9 @@ import { useAuth } from '@/context/AuthProvider';
 import { clearAuthCookies } from '@/app/actions/auth';
 import { getURL } from '@/lib/utils';
 import { useTranslations, useLocale } from 'next-intl';
-import { getErrorMessage } from '@/lib/logger';
+import { createLogger, getErrorMessage } from '@/lib/logger';
+
+const log = createLogger('auth/form');
 
 export default function AuthForm() {
     const t = useTranslations('Auth');
@@ -46,7 +48,7 @@ export default function AuthForm() {
             });
             if (error) throw error;
         } catch (error: unknown) {
-            console.error("Google login error:", error);
+            log.error('google_login', 'Google login failed', undefined, error);
             setMessage(getErrorMessage(error, "Failed to initiate Google login."));
             setLoadingMethod(null);
         }
@@ -102,7 +104,7 @@ export default function AuthForm() {
 
             if (profileError) {
                 // If profile creation fails, we might want to sign out the user to clean up
-                console.error("Profile creation failed:", profileError);
+                log.error('guest_login', 'Guest profile creation failed', undefined, profileError);
                 // But typically we can just let them in, maybe retry later? 
                 // For now, let's treat it as an error
                 throw profileError;
@@ -117,7 +119,7 @@ export default function AuthForm() {
 
             // AuthProvider should detect the session change and we should be good to go
         } catch (err: unknown) {
-            console.error("Guest login error:", err);
+            log.error('guest_login', 'Guest login failed', undefined, err);
             setMessage(getErrorMessage(err, "Failed to sign in as guest."));
             setLoadingMethod(null); // Only set loading false on error, otherwise we want to show loading until redirect/reload
             // If it's the "Anonymous sign-ins are disabled" error, we should probably tell the user.
@@ -142,7 +144,7 @@ export default function AuthForm() {
             try {
                 await clearAuthCookies();
             } catch (e) {
-                console.error("Failed to clear server cookies", e);
+                log.error('clear_cookies', 'Failed to clear server cookies', undefined, e);
             }
 
             window.location.reload();

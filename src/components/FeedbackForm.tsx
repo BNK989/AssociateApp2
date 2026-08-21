@@ -46,6 +46,9 @@ const formSchema = z.object({
 
 
 import { useTranslations } from "next-intl";
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('feedback');
 
 export function FeedbackForm() {
     const t = useTranslations('Feedback');
@@ -98,14 +101,14 @@ export function FeedbackForm() {
             });
 
             if (fnError) {
-                console.error("Failed to send email notification:", fnError);
+                log.error('notify', 'Failed to send feedback email notification', undefined, fnError);
             }
 
             toast.success(t('success'));
             setOpen(false);
             form.reset();
         } catch (error) {
-            console.error("Error sending feedback:", error);
+            log.error('submit', 'Failed to submit feedback', undefined, error);
             toast.error(t('error'));
         } finally {
             setIsSubmitting(false);

@@ -13,7 +13,9 @@ import {
 } from '@/lib/gameLogic';
 import { toast } from "sonner";
 import { COMMON_WORDS } from '@/lib/commonWords';
-import { getErrorMessage } from '@/lib/logger';
+import { createLogger, getErrorMessage } from '@/lib/logger';
+
+const log = createLogger('game');
 
 
 export type FloatingAnimationData = {
@@ -114,7 +116,7 @@ export function useGameLogic(gameId: string) {
             const response = await fetch(`/api/game/${gameId}/state`, { cache: 'no-store' });
             if (!response.ok) {
                 if (response.status === 401) {
-                    console.error("Unauthorized fetch");
+                    log.error('fetch_state', 'Unauthorized when fetching game state, session may have expired', { game_id: gameId, user_id: user?.id });
                     // Optionally redirect or handle session
                     return;
                 }
@@ -138,11 +140,11 @@ export function useGameLogic(gameId: string) {
             }
 
         } catch (error) {
-            console.error('Error fetching game data:', error);
+            log.error('fetch_state', 'Failed to fetch game state', { game_id: gameId, user_id: user?.id, retry_count: retryCount }, error);
 
             // Retry logic for initial load
             if (!game && retryCount < 2) {
-                console.log(`Retrying fetch... (${retryCount + 1}/2)`);
+                log.debug('fetch_state', 'Retrying fetch', { game_id: gameId, attempt: retryCount + 1, max_attempts: 2 });
                 setTimeout(() => fetchGameData(retryCount + 1), 1000);
                 return; // meaningful return to skip setting loading false yet
             }
@@ -445,7 +447,7 @@ export function useGameLogic(gameId: string) {
                 solving_started_at: new Date().toISOString()
             })
             .eq('id', game.id);
-        if (error) console.error("Error finalizing mode:", error);
+        if (error) log.error('finalize_mode', 'Failed to switch game into solving mode', { game_id: game.id }, error);
     }, [game]);
 
     // Timer for Proposal
@@ -791,7 +793,7 @@ export function useGameLogic(gameId: string) {
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-                    console.log(`Sending message via Server API (Attempt ${attempt + 1})...`);
+                    log.debug('send_message', 'Sending message via server API', { game_id: game?.id, user_id: user?.id, attempt: attempt + 1 });
 
                     try {
                         const response = await fetch('/api/messages/send', {
@@ -821,7 +823,7 @@ export function useGameLogic(gameId: string) {
                             throw new Error(errorData.error || `Server error: ${response.status}`);
                         }
 
-                        console.log("Message sent successfully via API!");
+                        log.debug('send_message', 'Message sent successfully', { game_id: game?.id, user_id: user?.id, attempt: attempt + 1 });
 
                         // Force a refresh immediately so the sender sees the message 
                         // even if the Realtime socket is lagging/disconnected
@@ -838,9 +840,9 @@ export function useGameLogic(gameId: string) {
                     }
 
                 } catch (err: unknown) {
-                    console.error("Attempt failed:", getErrorMessage(err));
+                    log.warn('send_message', 'Send attempt failed', { game_id: game?.id, user_id: user?.id, attempt: attempt + 1 }, err);
                     if (attempt < MAX_RETRIES) {
-                        console.log(`Retry attempt ${attempt + 1}/${MAX_RETRIES}`);
+                        log.debug('send_message', 'Retrying send', { game_id: game?.id, attempt: attempt + 1, max_retries: MAX_RETRIES });
                         await new Promise(r => setTimeout(r, 500 * Math.pow(2, attempt))); // Exponential backoff
                         return await sendSafe(attempt + 1);
                     }
@@ -859,7 +861,7 @@ export function useGameLogic(gameId: string) {
                 }
             }
         } catch (err) {
-            console.error("Message sending error:", err);
+            log.error('send_message', 'Message send failed after all retries', { game_id: game?.id, user_id: user?.id }, err);
             toast.error("Failed to send message. Please check your connection and try again.");
         } finally {
             setSending(false);
@@ -930,7 +932,7 @@ export function useGameLogic(gameId: string) {
             fetchGameData();
 
         } catch (err: unknown) {
-            console.error("Failed to start random game:", err);
+            log.error('start_random', 'Failed to start random game', { user_id: user?.id }, err);
             toast.error(getErrorMessage(err, "Failed to start random game"));
             // Revert optimistic update? For now just let it be or filter it out if we had a real ID system
         } finally {
@@ -949,7 +951,7 @@ export function useGameLogic(gameId: string) {
             });
             fetchGameData();
         } catch (e) {
-            console.error("Error proposing:", e);
+            log.error('propose_solve', 'Failed to propose solving mode', { game_id: game.id, user_id: user?.id }, e);
         }
     };
 
@@ -964,7 +966,7 @@ export function useGameLogic(gameId: string) {
             });
             fetchGameData();
         } catch (e) {
-            console.error("Error denying:", e);
+            log.error('deny_solve', 'Failed to deny solving mode', { game_id: game.id, user_id: user?.id }, e);
         }
     };
 
@@ -981,7 +983,7 @@ export function useGameLogic(gameId: string) {
             });
             fetchGameData();
         } catch (e) {
-            console.error("Error confirming:", e);
+            log.error('confirm_solve', 'Failed to confirm solving mode', { game_id: game.id, user_id: user.id }, e);
         }
     };
 
@@ -1063,7 +1065,7 @@ export function useGameLogic(gameId: string) {
             fetchGameData();
 
         } catch (error) {
-            console.error("Hint error:", error);
+            log.error('get_hint', 'Failed to buy hint', { game_id: game?.id, user_id: user?.id }, error);
             toast.error("Failed to buy hint");
         } finally {
             setSending(false);

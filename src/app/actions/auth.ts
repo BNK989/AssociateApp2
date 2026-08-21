@@ -2,6 +2,9 @@
 
 import { createAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('auth/actions');
 
 export async function deleteGuestAccount() {
     // Create a standard server client to get the current session/user securely
@@ -19,11 +22,11 @@ export async function deleteGuestAccount() {
             const { error } = await adminClient.auth.admin.deleteUser(user.id);
 
             if (error) {
-                console.error('Error deleting guest user:', error);
+                log.error('delete_guest', 'Failed to delete guest user', { user_id: user.id }, error);
                 throw error;
             }
         } catch (err) {
-            console.error('Failed to delete guest account:', err);
+            log.error('delete_guest', 'Unexpected error deleting guest account', undefined, err);
             // We don't want to block the logout process even if deletion fails
         }
     }
@@ -34,6 +37,6 @@ export async function clearAuthCookies() {
         const supabase = await createSupabaseServerClient();
         await supabase.auth.signOut();
     } catch (e) {
-        console.error("Error clearing auth cookies:", e);
+        log.error('clear_cookies', 'Failed to clear auth cookies', undefined, e);
     }
 }

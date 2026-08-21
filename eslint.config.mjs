@@ -43,9 +43,7 @@ const eslintConfig = defineConfig([
       "no-restricted-syntax": ["error", ...rtlRestrictedSyntax],
 
       // CLAUDE.md §8 — route logging through src/lib/logger.ts.
-      // Currently `warn`: ~138 pre-existing call sites are still being migrated.
-      // Raise to `error` once that backlog is cleared.
-      "no-console": "warn",
+      "no-console": "error",
     },
   },
 
@@ -63,6 +61,15 @@ const eslintConfig = defineConfig([
     // The single sanctioned console transport.
     name: "associateapp/logger",
     files: ["src/lib/logger.ts"],
+    rules: {
+      "no-console": "off",
+    },
+  },
+
+  {
+    // CLI scripts write to stdout by design, and test output is not shipped.
+    name: "associateapp/console-exempt",
+    files: ["scripts/**/*.{ts,tsx}", "src/**/*.test.{ts,tsx}"],
     rules: {
       "no-console": "off",
     },

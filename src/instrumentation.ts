@@ -1,3 +1,6 @@
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('instrumentation');
 export async function register() {
     // No-op for initialization
 }
@@ -24,7 +27,7 @@ export const onRequestError = async (
                     const postHogData = JSON.parse(decodedCookie)
                     distinctId = postHogData.distinct_id
                 } catch (e) {
-                    console.error('Error parsing PostHog cookie:', e)
+                    log.error('parse_cookie', 'Failed to parse PostHog cookie', undefined, e)
                 }
             }
         }
