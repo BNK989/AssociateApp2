@@ -37,7 +37,10 @@
             "counter_remain": "{count} Versuche übrig",
             "counter_last": "Letzter Versuch",
             "free_for_all": "JEDER GEGEN JEDEN",
-            "toast_max_length": "Nachricht darf nicht länger als {max} Zeichen sein"
+            "toast_max_length": "Nachricht darf nicht länger als {max} Zeichen sein",
+            "resume_auto_hint": "Auto-Hinweis fortsetzen",
+            "pause_auto_hint": "Auto-Hinweis pausieren",
+            "settings": "Einstellungen"
         },
         "Chat": {
             "start_random": "Mit zufälligem Wort starten",

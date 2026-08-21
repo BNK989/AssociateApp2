@@ -37,7 +37,10 @@
             "counter_remain": "{count} essais restants",
             "counter_last": "dernier essai",
             "free_for_all": "TOUS CONTRE TOUS",
-            "toast_max_length": "Le message ne peut pas dépasser {max} caractères"
+            "toast_max_length": "Le message ne peut pas dépasser {max} caractères",
+            "resume_auto_hint": "Reprendre l'indice auto",
+            "pause_auto_hint": "Mettre en pause l'indice auto",
+            "settings": "Paramètres"
         },
         "Chat": {
             "start_random": "Commencer avec un mot aléatoire",

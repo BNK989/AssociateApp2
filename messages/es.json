@@ -37,7 +37,10 @@
             "counter_remain": "Quedan {count} intentos",
             "counter_last": "último intento",
             "free_for_all": "TODOS CONTRA TODOS",
-            "toast_max_length": "El mensaje no puede exceder {max} caracteres"
+            "toast_max_length": "El mensaje no puede exceder {max} caracteres",
+            "resume_auto_hint": "Reanudar pista automática",
+            "pause_auto_hint": "Pausar pista automática",
+            "settings": "Ajustes"
         },
         "Chat": {
             "start_random": "Empezar con Palabra Aleatoria",

@@ -44,7 +44,6 @@ const rtlRestrictedSyntax = [
 const GRANDFATHERED_MAX_LINES = {
   "src/hooks/useGameLogic.ts": 1104,
   "src/components/CipherText.tsx": 546,
-  "src/components/game/GameInput.tsx": 516,
 };
 
 const sizeRatchet = Object.entries(GRANDFATHERED_MAX_LINES).map(([file, max]) => ({

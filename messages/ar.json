@@ -37,7 +37,10 @@
             "counter_remain": "تبقى {count} تخمينات",
             "counter_last": "التخمين الأخير",
             "free_for_all": "متاح للجميع",
-            "toast_max_length": "لا يمكن أن تتجاوز الرسالة {max} حرفًا"
+            "toast_max_length": "لا يمكن أن تتجاوز الرسالة {max} حرفًا",
+            "resume_auto_hint": "استئناف التلميح التلقائي",
+            "pause_auto_hint": "إيقاف التلميح التلقائي مؤقتًا",
+            "settings": "الإعدادات"
         },
         "Chat": {
             "start_random": "ابدأ بكلمة عشوائية",

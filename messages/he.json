@@ -43,7 +43,10 @@
             "counter_remain": "נותרו {count} ניחושים",
             "counter_last": "ניחוש אחרון",
             "free_for_all": "חופשי לכולם",
-            "toast_max_length": "ההודעה לא יכולה לעלות על {max} תווים"
+            "toast_max_length": "ההודעה לא יכולה לעלות על {max} תווים",
+            "resume_auto_hint": "המשך רמז אוטומטי",
+            "pause_auto_hint": "השהה רמז אוטומטי",
+            "settings": "הגדרות"
         },
         "Chat": {
             "start_random": "התחל עם מילה אקראית",

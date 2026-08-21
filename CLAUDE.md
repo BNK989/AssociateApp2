@@ -212,7 +212,7 @@ Run the dev server through the Browser pane (`.claude/launch.json`, config
 Measured 2026-08-21. These predate the rules above; they are exempt from
 "fix it now" but must not get worse.
 
-**Files over the 350-line cap (3).** Each is pinned at this exact length by the
+**Files over the 350-line cap (2).** Each is pinned at this exact length by the
 ratchet in [eslint.config.mjs](eslint.config.mjs) — see §2. Lower the pinned
 number whenever you shrink one.
 
@@ -232,6 +232,8 @@ number whenever you shrink one.
 >   (two hooks, five components, `headerRules` + 21 tests).
 > - `DailyGameClient.tsx` **1105 -> 292**, split into `src/components/daily/`
 >   (six hooks) and `src/lib/daily/` (messages, scoring, storage + 39 tests).
+> - `GameInput.tsx` **516 -> 200**, split into `src/components/game/input/`
+>   (three hooks, five components, `inputRules` + 23 tests).
 >
 > Their ratchet entries are gone. Use them as the template for the rest.
 
@@ -239,7 +241,6 @@ number whenever you shrink one.
 | ---: | ---: | :--- | :--- |
 | 1104 | +754 | `src/hooks/useGameLogic.ts` | The classic-mode engine. Realtime, turn rotation, scoring, sending. **Least test-covered load-bearing code in the repo — write tests before splitting.** |
 | 546 | +196 | `src/components/CipherText.tsx` | Animation state machine. Highest-risk file to touch — it masks the answers. Carries the two `set-state-in-effect` warnings. |
-| 516 | +166 | `src/components/game/GameInput.tsx` | Input, hint menu, and the character counter. |
 
 Approaching the cap and worth watching: `NotificationCenter.tsx` (349 — one line
 of headroom) and `Settings.tsx` (304).

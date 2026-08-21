@@ -43,7 +43,10 @@
             "counter_remain": "{count} guesses remain",
             "counter_last": "last guess",
             "free_for_all": "FREE FOR ALL",
-            "toast_max_length": "Message cannot exceed {max} characters"
+            "toast_max_length": "Message cannot exceed {max} characters",
+            "resume_auto_hint": "Resume Auto Hint",
+            "pause_auto_hint": "Pause Auto Hint",
+            "settings": "Settings"
         },
         "Chat": {
             "start_random": "Start with Random Word",

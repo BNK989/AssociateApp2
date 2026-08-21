@@ -37,7 +37,10 @@
             "counter_remain": "{count} încercări rămase",
             "counter_last": "ultima încercare",
             "free_for_all": "TOȚI PENTRU TOȚI",
-            "toast_max_length": "Mesajul nu poate depăși {max} caractere"
+            "toast_max_length": "Mesajul nu poate depăși {max} caractere",
+            "resume_auto_hint": "Reia indiciul automat",
+            "pause_auto_hint": "Pune pauză indiciului automat",
+            "settings": "Setări"
         },
         "Chat": {
             "start_random": "Începe cu Cuvânt Aleatoriu",
