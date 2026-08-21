@@ -185,19 +185,24 @@ This repo is managed by a single developer. Optimise for low ceremony.
 Measured 2026-08-21. These predate the rules above; they are exempt from
 "fix it now" but must not get worse.
 
-**Files over the 350-line cap (8).** Each is pinned at this exact length by the
+**Files over the 350-line cap (7).** Each is pinned at this exact length by the
 ratchet in [eslint.config.mjs](eslint.config.mjs) — see §2. Lower the pinned
 number whenever you shrink one.
 
-> `ChatArea.tsx` cleared the cap on 2026-08-21: **683 -> 150**, split into
-> `src/components/game/chat/` (four hooks, five components, one pure logic module
-> with 22 tests). Its ratchet entry is gone. Use it as the template for the rest.
+> Cleared so far (2026-08-21), both following the same shape — hooks for
+> behaviour, components for JSX, one pure tested module for the rules:
+>
+> - `ChatArea.tsx` **683 -> 150**, split into `src/components/game/chat/`
+>   (four hooks, five components, `messageFlags` + 22 tests).
+> - `InfoScreen.tsx` **589 -> 138**, split into `src/components/game/info/`
+>   (three hooks, six components, `resolveInfoSettings` + 7 tests).
+>
+> Both ratchet entries are gone. Use them as the template for the rest.
 
 | Lines | Over by | File | Refactor notes |
 | ---: | ---: | :--- | :--- |
 | 1105 | +755 | `src/app/[locale]/daily/DailyGameClient.tsx` | Mixed concerns: state machine, persistence, hint logic, and a lot of JSX. Extract the JSX first — lowest risk. |
 | 1104 | +754 | `src/hooks/useGameLogic.ts` | The classic-mode engine. Realtime, turn rotation, scoring, sending. **Least test-covered load-bearing code in the repo — write tests before splitting.** |
-| 589 | +239 | `src/components/game/InfoScreen.tsx` | Several unrelated panels behind one dialog; split per panel. |
 | 573 | +223 | `src/components/Lobby.tsx` | Game list, create dialog, and per-game actions. Three components. |
 | 572 | +222 | `src/app/api/game/[id]/action/route.ts` | One handler switching on ~10 actions; extract per-action handlers. |
 | 546 | +196 | `src/components/CipherText.tsx` | Animation state machine. Highest-risk file to touch — it masks the answers. Carries the two `set-state-in-effect` warnings. |
