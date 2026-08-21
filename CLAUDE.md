@@ -185,15 +185,18 @@ This repo is managed by a single developer. Optimise for low ceremony.
 Measured 2026-08-21. These predate the rules above; they are exempt from
 "fix it now" but must not get worse.
 
-**Files over the 350-line cap (9).** Each is pinned at this exact length by the
+**Files over the 350-line cap (8).** Each is pinned at this exact length by the
 ratchet in [eslint.config.mjs](eslint.config.mjs) — see §2. Lower the pinned
 number whenever you shrink one.
+
+> `ChatArea.tsx` cleared the cap on 2026-08-21: **683 -> 150**, split into
+> `src/components/game/chat/` (four hooks, five components, one pure logic module
+> with 22 tests). Its ratchet entry is gone. Use it as the template for the rest.
 
 | Lines | Over by | File | Refactor notes |
 | ---: | ---: | :--- | :--- |
 | 1105 | +755 | `src/app/[locale]/daily/DailyGameClient.tsx` | Mixed concerns: state machine, persistence, hint logic, and a lot of JSX. Extract the JSX first — lowest risk. |
 | 1104 | +754 | `src/hooks/useGameLogic.ts` | The classic-mode engine. Realtime, turn rotation, scoring, sending. **Least test-covered load-bearing code in the repo — write tests before splitting.** |
-| 683 | +333 | `src/components/game/ChatArea.tsx` | Message list + bubble rendering + admin actions. Bubble extracts cleanly. |
 | 589 | +239 | `src/components/game/InfoScreen.tsx` | Several unrelated panels behind one dialog; split per panel. |
 | 573 | +223 | `src/components/Lobby.tsx` | Game list, create dialog, and per-game actions. Three components. |
 | 572 | +222 | `src/app/api/game/[id]/action/route.ts` | One handler switching on ~10 actions; extract per-action handlers. |
