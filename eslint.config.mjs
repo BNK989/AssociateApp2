@@ -44,7 +44,6 @@ const rtlRestrictedSyntax = [
 const GRANDFATHERED_MAX_LINES = {
   "src/app/**/daily/DailyGameClient.tsx": 1105,
   "src/hooks/useGameLogic.ts": 1104,
-  "src/app/api/game/**/action/route.ts": 572,
   "src/components/CipherText.tsx": 546,
   "src/components/game/GameHeader.tsx": 525,
   "src/components/game/GameInput.tsx": 516,
