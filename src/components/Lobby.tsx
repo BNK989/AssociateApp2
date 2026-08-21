@@ -1,379 +1,81 @@
 'use client';
 
-import { Plus, MessageSquarePlus, Sparkles, Calendar, CheckCircle, ArrowRight, Loader2 } from 'lucide-react';
-
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/context/AuthProvider';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/context/AuthProvider';
 import { useAdmin } from '@/hooks/useAdmin';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { GAME_MODES } from '@/lib/gameConfig';
-import { Label } from '@/components/ui/label';
 import GameCard from './GameCard';
-import { usePostHog } from 'posthog-js/react';
 import { OnboardingTutorial } from './OnboardingTutorial';
+import { CreateGameDialog } from './lobby/CreateGameDialog';
+import { DailyChallengeCard } from './lobby/DailyChallengeCard';
+import { EmptyLobbyState } from './lobby/EmptyLobbyState';
+import { LeaveGameDialog } from './lobby/LeaveGameDialog';
+import { useCreateGame } from './lobby/useCreateGame';
+import { useGameActions } from './lobby/useGameActions';
+import { useLobbyGames } from './lobby/useLobbyGames';
+import { useOnboarding } from './lobby/useOnboarding';
+import type { LobbyGame } from './lobby/types';
 
-// Match the type in GameCard.tsx
-type Game = {
-    id: string;
-    handle: number;
-    status: string;
-    mode: string;
-    created_at: string;
-    last_activity_at?: string;
-    max_messages: number;
-    message_count: number;
-    current_turn_user_id?: string;
-    players?: {
-        has_left: boolean;
-        is_archived: boolean;
-        user: {
-            username: string;
-            avatar_url: string;
-        };
-    }[];
-    // Extra fields for logic
-    team_pot: number;
-    team_consecutive_correct: number;
-    fever_mode_remaining: number;
-};
-
-import { useTranslations } from "next-intl";
-import { createLogger } from '@/lib/logger';
-
-const log = createLogger('lobby');
+/** Placeholder cards shown while the first fetch is in flight. */
+function LobbySkeleton() {
+    return (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+                <div key={i} className="h-48 w-full bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse" />
+            ))}
+        </div>
+    );
+}
 
 export default function Lobby() {
-    const { user, profile, refreshProfile } = useAuth();
+    const { user } = useAuth();
     const { isAdmin } = useAdmin();
     const router = useRouter();
-    const posthog = usePostHog();
     const t = useTranslations('Lobby');
 
-    const [activeGames, setActiveGames] = useState<Game[]>([]);
-    const [completedGames, setCompletedGames] = useState<Game[]>([]);
-    const [creating, setCreating] = useState(false);
-    const [gameToLeave, setGameToLeave] = useState<string | null>(null);
-    const [leaving, setLeaving] = useState(false);
-    const [gamesLoading, setGamesLoading] = useState(true);
-
-    // Create Game State
     const [isCreateOpen, setIsCreateOpen] = useState(false);
-    const [selectedModeId, setSelectedModeId] = useState<string>(GAME_MODES[0].id);
-
-    const [showTutorial, setShowTutorial] = useState(false);
     const [isDailyCompleted, setIsDailyCompleted] = useState(false);
     const [isDailyLoading, setIsDailyLoading] = useState(false);
 
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const today = new Date().toISOString().split('T')[0];
-            const completed = localStorage.getItem(`daily_game_completed_${today}`);
-            if (completed === 'true') {
-                setIsDailyCompleted(true);
-            }
-        }
+    const { activeGames, completedGames, loading } = useLobbyGames(user);
+    const { creating, createGame } = useCreateGame(user);
+    const { showTutorial, completeTutorial } = useOnboarding();
+
+    // Optimistic removal; realtime will confirm it on the next fetch.
+    const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
+    const removeGame = useCallback((gameId: string) => {
+        setRemovedIds((prev) => new Set(prev).add(gameId));
     }, []);
 
+    const actions = useGameActions({ user, removeGame });
+
+    // The daily result lives in localStorage, which is unavailable during SSR.
     useEffect(() => {
-        if (profile && profile.has_seen_onboarding === false) {
-            setShowTutorial(true);
-            posthog.capture('onboarding_started');
-        }
-    }, [profile, posthog]);
+        const today = new Date().toISOString().split('T')[0];
+        setIsDailyCompleted(localStorage.getItem(`daily_game_completed_${today}`) === 'true');
+    }, []);
 
-    const handleTutorialComplete = async () => {
-        setShowTutorial(false);
-        if (user) {
-            posthog.capture('onboarding_completed');
-            await supabase
-                .from('profiles')
-                .update({ has_seen_onboarding: true })
-                .eq('id', user.id);
-            await refreshProfile();
-        }
-    };
+    const visible = (games: LobbyGame[]) => games.filter((g) => !removedIds.has(g.id));
+    const active = visible(activeGames);
+    const completed = visible(completedGames);
 
-    useEffect(() => {
-        if (!user) return;
-
-        const fetchGames = async () => {
-            setGamesLoading(true);
-            log.debug('fetch_games', 'Fetching games for user', { user_id: user.id });
-            // Fetch both active and completed in one go or separate if needed complexity
-            // We'll fetch all relevant games for the user
-            const { data: gamesData, error } = await supabase
-                .from('games')
-                .select(`
-                    *,
-                    messages(count),
-                    game_players!inner (user_id, is_archived, has_left),
-                    players:game_players (
-                        has_left,
-                        user:profiles (username, avatar_url)
-                    )
-                `)
-                .eq('game_players.user_id', user.id)
-                .order('last_activity_at', { ascending: false, nullsFirst: false }); // Sort by activity
-
-            if (error) {
-                log.error('fetch_games', 'Failed to load games', { user_id: user.id }, error);
-                toast.error(t('toasts.load_error', { message: error.message }));
-                setGamesLoading(false);
-                return;
-            }
-
-            log.debug('fetch_games', 'Games fetched', { user_id: user.id, count: gamesData?.length });
-
-            // Transform data to match Game type
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const formattedGames: Game[] = (gamesData as any[]).map((g) => {
-                // Determine message count
-                // supabase returns [{ count: N }] for messages(count) usually, or just count if using strict count?
-                // Actually with select('*, messages(count)') it returns messages: [{ count: 123 }] usually.
-                // Let's inspect safely.
-                const msgCount = g.messages?.[0]?.count ?? 0;
-
-                return {
-                    ...g,
-                    message_count: msgCount,
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    player_count: g.players.filter((p: any) => !p.has_left).length
-                };
-            });
-
-            // Filter and split
-            const active: Game[] = [];
-            const completed: Game[] = [];
-
-            formattedGames.forEach(g => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const playerInfo = (g as any).game_players.find((p: any) => p.user_id === user.id);
-
-                // If archived or left, don't show (unless we want to show archived separately?)
-                // Current logic implies checking is_archived/has_left
-                if (playerInfo?.is_archived || playerInfo?.has_left) return;
-
-                if (g.status === 'completed') {
-                    completed.push(g);
-                } else {
-                    active.push(g);
-                }
-            });
-
-            setActiveGames(active);
-            setCompletedGames(completed);
-            setGamesLoading(false);
-        };
-
-        const fetchAll = () => {
-            fetchGames();
-        };
-
-        fetchAll();
-
-        // Refetch when window gains focus (fixes back navigation stale state)
-        const handleFocus = () => {
-            log.debug('window_focus', 'Window focused, refreshing lobby');
-            fetchAll();
-        };
-        window.addEventListener('focus', handleFocus);
-
-        const channel = supabase
-            .channel('lobby_updates')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'games' }, () => fetchAll())
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'game_players' }, () => fetchAll())
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-            window.removeEventListener('focus', handleFocus);
-        };
-    }, [user]);
-
-    const createGame = async () => {
-        if (!user) return;
-        setCreating(true);
-
-        try {
-            const selectedMode = GAME_MODES.find(m => m.id === selectedModeId);
-            const maxMessages = selectedMode ? selectedMode.limit : 25;
-
-            // 1. Create Game
-            log.debug('create_game', 'Starting game creation', { user_id: user.id, mode: selectedModeId, max_messages: maxMessages });
-            const insertPayload = {
-                status: 'texting',
-                mode: 'free',
-                current_turn_user_id: user.id,
-                max_messages: maxMessages
-            };
-            log.debug('create_game', 'Insert payload prepared', { status: insertPayload.status, current_turn_user_id: insertPayload.current_turn_user_id });
-
-            // Wrap in timeout
-            const createGamePromise = supabase
-                .from('games')
-                .insert(insertPayload)
-                .select()
-                .single();
-
-            const { data: game, error: gameError } = await Promise.race([
-                createGamePromise,
-                new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Game creation timeout')), 10000))
-            ]);
-
-            log.debug('create_game', 'Game row insert completed', { game_id: game?.id, failed: !!gameError });
-
-            if (gameError) throw gameError;
-
-            log.debug('create_game', 'Adding creator as player', { game_id: game.id, user_id: user.id });
-
-            // 2. Add Creator as Player
-            // 2. Add Creator as Player
-            // Wrap in timeout
-            const { error: playerError } = await Promise.race([
-                supabase
-                    .from('game_players')
-                    .insert({
-                        game_id: game.id,
-                        user_id: user.id,
-                        score: 0
-                    }),
-                new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Player insertion timeout')), 10000))
-            ]);
-
-            log.debug('create_game', 'Player insert completed', { game_id: game.id, failed: !!playerError });
-
-            if (playerError) {
-                // Rollback: Delete the game if player creation failed
-                log.error('create_game', 'Player creation failed, rolling back game', { game_id: game.id, user_id: user.id }, playerError);
-                await supabase.from('games').delete().eq('id', game.id);
-                throw playerError;
-            }
-
-            posthog.capture('game_created', {
-                game_id: game.id,
-                status: 'texting', // Keeping status context might be useful, or just rely on event name
-                messages_count: 0
-            });
-
-            setIsCreateOpen(false);
-            const targetUrl = `/game/${game.id}?action=invite`;
-            log.debug('create_game', 'Redirecting to new game', { game_id: game.id, target_url: targetUrl });
-            router.push(targetUrl);
-            log.debug('create_game', 'Router push called', { game_id: game.id });
-
-        } catch (error) {
-            const err = error as Error;
-            log.error('create_game', 'Game creation failed', { user_id: user.id }, err);
-            toast.error(err.message || 'Failed to create game');
-            // If it was a timeout, explicitly alter the error message
-            if (err.message && err.message.includes('timeout')) {
-                alert('Connection timed out. Please check your internet connection and try again.');
-            }
-        } finally {
-            setCreating(false);
-        }
-    };
-
-    const confirmLeave = async () => {
-        if (!gameToLeave || !user) return;
-        setLeaving(true);
-
-        try {
-            const gameId = gameToLeave;
-
-            // Call API action to handle leave logic (system message, turn rotation, etc.)
-            const response = await fetch(`/api/game/${gameId}/action`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'leave_game' })
-            });
-
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error || 'Failed to leave game');
-            }
-
-            // Client-side state update handled below
-            // No need for manual inserts/updates here
-
-            // Optimistic update
-            setActiveGames(prev => prev.filter(g => g.id !== gameId));
-            setCompletedGames(prev => prev.filter(g => g.id !== gameId));
-            toast.success(t('toasts.left_success'));
-            setGameToLeave(null);
-
-        } catch (error) {
-            log.error('leave_game', 'Failed to leave game', { game_id: gameToLeave, user_id: user?.id }, error);
-            toast.error(t('toasts.left_error'));
-        } finally {
-            setLeaving(false);
-        }
-    };
-
-    const handleArchive = async (gameId: string) => {
-        const { error } = await supabase
-            .from('game_players')
-            .update({ is_archived: true })
-            .eq('game_id', gameId)
-            .eq('user_id', user?.id);
-
-        if (error) {
-            log.error('archive_game', 'Failed to archive game', { game_id: gameId, user_id: user?.id }, error);
-            toast.error(t('toasts.archived_error'));
-        } else {
-            setActiveGames(prev => prev.filter(g => g.id !== gameId));
-            setCompletedGames(prev => prev.filter(g => g.id !== gameId));
-        }
-    };
-
-    const handleDeleteGame = async (gameId: string) => {
-        if (!confirm('Are you sure you want to delete this game? This cannot be undone.')) return;
-
-        const { error } = await supabase
-            .from('games')
-            .delete()
-            .eq('id', gameId);
-
-        if (error) {
-            log.error('delete_game', 'Failed to delete game', { game_id: gameId, user_id: user?.id }, error);
-            toast.error(t('toasts.deleted_error'));
-        } else {
-            toast.success(t('toasts.deleted_success'));
-            setActiveGames(prev => prev.filter(g => g.id !== gameId));
-            setCompletedGames(prev => prev.filter(g => g.id !== gameId));
-        }
-    };
-
-    const handleResetGame = async (gameId: string) => {
-        if (!confirm('Are you sure you want to RESET this game? This will clear all scores and return to texting mode.')) return;
-
-        try {
-            await fetch(`/api/game/${gameId}/action`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'reset_game' })
-            });
-            toast.success(t('toasts.reset_success'));
-        } catch (error) {
-            log.error('reset_game', 'Failed to reset game', { game_id: gameId, user_id: user?.id }, error);
-            toast.error(t('toasts.reset_error'));
-        }
-    };
+    const renderCard = (game: LobbyGame) => (
+        <GameCard
+            key={game.id}
+            game={game}
+            onArchive={actions.archiveGame}
+            onLeave={() => actions.setGameToLeave(game.id)}
+            onDelete={actions.deleteGame}
+            onReset={actions.resetGame}
+            isAdmin={isAdmin}
+        />
+    );
 
     return (
         <div className="max-w-4xl mx-auto space-y-12">
-            {/* Active Games Section */}
             <section>
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold text-purple-400">{t('title')}</h2>
@@ -387,187 +89,57 @@ export default function Lobby() {
                     </Button>
                 </div>
 
-                {gamesLoading ? (
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {[1, 2, 3].map((i) => (
-                            <div key={i} className="h-48 w-full bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse" />
-                        ))}
-                    </div>
+                {loading ? (
+                    <LobbySkeleton />
                 ) : (
                     <>
-                        {/* Daily Challenge Card */}
-                        <div className="mb-8 p-1">
-                            <button
-                                onClick={() => {
-                                    setIsDailyLoading(true);
-                                    router.push('/daily');
-                                }}
-                                disabled={isDailyLoading}
-                                className={`w-full group relative overflow-hidden rounded-2xl border transition-all duration-300 transform hover:scale-[1.01] hover:shadow-xl text-start cursor-pointer
-                        ${isDailyCompleted
-                                        ? 'bg-secondary/50 border-border opacity-80'
-                                        : 'bg-gradient-to-r from-amber-100 to-orange-100 dark:bg-none dark:bg-gray-900/40 border-orange-200 dark:border-amber-500/20'
-                                    }`}
-                            >
-                                <div className="p-6 flex items-center justify-between relative z-10">
-                                    <div className="flex items-center gap-4">
-                                        <div className={`p-3 rounded-xl ${isDailyCompleted ? 'bg-secondary' : 'bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg shadow-orange-500/20'}`}>
-                                            {isDailyCompleted ? <CheckCircle className="w-6 h-6 text-green-500" /> : <Calendar className="w-6 h-6" />}
-                                        </div>
-                                        <div>
-                                            <h3 className={`text-lg font-bold ${isDailyCompleted ? 'text-muted-foreground' : 'text-orange-900 dark:text-amber-100'}`}>
-                                                {isDailyCompleted ? t('daily.completed') : t('daily.title')}
-                                            </h3>
-                                            <p className={`text-sm ${isDailyCompleted ? 'text-muted-foreground' : 'text-orange-700 dark:text-gray-400'}`}>
-                                                {isDailyCompleted ? t('daily.completed_description') : t('daily.description')}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    {!isDailyCompleted && (
-                                        <div className="bg-white/80 dark:bg-white/10 p-2 rounded-full transition-opacity transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1">
-                                            {isDailyLoading ? (
-                                                <Loader2 className="w-5 h-5 text-orange-600 dark:text-amber-400 animate-spin" />
-                                            ) : (
-                                                <ArrowRight className="w-5 h-5 text-orange-600 dark:text-amber-400 rtl:rotate-180" />
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                                {!isDailyCompleted && (
-                                    // eslint-disable-next-line no-restricted-syntax -- TODO(rtl): decorative blur blob. Paired with a physical translate-x-1/2, so end-0 alone would push it the wrong way in RTL. Needs a design call on whether the ornament should mirror.
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 dark:bg-amber-400/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
-                                )}
-                            </button>
-                        </div>
+                        <DailyChallengeCard
+                            completed={isDailyCompleted}
+                            loading={isDailyLoading}
+                            onOpen={() => {
+                                setIsDailyLoading(true);
+                                router.push('/daily');
+                            }}
+                        />
 
-                        {activeGames.length > 0 ? (
+                        {active.length > 0 ? (
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                                {activeGames.map((game) => (
-                                    <GameCard
-                                        key={game.id}
-                                        game={game}
-                                        onArchive={handleArchive}
-                                        onLeave={() => setGameToLeave(game.id)}
-                                        onDelete={handleDeleteGame}
-                                        onReset={handleResetGame}
-                                        isAdmin={isAdmin}
-                                    />
-                                ))}
+                                {active.map(renderCard)}
                             </div>
                         ) : (
-                            <div className="flex flex-col items-center justify-center py-16 px-4 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-800 text-center animate-in fade-in zoom-in duration-500">
-                                <div className="bg-purple-100 dark:bg-purple-900/30 p-4 rounded-full mb-6 relative group">
-                                    <Sparkles className="w-10 h-10 text-purple-600 dark:text-purple-400 absolute -top-2 -right-2 animate-pulse" />
-                                    <MessageSquarePlus className="w-12 h-12 text-purple-600 dark:text-purple-400" />
-                                </div>
-                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                                    {t('empty.title')}
-                                </h3>
-                                <p className="text-gray-500 dark:text-gray-400 max-w-md mb-8 leading-relaxed">
-                                    {t('empty.description')}
-                                </p>
-                                <Button
-                                    onClick={() => setIsCreateOpen(true)}
-                                    size="lg"
-                                    className="text-lg px-8 py-6 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-xl shadow-purple-500/20 hover:shadow-purple-500/40 transition-all duration-300 transform hover:scale-105"
-                                >
-                                    <Sparkles className="w-5 h-5 me-2" />
-                                    {t('empty.button')}
-                                </Button>
-                            </div>
+                            <EmptyLobbyState onCreateGame={() => setIsCreateOpen(true)} />
                         )}
                     </>
                 )}
             </section>
 
-            {/* Completed Games Section */}
-            {completedGames.length > 0 && (
+            {completed.length > 0 && (
                 <section>
                     <h2 className="text-2xl font-bold text-green-400 mb-6">{t('past_games')}</h2>
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {completedGames.map((game) => (
-                            <GameCard
-                                key={game.id}
-                                game={game}
-                                onArchive={handleArchive}
-                                onLeave={() => setGameToLeave(game.id)}
-                                onDelete={handleDeleteGame}
-                                onReset={handleResetGame}
-                                isAdmin={isAdmin}
-                            />
-                        ))}
+                        {completed.map(renderCard)}
                     </div>
                 </section>
             )}
 
-            <Dialog open={!!gameToLeave} onOpenChange={(open) => !open && setGameToLeave(null)}>
-                <DialogContent className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white">
-                    <DialogHeader>
-                        <DialogTitle>{t('leave_dialog.title')}</DialogTitle>
-                        <DialogDescription className="text-gray-400">
-                            {t('leave_dialog.description')}
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                        <Button variant="ghost" onClick={() => setGameToLeave(null)} disabled={leaving}>{t('leave_dialog.cancel')}</Button>
-                        <Button variant="destructive" onClick={confirmLeave} disabled={leaving}>
-                            {leaving ? t('leave_dialog.leaving') : t('leave_dialog.submit')}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            {/* Create Game Dialog */}
-            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-                <DialogContent className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>{t('create_dialog.title')}</DialogTitle>
-                        <DialogDescription className="text-gray-400">
-                            {t('create_dialog.description')}
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="py-4">
-                        <Label className="text-base font-semibold mb-3 block">{t('create_dialog.game_length')}</Label>
-                        <div className="grid grid-cols-2 gap-3">
-                            {GAME_MODES.map((mode) => (
-                                <button
-                                    key={mode.id}
-                                    onClick={() => setSelectedModeId(mode.id)}
-                                    className={`
-                                        p-3 rounded-lg border text-start transition-all
-                                        ${selectedModeId === mode.id
-                                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 ring-1 ring-purple-500'
-                                            : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700'}
-                                    `}
-                                >
-                                    <div className={`font-bold ${selectedModeId === mode.id ? 'text-purple-700 dark:text-purple-300' : 'text-gray-900 dark:text-white'}`}>
-                                        {mode.name}
-                                    </div>
-                                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                        {t('create_dialog.max_messages', { count: mode.limit })}
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                        <div className="mt-4 text-xs text-gray-400 bg-gray-50 dark:bg-gray-800/50 p-3 rounded">
-                            {t('create_dialog.note')}
-                        </div>
-                    </div>
-
-                    <DialogFooter>
-                        <Button variant="ghost" onClick={() => setIsCreateOpen(false)} disabled={creating}>{t('create_dialog.cancel')}</Button>
-                        <Button onClick={createGame} disabled={creating} className="bg-purple-600 hover:bg-purple-700 text-white">
-                            {creating ? t('create_dialog.creating') : t('create_dialog.submit')}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <OnboardingTutorial
-                open={showTutorial}
-                onComplete={handleTutorialComplete}
+            <LeaveGameDialog
+                gameId={actions.gameToLeave}
+                leaving={actions.leaving}
+                onCancel={() => actions.setGameToLeave(null)}
+                onConfirm={actions.confirmLeave}
             />
+
+            <CreateGameDialog
+                open={isCreateOpen}
+                onOpenChange={setIsCreateOpen}
+                creating={creating}
+                onCreate={async (modeId) => {
+                    const gameId = await createGame(modeId);
+                    if (gameId) setIsCreateOpen(false);
+                }}
+            />
+
+            <OnboardingTutorial open={showTutorial} onComplete={completeTutorial} />
         </div>
     );
 }

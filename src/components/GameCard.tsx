@@ -17,29 +17,11 @@ import {
     TooltipTrigger
 } from "@/components/ui/tooltip";
 import { useTranslations, useFormatter } from "next-intl";
+import type { LobbyGame } from './lobby/types';
 
-type Game = {
-    id: string;
-    handle: number;
-    status: string;
-    mode: string;
-    created_at: string;
-    last_activity_at?: string;
-    max_messages: number;
-    message_count?: number; // Fetched from relationship
-    current_turn_user_id?: string;
-    players?: {
-        has_left: boolean;
-        is_archived: boolean;
-        user: {
-            username: string;
-            avatar_url: string;
-        };
-    }[];
-};
 
 interface GameCardProps {
-    game: Game;
+    game: LobbyGame;
     onArchive: (gameId: string) => void;
     onLeave: (gameId: string) => void;
     onDelete?: (gameId: string) => void;

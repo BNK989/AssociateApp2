@@ -185,25 +185,26 @@ This repo is managed by a single developer. Optimise for low ceremony.
 Measured 2026-08-21. These predate the rules above; they are exempt from
 "fix it now" but must not get worse.
 
-**Files over the 350-line cap (7).** Each is pinned at this exact length by the
+**Files over the 350-line cap (6).** Each is pinned at this exact length by the
 ratchet in [eslint.config.mjs](eslint.config.mjs) — see §2. Lower the pinned
 number whenever you shrink one.
 
-> Cleared so far (2026-08-21), both following the same shape — hooks for
+> Cleared so far (2026-08-21), all following the same shape — hooks for
 > behaviour, components for JSX, one pure tested module for the rules:
 >
 > - `ChatArea.tsx` **683 -> 150**, split into `src/components/game/chat/`
 >   (four hooks, five components, `messageFlags` + 22 tests).
 > - `InfoScreen.tsx` **589 -> 138**, split into `src/components/game/info/`
 >   (three hooks, six components, `resolveInfoSettings` + 7 tests).
+> - `Lobby.tsx` **573 -> 145**, split into `src/components/lobby/`
+>   (four hooks, four components, `formatLobbyGames` + 15 tests).
 >
-> Both ratchet entries are gone. Use them as the template for the rest.
+> Their ratchet entries are gone. Use them as the template for the rest.
 
 | Lines | Over by | File | Refactor notes |
 | ---: | ---: | :--- | :--- |
 | 1105 | +755 | `src/app/[locale]/daily/DailyGameClient.tsx` | Mixed concerns: state machine, persistence, hint logic, and a lot of JSX. Extract the JSX first — lowest risk. |
 | 1104 | +754 | `src/hooks/useGameLogic.ts` | The classic-mode engine. Realtime, turn rotation, scoring, sending. **Least test-covered load-bearing code in the repo — write tests before splitting.** |
-| 573 | +223 | `src/components/Lobby.tsx` | Game list, create dialog, and per-game actions. Three components. |
 | 572 | +222 | `src/app/api/game/[id]/action/route.ts` | One handler switching on ~10 actions; extract per-action handlers. |
 | 546 | +196 | `src/components/CipherText.tsx` | Animation state machine. Highest-risk file to touch — it masks the answers. Carries the two `set-state-in-effect` warnings. |
 | 525 | +175 | `src/components/game/GameHeader.tsx` | Scoreboard, timers, and the solve-proposal UI. |
@@ -223,20 +224,26 @@ enforced and green.
 | 0 | `no-restricted-syntax` (RTL) | error | cleared 2026-08-21, 3 annotated exceptions |
 | 0 | `no-console` | error | cleared 2026-08-21 |
 | 0 | `prefer-const`, `ban-ts-comment`, `no-require-imports`, `react/no-unescaped-entities`, `react-hooks/immutability`, `react-hooks/purity` | error | cleared 2026-08-21 |
-| 6 | `react-hooks/set-state-in-effect` | **warn** | deliberate, see below |
+| 9 | `react-hooks/set-state-in-effect` | **warn** | deliberate, see below |
 | 64 | `@typescript-eslint/no-unused-vars` | warn | |
 | 18 | `react-hooks/exhaustive-deps` | warn | |
 
 ### `react-hooks/set-state-in-effect` is warn, not error
 
 React 19's compiler lint flags every `setState` reachable from an effect body.
-The six current sites are all legitimate external-system synchronisation, which
+The nine current sites are all legitimate external-system synchronisation, which
 is what effects exist for:
 
-- `LandingPage` — reads `localStorage` on mount (unavailable during SSR).
+- `LandingPage`, `Lobby` — read `localStorage` on mount (unavailable during SSR).
 - `admin/posthog` — waits on the PostHog SDK to report readiness.
-- `NotificationCenter`, `InvitePlayer` — kick off a fetch / realtime subscription.
+- `NotificationCenter`, `InvitePlayer`, `useLobbyGames` — kick off a fetch /
+  realtime subscription.
+- `useOnboarding` — opens the tutorial once the profile has loaded.
 - `CipherText` (×2) — syncs animation state to changed props.
+
+The count rises as files are split, which is expected rather than alarming:
+extracting an inline closure into a named hook makes a setState the analyser
+could not previously trace visible to it. Nothing new is introduced.
 
 The `CipherText` pair are the only two worth revisiting: they are genuinely
 derived-state-in-an-effect, but untangling them means rewriting an animation
