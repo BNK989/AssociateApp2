@@ -212,7 +212,7 @@ Run the dev server through the Browser pane (`.claude/launch.json`, config
 Measured 2026-08-21. These predate the rules above; they are exempt from
 "fix it now" but must not get worse.
 
-**Files over the 350-line cap (4).** Each is pinned at this exact length by the
+**Files over the 350-line cap (3).** Each is pinned at this exact length by the
 ratchet in [eslint.config.mjs](eslint.config.mjs) — see §2. Lower the pinned
 number whenever you shrink one.
 
@@ -230,12 +230,13 @@ number whenever you shrink one.
 >   operations, `rules` + 22 tests).
 > - `GameHeader.tsx` **525 -> 249**, split into `src/components/game/header/`
 >   (two hooks, five components, `headerRules` + 21 tests).
+> - `DailyGameClient.tsx` **1105 -> 292**, split into `src/components/daily/`
+>   (six hooks) and `src/lib/daily/` (messages, scoring, storage + 39 tests).
 >
 > Their ratchet entries are gone. Use them as the template for the rest.
 
 | Lines | Over by | File | Refactor notes |
 | ---: | ---: | :--- | :--- |
-| 1105 | +755 | `src/app/[locale]/daily/DailyGameClient.tsx` | Mixed concerns: state machine, persistence, hint logic, and a lot of JSX. Extract the JSX first — lowest risk. |
 | 1104 | +754 | `src/hooks/useGameLogic.ts` | The classic-mode engine. Realtime, turn rotation, scoring, sending. **Least test-covered load-bearing code in the repo — write tests before splitting.** |
 | 546 | +196 | `src/components/CipherText.tsx` | Animation state machine. Highest-risk file to touch — it masks the answers. Carries the two `set-state-in-effect` warnings. |
 | 516 | +166 | `src/components/game/GameInput.tsx` | Input, hint menu, and the character counter. |
@@ -305,8 +306,12 @@ in Hebrew/Arabic (§13).
   flies into the header via `layoutId`, which is why the game stays usable.
   Confirmed pre-existing by testing the commit before the GameHeader split.
 - `GameHeader` accepts `loading`, `solvingTimeLeft` and `onRefresh` and reads
-  none of them. Marked `@deprecated` rather than removed, since the callers are
-  `DailyGameClient` and the game page — both still awaiting their own split.
+  none of them. Marked `@deprecated` rather than removed; `DailyGameClient` no
+  longer passes them, so only the classic game page still does.
+- `src/components/game/DailyGameTutorial.tsx` (100 lines) is orphaned. Its
+  `open` prop was wired to state that nothing ever set to true, so it could
+  never appear; the real tutorial is the walkthrough tour. Nothing imports it
+  now. Candidate for deletion.
 - `src/types/database.types.ts` (590 lines) is a generated artifact and is
   exempt from the §2 line cap.
 - Emojis in ~8 component files and in `messages/*.json` copy (10–13 per locale).

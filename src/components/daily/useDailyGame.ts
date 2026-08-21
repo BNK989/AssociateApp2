@@ -1,0 +1,286 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
+import type { Message } from '@/hooks/useGameLogic';
+import { calculateSimilarity, generateCipherString } from '@/lib/gameLogic';
+import { GAME_CONFIG } from '@/lib/gameConfig';
+import { createLogger } from '@/lib/logger';
+import {
+    buildInitialMessages,
+    countRemainingAfterSolve,
+    findTargetMessage,
+    LOCAL_USER_ID,
+} from '@/lib/daily/dailyMessages';
+import {
+    calculateSolvePoints,
+    getNextHintLevel,
+    MATCH_THRESHOLD,
+    MAX_HINT_LEVEL,
+    MAX_STRIKES,
+    needsScrambleVisuals,
+} from '@/lib/daily/dailyScoring';
+import { clearDailyGame, loadDailyGame, saveDailyGame } from '@/lib/daily/dailyStorage';
+
+const log = createLogger('daily/game');
+
+/** How long the "+points" flourish stays on a solved word. */
+const SOLVED_FLASH_MS = 1500;
+
+/** Shake duration on a wrong guess. */
+const SHAKE_MS = 500;
+
+/** Deliberate pause before resolving a guess, so the answer does not snap in. */
+const RESOLVE_DELAY_MS = 300;
+
+type UseDailyGameArgs = {
+    words: string[];
+    date: string;
+    initialHintLevel: number;
+    hints?: string[] | null;
+    connectionScores?: number[] | null;
+    onSolved?: (args: { word: string; points: number; totalScore: number; consecutive: number }) => void;
+    onCompleted?: (finalScore: number) => void;
+    playSuccessSound?: () => void;
+};
+
+/**
+ * The daily game's state machine: the word chain, the score, and the moves a
+ * player can make against it.
+ *
+ * Everything lives client-side and is mirrored to localStorage after each
+ * change — the daily game writes no rows, unlike classic mode.
+ */
+export function useDailyGame({
+    words,
+    date,
+    initialHintLevel,
+    hints,
+    connectionScores,
+    onSolved,
+    onCompleted,
+    playSuccessSound,
+}: UseDailyGameArgs) {
+    const t = useTranslations('GameRoom.Chat');
+
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [score, setScore] = useState(0);
+    const [consecutive, setConsecutive] = useState(0);
+    const [gameOver, setGameOver] = useState(false);
+    const [restoredComplete, setRestoredComplete] = useState(false);
+
+    const [input, setInput] = useState('');
+    const [sending, setSending] = useState(false);
+    const [shakeMessageId, setShakeMessageId] = useState<string | null>(null);
+    const [justSolvedData, setJustSolvedData] = useState<{ id: string; points: number } | null>(null);
+
+    const targetMessage = useMemo(() => findTargetMessage(messages), [messages]);
+
+    const fallbackHint = useCallback((word: string) => t('hint_fallback', {
+        length: word.length,
+        firstLetter: word[0].toUpperCase(),
+    }), [t]);
+
+    const freshMessages = useCallback(() => buildInitialMessages({
+        words,
+        initialHintLevel,
+        hints,
+        connectionScores,
+        fallbackHint,
+        animateStartWord: GAME_CONFIG.DAILY_GAME_ANIMATE_START_MESSAGE,
+    }), [words, initialHintLevel, hints, connectionScores, fallbackHint]);
+
+    // Restore the day's progress, or start a new chain.
+    useEffect(() => {
+        const restored = loadDailyGame(date, words);
+
+        if (restored) {
+            setMessages(restored.messages);
+            setScore(restored.score);
+            setConsecutive(restored.consecutive);
+            setGameOver(restored.gameOver);
+            setRestoredComplete(restored.gameOver);
+            return;
+        }
+
+        setMessages(freshMessages());
+    }, [date, words, freshMessages]);
+
+    // Mirror every change back to storage.
+    useEffect(() => {
+        if (messages.length === 0) return;
+        saveDailyGame(date, words, { messages, score, consecutive, gameOver });
+    }, [messages, score, consecutive, gameOver, date, words]);
+
+    const patchTarget = useCallback((id: string, updates: Partial<Message>) => {
+        setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, ...updates } : m)));
+    }, []);
+
+    const flashSolved = useCallback((id: string, points: number) => {
+        setJustSolvedData({ id, points });
+        setTimeout(() => setJustSolvedData(null), SOLVED_FLASH_MS);
+    }, []);
+
+    /** Marks a word solved for zero points and ends the game if it was the last. */
+    const finishWord = useCallback((message: Message, points: number) => {
+        patchTarget(message.id, {
+            is_solved: true,
+            solved_by: LOCAL_USER_ID,
+            winner_points: points,
+        });
+
+        if (countRemainingAfterSolve(messages, message.id) === 0) {
+            setGameOver(true);
+            return true;
+        }
+        return false;
+    }, [messages, patchTarget]);
+
+    const solve = useCallback((guess: string) => {
+        if (!targetMessage || gameOver) return;
+
+        const isMatch = calculateSimilarity(guess, targetMessage.content) >= MATCH_THRESHOLD;
+        setSending(true);
+
+        setTimeout(() => {
+            setSending(false);
+            setInput('');
+
+            if (!isMatch) {
+                const strikes = (targetMessage.strikes || 0) + 1;
+                patchTarget(targetMessage.id, {
+                    strikes,
+                    is_solved: strikes >= MAX_STRIKES,
+                    guesses: [...(targetMessage.guesses || []), guess],
+                });
+
+                setConsecutive(0);
+                setShakeMessageId(targetMessage.id);
+                setTimeout(() => setShakeMessageId(null), SHAKE_MS);
+
+                if (strikes >= MAX_STRIKES) {
+                    toast.error(t('toast_word_lost', { word: targetMessage.content }));
+                }
+                return;
+            }
+
+            playSuccessSound?.();
+
+            const points = calculateSolvePoints(targetMessage.content, targetMessage.hint_level, consecutive);
+            const totalScore = score + points;
+
+            setScore(totalScore);
+            setConsecutive((prev) => prev + 1);
+            flashSolved(targetMessage.id, points);
+
+            onSolved?.({
+                word: targetMessage.content,
+                points,
+                totalScore,
+                consecutive: consecutive + 1,
+            });
+
+            if (finishWord(targetMessage, points)) {
+                onCompleted?.(totalScore);
+            }
+        }, RESOLVE_DELAY_MS);
+    }, [
+        targetMessage, gameOver, consecutive, score, patchTarget, flashSolved,
+        finishWord, onSolved, onCompleted, playSuccessSound, t,
+    ]);
+
+    const giveUp = useCallback(() => {
+        if (!targetMessage || gameOver) return;
+
+        setConsecutive(0);
+        finishWord(targetMessage, 0);
+        setInput('');
+    }, [targetMessage, gameOver, finishWord]);
+
+    /**
+     * Advances the current word's hint level, generating the cipher and clue to
+     * match. Authored hints are preferred; a fetch is only attempted when the
+     * day's hints were not preloaded.
+     */
+    const revealHint = useCallback(async (fetchHint?: (index: number) => Promise<string | null>) => {
+        if (!targetMessage || gameOver) return;
+
+        const currentLevel = targetMessage.hint_level || 0;
+        if (currentLevel >= MAX_HINT_LEVEL) return;
+
+        const nextLevel = getNextHintLevel({
+            currentLevel,
+            word: targetMessage.content,
+            guesses: targetMessage.guesses || [],
+        });
+
+        const cipherLevel = Math.min(nextLevel, 2);
+        const newCipherText = nextLevel < MAX_HINT_LEVEL || needsScrambleVisuals(currentLevel, nextLevel)
+            ? generateCipherString(targetMessage.content, cipherLevel, true)
+            : (targetMessage.cipher_text || generateCipherString(targetMessage.content, 2, true));
+
+        const updates: Partial<Message> = { hint_level: nextLevel, cipher_text: newCipherText };
+
+        if (nextLevel === MAX_HINT_LEVEL) {
+            const index = words.indexOf(targetMessage.content);
+            let clue = hints?.[index] ?? fallbackHint(targetMessage.content);
+
+            if (!hints && fetchHint && index !== -1) {
+                try {
+                    clue = (await fetchHint(index)) ?? clue;
+                } catch (e) {
+                    log.error('fetch_hint', 'Failed to fetch AI hint', { play_date: date }, e);
+                }
+            }
+
+            updates.ai_hint = clue;
+        }
+
+        patchTarget(targetMessage.id, updates);
+    }, [targetMessage, gameOver, words, hints, fallbackHint, patchTarget, date]);
+
+    const reset = useCallback(() => {
+        clearDailyGame(date);
+        setMessages(freshMessages());
+        setScore(0);
+        setConsecutive(0);
+        setGameOver(false);
+        setRestoredComplete(false);
+        setInput('');
+        toast.success(t('toast_reset_success'));
+    }, [date, freshMessages, t]);
+
+    /** Admin shortcut: jump straight to the end-of-game state. */
+    const forceGameOver = useCallback(() => setGameOver(true), []);
+
+    // Solves the free starting word, used by the entry typing animation.
+    const solveStartWord = useCallback((id: string) => {
+        patchTarget(id, { is_solved: true, solved_by: LOCAL_USER_ID, winner_points: 0 });
+        flashSolved(id, 0);
+    }, [patchTarget, flashSolved]);
+
+    const solvedCount = useMemo(
+        () => messages.filter((m) => m.is_solved).length,
+        [messages],
+    );
+
+    return {
+        messages,
+        targetMessage,
+        score,
+        consecutive,
+        gameOver,
+        restoredComplete,
+        solvedCount,
+        input,
+        setInput,
+        sending,
+        shakeMessageId,
+        justSolvedData,
+        solve,
+        giveUp,
+        revealHint,
+        reset,
+        forceGameOver,
+        solveStartWord,
+    };
+}
