@@ -83,11 +83,8 @@ describe('Game Logic', () => {
             // In Scramble mode, index 0 is not guaranteed to be 'A' positionally.
             // But we should find at least the expected number of A's in the string.
 
-            let matches = 0;
-            const nonSpaces = longInput.split('').filter(c => c !== ' ').length;
-            for (let i = 0; i < cipher.length; i++) {
-                if (cipher[i] === 'A') matches++;
-            }
+            const nonSpaces = [...longInput].filter((c) => c !== ' ').length;
+            const matches = [...cipher].filter((c) => c === 'A').length;
 
             const expectedMatches = Math.ceil(nonSpaces * GAME_CONFIG.PERCENT_REVEALED_SHUFFLE_HINT);
             expect(matches).toBeGreaterThanOrEqual(expectedMatches);
@@ -97,16 +94,13 @@ describe('Game Logic', () => {
             const shortInput = "ABC"; // 3 chars
             const cipher = generateCipherString(shortInput, 2);
 
-            expect([...cipher].length).toBe(3);
-            // 3 * 0.66 = 1.98 -> ceil is 2.
-            let lettersFound = 0;
-            if (shortInput.includes(cipher[0])) lettersFound++;
-            if (shortInput.includes(cipher[1])) lettersFound++;
-            if (shortInput.includes(cipher[2])) lettersFound++;
+            // Iterate code points, not UTF-16 units: the cipher alphabet contains
+            // astral glyphs that occupy two units each.
+            const cipherChars = [...cipher];
+            expect(cipherChars).toHaveLength(3);
 
-            if (lettersFound < 2) {
-                console.log('FAIL DEBUG:', { cipher, shortInput, lettersFound, config: GAME_CONFIG.PERCENT_REVEALED_SHUFFLE_HINT });
-            }
+            // 3 * 0.66 = 1.98 -> ceil is 2.
+            const lettersFound = cipherChars.filter((c) => shortInput.includes(c)).length;
             expect(lettersFound).toBeGreaterThanOrEqual(2);
         });
 
