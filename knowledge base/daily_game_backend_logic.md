@@ -2,11 +2,15 @@
 
 This document details the technical implementation of the Daily Game mode in AssociateApp2, specifically focusing on data loading, game state management, and the role of backend services.
 
+> For the AI side of this flow - which model runs where, the exact prompts, the
+> parsing and fallback rules, and every function running on Supabase - see
+> [ai_and_server_functions.md](ai_and_server_functions.md).
+
 ## 1. How the Game Loads
 
 The Daily Game is unique compared to Classic Mode because it is primarily a **Client-Side** experience initialized with server-side data.
 
-### Loading Flow (`src/app/daily/page.tsx`)
+### Loading Flow (`src/app/[locale]/daily/page.tsx`)
 1.  **Server Component Execution**: When a user navigates to `/daily`, the request is handled by a Next.js Server Component.
 2.  **Date & Time**: The server determines the current date (UTC/Server time).
 3.  **Database Query & Dynamic Fallback**: The server queries the Supabase `daily_games` table:
@@ -19,7 +23,7 @@ The Daily Game is unique compared to Classic Mode because it is primarily a **Cl
 
 ### The `daily_games` Table
 The daily game content is pre-determined and stored in the `daily_games` table.
-*   **words**: A JSONB array of strings (e.g., `["Coffee", "Morning", "Sun"]`).
+*   **words**: A `text[]` array of strings (e.g., `["Coffee", "Morning", "Sun"]`).
 *   **play_date**: The specific date this chain is for.
 
 ## 2. Game State & Messages
@@ -27,7 +31,7 @@ The daily game content is pre-determined and stored in the `daily_games` table.
 **"Does it load it into messages?"**
 **No.** The Daily Game does **not** create rows in the backend `messages` table for the game session.
 
-### Client-Side Message Generation (`src/app/daily/DailyGameClient.tsx`)
+### Client-Side Message Generation (`src/app/[locale]/daily/DailyGameClient.tsx`)
 *   **Initialization**: Upon mounting, the `DailyGameClient` takes the `words` array prop and **generates** the message objects in-memory within the browser.
 *   **Mock Data**: It assigns a mock `id`, `user_id` ('daily-bot'), and timestamps to these messages to mimic the structure of a real game.
 *   **Local Persistence**: The game state (current score, consecutive streak, revealed messages) is saved to the user's **LocalStorage** (`daily_game_state_YYYY-MM-DD`). This allows the user to refresh the page and resume their daily game without needing a backend database write.
@@ -46,7 +50,8 @@ The "3rd Hint" (AI Hint) is generated in advance by a scheduled background job, 
 #### Generation (Cron Job)
 *   **Schedule**: Runs daily at 1:00 AM UTC via `pg_cron`.
 *   **Function**: Invokes the `generate-daily-hints` Edge Function.
-*   **Logic**: Checks for upcoming games (next 2 days) that are missing hints and uses Google Gemini to generate and save them.
+*   **Logic**: Checks upcoming games (today through today+3, batch of 10) that are missing
+    `hints` **or** `connection_scores`, and uses Google Gemini to generate and save both.
 
 #### Retrieval (`src/app/api/daily/hint/route.ts`)
 The API route now primarily acts as a gatekeeper:
@@ -56,6 +61,10 @@ The API route now primarily acts as a gatekeeper:
 3.  **Rate Limiting**: Checks the `api_usage` table to enforce:
     *   **Per Player Limit**: Max 5 hints per game.
     *   **Per IP Limit**: Max 100 hints per day (global safety).
+    *   > **Broken today.** The route uses the anon key against an RLS-enabled
+      > `api_usage` with no policies, so the counts always read 0 and the usage insert
+      > is silently rejected. Neither limit fires. See
+      > [ai_and_server_functions.md](ai_and_server_functions.md#5-ai-related-tables).
 4.  **Gemini Integation**: 
     *   **Primary**: Hints are pre-loaded in the `daily_games` table. The server simply returns the stored hint.
     *   **Fallback**: If hints are missing (cron failed), the client (via `page.tsx`) or server may trigger on-demand generation (legacy behavior retained for robustness).

@@ -1,4 +1,8 @@
-# Knowledge Base
+# Cron Jobs & Automated Maintenance
+
+Scheduled background work and how to verify it. The full inventory of Postgres
+functions, triggers and Edge Functions - and every AI call site - lives in
+[ai_and_server_functions.md](ai_and_server_functions.md).
 
 ## Classic Multiplayer Game Management
 
@@ -40,6 +44,11 @@ The system relies on Postgres Cron Jobs (`pg_cron`) running in the background.
 | `daily-cleanup` | `0 3 * * *` (3:00 AM) | `SELECT cleanup_games_logic()` | Archives inactive games (>72h) and deletes old ones (>7d). |
 | `delete-guest-users` | `0 4 * * *` (4:00 AM) | `SELECT delete_expired_guests()` | Deletes anonymous guest accounts older than 24 hours. |
 | `generate-daily-hints` | `0 1 * * *` (1:00 AM) | `net.http_post(...)` | Generates AI hints and **connection scores** for upcoming daily games. Uses `gemma-3-12b-it`. |
+
+> **Note:** cleanup runs as a *Postgres function*, not as an Edge Function.
+> `supabase/functions/cleanup-games/index.ts` exists in the repo but was never
+> deployed and is superseded by `cleanup_games_logic()`. Editing it changes nothing
+> in production.
 
 ### Hint Generation Logic (Edge Function)
 *   **Model**: `gemma-3-12b-it` (Google Gemini)
