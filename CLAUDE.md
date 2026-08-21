@@ -180,6 +180,33 @@ This repo is managed by a single developer. Optimise for low ceremony.
 
 ---
 
+## 15. Browser Testing
+
+The app has four first-run overlays that will cover the UI during an automated
+browser pass: the lobby onboarding dialog, the daily walkthrough tour, the
+welcome theme card, and the hint tooltip. **Assume one is in the way** — a blank
+or unresponsive-looking preview is far more often an overlay than a bug.
+
+Before testing a page, pre-seed the two localStorage keys, then navigate:
+
+```js
+localStorage.setItem('daily_tutorial_seen', 'true');
+localStorage.setItem('associ8-hint-tooltip-seen', 'true');
+```
+
+The welcome card is on a timer and cannot be skipped — wait ~3s after landing on
+`/daily` before reading the page or screenshotting. The onboarding dialog is
+gated on a **database** column, so localStorage will not clear it; click through
+it or ask the human (§13).
+
+Full inventory, gates, timings, and the Escape-does-not-persist trap:
+[knowledge base/testing_overlays.md](knowledge%20base/testing_overlays.md).
+
+Run the dev server through the Browser pane (`.claude/launch.json`, config
+`associate-dev`), never as a bare shell command.
+
+---
+
 ## Known Debt (grandfathered, tracked for cleanup)
 
 Measured 2026-08-21. These predate the rules above; they are exempt from
