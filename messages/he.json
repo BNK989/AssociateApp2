@@ -22,7 +22,8 @@
             "agreed": "הסכימו",
             "confirmed": "אושר",
             "confirm": "אשר",
-            "deny": "דחה"
+            "deny": "דחה",
+            "fever_mode": "מצב קדחת!"
         },
         "Input": {
             "placeholder": "הקלד הודעה...",

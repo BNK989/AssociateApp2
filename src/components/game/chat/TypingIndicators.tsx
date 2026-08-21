@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TypingIndicator } from '@/components/ui/TypingIndicator';
 import type { Player } from '@/hooks/useGameLogic';
-import { getInitials } from './avatarUtils';
+import { getInitials } from '@/lib/avatarUtils';
 
 type TypingIndicatorsProps = {
     typingUsers?: Set<string>;

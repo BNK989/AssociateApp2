@@ -16,7 +16,8 @@
             "agreed": "Zugestimmt",
             "confirmed": "Bestätigt",
             "confirm": "Bestätigen",
-            "deny": "Ablehnen"
+            "deny": "Ablehnen",
+            "fever_mode": "Fieber-Modus!"
         },
         "Input": {
             "placeholder": "Nachricht eingeben...",

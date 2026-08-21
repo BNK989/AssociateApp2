@@ -16,7 +16,8 @@
             "agreed": "De acord",
             "confirmed": "Confirmat",
             "confirm": "Confirmă",
-            "deny": "Refuză"
+            "deny": "Refuză",
+            "fever_mode": "Mod Febră!"
         },
         "Input": {
             "placeholder": "Scrie un mesaj...",

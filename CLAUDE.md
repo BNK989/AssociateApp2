@@ -185,7 +185,7 @@ This repo is managed by a single developer. Optimise for low ceremony.
 Measured 2026-08-21. These predate the rules above; they are exempt from
 "fix it now" but must not get worse.
 
-**Files over the 350-line cap (5).** Each is pinned at this exact length by the
+**Files over the 350-line cap (4).** Each is pinned at this exact length by the
 ratchet in [eslint.config.mjs](eslint.config.mjs) — see §2. Lower the pinned
 number whenever you shrink one.
 
@@ -201,6 +201,8 @@ number whenever you shrink one.
 > - `api/game/[id]/action/route.ts` **572 -> 82**, split into
 >   `src/lib/gameActions/` (a dispatch registry, six handlers, shared game-state
 >   operations, `rules` + 22 tests).
+> - `GameHeader.tsx` **525 -> 249**, split into `src/components/game/header/`
+>   (two hooks, five components, `headerRules` + 21 tests).
 >
 > Their ratchet entries are gone. Use them as the template for the rest.
 
@@ -209,7 +211,6 @@ number whenever you shrink one.
 | 1105 | +755 | `src/app/[locale]/daily/DailyGameClient.tsx` | Mixed concerns: state machine, persistence, hint logic, and a lot of JSX. Extract the JSX first — lowest risk. |
 | 1104 | +754 | `src/hooks/useGameLogic.ts` | The classic-mode engine. Realtime, turn rotation, scoring, sending. **Least test-covered load-bearing code in the repo — write tests before splitting.** |
 | 546 | +196 | `src/components/CipherText.tsx` | Animation state machine. Highest-risk file to touch — it masks the answers. Carries the two `set-state-in-effect` warnings. |
-| 525 | +175 | `src/components/game/GameHeader.tsx` | Scoreboard, timers, and the solve-proposal UI. |
 | 516 | +166 | `src/components/game/GameInput.tsx` | Input, hint menu, and the character counter. |
 
 Approaching the cap and worth watching: `NotificationCenter.tsx` (349 — one line
@@ -271,6 +272,14 @@ in Hebrew/Arabic (§13).
 - Pre-existing hydration mismatch on `/[locale]`: Radix `useId` values differ
   between server and client for the footer language `Select` and the
   `FeedbackForm` `Dialog`. Verified unrelated to the debug-mode work.
+- The daily game's welcome overlay never unmounts. Its `AnimatePresence` exit
+  variant sets a transition but no animatable property, so the root stays
+  mounted after the 2.5s timer fires; only the backdrop fades. The theme text
+  flies into the header via `layoutId`, which is why the game stays usable.
+  Confirmed pre-existing by testing the commit before the GameHeader split.
+- `GameHeader` accepts `loading`, `solvingTimeLeft` and `onRefresh` and reads
+  none of them. Marked `@deprecated` rather than removed, since the callers are
+  `DailyGameClient` and the game page — both still awaiting their own split.
 - `src/types/database.types.ts` (590 lines) is a generated artifact and is
   exempt from the §2 line cap.
 - Emojis in ~8 component files and in `messages/*.json` copy (10–13 per locale).

@@ -22,7 +22,8 @@
             "agreed": "Agreed",
             "confirmed": "Confirmed",
             "confirm": "Confirm",
-            "deny": "Deny"
+            "deny": "Deny",
+            "fever_mode": "Fever Mode!"
         },
         "Input": {
             "placeholder": "Type a message...",

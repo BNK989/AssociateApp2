@@ -16,7 +16,8 @@
             "agreed": "Accepté",
             "confirmed": "Confirmé",
             "confirm": "Confirmer",
-            "deny": "Refuser"
+            "deny": "Refuser",
+            "fever_mode": "Mode Fièvre !"
         },
         "Input": {
             "placeholder": "Tapez un message...",

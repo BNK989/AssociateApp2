@@ -16,7 +16,8 @@
             "agreed": "موافق",
             "confirmed": "تم التأكيد",
             "confirm": "تأكيد",
-            "deny": "رفض"
+            "deny": "رفض",
+            "fever_mode": "وضع الحماس!"
         },
         "Input": {
             "placeholder": "اكتب رسالة...",

@@ -2,7 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { CipherText } from '@/components/CipherText';
 import type { GameState, Message } from '@/hooks/useGameLogic';
-import { getAvatarColor, getInitials } from './avatarUtils';
+import { getAvatarColor, getInitials } from '@/lib/avatarUtils';
 import { deriveMessageFlags, shouldShowStrikeLabel } from './messageFlags';
 import {
     AiHintPanel,

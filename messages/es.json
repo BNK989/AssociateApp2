@@ -16,7 +16,8 @@
             "agreed": "Acordado",
             "confirmed": "Confirmado",
             "confirm": "Confirmar",
-            "deny": "Denegar"
+            "deny": "Denegar",
+            "fever_mode": "¡Modo Fiebre!"
         },
         "Input": {
             "placeholder": "Escribe un mensaje...",
