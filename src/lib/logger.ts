@@ -143,6 +143,14 @@ export function normalizeError(error: unknown): NormalizedError | undefined {
     return { name: 'UnknownError', message: safeStringify(error) };
 }
 
+/**
+ * Best-effort human-readable message from an unknown thrown value. Use in
+ * `catch (error: unknown)` blocks instead of widening the binding to `any`.
+ */
+export function getErrorMessage(error: unknown, fallback = 'Unknown error'): string {
+    return normalizeError(error)?.message ?? fallback;
+}
+
 function safeStringify(value: unknown): string {
     try {
         return JSON.stringify(value) ?? String(value);

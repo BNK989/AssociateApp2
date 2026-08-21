@@ -192,7 +192,7 @@ export function EndGamePopover({ open, onClose, players, messages, gameId, gameH
                         onClick={handleShare}
                         className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-2 px-8 rounded-full shadow-lg transform transition hover:scale-105 flex items-center justify-center gap-2"
                     >
-                        <Share2 className="w-4 h-4 rtl:ml-2 rtl:scale-x-[-1]" />
+                        <Share2 className="w-4 h-4 rtl:me-2 rtl:scale-x-[-1]" />
                         {t('btn_share')}
                     </Button>
                     <Button

@@ -27,9 +27,11 @@ type DailyGameClientProps = {
 
 // Mock User for Daily Game
 const MEST_USER_ID = 'me';
+import type { User } from '@supabase/supabase-js';
+
 const BOT_USER_ID = 'daily-bot';
 
-const MOCK_USER = {
+const MOCK_USER: User = {
     id: MEST_USER_ID,
     email: 'guest@daily.game',
     user_metadata: {
@@ -977,7 +979,7 @@ function DailyGameBoard({ dailyWords, date, theme, initialHints, initialConnecti
         >
             <GameHeader
                 game={gameState}
-                user={MOCK_USER as any}
+                user={MOCK_USER}
                 players={players}
                 loading={false}
                 proposalTimeLeft={null}
@@ -1048,8 +1050,7 @@ function DailyGameBoard({ dailyWords, date, theme, initialHints, initialConnecti
 
             <ChatArea
                 messages={messages}
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                user={MOCK_USER as any}
+                user={MOCK_USER}
                 game={gameState}
                 messagesEndRef={messagesEndRef}
                 targetMessage={targetMessage}
@@ -1062,8 +1063,7 @@ function DailyGameBoard({ dailyWords, date, theme, initialHints, initialConnecti
 
             <GameInput
                 game={gameState}
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                user={MOCK_USER as any}
+                user={MOCK_USER}
                 players={players}
                 input={input}
                 setInput={setInput}

@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { getErrorMessage } from '@/lib/logger';
 
 export async function GET(
     request: Request,
@@ -91,8 +92,8 @@ export async function GET(
             timestamp: new Date().toISOString()
         });
 
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error("Game Fetch API Error:", err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 });
     }
 }

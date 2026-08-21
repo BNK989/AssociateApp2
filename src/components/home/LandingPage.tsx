@@ -45,19 +45,19 @@ function DailyChallengeButton() {
         >
             {isLoading ? (
                 <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    <Loader2 className="w-5 h-5 me-2 animate-spin" />
                     {t('daily_loading')}
                 </>
             ) : isCompleted ? (
                 <>
-                    <CheckCircle className="w-5 h-5 mr-2 text-green-500" />
+                    <CheckCircle className="w-5 h-5 me-2 text-green-500" />
                     {t('daily_completed')}
                 </>
             ) : (
                 <>
-                    <Calendar className="w-5 h-5 mr-2" />
+                    <Calendar className="w-5 h-5 me-2" />
                     {t('daily_button')}
-                    <ArrowRight className="w-4 h-4 ml-2 opacity-70 group-hover:translate-x-1 transition-transform rtl:rotate-180 rtl:mr-2 rtl:ml-0" />
+                    <ArrowRight className="w-4 h-4 ms-2 opacity-70 group-hover:translate-x-1 transition-transform rtl:rotate-180" />
                     <span className="absolute inset-0 rounded-md ring-2 ring-white/20 group-hover:ring-white/40 transition-all" />
                 </>
             )}
@@ -139,7 +139,7 @@ export default function LandingPage() {
                             onClick={() => document.getElementById('auth-form')?.scrollIntoView({ behavior: 'smooth' })}
                             className="bg-transparent border-primary/20 hover:bg-primary/5 hover:border-primary/40 text-foreground min-w-[200px]"
                         >
-                            <span className="mr-2 rtl:ml-2 rtl:mr-0">{t('hero.login_button')}</span>
+                            <span className="me-2">{t('hero.login_button')}</span>
                             <ArrowRight className="w-4 h-4 opacity-70 rtl:rotate-180" />
                         </Button>
                     </motion.div>

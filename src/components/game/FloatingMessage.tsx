@@ -24,7 +24,7 @@ export function FloatingMessage({ data, onComplete }: FloatingMessageProps) {
     const t = useTranslations('GameRoom.Chat');
 
     return (
-        <div className="absolute top-20 left-0 right-0 z-40 overflow-hidden pointer-events-none pb-2 h-16 flex items-center">
+        <div className="absolute top-20 inset-x-0 z-40 overflow-hidden pointer-events-none pb-2 h-16 flex items-center">
             <motion.div
                 initial={{ x: '100vw' }}
                 animate={{ x: '-100%' }}

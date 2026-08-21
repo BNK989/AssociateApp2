@@ -15,11 +15,12 @@ import { useTranslations } from 'next-intl';
 import { LanguagePicker } from '../LanguagePicker';
 import { GAME_CONFIG } from '@/lib/gameConfig';
 import { Input } from "@/components/ui/input";
+import type { User } from '@supabase/supabase-js';
 
 type InfoScreenProps = {
     game: GameState;
     players: Player[];
-    user: any;
+    user: User | null;
     onClose: () => void;
     theme?: string;
     date?: string;
@@ -94,7 +95,7 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
 
                 if (error) throw error;
                 await refreshProfile();
-            } catch (e: any) {
+            } catch (e: unknown) {
                 console.error("Settings save error:", e);
                 // Silent fail or toast
             } finally {
@@ -395,9 +396,9 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                                         >
                                             {duration === 0 ? t('auto_hint_immediate') : `${duration}s`}
                                             {isPickerOpen ? (
-                                                <X className="w-3 h-3 ml-2 text-gray-500" />
+                                                <X className="w-3 h-3 ms-2 text-gray-500" />
                                             ) : (
-                                                <ChevronRight className="w-3 h-3 ml-1 transition-transform duration-200" />
+                                                <ChevronRight className="w-3 h-3 ms-1 transition-transform duration-200" />
                                             )}
                                         </Button>
                                     )}
@@ -519,7 +520,7 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                                         </DialogTitle>
                                     </DialogHeader>
 
-                                    {displayInstructions.map((item: any, i: number) => (
+                                    {displayInstructions.map((item: { title: string; text: string }, i: number) => (
                                         <div key={i} className="space-y-1">
                                             <h4 className="font-bold text-sm text-gray-900 dark:text-gray-100">{item.title}</h4>
                                             <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
@@ -570,7 +571,7 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
                                 size="lg"
                                 onClick={handleShare}
                             >
-                                <Share className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0 rtl:scale-x-[-1]" />
+                                <Share className="w-5 h-5 me-2 rtl:scale-x-[-1]" />
                                 {t('share_results')}
                             </Button>
                         )}

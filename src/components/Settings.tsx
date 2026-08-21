@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Volume2 } from 'lucide-react';
 import DebugSettings from '@/components/settings/DebugSettings';
+import { getErrorMessage } from '@/lib/logger';
 
 export default function Settings() {
     const t = useTranslations('Settings');
@@ -89,19 +90,9 @@ export default function Settings() {
             setAvatarUrl(publicUrl);
             setMessage(t('upload_success'));
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Upload error details:', error);
-            let errorMessage = t('upload_error_generic');
-
-            if (error instanceof Error) {
-                errorMessage = error.message;
-            } else if (typeof error === 'object' && error !== null && 'message' in error) {
-                errorMessage = (error as any).message;
-            } else if (typeof error === 'string') {
-                errorMessage = error;
-            } else {
-                errorMessage = JSON.stringify(error);
-            }
+            const errorMessage = getErrorMessage(error, t('upload_error_generic'));
 
             setMessage(t('upload_error', { message: errorMessage }));
         } finally {

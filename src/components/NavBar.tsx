@@ -100,7 +100,7 @@ export function NavBar() {
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                                     <Avatar className="h-8 w-8 border border-gray-200 dark:border-gray-700">
-                                        <AvatarImage src={profile?.avatar_url} alt={profile?.username} />
+                                        <AvatarImage src={profile?.avatar_url ?? undefined} alt={profile?.username ?? undefined} />
                                         <AvatarFallback className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-white text-xs">
                                             {getInitials(profile?.username || user?.user_metadata?.username || t('guest_badge'))}
                                         </AvatarFallback>

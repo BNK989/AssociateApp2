@@ -8,10 +8,11 @@ import { GameState, Player, Message } from '@/hooks/useGameLogic';
 import { Progress } from "@/components/ui/progress";
 import { InfoScreen } from './InfoScreen';
 import { useTranslations } from 'next-intl';
+import type { User } from '@supabase/supabase-js';
 
 type GameHeaderProps = {
     game: GameState;
-    user: any;
+    user: User | null;
     players: Player[];
     loading: boolean;
     proposalTimeLeft: number | null;
@@ -407,6 +408,7 @@ export function GameHeader({
                         <div className="relative w-full">
                             <Progress value={isFeverMode ? 100 : teamFlowProgress} className={`h-1.5 ${isFeverMode ? 'animate-pulse' : ''}`} />
                             {isFeverMode && (
+                                // eslint-disable-next-line no-restricted-syntax -- left-1/2 with -translate-x-1/2 is the direction-neutral centering idiom; start-1/2 would break it in RTL.
                                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] uppercase font-black text-orange-500 tracking-widest animate-bounce">
                                     Fever Mode!
                                 </span>
@@ -431,7 +433,7 @@ export function GameHeader({
                         </span>
                     </div>
                     <div className="flex gap-2">
-                        {game.solve_proposal_confirmations?.includes(user?.id) ? (
+                        {game.solve_proposal_confirmations?.includes(user?.id ?? '') ? (
                             <button
                                 disabled
                                 className="px-3 py-1 bg-gray-400 dark:bg-gray-600 rounded text-xs font-bold text-white cursor-not-allowed"

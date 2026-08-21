@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthProvider';
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { getErrorMessage } from '@/lib/logger';
 
 export default function TestPlayground() {
     const { user } = useAuth();
@@ -37,8 +38,8 @@ export default function TestPlayground() {
 
             setGameId(game.id);
             toast.success(`Test Game Created: ${game.id}`);
-        } catch (error: any) {
-            toast.error(error.message);
+        } catch (error: unknown) {
+            toast.error(getErrorMessage(error));
         } finally {
             setLoading(false);
         }
@@ -62,8 +63,8 @@ export default function TestPlayground() {
             const { error } = await supabase.from('messages').insert(messages);
             if (error) throw error;
             toast.success(`Added ${count} messages`);
-        } catch (error: any) {
-            toast.error(error.message);
+        } catch (error: unknown) {
+            toast.error(getErrorMessage(error));
         } finally {
             setLoading(false);
         }

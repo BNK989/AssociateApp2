@@ -22,6 +22,8 @@ Agent-specific rule files (`.agent/rules/`, `.agents/rules/`) defer to this docu
 - **Soft cap: 350 lines per file.** Crossing it is the signal to refactor — extract
   sub-components, custom hooks, or utility modules.
 - New files must not be created over the cap.
+- **Generated files are exempt** (e.g. `src/types/database.types.ts`). Never
+  hand-edit them; regenerate instead.
 - Existing over-cap files are grandfathered (see §11) but must not grow. If you
   touch one, leave it smaller than you found it where practical.
 
@@ -184,23 +186,35 @@ Measured 2026-08-21. These predate the rules above; they are exempt from
 
 **Other open items:**
 
-`npm run lint` is currently **red**. Exact counts from ESLint on 2026-08-21:
+`npm run lint` reports **21 errors, 226 warnings**. All 21 errors pre-date the
+rules in this document; the §1 and §7 backlogs are cleared.
 
 | Count | Rule | Severity | Note |
 | ---: | :--- | :--- | :--- |
-| 56 | `@typescript-eslint/no-explicit-any` | error | §1 backlog, ~20 files |
-| 40 | `no-restricted-syntax` (RTL) | error | §7 backlog, 15 files, all outside `ui/` |
-| 21 | assorted (`prefer-const`, `ban-ts-comment`, `react-hooks/*`, …) | error | pre-dates these rules |
+| 0 | `@typescript-eslint/no-explicit-any` | error | cleared 2026-08-21 |
+| 0 | `no-restricted-syntax` (RTL) | error | cleared 2026-08-21, 3 annotated exceptions |
+| 21 | `prefer-const`, `ban-ts-comment`, `react-hooks/*`, `react/no-unescaped-entities`, `no-require-imports` | error | pre-dates these rules |
 | 140 | `no-console` | warn | §8 migration to `src/lib/logger.ts` |
 | 64 | `@typescript-eslint/no-unused-vars` | warn | |
+| 19 | `react-hooks/exhaustive-deps` | warn | |
 
-The 40 RTL violations are mostly mechanical (`mr-2` → `me-2`, `ml-2` → `ms-2`),
-but roughly 10 need a design decision rather than a substitution: `left-1/2` used
-with `-translate-x-1/2` for centering, paired `left-auto`/`right-auto` overrides,
-and the `rounded-tl/br/bl-*` chat-bubble corners, which should flip in RTL.
-Those need a Hebrew QA pass before changing (§13).
+**Three RTL sites remain physical**, each annotated inline with an
+`eslint-disable-next-line no-restricted-syntax` and a reason. Grep `TODO(rtl)`:
+
+- `Lobby.tsx` — decorative blur blob, `right-0` paired with `translate-x-1/2`.
+- `DailyEndGamePopover.tsx` — decorative watermark icon, offset by `translate-x-4`.
+- `GameHeader.tsx` — `left-1/2` + `-translate-x-1/2` centering. This one is
+  genuinely direction-neutral and correct as written; the rule flags it anyway.
+
+The first two need a design call on whether decorative ornaments should mirror
+in Hebrew/Arabic (§13).
 
 - 1 non-TS source file: `scripts/debug-profiles.js`.
+- Pre-existing hydration mismatch on `/[locale]`: Radix `useId` values differ
+  between server and client for the footer language `Select` and the
+  `FeedbackForm` `Dialog`. Verified unrelated to the debug-mode work.
+- `src/types/database.types.ts` (590 lines) is a generated artifact and is
+  exempt from the §2 line cap.
 - Emojis in ~8 component files and in `messages/*.json` copy (10–13 per locale).
 - Migration history drift: `add_message_type` and `create_translation_generations`
   exist as local files but were applied by hand and are absent from remote history;

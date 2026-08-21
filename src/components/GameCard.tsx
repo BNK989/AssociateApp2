@@ -95,10 +95,10 @@ export default function GameCard({
                             game.status === 'completed' ? 'bg-green-900/80 text-green-200 border border-green-700' :
                                 'bg-blue-900/80 text-blue-200 border border-blue-700'
                             }`}>
-                            {t(`status.${game.status}` as any)}
+                            {t(`status.${game.status}` as Parameters<typeof t>[0])}
                         </span>
                         {isMyTurn && (
-                            <span className="bg-green-500 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full shadow-lg animate-pulse ml-2">
+                            <span className="bg-green-500 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full shadow-lg animate-pulse ms-2">
                                 {t('your_turn')}
                             </span>
                         )}
@@ -128,7 +128,7 @@ export default function GameCard({
                     {/* Footer: Players & CTA */}
                     <div className="mt-auto flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700/50">
                         {/* Player Avatars */}
-                        <div className="flex items-center pl-2">
+                        <div className="flex items-center ps-2">
                             {displayPlayers.map((player, index) => (
                                 <div
                                     key={index}

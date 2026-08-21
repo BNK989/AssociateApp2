@@ -368,16 +368,16 @@ export function GameInput({
             >
                 {isAutoHintActive && (
                     <DropdownMenuItem onClick={() => onToggleHintPause && onToggleHintPause()}>
-                        {isHintPaused ? <Play className="w-4 h-4 mr-2" /> : <Pause className="w-4 h-4 mr-2" />}
+                        {isHintPaused ? <Play className="w-4 h-4 me-2" /> : <Pause className="w-4 h-4 me-2" />}
                         {isHintPaused ? "Resume Auto Hint" : "Pause Auto Hint"}
                     </DropdownMenuItem>
                 )}
                 <DropdownMenuItem onClick={() => onGiveUp && onGiveUp()} className="text-red-600 focus:text-red-600">
-                    <Flag className="w-4 h-4 mr-2" />
+                    <Flag className="w-4 h-4 me-2" />
                     {t('give_up')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onOpenSettings && onOpenSettings()}>
-                    <SettingsIcon className="w-4 h-4 mr-2" />
+                    <SettingsIcon className="w-4 h-4 me-2" />
                     Settings
                 </DropdownMenuItem>
             </DropdownMenuContent>
@@ -478,7 +478,7 @@ export function GameInput({
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter') {
                                         e.preventDefault();
-                                        onSendMessage(e as any);
+                                        onSendMessage(e as unknown as React.FormEvent);
                                     }
                                 }}
                                 onFocus={handleInteraction}
@@ -504,7 +504,7 @@ export function GameInput({
 
                         <button
                             type="button"
-                            onClick={(e) => onSendMessage(e as any)}
+                            onClick={(e) => onSendMessage(e as unknown as React.FormEvent)}
                             disabled={isSubmitDisabled}
                             onMouseDown={(e) => e.preventDefault()}
                             className={`h-10 w-10 flex items-center justify-center rounded-lg text-white font-bold shrink-0 transition-colors ${game.status === 'solving' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-green-600 hover:bg-green-700'} ${isSubmitDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}

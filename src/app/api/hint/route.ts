@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import type { MessageRow } from '@/types/app';
 import { createClient } from '@supabase/supabase-js';
 import { GAME_CONFIG } from '@/lib/gameConfig';
 
@@ -74,7 +75,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Failed to fetch messages' }, { status: 500 });
         }
 
-        const targetIndex = messages.findIndex((m: any) => m.id === targetMessageId);
+        const targetIndex = messages.findIndex((m: MessageRow) => m.id === targetMessageId);
         if (targetIndex === -1) {
             return NextResponse.json({ error: 'Target message not found' }, { status: 404 });
         }

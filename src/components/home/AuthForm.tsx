@@ -13,6 +13,7 @@ import { useAuth } from '@/context/AuthProvider';
 import { clearAuthCookies } from '@/app/actions/auth';
 import { getURL } from '@/lib/utils';
 import { useTranslations, useLocale } from 'next-intl';
+import { getErrorMessage } from '@/lib/logger';
 
 export default function AuthForm() {
     const t = useTranslations('Auth');
@@ -44,9 +45,9 @@ export default function AuthForm() {
                 }
             });
             if (error) throw error;
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Google login error:", error);
-            setMessage(error.message || "Failed to initiate Google login.");
+            setMessage(getErrorMessage(error, "Failed to initiate Google login."));
             setLoadingMethod(null);
         }
     };
@@ -115,12 +116,12 @@ export default function AuthForm() {
             }
 
             // AuthProvider should detect the session change and we should be good to go
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Guest login error:", err);
-            setMessage(err.message || "Failed to sign in as guest.");
+            setMessage(getErrorMessage(err, "Failed to sign in as guest."));
             setLoadingMethod(null); // Only set loading false on error, otherwise we want to show loading until redirect/reload
             // If it's the "Anonymous sign-ins are disabled" error, we should probably tell the user.
-            if (err.message && err.message.includes("Anonymous")) {
+            if (getErrorMessage(err).includes("Anonymous")) {
                 setMessage(t('guest_disabled'));
             }
         }
@@ -164,7 +165,7 @@ export default function AuthForm() {
                         disabled={loadingMethod !== null}
                     >
                         {loadingMethod === 'google' ? (
-                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                            <Loader2 className="me-2 h-5 w-5 animate-spin" />
                         ) : (
                             <svg className="w-5 h-5" viewBox="0 0 24 24">
                                 <path
@@ -214,7 +215,7 @@ export default function AuthForm() {
                             />
                         </div>
                         <Button type="submit" className="w-full" disabled={loadingMethod !== null}>
-                            {loadingMethod === 'email' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4 rtl:ml-2 rtl:mr-0" />}
+                            {loadingMethod === 'email' ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : <Mail className="me-2 h-4 w-4" />}
                             {t('magic_link_button')}
                         </Button>
                     </form>
@@ -242,7 +243,7 @@ export default function AuthForm() {
                             />
                         </div>
                         <Button type="submit" variant="secondary" className="w-full" disabled={loadingMethod !== null || !guestUsername.trim()}>
-                            {loadingMethod === 'guest' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <User className="mr-2 h-4 w-4 rtl:ml-2 rtl:mr-0" />}
+                            {loadingMethod === 'guest' ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : <User className="me-2 h-4 w-4" />}
                             {t('guest_button')}
                         </Button>
                     </form>

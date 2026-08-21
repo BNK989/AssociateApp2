@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 
 const CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
 // Special chars used for hinting (must match gameLogic.ts)
@@ -398,7 +398,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
     if (scrambleItems && !visible) {
         return (
             <motion.span dir={dir} className={`${className} break-words inline-flex flex-wrap gap-1`}>
-                {showColons && <span className="mr-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
+                {showColons && <span className="me-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
                 {scrambleItems.map((item, i) => {
                     const shouldFloat = item.isReal && !visible;
                     const isFirst = i === 0;
@@ -416,7 +416,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                             layout
                             key={item.id}
                             custom={i}
-                            variants={floatVariant as any}
+                            variants={floatVariant as Variants}
                             animate={shouldFloat ? "float" : undefined}
                             className={`inline-block ${item.isSpace ? 'whitespace-pre' : ''} ${item.isReal
                                 ? `font-bold mx-0.5 drop-shadow-[0_0_2px_rgba(255,255,255,0.5)] ${colorClass}`
@@ -433,7 +433,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                         </motion.span>
                     )
                 })}
-                {showColons && <span className="ml-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
+                {showColons && <span className="ms-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
             </motion.span>
         );
     }
@@ -443,7 +443,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
 
     return (
         <motion.span dir={dir} className={`${className} break-words inline-flex flex-wrap ${(visible || hintLevel >= 1 || isSolving) ? '[&>span:first-child]:uppercase' : ''} ${isSolving ? 'gap-1' : ''}`}>
-            {showColons && <span className="mr-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
+            {showColons && <span className="me-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
             {displayChars.map((char, i) => {
                 // textChars[i] correct? YES if displayChars and textChars are aligned by code point.
                 // Assuming display matches length of text in code points.
@@ -490,7 +490,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                         key={`${i}-${renderChar}`}
                         custom={isEffectiveMatch ? i : isEffectiveMatch}
                         animate={isJustRevealed ? "pop" : (hintLevel >= 2 && isEffectiveMatch && !visible) ? "float" : undefined}
-                        variants={isJustRevealed ? popVariant : floatVariant as any}
+                        variants={(isJustRevealed ? popVariant : floatVariant) as Variants}
                         className={`inline-block ${char === ' ' ? 'whitespace-pre' : ''} ${isEffectiveMatch
                             ? `font-bold drop-shadow-[0_0_2px_rgba(255,255,255,0.5)] ${colorClass || 'text-inherit'} ${(hintLevel >= 2 && !visible) ? 'mx-0.5' : ''}`
                             : `${colorClass}`
@@ -500,7 +500,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                     </motion.span>
                 );
             })}
-            {showColons && <span className="ml-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
+            {showColons && <span className="ms-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
         </motion.span >
     );
 }

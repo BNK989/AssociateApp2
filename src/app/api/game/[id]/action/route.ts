@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server';
 import { GAME_CONFIG } from '@/lib/gameConfig';
 import { calculateNextTurnUserId } from '@/lib/gameLogic';
 import { getPostHogServer } from '@/app/posthog-server'; // We might need to move this or duplicate logic if it's not server-ready, but let's assume util usage or implement inline.
+import { getErrorMessage, normalizeError } from '@/lib/logger';
 // Actually, calculateNextTurnUserId is in lib/gameLogic, let's verify if that file is clean for server usage. It usually is.
 
 
@@ -477,9 +478,9 @@ export async function POST(
                         } else {
                             console.error('[Hint Debug] CRITICAL: Missing GEMINI_KEY or GEMINI_API_KEY environment variable!');
                         }
-                    } catch (e: any) {
-                        console.error('[Hint Debug] Hint Exception:', e.toString());
-                        if (e.cause) console.error('[Hint Debug] Cause:', e.cause);
+                    } catch (e: unknown) {
+                        console.error('[Hint Debug] Hint Exception:', getErrorMessage(e));
+                        if (e instanceof Error && e.cause) console.error('[Hint Debug] Cause:', e.cause);
                     }
                 } else {
                     console.warn('[Hint Debug] Msg Content missing for targetId:', targetId);
@@ -558,11 +559,12 @@ export async function POST(
 
         return NextResponse.json({ success: true });
 
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error("Action API Error:", err);
-        const errorMessage = err?.message || (err instanceof Error ? err.message : 'Unknown error');
+        const normalized = normalizeError(err);
+        const errorMessage = normalized?.message ?? 'Unknown error';
         // Include full error details if available (e.g. Supabase error hint/details)
-        const errorDetails = err?.details || err?.hint || undefined;
+        const errorDetails = normalized?.details ?? normalized?.hint ?? undefined;
         return NextResponse.json({ error: errorMessage, details: errorDetails }, { status: 500 });
     }
 }

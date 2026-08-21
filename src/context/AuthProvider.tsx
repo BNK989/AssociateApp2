@@ -1,7 +1,8 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { User, Session, Subscription } from '@supabase/supabase-js';
+import type { Profile } from '@/types/app';
 import { supabase } from '@/lib/supabase';
 import { useTheme } from 'next-themes';
 
@@ -11,7 +12,7 @@ type AuthContextType = {
     user: User | null;
     session: Session | null;
     loading: boolean;
-    profile: any | null;
+    profile: Profile | null;
     signOut: () => Promise<void>;
     refreshProfile: () => Promise<void>;
 };
@@ -30,7 +31,7 @@ export const useAuth = () => useContext(AuthContext);
 export default function AuthProvider({ children, initialSession = null }: { children: React.ReactNode; initialSession?: Session | null }) {
     const [user, setUser] = useState<User | null>(initialSession?.user ?? null);
     const [session, setSession] = useState<Session | null>(initialSession);
-    const [profile, setProfile] = useState<any | null>(null);
+    const [profile, setProfile] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(!initialSession);
     const { setTheme } = useTheme();
     const [lastSyncedTheme, setLastSyncedTheme] = useState<string | null>(null);
@@ -62,7 +63,7 @@ export default function AuthProvider({ children, initialSession = null }: { chil
     // Let's restructure to match React best practices for async effects.
     useEffect(() => {
         let mounted = true;
-        let subscription: any = null;
+        let subscription: Subscription | null = null;
 
         const init = async () => {
              // If we have an initial session, ensure we fetch the profile if needed

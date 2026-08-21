@@ -12,13 +12,13 @@ describe('i18n Consistency', () => {
         .readdirSync(messagesDir)
         .filter((file) => file.endsWith('.json') && file !== 'en.json');
 
-    const flattenKeys = (obj: any, prefix = ''): string[] => {
+    const flattenKeys = (obj: Record<string, unknown>, prefix = ''): string[] => {
         return Object.keys(obj).reduce((acc: string[], key) => {
             const value = obj[key];
             const newKey = prefix ? `${prefix}.${key}` : key;
 
             if (value && typeof value === 'object' && !Array.isArray(value)) {
-                return acc.concat(flattenKeys(value, newKey));
+                return acc.concat(flattenKeys(value as Record<string, unknown>, newKey));
             } else {
                 return acc.concat(newKey);
             }

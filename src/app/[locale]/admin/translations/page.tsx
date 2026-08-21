@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { getErrorMessage } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,7 +62,7 @@ export default async function AdminTranslationsPage({
     }
 
     // 3. Data Fetching - Logs (Wait for Promise.all map) - Optimization: Fetch all logs for date range first
-    let generationLogs: any[] = [];
+    let generationLogs: { game_id: string; locale: string; generated_at: string }[] = [];
     try {
         const { data: logs } = await supabase
             .from('translation_generations')
@@ -91,8 +92,8 @@ export default async function AdminTranslationsPage({
                         locale
                     );
                 }) as TranslatedGameData | null;
-            } catch (e: any) {
-                if (e.message !== 'CACHE_MISS_PEEK') {
+            } catch (e: unknown) {
+                if (getErrorMessage(e) !== 'CACHE_MISS_PEEK') {
                     console.error(`Unexpected error in ${locale} translation check:`, e);
                 }
             }

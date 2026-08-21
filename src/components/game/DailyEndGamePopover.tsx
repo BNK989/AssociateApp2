@@ -118,6 +118,7 @@ export function DailyEndGamePopover({ open, score, totalWords, date, onClose }: 
 
                     {/* Upsell Card */}
                     <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-4 border border-indigo-100 dark:border-indigo-800/30 relative overflow-hidden group">
+                        {/* eslint-disable-next-line no-restricted-syntax -- TODO(rtl): decorative watermark icon, offset by a physical translate-x-4. Needs a design call on whether the ornament should mirror. */}
                         <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
                             <Users className="w-24 h-24 text-indigo-500 transform rotate-12 translate-x-4 -translate-y-4" />
                         </div>

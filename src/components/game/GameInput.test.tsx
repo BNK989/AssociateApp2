@@ -1,7 +1,16 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { GameInput } from './GameInput';
-import { GameState } from '@/hooks/useGameLogic';
+import { GameState, Message, Player } from '@/hooks/useGameLogic';
+import type { User } from '@supabase/supabase-js';
+
+/** Minimal prop shape shared by the stubbed-out UI components below. */
+type MockComponentProps = {
+    children?: React.ReactNode;
+    className?: string;
+    onClick?: React.MouseEventHandler;
+    disabled?: boolean;
+};
 
 // Mock Lucide icons
 vi.mock('lucide-react', () => ({
@@ -18,13 +27,13 @@ vi.mock('lucide-react', () => ({
 // Mock Framer Motion
 vi.mock('framer-motion', () => ({
     motion: {
-        button: ({ children, onClick, disabled }: any) => (
+        button: ({ children, onClick, disabled }: MockComponentProps) => (
             <button onClick={onClick} disabled={disabled}>{children}</button>
         ),
-        div: ({ children, className }: any) => <div className={className}>{children}</div>,
-        rect: ({ className }: any) => <rect className={className} />,
+        div: ({ children, className }: MockComponentProps) => <div className={className}>{children}</div>,
+        rect: ({ className }: MockComponentProps) => <rect className={className} />,
     },
-    AnimatePresence: ({ children }: any) => <div>{children}</div>,
+    AnimatePresence: ({ children }: MockComponentProps) => <div>{children}</div>,
 }));
 
 // Mock Sonner
@@ -70,10 +79,10 @@ vi.mock('@/components/ui/badge', () => ({
 }));
 
 vi.mock('@/components/ui/dropdown-menu', () => ({
-    DropdownMenu: ({ children }: any) => <div>{children}</div>,
-    DropdownMenuTrigger: ({ children }: any) => <div>{children}</div>,
-    DropdownMenuContent: ({ children }: any) => <div>{children}</div>,
-    DropdownMenuItem: ({ children, onClick }: any) => <div onClick={onClick}>{children}</div>,
+    DropdownMenu: ({ children }: MockComponentProps) => <div>{children}</div>,
+    DropdownMenuTrigger: ({ children }: MockComponentProps) => <div>{children}</div>,
+    DropdownMenuContent: ({ children }: MockComponentProps) => <div>{children}</div>,
+    DropdownMenuItem: ({ children, onClick }: MockComponentProps) => <div onClick={onClick}>{children}</div>,
 }));
 
 describe('GameInput Character Counter', () => {
@@ -88,8 +97,8 @@ describe('GameInput Character Counter', () => {
             status: 'solving',
             current_turn_user_id: 'user1',
         } as GameState,
-        user: { id: 'user1' } as any,
-        players: [{ user_id: 'user1', profiles: { username: 'User 1' } }] as any[],
+        user: { id: 'user1' } as unknown as User,
+        players: [{ user_id: 'user1', profiles: { username: 'User 1' } }] as unknown as Player[],
         input: '',
         setInput: mockSetInput,
         sending: false,
@@ -100,7 +109,7 @@ describe('GameInput Character Counter', () => {
             user_id: 'user2',
             hint_level: 0,
             guesses: [],
-        } as any,
+        } as unknown as Message,
         onSendMessage: mockOnSendMessage,
         onGetHint: mockOnGetHint,
         onGiveUp: mockOnGiveUp,
@@ -142,7 +151,7 @@ describe('GameInput Character Counter', () => {
                 hint_level: 1,
             },
             input: 'test', // 4
-        } as any;
+        };
 
         render(<GameInput {...props} />);
 

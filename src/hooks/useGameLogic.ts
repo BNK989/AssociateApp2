@@ -13,6 +13,7 @@ import {
 } from '@/lib/gameLogic';
 import { toast } from "sonner";
 import { COMMON_WORDS } from '@/lib/commonWords';
+import { getErrorMessage } from '@/lib/logger';
 
 
 export type FloatingAnimationData = {
@@ -129,7 +130,7 @@ export function useGameLogic(gameId: string) {
 
             // Access Control
             if (user && data.players) {
-                const isPlayer = data.players.some((p: any) => p.user_id === user.id);
+                const isPlayer = data.players.some((p: Player) => p.user_id === user.id);
                 if (!isPlayer) {
                     toast.error("You are not part of this game!");
                     router.push('/');
@@ -257,7 +258,7 @@ export function useGameLogic(gameId: string) {
                         if (!prev || prev.status === 'solving' || prev.status === 'completed') return prev;
 
                         const currentPlayers = playersRef.current;
-                        const senderId = (payload.new as any).user_id;
+                        const senderId = (payload.new as Message).user_id;
 
                         // Use shared logic
                         const activePlayers = currentPlayers.filter(p => !p.has_left);
@@ -277,7 +278,7 @@ export function useGameLogic(gameId: string) {
                         fetchGameData();
                     }
                 } else if (payload.eventType === 'UPDATE') {
-                    const updatedMessage = payload.new as any;
+                    const updatedMessage = payload.new as Message;
                     const oldMessage = messages.find(m => m.id === updatedMessage.id);
 
                     setMessages(prev => prev.map(m => m.id === updatedMessage.id ? { ...m, ...updatedMessage } : m));
@@ -288,7 +289,7 @@ export function useGameLogic(gameId: string) {
                         const isSteal = updatedMessage.solved_by &&
                             updatedMessage.user_id &&
                             updatedMessage.solved_by !== updatedMessage.user_id &&
-                            updatedMessage.winner_points > 0;
+                            (updatedMessage.winner_points ?? 0) > 0;
 
                         if (isSteal) {
                             // Determine who stole it for the animation
@@ -333,7 +334,7 @@ export function useGameLogic(gameId: string) {
                         if (updatedMessage.solved_by === user.id) {
                             // I am determining the points I earned.
                             // If I am the solver, use winner_points.
-                            const points = updatedMessage.winner_points;
+                            const points = updatedMessage.winner_points ?? 0;
                             if (points > 0) {
                                 setJustSolvedMessageId({ id: updatedMessage.id, points: points });
                                 setTimeout(() => setJustSolvedMessageId(null), 3000);
@@ -341,7 +342,7 @@ export function useGameLogic(gameId: string) {
                         } else if (updatedMessage.user_id === user.id) {
                             // I am the author. Did I get points?
                             // If it was a steal, I get author_points.
-                            const points = updatedMessage.author_points;
+                            const points = updatedMessage.author_points ?? 0;
                             if (points > 0) {
                                 setJustSolvedMessageId({ id: updatedMessage.id, points: points });
                                 setTimeout(() => setJustSolvedMessageId(null), 3000);
@@ -828,16 +829,16 @@ export function useGameLogic(gameId: string) {
 
                         return true;
 
-                    } catch (fetchErr: any) {
+                    } catch (fetchErr: unknown) {
                         clearTimeout(timeoutId);
-                        if (fetchErr.name === 'AbortError') {
+                        if (fetchErr instanceof Error && fetchErr.name === 'AbortError') {
                             throw new Error('Request timed out');
                         }
                         throw fetchErr;
                     }
 
-                } catch (err: any) {
-                    console.error("Attempt failed:", err.message || err);
+                } catch (err: unknown) {
+                    console.error("Attempt failed:", getErrorMessage(err));
                     if (attempt < MAX_RETRIES) {
                         console.log(`Retry attempt ${attempt + 1}/${MAX_RETRIES}`);
                         await new Promise(r => setTimeout(r, 500 * Math.pow(2, attempt))); // Exponential backoff
@@ -928,9 +929,9 @@ export function useGameLogic(gameId: string) {
 
             fetchGameData();
 
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Failed to start random game:", err);
-            toast.error(err.message || "Failed to start random game");
+            toast.error(getErrorMessage(err, "Failed to start random game"));
             // Revert optimistic update? For now just let it be or filter it out if we had a real ID system
         } finally {
             setSending(false);

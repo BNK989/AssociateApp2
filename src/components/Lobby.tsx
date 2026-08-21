@@ -381,7 +381,7 @@ export default function Lobby() {
                         disabled={creating}
                         className="bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 transition-all duration-300 transform hover:-translate-y-0.5"
                     >
-                        <Plus className="w-4 h-4 mr-2" />
+                        <Plus className="w-4 h-4 me-2" />
                         {t('new_game')}
                     </Button>
                 </div>
@@ -433,6 +433,7 @@ export default function Lobby() {
                                     )}
                                 </div>
                                 {!isDailyCompleted && (
+                                    // eslint-disable-next-line no-restricted-syntax -- TODO(rtl): decorative blur blob. Paired with a physical translate-x-1/2, so end-0 alone would push it the wrong way in RTL. Needs a design call on whether the ornament should mirror.
                                     <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 dark:bg-amber-400/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
                                 )}
                             </button>
@@ -469,7 +470,7 @@ export default function Lobby() {
                                     size="lg"
                                     className="text-lg px-8 py-6 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-xl shadow-purple-500/20 hover:shadow-purple-500/40 transition-all duration-300 transform hover:scale-105"
                                 >
-                                    <Sparkles className="w-5 h-5 mr-2" />
+                                    <Sparkles className="w-5 h-5 me-2" />
                                     {t('empty.button')}
                                 </Button>
                             </div>
@@ -533,7 +534,7 @@ export default function Lobby() {
                                     key={mode.id}
                                     onClick={() => setSelectedModeId(mode.id)}
                                     className={`
-                                        p-3 rounded-lg border text-left transition-all
+                                        p-3 rounded-lg border text-start transition-all
                                         ${selectedModeId === mode.id
                                             ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 ring-1 ring-purple-500'
                                             : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700'}

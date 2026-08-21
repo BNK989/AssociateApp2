@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import type { TablesInsert } from '@/types/database.types';
 import { createClient } from '@supabase/supabase-js';
 import { GAME_CONFIG } from '@/lib/gameConfig';
 import { headers } from 'next/headers';
@@ -140,7 +141,7 @@ export async function POST(request: Request) {
         }
 
         // 5. Track Usage
-        const usageData: any = {
+        const usageData: TablesInsert<'api_usage'> = {
             game_id: gameId,
             endpoint: 'daily_hint',
             ip_hash: ipHash

@@ -20,7 +20,7 @@ export default function PrivacyPage() {
                     <h2 className="text-xl font-semibold mb-3">{t('sections.2.title')}</h2>
                     <p className="text-muted-foreground">
                         {t('sections.2.content')}
-                        <ul className="list-disc list-inside ml-4 mt-2">
+                        <ul className="list-disc list-inside ms-4 mt-2">
                             <li>{t('sections.2.list.1')}</li>
                             <li>{t('sections.2.list.2')}</li>
                             <li>{t('sections.2.list.3')}</li>

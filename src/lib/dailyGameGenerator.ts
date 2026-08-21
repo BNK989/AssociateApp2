@@ -172,7 +172,7 @@ Return ONLY a valid JSON object matching this structure:
                 parsed.hints.length === parsed.words.length
             ) {
                 const connection_scores = Array.isArray(parsed.connection_scores) && parsed.connection_scores.length === parsed.words.length
-                    ? parsed.connection_scores.map((s: any) => typeof s === 'number' ? Math.max(0.1, Math.min(1.0, s)) : 0.8)
+                    ? parsed.connection_scores.map((s: unknown) => typeof s === 'number' ? Math.max(0.1, Math.min(1.0, s)) : 0.8)
                     : parsed.words.map(() => 0.85);
 
                 return {

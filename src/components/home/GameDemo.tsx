@@ -88,8 +88,8 @@ export default function GameDemo() {
                                     "max-w-[80%] px-4 py-2 rounded-2xl text-sm shadow-sm",
                                     msg.type === 'system' ? "bg-muted text-muted-foreground text-xs font-medium uppercase tracking-wider" :
                                         msg.type === 'success' ? "bg-green-500/10 text-green-600 border border-green-200 dark:border-green-900 font-bold flex items-center gap-2" :
-                                            msg.align === 'right' ? "bg-primary text-primary-foreground rounded-br-sm" :
-                                                "bg-secondary text-secondary-foreground rounded-bl-sm"
+                                            msg.align === 'right' ? "bg-primary text-primary-foreground rounded-ee-sm" :
+                                                "bg-secondary text-secondary-foreground rounded-es-sm"
                                 )}
                             >
                                 {msg.type === 'user' && (

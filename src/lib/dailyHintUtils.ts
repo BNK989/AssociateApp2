@@ -94,8 +94,14 @@ export async function generateDailyHints(words: string[], theme: string): Promis
             return null;
         }
 
+        interface RawHint {
+            word?: string;
+            hint?: string;
+            score?: number;
+        }
+
         const hintsMap = new Map<string, { hint: string, score: number }>();
-        rawHints.forEach((item: any) => {
+        rawHints.forEach((item: RawHint) => {
             if (item && item.word && item.hint) {
                 hintsMap.set(item.word.toLowerCase().trim(), {
                     hint: item.hint,

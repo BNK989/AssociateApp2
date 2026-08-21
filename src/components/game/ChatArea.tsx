@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CipherText } from '@/components/CipherText';
-import { Message, GameState } from '@/hooks/useGameLogic';
+import { Message, GameState, Player } from '@/hooks/useGameLogic';
 import { generateCipherString } from '@/lib/gameLogic';
 import { User } from '@supabase/supabase-js';
 import { toast } from "sonner";
@@ -24,6 +24,7 @@ import { GameBackground } from './GameBackground';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Shuffle, X, Check } from "lucide-react";
 import { useTranslations } from 'next-intl';
+import { getErrorMessage } from '@/lib/logger';
 
 type ChatAreaProps = {
     messages: Message[];
@@ -35,7 +36,7 @@ type ChatAreaProps = {
     justSolvedData?: { id: string; points: number } | null;
     onStartRandom?: () => void;
     typingUsers?: Set<string>;
-    players?: any[];
+    players?: Player[];
     floatingAnimation?: AnimationData | null;
     onAnimationComplete?: () => void;
     onTestEndSequence?: () => void;
@@ -94,9 +95,9 @@ export function ChatArea({
                 }
                 toast.success(`Hint ${hintType} triggered`);
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(`Admin action ${action} failed:`, error);
-            toast.error(`Action failed: ${error.message}`);
+            toast.error(`Action failed: ${getErrorMessage(error)}`);
         }
     };
 
@@ -302,7 +303,7 @@ export function ChatArea({
                                 <AvatarImage src={player?.profiles?.avatar_url} />
                                 <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">{getInitials(username)}</AvatarFallback>
                             </Avatar>
-                            <div className="bg-gray-100 dark:bg-neutral-800 rounded-2xl rounded-tl-none px-3 py-2 shadow-sm">
+                            <div className="bg-gray-100 dark:bg-neutral-800 rounded-2xl rounded-ss-none px-3 py-2 shadow-sm">
                                 <TypingIndicator />
                             </div>
                         </div>
@@ -439,7 +440,7 @@ export function ChatArea({
                                                 />
                                                 {/* Connection Score Indicator (Context Signal) - Hidden for now based on user feedback */}
                                                 {game.status === 'solving' && targetMessage?.id === msg.id && typeof msg.connection_score === 'number' && (
-                                                    <div className="hidden absolute -top-3 left-2 z-10 rtl:right-2 rtl:left-auto items-center gap-1.5 px-2 py-0.5 rounded-full bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 animate-in fade-in slide-in-from-bottom-2">
+                                                    <div className="hidden absolute -top-3 start-2 z-10 items-center gap-1.5 px-2 py-0.5 rounded-full bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 animate-in fade-in slide-in-from-bottom-2">
                                                         {/* Signal Icons based on score */}
                                                         {msg.connection_score >= 0.85 ? (
                                                             <span className="text-green-500 text-[10px]" title={t('link_strong')}>●●●</span>
@@ -465,7 +466,7 @@ export function ChatArea({
                                                             layout: { duration: 0.3, type: "spring", bounce: 0 },
                                                             opacity: { duration: 0.2 }
                                                         }}
-                                                        className={`absolute bottom-0.5 left-1 z-10 rtl:right-1 rtl:left-auto ${(msg.hint_level === 3 || msg.ai_hint) ? 'scale-75 origin-bottom-left rtl:origin-bottom-right' : ''}`}
+                                                        className={`absolute bottom-0.5 start-1 z-10 ${(msg.hint_level === 3 || msg.ai_hint) ? 'scale-75 origin-bottom-left rtl:origin-bottom-right' : ''}`}
                                                     >
                                                         <TooltipProvider delayDuration={0}>
                                                             <Tooltip>
@@ -504,7 +505,7 @@ export function ChatArea({
                                                     <motion.div
                                                         initial={{ opacity: 0, scale: 0.5 }}
                                                         animate={{ opacity: 1, scale: 1 }}
-                                                        className="absolute bottom-1 right-1 flex items-center gap-1 z-10 rtl:left-1 rtl:right-auto"
+                                                        className="absolute bottom-1 end-1 flex items-center gap-1 z-10"
                                                     >
                                                         {isCorrect ? (
                                                             // Success State
@@ -575,7 +576,7 @@ export function ChatArea({
                                                                 <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                                                                 <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                                                                 <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                                                                <span className="ml-1">{t('consulting_ai')}</span>
+                                                                <span className="ms-1">{t('consulting_ai')}</span>
                                                             </div>
                                                         ) : (
                                                             <div className="flex items-start gap-1.5 animate-in fade-in duration-300">

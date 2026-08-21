@@ -2,7 +2,11 @@ export async function register() {
     // No-op for initialization
 }
 
-export const onRequestError = async (err: any, request: Request, context: any) => {
+export const onRequestError = async (
+    err: unknown,
+    request: Request,
+    context: unknown,
+) => {
     if (process.env.NEXT_RUNTIME === 'nodejs') {
         const { getPostHogServer } = await import('./app/posthog-server')
         const posthog = getPostHogServer()
