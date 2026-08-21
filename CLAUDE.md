@@ -19,13 +19,28 @@ Agent-specific rule files (`.agent/rules/`, `.agents/rules/`) defer to this docu
 
 ## 2. File Size
 
-- **Soft cap: 350 lines per file.** Crossing it is the signal to refactor — extract
+- **Cap: 350 lines per file.** Crossing it is the signal to refactor — extract
   sub-components, custom hooks, or utility modules.
 - New files must not be created over the cap.
 - **Generated files are exempt** (e.g. `src/types/database.types.ts`). Never
   hand-edit them; regenerate instead.
-- Existing over-cap files are grandfathered (see §11) but must not grow. If you
-  touch one, leave it smaller than you found it where practical.
+
+### Enforced by a ratchet, not by good intentions
+
+`max-lines` is wired as an **error** in [eslint.config.mjs](eslint.config.mjs).
+Nine files predate the cap; each is pinned in `GRANDFATHERED_MAX_LINES` to its
+exact current length. They may shrink. They may not grow — adding a single line
+to one fails `npm run lint`.
+
+**The workflow when you shrink one:** lower its number in
+`GRANDFATHERED_MAX_LINES` in the same commit. That locks in the win and makes
+the next regression fail. Once a file drops under 350, delete its entry.
+
+Never add an entry. A new file lands under the cap or it does not land.
+
+> This rule was prose until 2026-08-21 and it drifted: eight of the nine
+> grandfathered files grew during the logging migration, +21 lines in total,
+> and nothing caught it. Hence the ratchet.
 
 ## 3. Icons & Emojis
 
@@ -170,19 +185,24 @@ This repo is managed by a single developer. Optimise for low ceremony.
 Measured 2026-08-21. These predate the rules above; they are exempt from
 "fix it now" but must not get worse.
 
-**Files over the 350-line cap (9):**
+**Files over the 350-line cap (9).** Each is pinned at this exact length by the
+ratchet in [eslint.config.mjs](eslint.config.mjs) — see §2. Lower the pinned
+number whenever you shrink one.
 
-| Lines | File |
-| ---: | :--- |
-| 1102 | `src/app/[locale]/daily/DailyGameClient.tsx` |
-| 1101 | `src/hooks/useGameLogic.ts` |
-| 680 | `src/components/game/ChatArea.tsx` |
-| 586 | `src/components/game/InfoScreen.tsx` |
-| 571 | `src/components/Lobby.tsx` |
-| 568 | `src/app/api/game/[id]/action/route.ts` |
-| 537 | `src/components/CipherText.tsx` |
-| 523 | `src/components/game/GameHeader.tsx` |
-| 519 | `src/components/game/GameInput.tsx` |
+| Lines | Over by | File | Refactor notes |
+| ---: | ---: | :--- | :--- |
+| 1105 | +755 | `src/app/[locale]/daily/DailyGameClient.tsx` | Mixed concerns: state machine, persistence, hint logic, and a lot of JSX. Extract the JSX first — lowest risk. |
+| 1104 | +754 | `src/hooks/useGameLogic.ts` | The classic-mode engine. Realtime, turn rotation, scoring, sending. **Least test-covered load-bearing code in the repo — write tests before splitting.** |
+| 683 | +333 | `src/components/game/ChatArea.tsx` | Message list + bubble rendering + admin actions. Bubble extracts cleanly. |
+| 589 | +239 | `src/components/game/InfoScreen.tsx` | Several unrelated panels behind one dialog; split per panel. |
+| 573 | +223 | `src/components/Lobby.tsx` | Game list, create dialog, and per-game actions. Three components. |
+| 572 | +222 | `src/app/api/game/[id]/action/route.ts` | One handler switching on ~10 actions; extract per-action handlers. |
+| 546 | +196 | `src/components/CipherText.tsx` | Animation state machine. Highest-risk file to touch — it masks the answers. Carries the two `set-state-in-effect` warnings. |
+| 525 | +175 | `src/components/game/GameHeader.tsx` | Scoreboard, timers, and the solve-proposal UI. |
+| 516 | +166 | `src/components/game/GameInput.tsx` | Input, hint menu, and the character counter. |
+
+Approaching the cap and worth watching: `NotificationCenter.tsx` (349 — one line
+of headroom) and `Settings.tsx` (304).
 
 **Other open items:**
 

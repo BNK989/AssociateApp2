@@ -28,6 +28,39 @@ const rtlRestrictedSyntax = [
   },
 ];
 
+/**
+ * CLAUDE.md §2 size ratchet.
+ *
+ * Every entry is a file that predates the 350-line cap, pinned to its exact
+ * current length. It may shrink; it may not grow. When you refactor one below
+ * its number, lower the number in the same commit — that locks in the win.
+ * Delete the entry entirely once the file is under 350.
+ *
+ * Do not add entries. New files land under the cap or they do not land.
+ *
+ * Paths use `**` rather than literal `[locale]` / `[id]` because square brackets
+ * are character classes in the glob syntax ESLint matches with.
+ */
+const GRANDFATHERED_MAX_LINES = {
+  "src/app/**/daily/DailyGameClient.tsx": 1105,
+  "src/hooks/useGameLogic.ts": 1104,
+  "src/components/game/ChatArea.tsx": 683,
+  "src/components/game/InfoScreen.tsx": 589,
+  "src/components/Lobby.tsx": 573,
+  "src/app/api/game/**/action/route.ts": 572,
+  "src/components/CipherText.tsx": 546,
+  "src/components/game/GameHeader.tsx": 525,
+  "src/components/game/GameInput.tsx": 516,
+};
+
+const sizeRatchet = Object.entries(GRANDFATHERED_MAX_LINES).map(([file, max]) => ({
+  name: `associateapp/size-ratchet/${file}`,
+  files: [file],
+  rules: {
+    "max-lines": ["error", { max, skipBlankLines: false, skipComments: false }],
+  },
+}));
+
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
@@ -38,6 +71,10 @@ const eslintConfig = defineConfig([
     rules: {
       // CLAUDE.md §1 — no `any`. Use `unknown` and narrow, or write an interface.
       "@typescript-eslint/no-explicit-any": "error",
+
+      // CLAUDE.md §2 — 350-line cap. Grandfathered files are pinned to their
+      // current size in the ratchet block below, so they can shrink but not grow.
+      "max-lines": ["error", { max: 350, skipBlankLines: false, skipComments: false }],
 
       // CLAUDE.md §7 — RTL safety.
       "no-restricted-syntax": ["error", ...rtlRestrictedSyntax],
@@ -83,6 +120,19 @@ const eslintConfig = defineConfig([
       "no-console": "off",
     },
   },
+
+  {
+    // Generated artifacts are regenerated wholesale, never hand-edited (§2).
+    name: "associateapp/generated",
+    files: ["src/types/database.types.ts"],
+    rules: {
+      "max-lines": "off",
+    },
+  },
+
+  // Per-file size ceilings for the pre-cap files. Must come after the block that
+  // sets the global 350 default so these win.
+  ...sizeRatchet,
 
   // Override default ignores of eslint-config-next.
   globalIgnores([
