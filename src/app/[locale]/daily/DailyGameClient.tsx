@@ -450,7 +450,7 @@ function DailyGameBoard({ dailyWords, date, theme, initialHints, initialConnecti
                 if (parsed && parsed.dailyWordsJSON === JSON.stringify(dailyWords)) {
                     // Sanitize: Fix old state where Level 0 cipher length was randomized
                     const sanitizedMessages = parsed.messages.map((m: Message) => {
-                        let newMessage = { ...m };
+                        const newMessage = { ...m };
                         if (m.hint_level === 0 && (m.cipher_text?.length ?? 0) !== m.content.length) {
                             newMessage.cipher_text = generateCipherString(m.content, 0, true);
                         }

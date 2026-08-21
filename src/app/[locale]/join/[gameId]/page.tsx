@@ -155,7 +155,7 @@ function JoinGameContent() {
                         <h1 className="text-2xl font-bold">Game Invitation</h1>
                         <p className="text-gray-600 dark:text-gray-400">
                             {invitedBy
-                                ? <span>You've been invited to play with <span className="font-semibold text-purple-600 dark:text-purple-400">{invitedBy}</span>!</span>
+                                ? <span>You&apos;ve been invited to play with <span className="font-semibold text-purple-600 dark:text-purple-400">{invitedBy}</span>!</span>
                                 : "You've been invited to join a game of Associate."
                             }
                         </p>
@@ -173,7 +173,7 @@ function JoinGameContent() {
                         </button>
 
                         <p className="text-xs text-gray-500">
-                            Don't have an account? You can play as a guest!
+                            Don&apos;t have an account? You can play as a guest!
                         </p>
                     </div>
                 </div>

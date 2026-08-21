@@ -16,7 +16,7 @@ const intlMiddleware = createMiddleware(routing);
 
 export async function proxy(request: NextRequest) {
     // 1. Run next-intl middleware first to handle routing and locals
-    let response = intlMiddleware(request);
+    const response = intlMiddleware(request);
 
     // 2. Run Supabase auth logic
     try {

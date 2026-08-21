@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useCallback, useEffect, useRef, useState } from 'react';
 import { User, Session, Subscription } from '@supabase/supabase-js';
 import type { Profile } from '@/types/app';
 import { supabase } from '@/lib/supabase';
@@ -37,7 +37,8 @@ export default function AuthProvider({ children, initialSession = null }: { chil
     const [profile, setProfile] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(!initialSession);
     const { setTheme } = useTheme();
-    const [lastSyncedTheme, setLastSyncedTheme] = useState<string | null>(null);
+    // Guard against re-applying the same theme; never rendered, so a ref not state.
+    const lastSyncedTheme = useRef<string | null>(null);
 
     // Proactive session check on tab resume
     // Proactive session check on tab resume
@@ -61,6 +62,24 @@ export default function AuthProvider({ children, initialSession = null }: { chil
     }, [loading]);
 
 
+
+    const fetchProfile = useCallback(async (userId: string) => {
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', userId)
+                .single();
+
+            if (error) {
+                log.error('fetch_profile', 'Failed to fetch profile', { user_id: userId }, error);
+            } else {
+                setProfile(data);
+            }
+        } catch (err) {
+            log.error('fetch_profile', 'Unexpected error fetching profile', { user_id: userId }, err);
+        }
+    }, []);
 
     // Effect for cleanup needs to be cleaner.
     // Let's restructure to match React best practices for async effects.
@@ -113,7 +132,7 @@ export default function AuthProvider({ children, initialSession = null }: { chil
                         }
                     } else {
                         setProfile(null);
-                        setLastSyncedTheme(null);
+                        lastSyncedTheme.current = null;
                     }
                     setLoading(false);
                 });
@@ -135,29 +154,12 @@ export default function AuthProvider({ children, initialSession = null }: { chil
 
     // Sync theme from profile settings if available
     useEffect(() => {
-        if (profile?.settings?.theme && profile.settings.theme !== lastSyncedTheme) {
+        if (profile?.settings?.theme && profile.settings.theme !== lastSyncedTheme.current) {
             setTheme(profile.settings.theme);
-            setLastSyncedTheme(profile.settings.theme);
+            lastSyncedTheme.current = profile.settings.theme;
         }
-    }, [profile, setTheme, lastSyncedTheme]);
+    }, [profile, setTheme]);
 
-    const fetchProfile = async (userId: string) => {
-        try {
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', userId)
-                .single();
-
-            if (error) {
-                log.error('fetch_profile', 'Failed to fetch profile', { user_id: userId }, error);
-            } else {
-                setProfile(data);
-            }
-        } catch (err) {
-            log.error('fetch_profile', 'Unexpected error fetching profile', { user_id: userId }, err);
-        }
-    };
 
     const refreshProfile = async () => {
         if (user) {

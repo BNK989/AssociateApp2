@@ -143,13 +143,12 @@ export function InfoScreen({ game, players, user, onClose, theme: dailyTheme, da
             // Guest Mode
             try {
                 const localSettings = localStorage.getItem('daily_game_settings');
-                let newSettings = {};
+                let newSettings: Record<string, unknown> = {};
                 if (localSettings) {
                     try {
                         newSettings = JSON.parse(localSettings);
                     } catch (e) { }
                 }
-                // @ts-ignore
                 newSettings.enable_audio_chime = checked;
                 localStorage.setItem('daily_game_settings', JSON.stringify(newSettings));
             } catch (e) { log.error('toggle_chime', 'Failed to persist guest audio preference to localStorage', undefined, e); }

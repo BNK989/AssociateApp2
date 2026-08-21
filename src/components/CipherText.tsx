@@ -25,6 +25,18 @@ interface ScrambleItem {
     locked?: boolean; // If true, this item MUST NOT move (Green letter)
 }
 
+/** Builds a random mask the same length as `text`, never repeating a source char. */
+function buildRandomCipher(text: string): string {
+    return [...text].map((originalChar) => {
+        if (originalChar === ' ') return ' ';
+        let randomChar;
+        do {
+            randomChar = CHARS[Math.floor(Math.random() * CHARS.length)];
+        } while (randomChar === originalChar);
+        return randomChar;
+    }).join('');
+}
+
 export function CipherText({ text, cipherText, visible, className = '', isSolving = false, hintLevel = 0, forceScramble, guesses = [] }: CipherTextProps) {
     const cipherRef = useRef<string>('');
 
@@ -32,23 +44,15 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
     const isRtl = /[\u0590-\u05FF]/.test(text);
     const dir = isRtl ? 'rtl' : 'ltr';
 
-    // Initialize cipher string lazily, but PREFER cipherText if available
-    if (!cipherRef.current) {
-        if (cipherText) {
-            cipherRef.current = cipherText;
-        } else {
-            cipherRef.current = [...text].map((originalChar) => {
-                if (originalChar === ' ') return ' ';
-                let randomChar;
-                do {
-                    randomChar = CHARS[Math.floor(Math.random() * CHARS.length)];
-                } while (randomChar === originalChar);
-                return randomChar;
-            }).join('');
-        }
-    }
+    // Fallback mask, generated once. useState's initializer keeps the randomness
+    // off the render path on every subsequent render.
+    const [generatedCipher] = useState(() => buildRandomCipher(text));
 
-    const [display, setDisplay] = useState(visible ? text : (cipherText || cipherRef.current));
+    // The mask in force this render: the stored cipher when we have one, the
+    // generated fallback otherwise. Derived, so the render path touches no refs.
+    const activeCipher = cipherText || generatedCipher;
+
+    const [display, setDisplay] = useState(visible ? text : activeCipher);
     // For Scramble Effect: We use an array of items to allow layout animations
     const [scrambleItems, setScrambleItems] = useState<ScrambleItem[] | null>(null);
     const lastForceScrambleRef = useRef<number>(forceScramble || 0);
@@ -62,7 +66,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
 
     // Convert to arrays to handle surrogate pairs (e.g. Alchemy symbols) correctly
     const textChars = [...text];
-    const cipherChars = [...(cipherText || cipherRef.current)];
+    const cipherChars = [...activeCipher];
 
     // Calculate Wordle States
     const greenIndices = new Set<number>();
@@ -88,14 +92,14 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
     }
 
     useEffect(() => {
-        // Update local cipher ref if prop changes (e.g. new hint bought)
-        if (cipherText) {
-            cipherRef.current = cipherText;
-            if (!visible && !scrambleItems) {
-                setDisplay(cipherText);
-            }
+        // Keep the ref the async animation paths read in sync with the render value.
+        cipherRef.current = activeCipher;
+
+        // Update the visible mask if the prop changed (e.g. a new hint was bought)
+        if (cipherText && !visible && !scrambleItems) {
+            setDisplay(cipherText);
         }
-    }, [cipherText, visible, scrambleItems]);
+    }, [activeCipher, cipherText, visible, scrambleItems]);
 
     const guessesKey = guesses.join(',');
 
@@ -172,7 +176,7 @@ export function CipherText({ text, cipherText, visible, className = '', isSolvin
                     const realChar = textChars[i];
                     const isOrange = !isGreen && revealedChars.has(realChar.toLowerCase());
 
-                    const cipherChar = [...(cipherText || cipherRef.current)][i];
+                    const cipherChar = [...activeCipher][i];
 
                     let charToShow = cipherChar;
                     let isReal = false;

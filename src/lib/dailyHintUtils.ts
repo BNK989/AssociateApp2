@@ -120,7 +120,7 @@ export async function generateDailyHints(words: string[], theme: string): Promis
             const key = originalWord.toLowerCase().trim();
             const strippedKey = key.replace(/[.,!?;:]/g, '');
 
-            let match = hintsMap.get(key) || hintsMap.get(strippedKey);
+            const match = hintsMap.get(key) || hintsMap.get(strippedKey);
 
             if (match) {
                 alignedHints.push(match.hint);

@@ -6,11 +6,20 @@ import { cn } from '@/lib/utils';
 import { User, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
+type DemoMessage = {
+    id: number;
+    text: string;
+    type: 'system' | 'user' | 'success';
+    delay: number;
+    user?: string;
+    align?: 'left' | 'right';
+};
+
 export default function GameDemo() {
     const t = useTranslations('HomePage.demo');
     const [visibleMessages, setVisibleMessages] = useState<number[]>([]);
 
-    const messages = [
+    const messages: DemoMessage[] = [
         { id: 1, text: t('hint'), type: 'system', delay: 0 },
         { id: 2, text: "Hot", type: 'user', user: 'Alex', delay: 1.5, align: 'left' },
         { id: 3, text: "Sun", type: 'user', user: 'Sam', delay: 2.5, align: 'right' },
@@ -93,10 +102,7 @@ export default function GameDemo() {
                                 )}
                             >
                                 {msg.type === 'user' && (
-                                    <span className="block text-[10px] opacity-70 mb-1">{
-                                        // @ts-ignore
-                                        msg.user
-                                    }</span>
+                                    <span className="block text-[10px] opacity-70 mb-1">{msg.user}</span>
                                 )}
                                 {msg.type === 'success' && <Sparkles className="w-3 h-3" />}
                                 {msg.text}

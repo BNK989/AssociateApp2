@@ -32,7 +32,6 @@ export function LanguagePicker({ variant = 'select', className }: LanguagePicker
             }
 
             // 2. Navigate to new locale
-            // @ts-ignore -- standard next-intl usage
             router.replace(pathname, { locale: newLocale });
         });
     };

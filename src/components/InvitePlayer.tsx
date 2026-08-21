@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthProvider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -25,33 +25,25 @@ type Profile = {
 
 function InvitePlayerContent({ gameId, players }: { gameId: string; players: Player[] }) {
     const { user, profile } = useAuth();
-    const [open, setOpen] = useState(false);
+    const searchParams = useSearchParams();
+    // Derived from the URL during render — no effect needed to open the dialog.
+    const [open, setOpen] = useState(() => searchParams.get('action') === 'invite');
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<Profile[]>([]);
     const [invited, setInvited] = useState<Set<string>>(new Set());
-    const searchParams = useSearchParams();
     const router = useRouter();
     const pathname = usePathname();
     const t = useTranslations('Invite');
 
+    // Strip the ?action=invite marker once it has been consumed.
     useEffect(() => {
-        const action = searchParams.get('action');
-        if (action === 'invite') {
-            setOpen(true);
-            // Clean up URL
-            const params = new URLSearchParams(searchParams.toString());
-            params.delete('action');
-            router.replace(`${pathname}?${params.toString()}`);
-        }
+        if (searchParams.get('action') !== 'invite') return;
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete('action');
+        router.replace(`${pathname}?${params.toString()}`);
     }, [searchParams, pathname, router]);
 
-    useEffect(() => {
-        if (open) {
-            searchUsers();
-        }
-    }, [open, query]);
-
-    const searchUsers = async () => {
+    const searchUsers = useCallback(async () => {
         let queryBuilder = supabase
             .from('profiles')
             .select('id, username, avatar_url')
@@ -69,7 +61,14 @@ function InvitePlayerContent({ gameId, players }: { gameId: string; players: Pla
         } else {
             setResults(data || []);
         }
-    };
+    }, [query, user?.id, gameId]);
+
+    useEffect(() => {
+        if (open) {
+            searchUsers();
+        }
+    }, [open, searchUsers]);
+
 
     const sendInvite = async (receiverId: string) => {
         if (!user) return;

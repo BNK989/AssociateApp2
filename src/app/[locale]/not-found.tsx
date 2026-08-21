@@ -35,7 +35,7 @@ export default function NotFound() {
                 <h1 className="text-2xl font-bold mb-2">Page Not Found</h1>
 
                 <p className="text-gray-600 dark:text-gray-400 mb-8">
-                    The page you are looking for doesn't exist or has been moved.
+                    The page you are looking for doesn&apos;t exist or has been moved.
                 </p>
 
                 <div className="space-y-4">

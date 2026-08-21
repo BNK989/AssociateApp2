@@ -361,9 +361,6 @@ export function GameInput({
             </DropdownMenuTrigger>
             <DropdownMenuContent
                 align="start"
-                // @ts-ignore - Radix prop validation issue
-                onOpenAutoFocus={(e: Event) => e.preventDefault()}
-                // @ts-ignore - Radix prop validation issue
                 onCloseAutoFocus={(e: Event) => e.preventDefault()}
             >
                 {isAutoHintActive && (

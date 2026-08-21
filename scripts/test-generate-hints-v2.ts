@@ -1,5 +1,5 @@
 
-const { generateDailyHints } = require('../src/lib/dailyHintUtils');
+import { generateDailyHints } from '../src/lib/dailyHintUtils';
 // Mock process.env.GEMINI_KEY if needed or rely on .env
 // Note: This script needs to be run with ts-node or similar in a way that loads env vars.
 

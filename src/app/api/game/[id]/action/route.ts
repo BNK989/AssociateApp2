@@ -312,7 +312,7 @@ export async function POST(
                 const newTeamConsec = (gameData.team_consecutive_correct || 0) + 1;
                 const newFever = Math.max(0, (gameData.fever_mode_remaining || 0) - 1);
 
-                let updatePayload = {
+                const updatePayload = {
                     team_consecutive_correct: newTeamConsec,
                     fever_mode_remaining: newFever
                 };

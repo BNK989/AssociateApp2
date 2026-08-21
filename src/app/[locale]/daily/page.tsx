@@ -38,11 +38,13 @@ export default async function DailyGamePage({
     const todayStr = new Date().toISOString().split('T')[0];
 
     // Fetch today's daily game (Base English Data)
-    let { data: dailyGame, error } = await supabase
+    const { data: initialDailyGame, error } = await supabase
         .from('daily_games')
         .select('*')
         .eq('play_date', todayStr)
         .single();
+
+    let dailyGame = initialDailyGame;
 
     if (error || !dailyGame) {
         log.warn('load_game', 'No pre-planned daily game found, falling back to generation', { play_date: todayStr }, error);

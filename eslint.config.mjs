@@ -44,6 +44,15 @@ const eslintConfig = defineConfig([
 
       // CLAUDE.md §8 — route logging through src/lib/logger.ts.
       "no-console": "error",
+
+      // React 19's compiler lint flags every setState reachable from an effect.
+      // The 6 current sites are all legitimate external-system synchronisation —
+      // reading localStorage on mount, waiting on the PostHog SDK, kicking off a
+      // fetch/realtime subscription — which is what effects are for. Eliminating
+      // them means restructuring to derive during render, which for CipherText's
+      // animation state machine is a rewrite rather than a fix. Kept visible as a
+      // warning; see CLAUDE.md Known Debt.
+      "react-hooks/set-state-in-effect": "warn",
     },
   },
 
@@ -83,6 +92,9 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "supabase/**",
+    // Agent tooling (Antigravity / Claude Code skill scripts), not app source.
+    ".agent/**",
+    ".agents/**",
   ]),
 ]);
 
