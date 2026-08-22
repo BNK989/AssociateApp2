@@ -260,3 +260,27 @@ export const calculateNextTurnUserId = (players: { user_id: string }[], currentU
     const nextIndex = (currentIndex + 1) % players.length;
     return players[nextIndex].user_id;
 };
+
+/** Strikes before a word is retired unsolved. Shared by both game modes. */
+export const MAX_STRIKES = 3;
+
+type SolvableMessage = {
+    is_solved: boolean;
+    strikes?: number | null;
+};
+
+/**
+ * The word currently in play: the last one still unsolved and under the strike
+ * limit. Both modes solve their chain backwards, hence the search from the end.
+ *
+ * Generic over the message shape so classic and daily can share one definition.
+ */
+export const findTargetMessage = <T extends SolvableMessage>(messages: T[]): T | undefined => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+        const message = messages[i];
+        if (!message.is_solved && (message.strikes || 0) < MAX_STRIKES) {
+            return message;
+        }
+    }
+    return undefined;
+};

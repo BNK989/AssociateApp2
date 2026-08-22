@@ -31,19 +31,14 @@ const rtlRestrictedSyntax = [
 /**
  * CLAUDE.md §2 size ratchet.
  *
- * Every entry is a file that predates the 350-line cap, pinned to its exact
- * current length. It may shrink; it may not grow. When you refactor one below
- * its number, lower the number in the same commit — that locks in the win.
- * Delete the entry entirely once the file is under 350.
+ * Empty as of 2026-08-22: every file that predated the 350-line cap has since
+ * been refactored under it, so the global `max-lines` rule now governs the
+ * whole codebase with no exceptions.
  *
- * Do not add entries. New files land under the cap or they do not land.
- *
- * Paths use `**` rather than literal `[locale]` / `[id]` because square brackets
- * are character classes in the glob syntax ESLint matches with.
+ * Do not add entries. A new file lands under the cap or it does not land; a
+ * file that has grown past it needs splitting, not pinning.
  */
-const GRANDFATHERED_MAX_LINES = {
-  "src/hooks/useGameLogic.ts": 1104,
-};
+const GRANDFATHERED_MAX_LINES = {};
 
 const sizeRatchet = Object.entries(GRANDFATHERED_MAX_LINES).map(([file, max]) => ({
   name: `associateapp/size-ratchet/${file}`,

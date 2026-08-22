@@ -27,16 +27,13 @@ Agent-specific rule files (`.agent/rules/`, `.agents/rules/`) defer to this docu
 
 ### Enforced by a ratchet, not by good intentions
 
-`max-lines` is wired as an **error** in [eslint.config.mjs](eslint.config.mjs).
-Nine files predate the cap; each is pinned in `GRANDFATHERED_MAX_LINES` to its
-exact current length. They may shrink. They may not grow — adding a single line
-to one fails `npm run lint`.
+`max-lines` is wired as an **error** in [eslint.config.mjs](eslint.config.mjs)
+and applies to every file. The `GRANDFATHERED_MAX_LINES` ratchet that carried
+the nine pre-cap files is now empty: all nine were refactored under the cap
+between 2026-08-21 and 2026-08-22.
 
-**The workflow when you shrink one:** lower its number in
-`GRANDFATHERED_MAX_LINES` in the same commit. That locks in the win and makes
-the next regression fail. Once a file drops under 350, delete its entry.
-
-Never add an entry. A new file lands under the cap or it does not land.
+Never add an entry to it. A new file lands under the cap or it does not land;
+a file that has grown past it needs splitting, not pinning.
 
 > This rule was prose until 2026-08-21 and it drifted: eight of the nine
 > grandfathered files grew during the logging migration, +21 lines in total,
@@ -212,40 +209,28 @@ Run the dev server through the Browser pane (`.claude/launch.json`, config
 Measured 2026-08-21. These predate the rules above; they are exempt from
 "fix it now" but must not get worse.
 
-**Files over the 350-line cap (1).** Each is pinned at this exact length by the
-ratchet in [eslint.config.mjs](eslint.config.mjs) — see §2. Lower the pinned
-number whenever you shrink one.
+**No files remain over the 350-line cap.** Every file that predated it has been
+refactored under it, and the ratchet in [eslint.config.mjs](eslint.config.mjs)
+is now empty — the global `max-lines` rule governs the whole codebase with no
+exceptions.
 
-> Cleared so far (2026-08-21), all following the same shape — hooks for
-> behaviour, components for JSX, one pure tested module for the rules:
->
-> - `ChatArea.tsx` **683 -> 150**, split into `src/components/game/chat/`
->   (four hooks, five components, `messageFlags` + 22 tests).
-> - `InfoScreen.tsx` **589 -> 138**, split into `src/components/game/info/`
->   (three hooks, six components, `resolveInfoSettings` + 7 tests).
-> - `Lobby.tsx` **573 -> 145**, split into `src/components/lobby/`
->   (four hooks, four components, `formatLobbyGames` + 15 tests).
-> - `api/game/[id]/action/route.ts` **572 -> 82**, split into
->   `src/lib/gameActions/` (a dispatch registry, six handlers, shared game-state
->   operations, `rules` + 22 tests).
-> - `GameHeader.tsx` **525 -> 249**, split into `src/components/game/header/`
->   (two hooks, five components, `headerRules` + 21 tests).
-> - `DailyGameClient.tsx` **1105 -> 292**, split into `src/components/daily/`
->   (six hooks) and `src/lib/daily/` (messages, scoring, storage + 39 tests).
-> - `GameInput.tsx` **516 -> 200**, split into `src/components/game/input/`
->   (three hooks, five components, `inputRules` + 23 tests).
-> - `CipherText.tsx` **546 -> 101**, split into `src/components/cipher/`
->   (two hooks, two views, `cipherRules` + 34 tests). Its two
->   `set-state-in-effect` warnings went with it.
->
-> Their ratchet entries are gone. Use them as the template for the rest.
+Cleared over 2026-08-21/22, all following the same shape — hooks for behaviour,
+components for JSX, one pure tested module for the rules:
 
-| Lines | Over by | File | Refactor notes |
-| ---: | ---: | :--- | :--- |
-| 1104 | +754 | `src/hooks/useGameLogic.ts` | The classic-mode engine. Realtime, turn rotation, scoring, sending. **Least test-covered load-bearing code in the repo — write tests before splitting.** |
+| File | Before | After | Split into |
+| :--- | ---: | ---: | :--- |
+| `useGameLogic.ts` | 1104 | 145 | `src/hooks/classic/` + `src/lib/classicGame/` (54 tests) |
+| `DailyGameClient.tsx` | 1105 | 292 | `src/components/daily/` + `src/lib/daily/` (39 tests) |
+| `ChatArea.tsx` | 683 | 150 | `src/components/game/chat/` (22 tests) |
+| `InfoScreen.tsx` | 589 | 138 | `src/components/game/info/` (7 tests) |
+| `Lobby.tsx` | 573 | 145 | `src/components/lobby/` (15 tests) |
+| `api/game/[id]/action/route.ts` | 572 | 82 | `src/lib/gameActions/` (22 tests) |
+| `CipherText.tsx` | 546 | 101 | `src/components/cipher/` (34 tests) |
+| `GameHeader.tsx` | 525 | 249 | `src/components/game/header/` (21 tests) |
+| `GameInput.tsx` | 516 | 200 | `src/components/game/input/` (23 tests) |
 
-Approaching the cap and worth watching: `NotificationCenter.tsx` (349 — one line
-of headroom) and `Settings.tsx` (304).
+Do not add ratchet entries. A new file lands under the cap or it does not land;
+a file that has grown past it needs splitting, not pinning.
 
 **Other open items:**
 

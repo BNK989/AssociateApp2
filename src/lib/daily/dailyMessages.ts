@@ -1,6 +1,10 @@
 import type { Message } from '@/hooks/useGameLogic';
 import { generateCipherString } from '@/lib/gameLogic';
-import { MAX_HINT_LEVEL, MAX_STRIKES } from './dailyScoring';
+
+// One definition, shared with classic mode.
+export { findTargetMessage } from '@/lib/gameLogic';
+import { MAX_HINT_LEVEL } from './dailyScoring';
+import { MAX_STRIKES } from '@/lib/gameLogic';
 
 /** The daily chain is authored by a bot rather than a real player. */
 export const BOT_USER_ID = 'daily-bot';
@@ -17,21 +21,6 @@ export const MY_PROFILE = {
     username: 'You',
     avatar_url: 'https://api.dicebear.com/9.x/thumbs/svg?seed=guest',
 };
-
-/**
- * The word the player is currently guessing: the last one in the chain that is
- * still unsolved and has strikes left. The chain is solved backwards, hence the
- * search from the end.
- */
-export function findTargetMessage(messages: Message[]): Message | undefined {
-    for (let i = messages.length - 1; i >= 0; i--) {
-        const message = messages[i];
-        if (!message.is_solved && (message.strikes || 0) < MAX_STRIKES) {
-            return message;
-        }
-    }
-    return undefined;
-}
 
 /** Words still in play once `solvedId` is taken out. Zero means the game is over. */
 export function countRemainingAfterSolve(messages: Message[], solvedId: string): number {
