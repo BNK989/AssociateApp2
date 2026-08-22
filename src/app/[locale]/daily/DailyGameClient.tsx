@@ -18,6 +18,7 @@ import { buildDailyGameState, buildDailyPlayers, MOCK_USER } from '@/components/
 import { useAutoHint } from '@/components/daily/useAutoHint';
 import { useDailyCompletion } from '@/components/daily/useDailyCompletion';
 import { useDailyGame } from '@/components/daily/useDailyGame';
+import { useDailyResults, type RecordWordArgs } from '@/components/daily/useDailyResults';
 import { useDailySettings } from '@/components/daily/useDailySettings';
 import { useDailyTutorial } from '@/components/daily/useDailyTutorial';
 import { useStartWordAnimation } from '@/components/daily/useStartWordAnimation';
@@ -102,6 +103,13 @@ function DailyGameBoard({
     const settings = useDailySettings(authUser, isInfoOpen);
     const userType = authUser ? 'registered' : 'guest';
 
+    /**
+     * The results hook needs the word currently in play, which only exists once
+     * the game hook has run, so the callback reaches it through a ref rather
+     * than the two hooks depending on each other.
+     */
+    const recordWordRef = useRef<((args: RecordWordArgs) => void) | null>(null);
+
     const game = useDailyGame({
         words: dailyWords,
         date,
@@ -127,7 +135,19 @@ function DailyGameBoard({
                 date,
             });
         },
+        onWordFinished: (args) => recordWordRef.current?.(args),
     });
+
+    const results = useDailyResults({
+        playDate: date,
+        wordsTotal: dailyWords.length,
+        activeWordId: game.targetMessage?.id ?? null,
+        accessToken: session?.access_token,
+    });
+
+    useEffect(() => {
+        recordWordRef.current = results.recordWord;
+    }, [results.recordWord]);
 
     const { showSummary } = useDailyCompletion(game.gameOver, game.restoredComplete);
     const tutorial = useDailyTutorial({ authUser, authLoading, words: dailyWords, date });

@@ -70,7 +70,91 @@ The API route now primarily acts as a gatekeeper:
     *   **Fallback**: If hints are missing (cron failed), the client (via `page.tsx`) or server may trigger on-demand generation (legacy behavior retained for robustness).
 5.  **Logging**: The usage is recorded in `api_usage`.
 
-## 4. Feature Flags (PostHog)
+## 4. Results & Measurement (`daily_results`)
+
+Gameplay is client-side, but the **outcome** is now recorded server-side. This
+table exists to answer two questions that gate the daily game's length: how long
+a chain actually takes, and at which word players give up.
+
+### Why it is written progressively
+
+The row is upserted after **every resolved word**, not only on completion. A
+player who quits at word 8 of 12 never reaches a completion event, and that
+abandonment is the signal we most need. The last stored state for a
+`(client_id, play_date)` is therefore how far that player got, and
+`per_word.length` across all rows for a date is the drop-off histogram.
+
+A row is also opened the moment the board goes live, with an empty `per_word`.
+Those rows are players who arrived and solved nothing — the denominator every
+drop-off rate is measured against.
+
+### Identity: why `client_id` and not just `user_id`
+
+Guests in this app are **not** anonymous auth users — there are none. A guest
+simply has no session, so `auth.uid()` identifies only the registered minority.
+Keying on that alone would bias every number toward signed-in players.
+
+`client_id` is a UUID minted into `localStorage` (`associ8-client-id`) for every
+player. `user_id` is attached as an attribute when a session exists. The unique
+key is `(client_id, play_date)`; a signed-in player on two devices produces two
+rows, so streak queries aggregate on `coalesce(user_id::text, client_id)`.
+
+### Columns
+
+| Column | Note |
+| :--- | :--- |
+| `client_id` | Per-browser UUID. Present for everyone. |
+| `user_id` | Set when signed in, null for guests. |
+| `words_total` | Full chain length, **including** the free revealed start word. |
+| `words_solved` | Outcome `solved` only; excludes gave-up and struck-out. |
+| `duration_ms` | Sum of per-word active time. |
+| `per_word` | `[{ index, outcome, hint_level, strikes, points, ms }]` |
+
+`outcome` is `solved` | `gave_up` | `struck_out`.
+
+> **Reading `per_word` against `words_total`:** the last word of the chain is
+> revealed for free and is never guessed, so a completed game has
+> `per_word.length === words_total - 1`. Do not treat the shortfall as a
+> drop-off.
+
+### Timing is attention, not wall clock
+
+Each word's `ms` stops while the tab is hidden, and is capped at 10 minutes
+(`MAX_WORD_MS`). The cap catches the player who leaves the tab focused and walks
+away — counting that would drag every median we compute.
+
+### Writes are server-only
+
+`daily_results` has RLS enabled with a SELECT policy for a player's own rows and
+**no INSERT or UPDATE policy at all**. The anon key that ships in the browser
+bundle cannot write to it. `/api/daily/result` writes through the service-role
+client, following the posture set in
+[database_security.md](database_security.md).
+
+The route enforces what it can of an inherently client-scored game:
+
+- `play_date` must be within a day of today (UTC), so old dates cannot be backfilled.
+- `words_total` comes from the stored chain, **not** the request — a client cannot
+  claim a longer game than the one served, nor index past its end.
+- Every field is range-checked (`parseResultPayload` in `src/lib/daily/dailyResults.ts`,
+  shared with the client that builds the payload).
+- **Progress may not regress.** Without this, reopening a finished game would let
+  the fresh empty log overwrite the completed one, and a second tab would do the
+  same mid-game.
+
+A failed write is logged and swallowed. The daily game has never depended on the
+server and still does not — the player sees nothing.
+
+### Known gap
+
+Striking out on the **final** unsolved word does not set `gameOver`
+(`useDailyGame.solve` patches the message but never re-checks the remaining
+count). Those players never record `completed = true`, so completion rates read
+slightly low. Pre-existing, tracked separately.
+
+---
+
+## 5. Feature Flags (PostHog)
 
 The Daily Game uses **PostHog** feature flags to control rollout strategies and game difficulty adjustments without redeploying code.
 

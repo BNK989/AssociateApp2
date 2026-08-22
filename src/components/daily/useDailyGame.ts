@@ -20,6 +20,7 @@ import {
     needsScrambleVisuals,
 } from '@/lib/daily/dailyScoring';
 import { clearDailyGame, loadDailyGame, saveDailyGame } from '@/lib/daily/dailyStorage';
+import type { WordOutcome } from '@/lib/daily/dailyResults';
 
 const log = createLogger('daily/game');
 
@@ -40,6 +41,16 @@ type UseDailyGameArgs = {
     connectionScores?: number[] | null;
     onSolved?: (args: { word: string; points: number; totalScore: number; consecutive: number }) => void;
     onCompleted?: (finalScore: number) => void;
+    /** Fires once per word as it leaves the board, however it left. */
+    onWordFinished?: (args: {
+        index: number;
+        outcome: WordOutcome;
+        hintLevel: number;
+        strikes: number;
+        points: number;
+        totalScore: number;
+        completed: boolean;
+    }) => void;
     playSuccessSound?: () => void;
 };
 
@@ -58,6 +69,7 @@ export function useDailyGame({
     connectionScores,
     onSolved,
     onCompleted,
+    onWordFinished,
     playSuccessSound,
 }: UseDailyGameArgs) {
     const t = useTranslations('GameRoom.Chat');
@@ -115,6 +127,12 @@ export function useDailyGame({
         setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, ...updates } : m)));
     }, []);
 
+    /** Position of a word in the chain, which is how results are indexed. */
+    const indexOfMessage = useCallback(
+        (id: string) => messages.findIndex((m) => m.id === id),
+        [messages],
+    );
+
     const flashSolved = useCallback((id: string, points: number) => {
         setJustSolvedData({ id, points });
         setTimeout(() => setJustSolvedData(null), SOLVED_FLASH_MS);
@@ -159,6 +177,15 @@ export function useDailyGame({
 
                 if (strikes >= MAX_STRIKES) {
                     toast.error(t('toast_word_lost', { word: targetMessage.content }));
+                    onWordFinished?.({
+                        index: indexOfMessage(targetMessage.id),
+                        outcome: 'struck_out',
+                        hintLevel: targetMessage.hint_level || 0,
+                        strikes,
+                        points: 0,
+                        totalScore: score,
+                        completed: false,
+                    });
                 }
                 return;
             }
@@ -179,22 +206,46 @@ export function useDailyGame({
                 consecutive: consecutive + 1,
             });
 
-            if (finishWord(targetMessage, points)) {
+            const completed = finishWord(targetMessage, points);
+
+            onWordFinished?.({
+                index: indexOfMessage(targetMessage.id),
+                outcome: 'solved',
+                hintLevel: targetMessage.hint_level || 0,
+                strikes: targetMessage.strikes || 0,
+                points,
+                totalScore,
+                completed,
+            });
+
+            if (completed) {
                 onCompleted?.(totalScore);
             }
         }, RESOLVE_DELAY_MS);
     }, [
         targetMessage, gameOver, consecutive, score, patchTarget, flashSolved,
-        finishWord, onSolved, onCompleted, playSuccessSound, t,
+        finishWord, onSolved, onCompleted, onWordFinished, indexOfMessage,
+        playSuccessSound, t,
     ]);
 
     const giveUp = useCallback(() => {
         if (!targetMessage || gameOver) return;
 
         setConsecutive(0);
-        finishWord(targetMessage, 0);
+        const completed = finishWord(targetMessage, 0);
+
+        onWordFinished?.({
+            index: indexOfMessage(targetMessage.id),
+            outcome: 'gave_up',
+            hintLevel: targetMessage.hint_level || 0,
+            strikes: targetMessage.strikes || 0,
+            points: 0,
+            totalScore: score,
+            completed,
+        });
+
         setInput('');
-    }, [targetMessage, gameOver, finishWord]);
+    }, [targetMessage, gameOver, finishWord, onWordFinished, indexOfMessage, score]);
 
     /**
      * Advances the current word's hint level, generating the cipher and clue to
