@@ -25,8 +25,15 @@ export const GAME_CONFIG = {
   PERCENT_REVEALED_SHUFFLE_HINT: 0.66,
   // Auto Hint Defaults
   DEFAULT_AUTO_HINT_ENABLED: true,
-  DEFAULT_AUTO_HINT_DURATION: 7, // seconds
-  DEFAULT_AUTO_HINT_REVEAL_TYPE: "ALL", // "ALL" | "SCRAMBLE" | "AI"
+  // Seconds of thinking time before the next hint level is offered. Short
+  // values hand the answer over before a player has engaged with the word;
+  // there is always a manual hint button for anyone who wants one sooner.
+  DEFAULT_AUTO_HINT_DURATION: 20,
+  // "STEP"  - climb the ladder one level at a time: first letter, then
+  //           scramble, then the AI clue. Cost rises with each step.
+  // "ALL"   - skip the ladder and go straight to the AI clue.
+  // Only "ALL" is special-cased; any other value behaves as "STEP".
+  DEFAULT_AUTO_HINT_REVEAL_TYPE: "STEP",
 };
 
 export const CIPHER_SIGNS = [...'⊗⊕⊖⊙⊚⊛⊠⌖⌂⌁⌇⌖⌂⌁🜁🜂🜄🜃🜁🜄🜂◆◇▲▼○●⬡⬢⬟░▲●★☆☉✵✶∝∞∧∨∩∪∴∵∶∷✷✸✹✺✱✲✢✣✤✥✦❈❉❊❋❀❁❂❃❖❘❙❚✦✧✩✪✫✬✭✮✯♃♄♅♆♇☉☾☽☿🜚🜛🜜🜝🜞🜟🜓🜔🜕🜖🜗🜘🜌🜅🜆🜇🜈🜉🜊🜋🜍🜎🜏🜐🜑'];

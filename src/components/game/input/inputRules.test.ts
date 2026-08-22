@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { GameState, Message, Player } from '@/hooks/useGameLogic';
 import { calculateMessageValue, HINT_COSTS } from '@/lib/gameLogic';
+import { getNextHintLevel } from '@/lib/daily/dailyScoring';
 import {
     countMeaningfulChars,
     getActivePlayerId,
@@ -187,6 +188,31 @@ describe('getHintTier', () => {
         expect(getHintTier(0, undefined, ladder)).toBeNull();
     });
 });
+
+describe('hint cost and hint level agree', () => {
+    const word = { id: 'm1', content: 'Harmony' } as Message;
+
+    // These drifted apart under the old 'ALL' default: the button priced the
+    // next hint at its tier (10% at level 0) while getNextHintLevel jumped
+    // straight to level 3 and calculateSolvePoints deducted 60%. The player
+    // was charged six times what the button offered.
+    it('prices the step the player will actually be moved to', () => {
+        const value = calculateMessageValue(word.content);
+
+        expect(getNextHintLevel({ currentLevel: 0, word: word.content, guesses: [] })).toBe(1);
+        expect(getHintTier(0, word)?.cost).toBe(Math.ceil(value * HINT_COSTS.TIER_1));
+
+        expect(getNextHintLevel({ currentLevel: 1, word: word.content, guesses: [] })).toBe(2);
+        expect(getHintTier(1, word)?.cost).toBe(Math.ceil(value * HINT_COSTS.TIER_2));
+    });
+
+    it('shows the step glyph now that the ladder is real', () => {
+        expect(getHintTier(0, word)?.badge).toBe('level');
+        expect(getHintTier(1, word)?.badge).toBe('shuffle');
+        expect(getHintTier(2, word)?.badge).toBe('ai');
+    });
+});
+
 
 describe('countMeaningfulChars', () => {
     it('ignores spaces wherever they fall', () => {

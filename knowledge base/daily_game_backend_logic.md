@@ -265,7 +265,46 @@ select cron.schedule(
 );
 ```
 
-## 7. Feature Flags (PostHog)
+## 7. The Hint Ladder
+
+A word can be nudged three times, each costing more of its value:
+
+| Level | Reveal | Cost |
+| ---: | :--- | ---: |
+| 1 | First letter | 10% |
+| 2 | Scramble — first letter pinned, 66% of the rest revealed but shuffled | +10% |
+| 3 | AI clue, on top of the level-2 scramble | +40% |
+
+`GAME_CONFIG.DEFAULT_AUTO_HINT_REVEAL_TYPE` decides whether the ladder is
+climbed or skipped. Only `"ALL"` is special-cased (skip straight to the AI
+clue); any other value, including the default `"STEP"`, climbs one level at a
+time.
+
+### Why the default is `STEP`
+
+It was `"ALL"` with a 7-second timer, and that combination gave the answer away
+before the player had engaged with the word. Three things went wrong at once:
+
+1. **The automatic hint went straight to level 3.** Seven seconds after a word
+   became active, the AI clue appeared. Every word in a test session recorded
+   `hint_level: 3`.
+2. **So did the manual hint button.** `revealHint` passes no reveal type, so it
+   took the same default. There was no way to ask for a *small* hint — one tap
+   spent the whole ladder.
+3. **The button under-reported the price.** `getHintTier` costs the next hint
+   from `effectiveLevel` (10% at level 0), while `getNextHintLevel` jumped to
+   level 3 and `calculateSolvePoints` deducted the full 60%. The player was
+   charged six times what the button offered.
+
+With `STEP` and a 20-second timer, a stuck player now gets the first letter at
+20s, the scramble at 40s, and the clue at 60s — and the cost shown is the cost
+charged. The manual button is always there for anyone who wants a nudge sooner,
+which is why the timer can afford to be patient.
+
+> This also un-saturates `daily_results.hints_used` (§4). While every word
+> recorded level 3, that column carried no information about difficulty.
+
+## 8. Feature Flags (PostHog)
 
 The Daily Game uses **PostHog** feature flags to control rollout strategies and game difficulty adjustments without redeploying code.
 

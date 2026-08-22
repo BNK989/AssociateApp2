@@ -54,8 +54,8 @@ describe('calculateSolvePoints', () => {
 });
 
 describe('getNextHintLevel', () => {
-    // These tests set revealType explicitly; the app default is 'ALL', which
-    // short-circuits the ladder entirely.
+    // The ladder is now the app default; these still set it explicitly so the
+    // cases stay readable next to the 'ALL' one below.
     const ladder = { revealType: 'STEP' };
 
     it('steps up one level at a time', () => {
@@ -89,10 +89,16 @@ describe('getNextHintLevel', () => {
         }
     });
 
-    it('uses the configured reveal type by default', () => {
-        const result = getNextHintLevel({ currentLevel: 0, word: WORD, guesses: [] });
-        const expected = GAME_CONFIG.DEFAULT_AUTO_HINT_REVEAL_TYPE === 'ALL' ? MAX_HINT_LEVEL : 1;
-        expect(result).toBe(expected);
+    it('climbs one step at a time by default, rather than handing over the answer', () => {
+        // The default used to be 'ALL', so the very first hint -- automatic or
+        // from the button -- jumped to the AI clue and cost 60% of the word.
+        expect(getNextHintLevel({ currentLevel: 0, word: WORD, guesses: [] })).toBe(1);
+        expect(getNextHintLevel({ currentLevel: 1, word: WORD, guesses: [] })).toBe(2);
+        expect(getNextHintLevel({ currentLevel: 2, word: WORD, guesses: [] })).toBe(MAX_HINT_LEVEL);
+    });
+
+    it('leaves the player time to think before the first automatic nudge', () => {
+        expect(GAME_CONFIG.DEFAULT_AUTO_HINT_DURATION).toBeGreaterThanOrEqual(15);
     });
 
     it('handles an empty word without throwing', () => {
