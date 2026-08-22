@@ -103,7 +103,7 @@ function outputFormat(plan: DayPlan): string {
         'Return ONLY a JSON object, with no prose and no code fence, in exactly this shape:',
         '{',
         '  "theme": "<a short evocative title, 2-4 words>",',
-        `  "words": [<${plan.words} strings, each one or two words, capitalised>],`,
+        `  "words": [<${plan.words} strings, each one or two everyday words, written in sentence case like \"Kettle\" or \"Sleeping bag\", never in capitals>],`,
         `  "hints": [<${plan.words} strings, one per word, same order>],`,
         `  "connection_scores": [<${plan.words} numbers between 0.5 and 1.0, one per word>]`,
         '}',

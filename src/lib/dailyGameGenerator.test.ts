@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { generateChain, parseChainResponse } from './dailyGameGenerator';
+import { generateChain, normalizeWordCasing, parseChainResponse } from './dailyGameGenerator';
 import { FALLBACK_CHAINS, domainsWithoutFallback, getFallbackChain } from '@/lib/daily/fallbackPool';
 import { DOMAINS, ANGLES, planForDate, type DayPlan } from '@/lib/daily/themeWheel';
 import type { ChainHistory } from '@/lib/daily/chainValidation';
@@ -50,7 +50,36 @@ function promptFromCall(spy: ReturnType<typeof vi.spyOn>, index: number): string
     return body.contents[0].parts[0].text;
 }
 
+describe('normalizeWordCasing', () => {
+    it('settles a shouted word into sentence case', () => {
+        expect(normalizeWordCasing('CELLULOID')).toBe('Celluloid');
+        expect(normalizeWordCasing('SLEEPING BAG')).toBe('Sleeping bag');
+    });
+
+    it('leaves a word that already has lowercase alone', () => {
+        expect(normalizeWordCasing('Kettle')).toBe('Kettle');
+        expect(normalizeWordCasing('T-shirt')).toBe('T-shirt');
+        expect(normalizeWordCasing('iPhone')).toBe('iPhone');
+    });
+
+    it('trims surrounding whitespace', () => {
+        expect(normalizeWordCasing('  Kettle  ')).toBe('Kettle');
+        expect(normalizeWordCasing('  BOILER ')).toBe('Boiler');
+    });
+
+    it('survives an empty string', () => {
+        expect(normalizeWordCasing('   ')).toBe('');
+    });
+});
+
 describe('parseChainResponse', () => {
+    it('normalizes a chain the model shouted back', () => {
+        const parsed = parseChainResponse(
+            JSON.stringify({ theme: 'Basement', words: ['BOILER', 'VALVE', 'Lever'] }),
+        );
+        expect(parsed?.words).toEqual(['Boiler', 'Valve', 'Lever']);
+    });
+
     it('reads a bare JSON object', () => {
         const parsed = parseChainResponse(JSON.stringify(GOOD_CHAIN));
         expect(parsed?.theme).toBe('Tidal Pools');

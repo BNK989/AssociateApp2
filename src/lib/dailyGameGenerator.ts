@@ -78,6 +78,23 @@ export async function fetchChainHistory(dateStr: string): Promise<ChainHistory> 
     return { recentThemes, recentWords };
 }
 
+/**
+ * Settles a word into the board's house style.
+ *
+ * Asked for "capitalised" words, the model sometimes reads that as SHOUTING and
+ * returns the whole chain in caps, which then sits next to a Title Case day and
+ * looks like a bug. Only all-caps entries are touched: anything already
+ * carrying a lowercase letter is left exactly as written, so a deliberate
+ * "T-shirt" survives.
+ */
+export function normalizeWordCasing(word: string): string {
+    const trimmed = word.trim();
+    if (trimmed.length === 0) return trimmed;
+    if (/[a-z]/.test(trimmed)) return trimmed;
+
+    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+}
+
 /** Pulls a JSON object out of a model response that may be fenced or padded with prose. */
 export function parseChainResponse(rawText: string): GeneratedChain | null {
     let text = rawText.trim();
@@ -99,7 +116,7 @@ export function parseChainResponse(rawText: string): GeneratedChain | null {
 
         return {
             theme: parsed.theme.trim(),
-            words: parsed.words.map((w: unknown) => String(w).trim()),
+            words: parsed.words.map((w: unknown) => normalizeWordCasing(String(w))),
             hints: Array.isArray(parsed.hints) ? parsed.hints.map((h: unknown) => String(h).trim()) : undefined,
             connection_scores: Array.isArray(parsed.connection_scores)
                 ? parsed.connection_scores.map((s: unknown) => (typeof s === 'number' ? s : DEFAULT_CONNECTION))

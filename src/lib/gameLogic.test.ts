@@ -8,6 +8,7 @@ import {
     calculateRevealedPercentage
 } from '@/lib/gameLogic';
 import { GAME_CONFIG } from '@/lib/gameConfig';
+import { MATCH_THRESHOLD } from '@/lib/daily/dailyScoring';
 
 describe('Game Logic', () => {
     describe('calculateMessageValue', () => {
@@ -30,6 +31,15 @@ describe('Game Logic', () => {
         it('should return 1.0 for exact matches (case insensitive)', () => {
             expect(calculateSimilarity('Hello', 'hello')).toBe(1.0);
             expect(calculateSimilarity('TEST', 'test')).toBe(1.0);
+        });
+
+        it('accepts a differently-cased guess at the threshold play actually uses', () => {
+            // Board words are stored in sentence case; players type however they
+            // like. These must clear MATCH_THRESHOLD, not merely score above zero.
+            expect(calculateSimilarity('boiler', 'Boiler')).toBeGreaterThanOrEqual(MATCH_THRESHOLD);
+            expect(calculateSimilarity('BOILER', 'Boiler')).toBeGreaterThanOrEqual(MATCH_THRESHOLD);
+            expect(calculateSimilarity('sleeping bag', 'Sleeping bag')).toBeGreaterThanOrEqual(MATCH_THRESHOLD);
+            expect(calculateSimilarity('  kettle  ', 'Kettle')).toBeGreaterThanOrEqual(MATCH_THRESHOLD);
         });
 
         it('should return < 1.0 for partial matches', () => {
