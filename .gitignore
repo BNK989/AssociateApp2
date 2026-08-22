@@ -49,3 +49,6 @@ next-env.d.ts
 
 # Claude Code local-only state
 .claude/settings.local.json
+
+# Supabase CLI scratch state (project ref, cached version) — not project source
+supabase/.temp/
