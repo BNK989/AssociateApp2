@@ -1,4 +1,8 @@
-import { CIPHER_SIGNS, GAME_CONFIG } from './gameConfig';
+import { CIPHER_SIGNS, GAME_CONFIG, HINT_COSTS, MAX_STRIKES } from './gameConfig';
+
+// Re-exported so the ~20 existing import sites keep working; the definitions
+// now live in gameConfig.ts alongside the rest of the game's balance.
+export { HINT_COSTS, MAX_STRIKES };
 
 export const calculateMessageValue = (content: string): number => {
     // Base value 10 + 1 point per character
@@ -87,14 +91,6 @@ export const calculatePointDistribution = (
         };
     }
 };
-
-export const HINT_COSTS = {
-    TIER_1: 0.10, // 10%
-    TIER_2: 0.10, // Another 10%
-    TIER_3: 0.40  // 40%
-};
-
-
 
 export const generateCipherString = (content: string, level: number, isDaily: boolean = false): string => {
     const length = content.length;
@@ -260,9 +256,6 @@ export const calculateNextTurnUserId = (players: { user_id: string }[], currentU
     const nextIndex = (currentIndex + 1) % players.length;
     return players[nextIndex].user_id;
 };
-
-/** Strikes before a word is retired unsolved. Shared by both game modes. */
-export const MAX_STRIKES = 3;
 
 type SolvableMessage = {
     is_solved: boolean;

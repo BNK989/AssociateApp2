@@ -1,19 +1,18 @@
-import { calculateMessageValue, calculateRevealedPercentage, HINT_COSTS } from '@/lib/gameLogic';
-import { GAME_CONFIG } from '@/lib/gameConfig';
+import { calculateMessageValue, calculateRevealedPercentage } from '@/lib/gameLogic';
+import {
+    GAME_CONFIG,
+    HINT_COSTS,
+    MATCH_THRESHOLD,
+    MAX_HINT_LEVEL,
+    MAX_STRIKES,
+    STREAK_BONUS_AT,
+    STREAK_MULTIPLIER,
+} from '@/lib/gameConfig';
 
-/** Guess similarity at or above this counts as correct. */
-export const MATCH_THRESHOLD = 0.8;
-
-/** Consecutive solves needed before the streak bonus applies. */
-export const STREAK_BONUS_AT = 3;
-
-export const STREAK_MULTIPLIER = 1.5;
-
-/** Highest hint level; level 3 is the AI clue. */
-export const MAX_HINT_LEVEL = 3;
-
-/** Strikes before a word is retired unsolved. */
-export const MAX_STRIKES = 3;
+// Re-exported so existing import sites keep working; the definitions now live
+// in gameConfig.ts alongside the rest of the game's balance. This file used to
+// declare its own MAX_STRIKES, duplicating the one in gameLogic.ts.
+export { MATCH_THRESHOLD, MAX_HINT_LEVEL, MAX_STRIKES, STREAK_BONUS_AT, STREAK_MULTIPLIER };
 
 /**
  * Points for solving a word.

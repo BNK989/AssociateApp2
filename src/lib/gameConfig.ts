@@ -36,6 +36,37 @@ export const GAME_CONFIG = {
   DEFAULT_AUTO_HINT_REVEAL_TYPE: "STEP",
 };
 
+/**
+ * Rules constants shared by both game modes.
+ *
+ * These live here rather than beside the code that uses them so there is a
+ * single place to read the game's balance from — they were previously split
+ * between `gameLogic.ts` and `daily/dailyScoring.ts`, which each defined their
+ * own `MAX_STRIKES`. Both files re-export from here, so every existing import
+ * site is unchanged.
+ */
+
+/** Fraction of a word's value forfeited at each hint tier, cumulatively. */
+export const HINT_COSTS = {
+  TIER_1: 0.10, // 10%
+  TIER_2: 0.10, // Another 10%
+  TIER_3: 0.40, // 40%
+};
+
+/** Strikes before a word is retired unsolved. */
+export const MAX_STRIKES = 3;
+
+/** Highest hint level; level 3 is the AI clue. */
+export const MAX_HINT_LEVEL = 3;
+
+/** Guess similarity at or above this counts as correct. */
+export const MATCH_THRESHOLD = 0.8;
+
+/** Consecutive solves needed before the streak bonus applies. */
+export const STREAK_BONUS_AT = 3;
+
+export const STREAK_MULTIPLIER = 1.5;
+
 export const CIPHER_SIGNS = [...'⊗⊕⊖⊙⊚⊛⊠⌖⌂⌁⌇⌖⌂⌁🜁🜂🜄🜃🜁🜄🜂◆◇▲▼○●⬡⬢⬟░▲●★☆☉✵✶∝∞∧∨∩∪∴∵∶∷✷✸✹✺✱✲✢✣✤✥✦❈❉❊❋❀❁❂❃❖❘❙❚✦✧✩✪✫✬✭✮✯♃♄♅♆♇☉☾☽☿🜚🜛🜜🜝🜞🜟🜓🜔🜕🜖🜗🜘🜌🜅🜆🜇🜈🜉🜊🜋🜍🜎🜏🜐🜑'];
 
 export const GAME_MODES = [
