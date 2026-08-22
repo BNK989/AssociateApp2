@@ -1,4 +1,5 @@
 import { autoRevealDelay, clockOrigin, type DailyHintPolicy } from './hintPolicy';
+import { MAX_HINT_LEVEL } from '@/lib/gameConfig';
 
 /**
  * When the next automatic hint is due.
@@ -89,4 +90,53 @@ export function progressPercent(schedule: RevealSchedule | null, now: number): n
 /** Whether the reveal is due. */
 export function isDue(schedule: RevealSchedule | null, now: number): boolean {
     return schedule !== null && now >= schedule.deadline;
+}
+
+
+export type TimelineEntry = {
+    /** Hint level the player reaches. */
+    level: number;
+    /** Seconds after the word opens, or null when only a manual hint gets there. */
+    atSeconds: number | null;
+};
+
+/**
+ * When each hint lands on a fresh word, for the admin panel's preview.
+ *
+ * Built by running the real scheduler rather than by re-deriving the timings,
+ * so the preview cannot drift from what players actually experience — which is
+ * the only thing that makes it worth showing. A rung that never fires
+ * automatically ends the timeline: the ladder stops there until the player asks.
+ */
+export function previewTimeline(policy: DailyHintPolicy): TimelineEntry[] {
+    const entries: TimelineEntry[] = [];
+    const startLevel = Math.max(0, Math.min(MAX_HINT_LEVEL, policy.startLevel));
+
+    // A level the word opens at is already there when the player arrives.
+    if (startLevel > 0) entries.push({ level: startLevel, atSeconds: 0 });
+
+    const wordOpenedAt = 0;
+    let rungArmedAt = 0;
+    let lastRevealAt: number | null = null;
+
+    for (let level = startLevel; level < MAX_HINT_LEVEL; level += 1) {
+        const schedule = revealSchedule({
+            policy,
+            currentLevel: level,
+            wordOpenedAt,
+            rungArmedAt,
+            lastRevealAt,
+        });
+
+        if (!schedule) {
+            entries.push({ level: level + 1, atSeconds: null });
+            break;
+        }
+
+        entries.push({ level: level + 1, atSeconds: schedule.deadline / 1000 });
+        rungArmedAt = schedule.deadline;
+        lastRevealAt = schedule.deadline;
+    }
+
+    return entries;
 }

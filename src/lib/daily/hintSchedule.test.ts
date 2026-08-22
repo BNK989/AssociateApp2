@@ -3,6 +3,7 @@ import { DEFAULT_HINT_POLICY, type DailyHintPolicy } from './hintPolicy';
 import {
     isDue,
     MIN_REVEAL_SPACING_MS,
+    previewTimeline,
     progressPercent,
     revealSchedule,
     secondsUntil,
@@ -193,5 +194,57 @@ describe('isDue', () => {
 
     it('is never due without a schedule', () => {
         expect(isDue(null, Number.MAX_SAFE_INTEGER)).toBe(false);
+    });
+});
+
+describe('previewTimeline', () => {
+    it('reads per-rung delays as gaps', () => {
+        const entries = previewTimeline(policy({ stagger: 'per-rung' }));
+        expect(entries).toEqual([
+            { level: 1, atSeconds: 15 },
+            { level: 2, atSeconds: 45 },
+            { level: 3, atSeconds: 105 },
+        ]);
+    });
+
+    it('reads cumulative delays as offsets from the word opening', () => {
+        const entries = previewTimeline(policy({ stagger: 'cumulative' }));
+        expect(entries).toEqual([
+            { level: 1, atSeconds: 15 },
+            { level: 2, atSeconds: 30 },
+            { level: 3, atSeconds: 60 },
+        ]);
+    });
+
+    it('shows a pre-given level as already there on arrival', () => {
+        const entries = previewTimeline(policy({ startLevel: 1, stagger: 'cumulative' }));
+        expect(entries[0]).toEqual({ level: 1, atSeconds: 0 });
+        expect(entries[1]).toEqual({ level: 2, atSeconds: 30 });
+    });
+
+    // The ladder halts at a manual rung: nothing past it arrives on its own.
+    it('ends the timeline at the first manual rung', () => {
+        const entries = previewTimeline(policy({
+            rungs: [
+                { auto: true, delaySeconds: 15 },
+                { auto: false, delaySeconds: 30 },
+                { auto: true, delaySeconds: 60 },
+            ],
+        }));
+
+        expect(entries).toEqual([
+            { level: 1, atSeconds: 15 },
+            { level: 2, atSeconds: null },
+        ]);
+    });
+
+    it('shows nothing automatic when the master switch is off', () => {
+        expect(previewTimeline(policy({ autoEnabled: false })))
+            .toEqual([{ level: 1, atSeconds: null }]);
+    });
+
+    it('has nothing to show when the word opens fully hinted', () => {
+        expect(previewTimeline(policy({ startLevel: 3 })))
+            .toEqual([{ level: 3, atSeconds: 0 }]);
     });
 });

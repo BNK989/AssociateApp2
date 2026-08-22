@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Hammer, Globe, Activity } from 'lucide-react';
+import { Hammer, Globe, Activity, SlidersHorizontal } from 'lucide-react';
 
 export default async function AdminDashboardPage({
     params
@@ -10,6 +10,13 @@ export default async function AdminDashboardPage({
     const { locale } = await params;
 
     const tools = [
+        {
+            title: "Game Settings",
+            description: "Tune the daily game's hints without a deploy.",
+            href: `/${locale}/admin/game-settings`,
+            icon: SlidersHorizontal,
+            color: "text-emerald-500"
+        },
         {
             title: "Translation Cache",
             description: "Inspect and verify daily game translations.",
