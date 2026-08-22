@@ -13,6 +13,22 @@ type WelcomeOverlayProps = {
  * copy, so framer-motion animates it into place rather than cross-fading. The
  * root deliberately does not fade on exit — only the backdrop does — otherwise
  * the shared element would fade out mid-flight.
+ *
+ * **This overlay never unmounts, by design of a framer quirk we have not
+ * cracked.** After the 2.5s timer the backdrop fades to `opacity: 0` but
+ * `AnimatePresence` never removes the tree. Removing the root's no-op `exit`
+ * did not fix it, and neither did mounting the header's shared-`layoutId` copy
+ * only after the handoff — the two copies still coexist for the exit window,
+ * and framer appears to hold the exiting one because of that.
+ *
+ * What that used to cost: `opacity: 0` still receives pointer events, so an
+ * invisible full-screen sheet sat at `z-50` over the header and the whole
+ * board. Back and Settings could not be tapped and the chain could not be
+ * dragged; only the input row, which paints in a later sibling, stayed usable.
+ *
+ * So the root is `pointer-events-none` and `aria-hidden`: nothing inside it is
+ * interactive or worth announcing twice, which makes a lingering mount inert
+ * rather than harmful. The residual cost is one dead node in the DOM.
  */
 export function WelcomeOverlay({ show, theme }: WelcomeOverlayProps) {
     const t = useTranslations('GameRoom.Header');
@@ -24,8 +40,8 @@ export function WelcomeOverlay({ show, theme }: WelcomeOverlayProps) {
                     key="welcome-overlay"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    exit={{ transition: { duration: 0.8 } }}
-                    className="fixed inset-0 z-50 flex items-center justify-center p-6"
+                    aria-hidden="true"
+                    className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-6"
                 >
                     <motion.div
                         initial={{ opacity: 0 }}

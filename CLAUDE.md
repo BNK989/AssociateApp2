@@ -290,11 +290,22 @@ in Hebrew/Arabic (§13).
 - Pre-existing hydration mismatch on `/[locale]`: Radix `useId` values differ
   between server and client for the footer language `Select` and the
   `FeedbackForm` `Dialog`. Verified unrelated to the debug-mode work.
-- The daily game's welcome overlay never unmounts. Its `AnimatePresence` exit
-  variant sets a transition but no animatable property, so the root stays
-  mounted after the 2.5s timer fires; only the backdrop fades. The theme text
-  flies into the header via `layoutId`, which is why the game stays usable.
-  Confirmed pre-existing by testing the commit before the GameHeader split.
+- The daily game's welcome overlay never unmounts. After the 2.5s timer the
+  backdrop fades to `opacity: 0` but `AnimatePresence` never removes the tree.
+  The cause is **not** the no-op `exit` variant this entry used to blame:
+  removing it changes nothing, and neither does mounting the header's shared
+  `layoutId` copy only after the handoff. The two copies coexist for the exit
+  window and framer appears to hold the exiting one because of that.
+
+  This entry also used to say "the game stays usable". It was not: `opacity: 0`
+  still receives pointer events, so the invisible sheet sat at `z-50` over the
+  header and the whole board. Measured 2026-08-22 with `elementFromPoint` —
+  Back and Settings were both unreachable and the message list could not be
+  dragged; only the input row, which paints in a later sibling, still worked.
+
+  Fixed by making the lingering mount inert: the root is now
+  `pointer-events-none` and `aria-hidden`. Every hit test now lands on real
+  content. The residual debt is one dead node in the DOM, which is cosmetic.
 - `GameHeader` accepts `loading`, `solvingTimeLeft` and `onRefresh` and reads
   none of them. Marked `@deprecated` rather than removed; `DailyGameClient` no
   longer passes them, so only the classic game page still does.
