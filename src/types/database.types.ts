@@ -5,7 +5,7 @@
  *   npx supabase gen types typescript --project-id pueadfincgiwwylpgxxs
  *
  * Exempt from the 350-line cap in CLAUDE.md §2 (generated artifact).
- * Last generated: 2026-08-21
+ * Last generated: 2026-08-22
  */
 
 export type Json =
@@ -86,6 +86,57 @@ export type Database = {
           play_date?: string
           theme?: string | null
           words?: string[]
+        }
+        Relationships: []
+      }
+      daily_results: {
+        Row: {
+          client_id: string
+          completed: boolean
+          created_at: string
+          duration_ms: number
+          hints_used: number
+          id: string
+          per_word: Json
+          play_date: string
+          score: number
+          strikes: number
+          updated_at: string
+          user_id: string | null
+          words_solved: number
+          words_total: number
+        }
+        Insert: {
+          client_id: string
+          completed?: boolean
+          created_at?: string
+          duration_ms?: number
+          hints_used?: number
+          id?: string
+          per_word?: Json
+          play_date: string
+          score?: number
+          strikes?: number
+          updated_at?: string
+          user_id?: string | null
+          words_solved?: number
+          words_total: number
+        }
+        Update: {
+          client_id?: string
+          completed?: boolean
+          created_at?: string
+          duration_ms?: number
+          hints_used?: number
+          id?: string
+          per_word?: Json
+          play_date?: string
+          score?: number
+          strikes?: number
+          updated_at?: string
+          user_id?: string | null
+          words_solved?: number
+          words_total?: number
         }
         Relationships: []
       }
@@ -577,6 +628,23 @@ export type Enums<
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
 
 export const Constants = {
