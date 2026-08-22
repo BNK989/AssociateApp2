@@ -19,6 +19,28 @@ export type InviteRow = Tables<'invites'>;
 export type DailyGameRow = Tables<'daily_games'>;
 
 /**
+ * A row of `game_settings` — the game-master tunables.
+ *
+ * Hand-written rather than `Tables<'game_settings'>` because the table's
+ * migration (20260822140000_create_game_settings.sql) is written but not yet
+ * applied, so the generated types do not know it exists. Once the migration is
+ * deployed, regenerate `database.types.ts` and replace this with the generated
+ * alias — do not let the two drift.
+ *
+ * `value` is deliberately `unknown`: it is a hand-editable jsonb blob, narrowed
+ * on read by `parseHintPolicy` rather than trusted.
+ */
+export type GameSettingsRow = {
+    key: string;
+    value: unknown;
+    scope: 'default' | 'force';
+    revision: number;
+    updated_by: string | null;
+    updated_at: string;
+    created_at: string;
+};
+
+/**
  * User-controlled preferences stored in `profiles.settings` (jsonb).
  * Every field is optional — older rows predate most of these keys.
  */
