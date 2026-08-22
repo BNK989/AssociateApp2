@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createLogger } from '@/lib/logger';
+import { createAdminClient } from '@/lib/supabase-admin';
 import type { ActionContext, ActionPayload } from '../context';
 import { readBoolean, readNumber, readString } from '../context';
 import { completeGameOrAdvanceTurn } from '../gameState';
@@ -58,7 +59,11 @@ async function applyCorrectGuess(
         .eq('id', targetId);
     if (msgError) throw msgError;
 
-    const { error: rpcError } = await ctx.supabase.rpc('distribute_game_points', {
+    // Awarding points is privileged: the function is SECURITY DEFINER and takes
+    // the recipient and amount as arguments, so a client able to call it could
+    // award itself anything. It runs through the service role here, and EXECUTE
+    // is revoked from anon and authenticated in the database.
+    const { error: rpcError } = await createAdminClient().rpc('distribute_game_points', {
         game_id_param: ctx.gameId,
         winner_id: ctx.user.id,
         winner_amount: winnerPoints,

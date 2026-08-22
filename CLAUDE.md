@@ -305,6 +305,11 @@ in Hebrew/Arabic (§13).
 - `src/types/database.types.ts` (590 lines) is a generated artifact and is
   exempt from the §2 line cap.
 - Emojis in ~8 component files and in `messages/*.json` copy (10–13 per locale).
+- Two migrations are written but **not yet applied**:
+  `20260822090000_lock_down_function_execute.sql` and
+  `20260822090100_pin_function_search_path.sql`. Deploy the app first — the
+  first migration removes the EXECUTE grant the pre-deploy code relied on for
+  `distribute_game_points`. See [knowledge base/database_security.md](knowledge%20base/database_security.md).
 - Migration history drift: `add_message_type` and `create_translation_generations`
   exist as local files but were applied by hand and are absent from remote history;
   four remote migrations have no local file.

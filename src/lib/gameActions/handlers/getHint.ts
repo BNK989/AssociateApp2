@@ -14,14 +14,17 @@ const AI_HINT_LEVEL = 3;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
- * Rate-limit reads need to see every player's usage, which RLS hides, so they
- * go through the service role. Falls back to the caller's client if no service
- * key is configured — the limits then under-count rather than the request
- * failing outright.
+ * Client for the rate-limit ledger.
+ *
+ * `api_usage` is deny-all under RLS, so only the service role can read or write
+ * it. Returns null when no service key is configured: the caller then refuses
+ * the hint rather than proceeding, because a client-scoped read of a deny-all
+ * table returns a count of zero, which reads as "no quota spent" and would
+ * silently make AI hints unlimited.
  */
-function getUsageClient(fallback: SupabaseClient): SupabaseClient {
+function getUsageClient(): SupabaseClient | null {
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
-    if (!serviceKey) return fallback;
+    if (!serviceKey) return null;
     return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey);
 }
 
@@ -82,7 +85,14 @@ export async function handleGetHint(
 
     if (nextLevel === AI_HINT_LEVEL) {
         const ip = ctx.request.headers.get('x-forwarded-for') || 'unknown';
-        const usage = getUsageClient(ctx.supabase);
+        const usage = getUsageClient();
+
+        if (!usage) {
+            log.error('config', 'No service role key configured; refusing to issue an unmetered AI hint', {
+                game_id: ctx.gameId,
+            });
+            return NextResponse.json({ error: 'AI hints are unavailable.' }, { status: 503 });
+        }
 
         const quotaResponse = await checkHintQuota(ctx, usage, ip);
         if (quotaResponse) return quotaResponse;
