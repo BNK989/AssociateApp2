@@ -57,6 +57,14 @@ export type DailyResultPayload = {
     duration_ms: number;
     completed: boolean;
     per_word: WordResult[];
+    /**
+     * The game_settings revision this game was played under.
+     *
+     * Zero means the settings table could not be read and the compiled defaults
+     * were used, which is a real answer rather than a missing one — grouping
+     * outcomes by this is how a configuration change is judged.
+     */
+    settings_revision: number;
 };
 
 function previousDay(dateStr: string): string {
@@ -99,6 +107,7 @@ type BuildArgs = {
     score: number;
     perWord: WordResult[];
     completed: boolean;
+    settingsRevision: number;
 };
 
 /**
@@ -114,6 +123,7 @@ export function buildResultPayload({
     score,
     perWord,
     completed,
+    settingsRevision,
 }: BuildArgs): DailyResultPayload {
     return {
         client_id: clientId,
@@ -126,6 +136,7 @@ export function buildResultPayload({
         duration_ms: perWord.reduce((sum, w) => sum + clampWordMs(w.ms), 0),
         completed,
         per_word: perWord.map((w) => ({ ...w, ms: clampWordMs(w.ms) })),
+        settings_revision: settingsRevision,
     };
 }
 
@@ -170,7 +181,7 @@ export type ParseSuccess = { ok: true; payload: DailyResultPayload };
 export function parseResultPayload(body: unknown, wordsTotal: number): ParseSuccess | ParseFailure {
     if (!isRecord(body)) return { ok: false, reason: 'body is not an object' };
 
-    const { client_id, play_date, score, completed, per_word } = body;
+    const { client_id, play_date, score, completed, per_word, settings_revision } = body;
 
     // Charset is restricted, not merely length-checked: the streak query builds
     // a PostgREST `or` filter from this value, and that filter is a string
@@ -194,6 +205,14 @@ export function parseResultPayload(body: unknown, wordsTotal: number): ParseSucc
     const parsedScore = boundedInt(score, 0, 10_000_000);
     if (parsedScore === null) return { ok: false, reason: 'score out of range' };
 
+    // Absent is tolerated and recorded as the no-revision marker: a client that
+    // could not read the settings still played a real game, and dropping its
+    // result would bias exactly the measurements this exists to collect.
+    const parsedRevision = settings_revision === undefined || settings_revision === null
+        ? 0
+        : boundedInt(settings_revision, 0, 1_000_000);
+    if (parsedRevision === null) return { ok: false, reason: 'settings_revision out of range' };
+
     const parsedWords: WordResult[] = [];
     for (const entry of per_word) {
         const parsed = parseWordResult(entry, wordsTotal);
@@ -210,6 +229,7 @@ export function parseResultPayload(body: unknown, wordsTotal: number): ParseSucc
             score: parsedScore,
             perWord: parsedWords,
             completed,
+            settingsRevision: parsedRevision,
         }),
     };
 }

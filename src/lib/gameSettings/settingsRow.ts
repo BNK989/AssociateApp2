@@ -4,6 +4,10 @@ import {
     type GameMasterHintSettings,
 } from '@/lib/daily/hintPolicy';
 
+// Re-exported so callers of this module do not need to know where the error
+// codes live; the definition is shared with the daily-results write path.
+export { isMissingTable } from '@/lib/supabaseErrors';
+
 /**
  * Turning a `game_settings` row into settings the game can play by.
  *
@@ -37,38 +41,11 @@ export const FALLBACK_DAILY_HINT_SETTINGS: DailyHintSettings = {
     revision: NO_REVISION,
 };
 
-/**
- * Codes meaning "this table does not exist yet".
- *
- * Two of them, because the answer depends on who is asked. Raw Postgres returns
- * the SQLSTATE `42P01`, but supabase-js goes through PostgREST, which answers
- * from its schema cache and reports `PGRST205` instead. Checking only the
- * SQLSTATE looks right when tested with a direct SQL query and still logs an
- * error through the client, which is exactly the wolf-crying this branch exists
- * to avoid.
- */
-export const MISSING_TABLE_CODES = ['42P01', 'PGRST205'] as const;
-
 export type SettingsRow = {
     value: unknown;
     scope: string | null;
     revision: number | null;
 };
-
-/**
- * Whether a read failed only because the migration has not been applied yet.
- *
- * Worth distinguishing: it is an expected state between merging this code and
- * deploying the migration, and logging it as an error would train the reader to
- * ignore a line that means something real everywhere else.
- */
-export function isMissingTable(error: unknown): boolean {
-    if (typeof error !== 'object' || error === null || !('code' in error)) return false;
-
-    const code = (error as { code?: unknown }).code;
-    return typeof code === 'string'
-        && (MISSING_TABLE_CODES as readonly string[]).includes(code);
-}
 
 /**
  * Narrows a row into settings, falling back per field.

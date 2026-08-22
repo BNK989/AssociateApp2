@@ -24,6 +24,8 @@ type UseDailyResultsArgs = {
     /** Id of the word currently being guessed; a change restarts the timer. */
     activeWordId: string | null;
     accessToken?: string;
+    /** Recorded with every result, so outcomes can be attributed to a config. */
+    settingsRevision: number;
 };
 
 /**
@@ -43,6 +45,7 @@ export function useDailyResults({
     wordsTotal,
     activeWordId,
     accessToken,
+    settingsRevision,
 }: UseDailyResultsArgs) {
     const perWordRef = useRef<WordResult[]>([]);
     const clientIdRef = useRef<string | null>(null);
@@ -83,6 +86,7 @@ export function useDailyResults({
             score: totalScore,
             perWord: perWordRef.current,
             completed,
+            settingsRevision,
         });
 
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -118,7 +122,7 @@ export function useDailyResults({
                     progress: payload.per_word.length,
                 }, e);
             });
-    }, [playDate, wordsTotal, accessToken]);
+    }, [playDate, wordsTotal, accessToken, settingsRevision]);
 
     // Stop the clock while the tab is hidden, so a game left open overnight is
     // not recorded as an eight-hour puzzle.

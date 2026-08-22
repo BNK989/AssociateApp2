@@ -141,6 +141,7 @@ function DailyGameBoard({
                 consecutive,
                 user_type: userType,
                 date,
+                settings_revision: hintSettings.revision,
             });
         },
         onCompleted: (finalScore) => {
@@ -149,6 +150,7 @@ function DailyGameBoard({
                 total_words: dailyWords.length,
                 user_type: userType,
                 date,
+                settings_revision: hintSettings.revision,
             });
         },
         onWordFinished: (args) => recordWordRef.current?.(args),
@@ -159,6 +161,7 @@ function DailyGameBoard({
         wordsTotal: dailyWords.length,
         activeWordId: game.targetMessage?.id ?? null,
         accessToken: session?.access_token,
+        settingsRevision: hintSettings.revision,
     });
 
     useEffect(() => {
@@ -225,8 +228,12 @@ function DailyGameBoard({
     useEffect(() => {
         if (authLoading || hasTrackedEntrance.current) return;
         hasTrackedEntrance.current = true;
-        posthog.capture('daily_game_entered', { user_type: userType, date });
-    }, [authLoading, userType, date, posthog]);
+        posthog.capture('daily_game_entered', {
+            user_type: userType,
+            date,
+            settings_revision: hintSettings.revision,
+        });
+    }, [authLoading, userType, date, posthog, hintSettings.revision]);
 
     // Keep the word being guessed centred as the chain advances.
     useEffect(() => {

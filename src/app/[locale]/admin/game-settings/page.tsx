@@ -1,4 +1,5 @@
 import { GameSettingsForm } from '@/components/admin/gameSettings/GameSettingsForm';
+import { OutcomesPanel } from '@/components/admin/gameSettings/OutcomesPanel';
 import { getDailyHintSettings, NO_REVISION } from '@/lib/gameSettings/server';
 
 export const dynamic = 'force-dynamic';
@@ -29,6 +30,8 @@ export default async function GameSettingsPage() {
                 revision={settings.revision}
                 usingFallback={settings.revision === NO_REVISION}
             />
+
+            <OutcomesPanel currentRevision={settings.revision} />
         </div>
     );
 }

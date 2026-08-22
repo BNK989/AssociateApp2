@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase-admin';
 import { createLogger } from '@/lib/logger';
 import { countStreak, parseResultPayload } from '@/lib/daily/dailyResults';
+import { isMissingColumn } from '@/lib/supabaseErrors';
 
 const log = createLogger('api/daily/result');
 
@@ -157,12 +158,27 @@ export async function POST(request: Request) {
         }
     }
 
-    const { error: upsertError } = await supabase
+    const row = { ...payload, user_id: userId, updated_at: new Date().toISOString() };
+
+    let { error: upsertError } = await supabase
         .from('daily_results')
-        .upsert(
-            { ...payload, user_id: userId, updated_at: new Date().toISOString() },
-            { onConflict: 'client_id,play_date' },
-        );
+        .upsert(row, { onConflict: 'client_id,play_date' });
+
+    // Deployed code can run ahead of the schema here, since migrations are
+    // applied by hand. Losing every result until someone remembers to migrate
+    // would cost exactly the measurements this table exists for, so drop the
+    // column the database does not have and record the rest.
+    if (upsertError && isMissingColumn(upsertError)) {
+        log.warn('upsert', 'daily_results has no settings_revision column; recording without it. '
+            + 'Apply supabase/migrations/20260823090000_add_settings_revision_to_daily_results.sql '
+            + 'to attribute results to a configuration', { play_date: playDate });
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructured only to omit the column
+        const { settings_revision, ...withoutRevision } = row;
+        ({ error: upsertError } = await supabase
+            .from('daily_results')
+            .upsert(withoutRevision, { onConflict: 'client_id,play_date' }));
+    }
 
     if (upsertError) {
         log.error('upsert', 'Failed to record daily result', {

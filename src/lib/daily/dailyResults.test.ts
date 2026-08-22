@@ -53,6 +53,7 @@ describe('buildResultPayload', () => {
         score: 80,
         perWord,
         completed: false,
+        settingsRevision: 7,
     });
 
     it('counts only solved words as solved', () => {
@@ -79,6 +80,7 @@ describe('buildResultPayload', () => {
             score: 0,
             perWord: [word({ ms: MAX_WORD_MS * 5 })],
             completed: false,
+            settingsRevision: 7,
         });
 
         expect(capped.duration_ms).toBe(MAX_WORD_MS);
@@ -93,6 +95,7 @@ describe('buildResultPayload', () => {
             score: 0,
             perWord: [],
             completed: false,
+            settingsRevision: 7,
         });
 
         expect(abandoned.per_word).toEqual([]);
@@ -220,5 +223,39 @@ describe('countStreak', () => {
 
     it('is zero with no history at all', () => {
         expect(countStreak([], '2026-08-22')).toBe(0);
+    });
+});
+
+describe('parseResultPayload — settings_revision', () => {
+    const base = {
+        client_id: CLIENT_ID,
+        play_date: PLAY_DATE,
+        score: 0,
+        completed: false,
+        per_word: [],
+    };
+
+    it('reads a stored revision', () => {
+        const parsed = parseResultPayload({ ...base, settings_revision: 12 }, 5);
+        expect(parsed.ok && parsed.payload.settings_revision).toBe(12);
+    });
+
+    // A client that could not read the settings still played a real game.
+    // Rejecting it would bias exactly the drop-off numbers this table exists for.
+    it('records an absent revision as the no-revision marker', () => {
+        for (const value of [undefined, null]) {
+            const parsed = parseResultPayload({ ...base, settings_revision: value }, 5);
+            expect(parsed.ok && parsed.payload.settings_revision).toBe(0);
+        }
+    });
+
+    it('rejects a revision outside any believable range', () => {
+        const parsed = parseResultPayload({ ...base, settings_revision: -1 }, 5);
+        expect(parsed.ok).toBe(false);
+    });
+
+    it('rejects a non-numeric revision', () => {
+        const parsed = parseResultPayload({ ...base, settings_revision: 'latest' }, 5);
+        expect(parsed.ok).toBe(false);
     });
 });
