@@ -18,6 +18,8 @@ type InfoScreenProps = {
     user: User | null;
     onClose: () => void;
     theme?: string;
+    /** Prebuilt spoiler-free result text; when absent the share button is inert. */
+    shareText?: string;
     date?: string;
     solvedCount?: number;
     onRestartTutorial?: () => void;
@@ -38,6 +40,7 @@ export function InfoScreen({
     user,
     onClose,
     theme: dailyTheme,
+    shareText,
     date,
     solvedCount,
     onRestartTutorial,
@@ -50,7 +53,7 @@ export function InfoScreen({
     const instructions = useGameInstructions(isDaily);
 
     const myScore = players.find((p) => p.user_id === user?.id)?.score || 0;
-    const share = useShareResults({ date, theme: dailyTheme, score: myScore });
+    const share = useShareResults({ shareText });
 
     const handleClose = async () => {
         await settings.save();

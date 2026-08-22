@@ -204,7 +204,8 @@
             "home_btn": "Zurück zur Startseite",
             "share_text": "Associ8 Tägliche Herausforderung 📅 {date}\n🏆 Punkte: {score} Pkt\n🧩 Wörter: {solved}/{total}\n\nKannst du meinen Punktestand schlagen? Spiele auf: {url}",
             "toast_copied": "Ergebnisse in die Zwischenablage kopiert!",
-            "toast_share_fail": "Ergebnisse konnten nicht geteilt werden"
+            "toast_share_fail": "Ergebnisse konnten nicht geteilt werden",
+            "streak_badge": "{streak} Tage in Folge"
         }
     },
     "HomePage": {
@@ -513,5 +514,9 @@
         "back": "Back",
         "finish": "Finish",
         "skip": "Skip"
+    },
+    "DailyShare": {
+        "headline": "Associ8 #{number} — {solved}/{total} · {score} Pkt",
+        "streak": "🔥 {streak} Tage in Folge"
     }
 }

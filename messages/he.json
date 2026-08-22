@@ -210,7 +210,8 @@
             "home_btn": "חזרה לבית",
             "share_text": "אתגר יומי Associ8 📅 {date}\n🏆 ניקוד: {score} נק'\n🧩 מילים: {solved}/{total}\n\nנראה אתכם מנצחים אותי? שחקו ב: {url}",
             "toast_copied": "התוצאות הועתקו ללוח!",
-            "toast_share_fail": "שיתוף התוצאות נכשל"
+            "toast_share_fail": "שיתוף התוצאות נכשל",
+            "streak_badge": "{streak} ימים ברצף"
         }
     },
     "HomePage": {
@@ -513,5 +514,9 @@
         "debug_section": "ניפוי שגיאות",
         "debug_mode": "מצב ניפוי שגיאות",
         "debug_mode_hint": "מפיק אבחון מפורט למסוף הדפדפן. גלוי למנהלים בלבד; שחקנים לעולם אינם רואים את פלט היומן."
+    },
+    "DailyShare": {
+        "headline": "Associ8 #{number} — {solved}/{total} · {score} נק׳",
+        "streak": "🔥 {streak} ימים ברצף"
     }
 }

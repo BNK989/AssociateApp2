@@ -204,7 +204,8 @@
             "home_btn": "العودة للرئيسية",
             "share_text": "تحدي Associ8 اليومي 📅 {date}\n🏆 النتيجة: {score} نقطة\n🧩 الكلمات: {solved}/{total}\n\nهل يمكنك التغلب على نتيجتي؟ العب في: {url}",
             "toast_copied": "تم نسخ النتائج للحافظة!",
-            "toast_share_fail": "فشل مشاركة النتائج"
+            "toast_share_fail": "فشل مشاركة النتائج",
+            "streak_badge": "{streak} أيام متتالية"
         }
     },
     "HomePage": {
@@ -513,5 +514,9 @@
         "back": "Back",
         "finish": "Finish",
         "skip": "Skip"
+    },
+    "DailyShare": {
+        "headline": "Associ8 #{number} — {solved}/{total} · {score} نقطة",
+        "streak": "🔥 {streak} أيام متتالية"
     }
 }

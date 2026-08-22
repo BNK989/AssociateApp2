@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
     buildResultPayload,
     clampWordMs,
+    countStreak,
     MAX_WORD_MS,
     parseResultPayload,
     type WordResult,
@@ -183,5 +184,41 @@ describe('parseResultPayload', () => {
         expect(result.ok).toBe(true);
         if (!result.ok) return;
         expect(result.payload.duration_ms).toBe(MAX_WORD_MS);
+    });
+});
+
+describe('countStreak', () => {
+    it('counts an unbroken run ending today', () => {
+        expect(countStreak(['2026-08-22', '2026-08-21', '2026-08-20'], '2026-08-22')).toBe(3);
+    });
+
+    it('is one for a single day', () => {
+        expect(countStreak(['2026-08-22'], '2026-08-22')).toBe(1);
+    });
+
+    it('is zero when today is not finished, however long the past run', () => {
+        // The streak is about continuing it, so an unfinished today ends it.
+        expect(countStreak(['2026-08-21', '2026-08-20'], '2026-08-22')).toBe(0);
+    });
+
+    it('stops at the first gap rather than counting completions', () => {
+        // Finished Monday and Wednesday: Wednesday is a streak of one, not two.
+        expect(countStreak(['2026-08-19', '2026-08-17'], '2026-08-19')).toBe(1);
+    });
+
+    it('walks across a month boundary', () => {
+        expect(countStreak(['2026-09-01', '2026-08-31', '2026-08-30'], '2026-09-01')).toBe(3);
+    });
+
+    it('walks across a year boundary', () => {
+        expect(countStreak(['2027-01-01', '2026-12-31', '2026-12-30'], '2027-01-01')).toBe(3);
+    });
+
+    it('ignores days after the one being counted from', () => {
+        expect(countStreak(['2026-08-25', '2026-08-22', '2026-08-21'], '2026-08-22')).toBe(2);
+    });
+
+    it('is zero with no history at all', () => {
+        expect(countStreak([], '2026-08-22')).toBe(0);
     });
 });

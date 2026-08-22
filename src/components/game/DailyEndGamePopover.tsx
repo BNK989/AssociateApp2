@@ -9,13 +9,14 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Trophy, Share2, Users, ArrowRight } from "lucide-react";
+import { Trophy, Share2, Users, ArrowRight, Flame } from "lucide-react";
 import confetti from 'canvas-confetti';
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { createLogger, getErrorMessage } from '@/lib/logger';
+import { MIN_SHAREABLE_STREAK } from '@/lib/daily/dailyShare';
 
 const log = createLogger('daily/endgame');
 
@@ -23,11 +24,17 @@ type DailyEndGamePopoverProps = {
     open: boolean;
     score: number;
     totalWords: number;
-    date: string;
+    /**
+     * The finished, spoiler-free result. Built by the client so both share
+     * buttons say the same thing; see useDailyShareText.
+     */
+    shareText: string;
+    /** Consecutive days finished, or null while that is unknown. */
+    streak?: number | null;
     onClose: () => void;
 };
 
-export function DailyEndGamePopover({ open, score, totalWords, date, onClose }: DailyEndGamePopoverProps) {
+export function DailyEndGamePopover({ open, score, totalWords, shareText, streak, onClose }: DailyEndGamePopoverProps) {
     const router = useRouter();
     const t = useTranslations('GameRoom.DailyEndGame');
     const [internalOpen, setInternalOpen] = useState(open);
@@ -64,14 +71,6 @@ export function DailyEndGamePopover({ open, score, totalWords, date, onClose }: 
     }, [internalOpen, open]);
 
     const handleShare = async () => {
-        const shareText = t('share_text', {
-            date,
-            score,
-            solved: totalWords,
-            total: totalWords,
-            url: `${window.location.origin}/daily`
-        });
-
         try {
             if (navigator.share) {
                 await navigator.share({
@@ -117,6 +116,13 @@ export function DailyEndGamePopover({ open, score, totalWords, date, onClose }: 
                         <div className="text-5xl font-black text-gray-900 dark:text-white mt-1 tabular-nums tracking-tight">
                             {score}
                         </div>
+
+                        {streak !== null && streak !== undefined && streak >= MIN_SHAREABLE_STREAK && (
+                            <div className="mt-3 flex items-center gap-1.5 rounded-full bg-orange-100 px-3 py-1 text-sm font-semibold text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
+                                <Flame className="h-4 w-4" />
+                                {t('streak_badge', { streak })}
+                            </div>
+                        )}
                     </div>
 
                     {/* Upsell Card */}

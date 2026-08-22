@@ -210,7 +210,8 @@
             "home_btn": "Back to Home",
             "share_text": "Associ8 Daily Challenge 📅 {date}\n🏆 Score: {score} pts\n🧩 Words: {solved}/{total}\n\nCan you beat my score? Play at: {url}",
             "toast_copied": "Results copied to clipboard!",
-            "toast_share_fail": "Failed to share results"
+            "toast_share_fail": "Failed to share results",
+            "streak_badge": "{streak} day streak"
         }
     },
     "HomePage": {
@@ -513,5 +514,9 @@
         "debug_section": "Debugging",
         "debug_mode": "Debug Mode",
         "debug_mode_hint": "Emits verbose diagnostics to the browser console. Visible to administrators only; players never see logger output."
+    },
+    "DailyShare": {
+        "headline": "Associ8 #{number} — {solved}/{total} · {score} pts",
+        "streak": "🔥 {streak} day streak"
     }
 }

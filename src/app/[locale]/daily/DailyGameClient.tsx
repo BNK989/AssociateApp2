@@ -19,6 +19,7 @@ import { useAutoHint } from '@/components/daily/useAutoHint';
 import { useDailyCompletion } from '@/components/daily/useDailyCompletion';
 import { useDailyGame } from '@/components/daily/useDailyGame';
 import { useDailyResults, type RecordWordArgs } from '@/components/daily/useDailyResults';
+import { useDailyShareText } from '@/components/daily/useDailyShareText';
 import { useDailySettings } from '@/components/daily/useDailySettings';
 import { useDailyTutorial } from '@/components/daily/useDailyTutorial';
 import { useStartWordAnimation } from '@/components/daily/useStartWordAnimation';
@@ -149,6 +150,13 @@ function DailyGameBoard({
         recordWordRef.current = results.recordWord;
     }, [results.recordWord]);
 
+    const shareText = useDailyShareText({
+        date,
+        score: game.score,
+        messages: game.messages,
+        streak: results.streak,
+    });
+
     const { showSummary } = useDailyCompletion(game.gameOver, game.restoredComplete);
     const tutorial = useDailyTutorial({ authUser, authLoading, words: dailyWords, date });
 
@@ -259,6 +267,7 @@ function DailyGameBoard({
                     settings.setAutoHintEnabled(enabled);
                     settings.setAutoHintDuration(duration);
                 }}
+                shareText={shareText}
                 onWelcomeComplete={
                     GAME_CONFIG.DAILY_GAME_ANIMATE_START_MESSAGE ? animateStartWord : undefined
                 }
@@ -307,7 +316,8 @@ function DailyGameBoard({
                 open={showSummary}
                 score={game.score}
                 totalWords={dailyWords.length}
-                date={date}
+                shareText={shareText}
+                streak={results.streak}
                 onClose={() => router.push('/')}
             />
         </div>

@@ -59,6 +59,33 @@ export type DailyResultPayload = {
     per_word: WordResult[];
 };
 
+function previousDay(dateStr: string): string {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Date(Date.UTC(y, m - 1, d - 1)).toISOString().slice(0, 10);
+}
+
+/**
+ * Consecutive days finished, counting back from `playDate`.
+ *
+ * The walk stops at the first gap rather than counting completions, so a player
+ * who finished Monday and Wednesday has a streak of one on Wednesday, not two.
+ * A day the player did not finish breaks it, which is the whole point of the
+ * number.
+ */
+export function countStreak(completedDates: Iterable<string>, playDate: string): number {
+    const finished = new Set(completedDates);
+
+    let streak = 0;
+    let cursor = playDate;
+
+    while (finished.has(cursor)) {
+        streak++;
+        cursor = previousDay(cursor);
+    }
+
+    return streak;
+}
+
 /** Clamps a raw elapsed time into the range we are willing to believe. */
 export function clampWordMs(ms: number): number {
     if (!Number.isFinite(ms) || ms < 0) return 0;
@@ -145,8 +172,11 @@ export function parseResultPayload(body: unknown, wordsTotal: number): ParseSucc
 
     const { client_id, play_date, score, completed, per_word } = body;
 
-    if (typeof client_id !== 'string' || client_id.length < 8 || client_id.length > 64) {
-        return { ok: false, reason: 'client_id missing or wrong length' };
+    // Charset is restricted, not merely length-checked: the streak query builds
+    // a PostgREST `or` filter from this value, and that filter is a string
+    // grammar rather than a parameterised query.
+    if (typeof client_id !== 'string' || !/^[A-Za-z0-9_-]{8,64}$/.test(client_id)) {
+        return { ok: false, reason: 'client_id missing or malformed' };
     }
     if (typeof play_date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(play_date)) {
         return { ok: false, reason: 'play_date is not an ISO date' };

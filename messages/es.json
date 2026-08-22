@@ -204,7 +204,8 @@
             "home_btn": "Volver a Inicio",
             "share_text": "Desafío Diario Associ8 📅 {date}\n🏆 Puntuación: {score} pts\n🧩 Palabras: {solved}/{total}\n\n¿Puedes superar mi puntuación? Juega en: {url}",
             "toast_copied": "¡Resultados copiados al portapapeles!",
-            "toast_share_fail": "Error al compartir resultados"
+            "toast_share_fail": "Error al compartir resultados",
+            "streak_badge": "{streak} días seguidos"
         }
     },
     "HomePage": {
@@ -513,5 +514,9 @@
         "back": "Back",
         "finish": "Finish",
         "skip": "Skip"
+    },
+    "DailyShare": {
+        "headline": "Associ8 #{number} — {solved}/{total} · {score} pts",
+        "streak": "🔥 {streak} días seguidos"
     }
 }

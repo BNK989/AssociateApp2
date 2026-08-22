@@ -304,7 +304,70 @@ which is why the timer can afford to be patient.
 > This also un-saturates `daily_results.hints_used` (§4). While every word
 > recorded level 3, that column carried no information about difficulty.
 
-## 8. Feature Flags (PostHog)
+## 8. Sharing and Streaks
+
+### The grid
+
+A finished day shares as a spoiler-free result:
+
+```
+Associ8 #238 — 4/4 · 50 pts
+🟨🟩🟩🟨
+
+https://associ8game.com/daily
+```
+
+| Glyph | Meaning |
+| :--- | :--- |
+| 🟩 | solved with no hints |
+| 🟨 | solved, but took a hint |
+| ⬜ | never solved — given up or struck out |
+
+The property worth protecting is the one that made Wordle's grid travel: it is
+**meaningless until you have played**. It reports how the day went without
+naming a word, a hint, or the theme. The theme is itself a spoiler — knowing
+the subject is most of the work — which is why it is not in the message.
+
+Two details that look like bugs and are not:
+
+- **The count is one less than the chain length.** A 5-word chain shares as
+  `4/4`, because the last word is revealed free to start the game.
+- **`is_solved` does not mean "guessed".** It is set when a word leaves the
+  board by any route. Points are the discriminator: a real solve always scores
+  something, even after every hint, while a surrender scores zero.
+
+### One wording, two buttons
+
+`useDailyShareText` builds the string; both the end-of-game summary and the
+info screen's share button take the finished text. They used to format
+separately and had drifted — the info screen's version named the theme.
+
+The grid glyphs live in code rather than `messages/*.json` because they are
+language-neutral. They are emoji in component code, which CLAUDE.md §3
+otherwise forbids; the exception is the same one `CIPHER_SIGNS` gets. They are
+the shared artefact itself, and they must survive being pasted into a chat app,
+which an SVG icon cannot do.
+
+### Streaks
+
+Consecutive days finished, counted **server-side** and returned from
+`/api/daily/result` when a day completes — no extra endpoint, and the number is
+fresh exactly when it is needed.
+
+Server-side because the client only knows about today: yesterday's game sits in
+a localStorage key it has no reason to read, and a player switching devices
+would lose the run entirely. Identity is client id **or** account, so signing in
+part-way through keeps a streak built as a guest on the same browser.
+
+`countStreak` walks back one day at a time and stops at the first gap, so it
+counts a *run*, not a total: finishing Monday and Wednesday is a streak of one
+on Wednesday. An unfinished today is a streak of zero, however long the run
+behind it — which is the pressure the number is there to create.
+
+Shown only from **2 days** (`MIN_SHAREABLE_STREAK`); a "1 day streak" is just a
+game of the daily.
+
+## 9. Feature Flags (PostHog)
 
 The Daily Game uses **PostHog** feature flags to control rollout strategies and game difficulty adjustments without redeploying code.
 

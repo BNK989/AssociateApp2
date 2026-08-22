@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createLogger } from '@/lib/logger';
 import { getClientId } from '@/lib/daily/clientId';
 import { buildResultPayload, type WordOutcome, type WordResult } from '@/lib/daily/dailyResults';
@@ -46,6 +46,10 @@ export function useDailyResults({
 }: UseDailyResultsArgs) {
     const perWordRef = useRef<WordResult[]>([]);
     const clientIdRef = useRef<string | null>(null);
+
+    // Consecutive days finished, as counted by the server when the day is
+    // completed. Null until then -- an unfinished game has no streak to show.
+    const [streak, setStreak] = useState<number | null>(null);
 
     // Active-time accounting for the word on screen: time already banked before
     // the tab was last hidden, plus the run since it came back into view.
@@ -100,6 +104,12 @@ export function useDailyResults({
                         progress: payload.per_word.length,
                         body: body.slice(0, 200),
                     });
+                    return;
+                }
+
+                const result = await res.json();
+                if (typeof result?.streak === 'number') {
+                    setStreak(result.streak);
                 }
             })
             .catch((e) => {
@@ -169,5 +179,5 @@ export function useDailyResults({
         syncRef.current(totalScore, completed);
     }, [readElapsed, restartTimer]);
 
-    return { recordWord };
+    return { recordWord, streak };
 }

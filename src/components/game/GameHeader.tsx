@@ -39,6 +39,8 @@ type GameHeaderProps = {
     onLeave?: () => void;
     skipExitConfirm?: boolean;
     theme?: string;
+    /** Prebuilt spoiler-free result, forwarded to the info screen's share button. */
+    shareText?: string;
     hideBank?: boolean;
     hideAvatars?: boolean;
     date?: string;
@@ -71,6 +73,7 @@ export function GameHeader({
     onLeave,
     skipExitConfirm,
     theme,
+    shareText,
     hideBank,
     hideAvatars,
     date,
@@ -237,6 +240,7 @@ export function GameHeader({
                         user={user}
                         onClose={() => toggleInfo(false)}
                         theme={theme}
+                        shareText={shareText}
                         date={date}
                         solvedCount={solvedCount}
                         onRestartTutorial={onRestartTutorial}

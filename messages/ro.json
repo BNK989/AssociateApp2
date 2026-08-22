@@ -204,7 +204,8 @@
             "home_btn": "Înapoi Acasă",
             "share_text": "Provocare Zilnică Associ8 📅 {date}\n🏆 Scor: {score} pct\n🧩 Cuvinte: {solved}/{total}\n\nPoți să-mi bați scorul? Joacă la: {url}",
             "toast_copied": "Rezultate copiate în clipboard!",
-            "toast_share_fail": "Partajare rezultate eșuată"
+            "toast_share_fail": "Partajare rezultate eșuată",
+            "streak_badge": "{streak} zile la rând"
         }
     },
     "HomePage": {
@@ -513,5 +514,9 @@
         "back": "Back",
         "finish": "Finish",
         "skip": "Skip"
+    },
+    "DailyShare": {
+        "headline": "Associ8 #{number} — {solved}/{total} · {score} pct",
+        "streak": "🔥 {streak} zile la rând"
     }
 }

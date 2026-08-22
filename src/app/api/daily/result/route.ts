@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase-admin';
 import { createLogger } from '@/lib/logger';
-import { parseResultPayload } from '@/lib/daily/dailyResults';
+import { countStreak, parseResultPayload } from '@/lib/daily/dailyResults';
 
 const log = createLogger('api/daily/result');
 
@@ -16,6 +16,46 @@ function isoDay(offsetDays: number): string {
 
 function isPlayableDate(playDate: string): boolean {
     return playDate >= isoDay(-DATE_SLACK_DAYS) && playDate <= isoDay(DATE_SLACK_DAYS);
+}
+
+/** Furthest back a streak is counted. Beyond this the number stops being a hook. */
+const MAX_STREAK_LOOKBACK = 400;
+
+/**
+ * Consecutive days finished, counting back from this one.
+ *
+ * Computed here rather than on the client because the client only knows about
+ * today -- yesterday's game lives in a localStorage key it has no reason to
+ * read, and a player switching devices would lose the streak entirely.
+ *
+ * Identity is client id OR account, so signing in part-way through a run keeps
+ * the streak that was built as a guest on the same browser.
+ */
+async function computeStreak(
+    supabase: ReturnType<typeof createAdminClient>,
+    clientId: string,
+    userId: string | null,
+    playDate: string,
+): Promise<number> {
+    const identity = userId
+        ? `client_id.eq.${clientId},user_id.eq.${userId}`
+        : `client_id.eq.${clientId}`;
+
+    const { data, error } = await supabase
+        .from('daily_results')
+        .select('play_date')
+        .or(identity)
+        .eq('completed', true)
+        .lte('play_date', playDate)
+        .order('play_date', { ascending: false })
+        .limit(MAX_STREAK_LOOKBACK);
+
+    if (error) {
+        log.warn('streak', 'Could not read history for the streak; reporting none', { play_date: playDate }, error);
+        return 0;
+    }
+
+    return countStreak((data ?? []).map((row) => row.play_date), playDate);
 }
 
 /**
@@ -134,5 +174,11 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Could not record result' }, { status: 500 });
     }
 
-    return NextResponse.json({ ok: true });
+    // Only worth a query once the day is actually finished; an unfinished game
+    // has no streak to report and this runs after every single word.
+    const streak = payload.completed
+        ? await computeStreak(supabase, payload.client_id, userId, playDate)
+        : null;
+
+    return NextResponse.json({ ok: true, streak });
 }
