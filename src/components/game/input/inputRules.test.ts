@@ -158,7 +158,7 @@ describe('getEffectiveHintLevel', () => {
 describe('getHintTier', () => {
     const message = makeMessage();
     const value = calculateMessageValue(message.content);
-    const ladder = 'STEP';
+    const ladder = 'ladder' as const;
 
     it('prices each tier off the word value', () => {
         expect(getHintTier(0, message, ladder)?.cost).toBe(Math.ceil(value * HINT_COSTS.TIER_1));
@@ -179,7 +179,7 @@ describe('getHintTier', () => {
 
     it('shows no glyph under the ALL reveal type, since no step is passed through', () => {
         for (const level of [0, 1, 2]) {
-            expect(getHintTier(level, message, 'ALL')?.badge).toBeNull();
+            expect(getHintTier(level, message, 'jump')?.badge).toBeNull();
         }
     });
 
@@ -192,7 +192,7 @@ describe('getHintTier', () => {
 describe('hint cost and hint level agree', () => {
     const word = { id: 'm1', content: 'Harmony' } as Message;
 
-    // These drifted apart under the old 'ALL' default: the button priced the
+    // These drifted apart under the old jump-by-default behaviour: the button priced the
     // next hint at its tier (10% at level 0) while getNextHintLevel jumped
     // straight to level 3 and calculateSolvePoints deducted 60%. The player
     // was charged six times what the button offered.

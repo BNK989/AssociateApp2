@@ -8,6 +8,7 @@ import {
     findTargetMessage,
     sanitizeRestoredMessages,
 } from './dailyMessages';
+import { DEFAULT_HINT_POLICY } from './hintPolicy';
 
 const WORDS = ['Conductor', 'Baton', 'Harmony', 'Chord'];
 
@@ -23,6 +24,11 @@ function makeMessage(overrides: Partial<Message> = {}): Message {
         hint_level: 0,
         ...overrides,
     };
+}
+
+/** A policy that opens words at `startLevel`, applied where `appliesTo` says. */
+function policyAt(startLevel: number, appliesTo: 'first-word' | 'every-word' = 'first-word') {
+    return { ...DEFAULT_HINT_POLICY, startLevel, startLevelAppliesTo: appliesTo };
 }
 
 describe('buildInitialMessages', () => {
@@ -45,32 +51,40 @@ describe('buildInitialMessages', () => {
     });
 
     it('pre-applies the hint level only to the first word the player faces', () => {
-        const messages = buildInitialMessages({ words: WORDS, initialHintLevel: 2 });
+        const messages = buildInitialMessages({ words: WORDS, policy: policyAt(2) });
         expect(messages[2].hint_level).toBe(2);
         expect([messages[0], messages[1], messages[3]].every((m) => m.hint_level === 0)).toBe(true);
     });
 
     it('clamps the hint level into range', () => {
-        expect(buildInitialMessages({ words: WORDS, initialHintLevel: 99 })[2].hint_level).toBe(3);
-        expect(buildInitialMessages({ words: WORDS, initialHintLevel: -5 })[2].hint_level).toBe(0);
+        expect(buildInitialMessages({ words: WORDS, policy: policyAt(99) })[2].hint_level).toBe(3);
+        expect(buildInitialMessages({ words: WORDS, policy: policyAt(-5) })[2].hint_level).toBe(0);
     });
 
     it('attaches an authored hint at level 3, falling back when absent', () => {
         const hints = ['a', 'b', 'authored clue', 'd'];
-        expect(buildInitialMessages({ words: WORDS, initialHintLevel: 3, hints })[2].ai_hint)
+        expect(buildInitialMessages({ words: WORDS, policy: policyAt(3), hints })[2].ai_hint)
             .toBe('authored clue');
 
         expect(buildInitialMessages({
             words: WORDS,
-            initialHintLevel: 3,
+            policy: policyAt(3),
             fallbackHint: (w) => `fallback:${w}`,
         })[2].ai_hint).toBe('fallback:Harmony');
     });
 
     it('attaches no hint below level 3', () => {
         const hints = ['a', 'b', 'authored clue', 'd'];
-        expect(buildInitialMessages({ words: WORDS, initialHintLevel: 2, hints })[2].ai_hint)
+        expect(buildInitialMessages({ words: WORDS, policy: policyAt(2), hints })[2].ai_hint)
             .toBeUndefined();
+    });
+
+    it('opens every unsolved word hinted under every-word', () => {
+        const messages = buildInitialMessages({ words: WORDS, policy: policyAt(1, 'every-word') });
+
+        expect(messages.slice(0, 3).every((m) => m.hint_level === 1)).toBe(true);
+        // The freebie is already solved; a hint level on it would be meaningless.
+        expect(messages[3].hint_level).toBe(0);
     });
 
     it('carries connection scores through by index', () => {

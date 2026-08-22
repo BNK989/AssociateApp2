@@ -5,6 +5,7 @@ import { generateCipherString } from '@/lib/gameLogic';
 export { findTargetMessage } from '@/lib/gameLogic';
 import { MAX_HINT_LEVEL } from './dailyScoring';
 import { MAX_STRIKES } from '@/lib/gameLogic';
+import { DEFAULT_HINT_POLICY, startLevelFor, type DailyHintPolicy } from './hintPolicy';
 
 /** The daily chain is authored by a bot rather than a real player. */
 export const BOT_USER_ID = 'daily-bot';
@@ -31,8 +32,8 @@ export function countRemainingAfterSolve(messages: Message[], solvedId: string):
 
 type BuildArgs = {
     words: string[];
-    /** Hint level to pre-apply to the first word the player will face. */
-    initialHintLevel?: number;
+    /** Decides the hint level each word opens at. */
+    policy?: DailyHintPolicy;
     hints?: string[] | null;
     connectionScores?: number[] | null;
     /** Fallback clue text, used when no authored hint exists for a word. */
@@ -46,23 +47,24 @@ type BuildArgs = {
  *
  * The chain is presented newest-last, and the *final* word is the one the
  * player is given for free — so it starts solved, unless the entry animation is
- * going to type it out instead. Only the word immediately before it carries any
- * pre-applied hint level.
+ * going to type it out instead.
+ *
+ * Which words open already hinted is the policy's call: under `first-word` only
+ * the one immediately before the freebie does, which is how this has always
+ * behaved, and under `every-word` the whole chain does.
  */
 export function buildInitialMessages({
     words,
-    initialHintLevel = 0,
+    policy = DEFAULT_HINT_POLICY,
     hints,
     connectionScores,
     fallbackHint,
     animateStartWord = false,
 }: BuildArgs): Message[] {
     const startIndex = words.length - 1;
-    const firstTargetIndex = words.length - 2;
-    const clampedHintLevel = Math.max(0, Math.min(MAX_HINT_LEVEL, initialHintLevel));
 
     return words.map((word, index) => {
-        const hintLevel = index === firstTargetIndex ? clampedHintLevel : 0;
+        const hintLevel = startLevelFor(policy, index, words.length);
 
         let aiHint: string | undefined;
         if (hintLevel === MAX_HINT_LEVEL) {

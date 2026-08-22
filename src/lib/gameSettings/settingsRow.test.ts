@@ -5,19 +5,29 @@ import {
     isMissingTable,
     NO_REVISION,
     settingsFromRow,
-    UNDEFINED_TABLE,
 } from './settingsRow';
 
 describe('isMissingTable', () => {
     // The window between merging the code and applying the migration is a
     // normal state, not a fault, and has to be distinguishable in the logs.
-    it('recognises the undefined-table code', () => {
-        expect(isMissingTable({ code: UNDEFINED_TABLE })).toBe(true);
+    it('recognises the raw Postgres undefined-table code', () => {
+        expect(isMissingTable({ code: '42P01' })).toBe(true);
+    });
+
+    // supabase-js answers through PostgREST, which reports a missing table from
+    // its schema cache under its own code. Checking only the SQLSTATE passes a
+    // direct SQL test and still logs an error through the client.
+    it('recognises the PostgREST schema-cache code', () => {
+        expect(isMissingTable({ code: 'PGRST205' })).toBe(true);
     });
 
     it('does not treat other Postgres errors as a missing table', () => {
         expect(isMissingTable({ code: '42501' })).toBe(false);
         expect(isMissingTable({ code: 'PGRST116' })).toBe(false);
+    });
+
+    it('ignores a non-string code', () => {
+        expect(isMissingTable({ code: 42101 })).toBe(false);
     });
 
     it('tolerates anything that is not an error object', () => {

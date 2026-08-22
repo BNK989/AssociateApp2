@@ -10,6 +10,7 @@ import { PreferencesPanel } from './info/PreferencesPanel';
 import { ScoreSummary } from './info/ScoreSummary';
 import { useGameInstructions } from './info/gameInstructions';
 import { useInfoSettings } from './info/useInfoSettings';
+import type { DailyHintPolicy } from '@/lib/daily/hintPolicy';
 import { useShareResults } from './info/useShareResults';
 
 type InfoScreenProps = {
@@ -24,6 +25,8 @@ type InfoScreenProps = {
     solvedCount?: number;
     onRestartTutorial?: () => void;
     onAutoHintChange?: (enabled: boolean, duration: number) => void;
+    /** Game-master policy the preference defaults are read from. */
+    hintPolicy?: DailyHintPolicy;
 };
 
 /**
@@ -45,11 +48,12 @@ export function InfoScreen({
     solvedCount,
     onRestartTutorial,
     onAutoHintChange,
+    hintPolicy,
 }: InfoScreenProps) {
     const t = useTranslations('GameRoom.Info');
     const isDaily = Boolean(dailyTheme);
 
-    const settings = useInfoSettings(onAutoHintChange);
+    const settings = useInfoSettings(onAutoHintChange, hintPolicy);
     const instructions = useGameInstructions(isDaily);
 
     const myScore = players.find((p) => p.user_id === user?.id)?.score || 0;

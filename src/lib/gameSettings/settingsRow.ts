@@ -37,8 +37,17 @@ export const FALLBACK_DAILY_HINT_SETTINGS: DailyHintSettings = {
     revision: NO_REVISION,
 };
 
-/** Postgres "relation does not exist" — the migration has not been applied. */
-export const UNDEFINED_TABLE = '42P01';
+/**
+ * Codes meaning "this table does not exist yet".
+ *
+ * Two of them, because the answer depends on who is asked. Raw Postgres returns
+ * the SQLSTATE `42P01`, but supabase-js goes through PostgREST, which answers
+ * from its schema cache and reports `PGRST205` instead. Checking only the
+ * SQLSTATE looks right when tested with a direct SQL query and still logs an
+ * error through the client, which is exactly the wolf-crying this branch exists
+ * to avoid.
+ */
+export const MISSING_TABLE_CODES = ['42P01', 'PGRST205'] as const;
 
 export type SettingsRow = {
     value: unknown;
@@ -54,10 +63,11 @@ export type SettingsRow = {
  * ignore a line that means something real everywhere else.
  */
 export function isMissingTable(error: unknown): boolean {
-    return typeof error === 'object'
-        && error !== null
-        && 'code' in error
-        && (error as { code?: unknown }).code === UNDEFINED_TABLE;
+    if (typeof error !== 'object' || error === null || !('code' in error)) return false;
+
+    const code = (error as { code?: unknown }).code;
+    return typeof code === 'string'
+        && (MISSING_TABLE_CODES as readonly string[]).includes(code);
 }
 
 /**

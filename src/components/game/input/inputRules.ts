@@ -2,6 +2,7 @@ import type { GameState, Message, Player } from '@/hooks/useGameLogic';
 import { GAME_CONFIG } from '@/lib/gameConfig';
 import { calculateMessageValue, calculateRevealedPercentage, HINT_COSTS } from '@/lib/gameLogic';
 import { MAX_HINT_LEVEL } from '@/lib/daily/dailyScoring';
+import { DEFAULT_HINT_POLICY, type HintProgression } from '@/lib/daily/hintPolicy';
 
 /**
  * Whose word is in play: the turn holder while texting, the author of the
@@ -119,19 +120,19 @@ export type HintTier = {
 /**
  * Cost and labelling for the next hint.
  *
- * Under the `ALL` reveal type the ladder is skipped entirely — every hint jumps
+ * Under the `jump` progression the ladder is skipped entirely — every hint goes
  * straight to the AI clue — so the button shows no intermediate glyph that
  * would imply a step the player will not pass through.
  */
 export function getHintTier(
     effectiveLevel: number,
     targetMessage?: Message,
-    revealType: string = GAME_CONFIG.DEFAULT_AUTO_HINT_REVEAL_TYPE,
+    progression: HintProgression = DEFAULT_HINT_POLICY.progression,
 ): HintTier | null {
     if (!targetMessage || effectiveLevel >= MAX_HINT_LEVEL) return null;
 
     const wordValue = calculateMessageValue(targetMessage.content);
-    const revealsEverything = revealType === 'ALL';
+    const revealsEverything = progression === 'jump';
 
     if (effectiveLevel === 0) {
         return {

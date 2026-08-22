@@ -6,6 +6,7 @@ import type { User } from '@supabase/supabase-js';
 import { InvitePlayer } from '@/components/InvitePlayer';
 import type { GameState, Message, Player } from '@/hooks/useGameLogic';
 import { InfoScreen } from './InfoScreen';
+import type { DailyHintPolicy } from '@/lib/daily/hintPolicy';
 import { LeaveGameConfirm } from './header/LeaveGameConfirm';
 import { PlayerAvatarStack } from './header/PlayerAvatarStack';
 import { ScoreCounter } from './header/ScoreCounter';
@@ -52,6 +53,8 @@ type GameHeaderProps = {
     onInfoToggle?: (open: boolean) => void;
     onRestartTutorial?: () => void;
     onAutoHintChange?: (enabled: boolean, duration: number) => void;
+    /** Game-master policy, forwarded to the info screen's preference defaults. */
+    hintPolicy?: DailyHintPolicy;
 };
 
 /**
@@ -84,6 +87,7 @@ export function GameHeader({
     onInfoToggle,
     onRestartTutorial,
     onAutoHintChange,
+    hintPolicy,
 }: GameHeaderProps) {
     const t = useTranslations('GameRoom.Header');
 
@@ -245,6 +249,7 @@ export function GameHeader({
                         solvedCount={solvedCount}
                         onRestartTutorial={onRestartTutorial}
                         onAutoHintChange={onAutoHintChange}
+                        hintPolicy={hintPolicy}
                     />
                 </div>
             )}

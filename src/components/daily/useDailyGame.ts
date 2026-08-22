@@ -2,27 +2,19 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 import type { Message } from '@/hooks/useGameLogic';
-import { calculateSimilarity, generateCipherString } from '@/lib/gameLogic';
+import { calculateSimilarity } from '@/lib/gameLogic';
 import { GAME_CONFIG } from '@/lib/gameConfig';
-import { createLogger } from '@/lib/logger';
 import {
     buildInitialMessages,
     countRemainingAfterSolve,
     findTargetMessage,
     LOCAL_USER_ID,
 } from '@/lib/daily/dailyMessages';
-import {
-    calculateSolvePoints,
-    getNextHintLevel,
-    MATCH_THRESHOLD,
-    MAX_HINT_LEVEL,
-    MAX_STRIKES,
-    needsScrambleVisuals,
-} from '@/lib/daily/dailyScoring';
+import { calculateSolvePoints, MATCH_THRESHOLD, MAX_STRIKES } from '@/lib/daily/dailyScoring';
 import { clearDailyGame, loadDailyGame, saveDailyGame } from '@/lib/daily/dailyStorage';
+import { startLevelFor, type DailyHintPolicy } from '@/lib/daily/hintPolicy';
+import { useDailyHintReveal } from './useDailyHintReveal';
 import type { WordOutcome } from '@/lib/daily/dailyResults';
-
-const log = createLogger('daily/game');
 
 /** How long the "+points" flourish stays on a solved word. */
 const SOLVED_FLASH_MS = 1500;
@@ -36,7 +28,10 @@ const RESOLVE_DELAY_MS = 300;
 type UseDailyGameArgs = {
     words: string[];
     date: string;
-    initialHintLevel: number;
+    /** Game-master hint policy in force for this play. */
+    policy: DailyHintPolicy;
+    /** Revision of the policy, recorded with the save and with every result. */
+    settingsRevision: number;
     hints?: string[] | null;
     connectionScores?: number[] | null;
     onSolved?: (args: { word: string; points: number; totalScore: number; consecutive: number }) => void;
@@ -64,7 +59,8 @@ type UseDailyGameArgs = {
 export function useDailyGame({
     words,
     date,
-    initialHintLevel,
+    policy,
+    settingsRevision,
     hints,
     connectionScores,
     onSolved,
@@ -94,16 +90,19 @@ export function useDailyGame({
 
     const freshMessages = useCallback(() => buildInitialMessages({
         words,
-        initialHintLevel,
+        policy,
         hints,
         connectionScores,
         fallbackHint,
         animateStartWord: GAME_CONFIG.DAILY_GAME_ANIMATE_START_MESSAGE,
-    }), [words, initialHintLevel, hints, connectionScores, fallbackHint]);
+    }), [words, policy, hints, connectionScores, fallbackHint]);
 
     // Restore the day's progress, or start a new chain.
     useEffect(() => {
-        const restored = loadDailyGame(date, words);
+        const restored = loadDailyGame(date, words, {
+            settingsRevision,
+            onRevisionChange: policy.onRevisionChange,
+        });
 
         if (restored) {
             setMessages(restored.messages);
@@ -115,13 +114,13 @@ export function useDailyGame({
         }
 
         setMessages(freshMessages());
-    }, [date, words, freshMessages]);
+    }, [date, words, freshMessages, settingsRevision, policy.onRevisionChange]);
 
     // Mirror every change back to storage.
     useEffect(() => {
         if (messages.length === 0) return;
-        saveDailyGame(date, words, { messages, score, consecutive, gameOver });
-    }, [messages, score, consecutive, gameOver, date, words]);
+        saveDailyGame(date, words, { messages, score, consecutive, gameOver }, settingsRevision);
+    }, [messages, score, consecutive, gameOver, date, words, settingsRevision]);
 
     const patchTarget = useCallback((id: string, updates: Partial<Message>) => {
         setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, ...updates } : m)));
@@ -192,7 +191,15 @@ export function useDailyGame({
 
             playSuccessSound?.();
 
-            const points = calculateSolvePoints(targetMessage.content, targetMessage.hint_level, consecutive);
+            const points = calculateSolvePoints(
+                targetMessage.content,
+                targetMessage.hint_level,
+                consecutive,
+                {
+                    startLevel: startLevelFor(policy, indexOfMessage(targetMessage.id), words.length),
+                    chargeForStartLevel: policy.chargeForStartLevel,
+                },
+            );
             const totalScore = score + points;
 
             setScore(totalScore);
@@ -225,7 +232,7 @@ export function useDailyGame({
     }, [
         targetMessage, gameOver, consecutive, score, patchTarget, flashSolved,
         finishWord, onSolved, onCompleted, onWordFinished, indexOfMessage,
-        playSuccessSound, t,
+        playSuccessSound, t, policy, words.length,
     ]);
 
     const giveUp = useCallback(() => {
@@ -247,47 +254,16 @@ export function useDailyGame({
         setInput('');
     }, [targetMessage, gameOver, finishWord, onWordFinished, indexOfMessage, score]);
 
-    /**
-     * Advances the current word's hint level, generating the cipher and clue to
-     * match. Authored hints are preferred; a fetch is only attempted when the
-     * day's hints were not preloaded.
-     */
-    const revealHint = useCallback(async (fetchHint?: (index: number) => Promise<string | null>) => {
-        if (!targetMessage || gameOver) return;
-
-        const currentLevel = targetMessage.hint_level || 0;
-        if (currentLevel >= MAX_HINT_LEVEL) return;
-
-        const nextLevel = getNextHintLevel({
-            currentLevel,
-            word: targetMessage.content,
-            guesses: targetMessage.guesses || [],
-        });
-
-        const cipherLevel = Math.min(nextLevel, 2);
-        const newCipherText = nextLevel < MAX_HINT_LEVEL || needsScrambleVisuals(currentLevel, nextLevel)
-            ? generateCipherString(targetMessage.content, cipherLevel, true)
-            : (targetMessage.cipher_text || generateCipherString(targetMessage.content, 2, true));
-
-        const updates: Partial<Message> = { hint_level: nextLevel, cipher_text: newCipherText };
-
-        if (nextLevel === MAX_HINT_LEVEL) {
-            const index = words.indexOf(targetMessage.content);
-            let clue = hints?.[index] ?? fallbackHint(targetMessage.content);
-
-            if (!hints && fetchHint && index !== -1) {
-                try {
-                    clue = (await fetchHint(index)) ?? clue;
-                } catch (e) {
-                    log.error('fetch_hint', 'Failed to fetch AI hint', { play_date: date }, e);
-                }
-            }
-
-            updates.ai_hint = clue;
-        }
-
-        patchTarget(targetMessage.id, updates);
-    }, [targetMessage, gameOver, words, hints, fallbackHint, patchTarget, date]);
+    const revealHint = useDailyHintReveal({
+        targetMessage,
+        gameOver,
+        words,
+        hints,
+        policy,
+        date,
+        fallbackHint,
+        patchTarget,
+    });
 
     const reset = useCallback(() => {
         clearDailyGame(date);

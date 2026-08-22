@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import DailyGameClient from './DailyGameClient';
 import { notFound } from 'next/navigation';
 import { createLogger } from '@/lib/logger';
+import { getDailyHintSettings } from '@/lib/gameSettings/server';
 
 const log = createLogger('daily/page');
 
@@ -115,6 +116,11 @@ export default async function DailyGamePage({
         }
     }
 
+    // Read on the server so the board is built with the right hint levels from
+    // the first paint — resolving this on the client would show the default
+    // policy first and then rewrite the board underneath the player.
+    const hintSettings = await getDailyHintSettings();
+
     return (
         <DailyGameClient
             dailyWords={dailyGame.words || []}
@@ -122,6 +128,7 @@ export default async function DailyGamePage({
             theme={dailyGame.theme}
             initialHints={dailyGame.hints}
             initialConnectionScores={dailyGame.connection_scores}
+            hintSettings={hintSettings}
         />
     );
 }

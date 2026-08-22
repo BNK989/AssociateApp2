@@ -23,6 +23,7 @@ import { useDailyShareText } from '@/components/daily/useDailyShareText';
 import { useDailySettings } from '@/components/daily/useDailySettings';
 import { useDailyTutorial } from '@/components/daily/useDailyTutorial';
 import { useStartWordAnimation } from '@/components/daily/useStartWordAnimation';
+import type { DailyHintSettings } from '@/lib/gameSettings/settingsRow';
 
 const log = createLogger('daily/client');
 
@@ -35,6 +36,8 @@ type DailyGameClientProps = {
     theme?: string;
     initialHints?: string[] | null;
     initialConnectionScores?: number[] | null;
+    /** Game-master hint policy, resolved on the server so there is no flash. */
+    hintSettings: DailyHintSettings;
 };
 
 export default function DailyGameClient(props: DailyGameClientProps) {
@@ -45,17 +48,27 @@ export default function DailyGameClient(props: DailyGameClientProps) {
     );
 }
 
-/** Reads the auto-hint level assigned by the PostHog experiment. */
-function useInitialHintLevel(): number {
+/**
+ * The start level assigned by the PostHog experiment, or null when the player
+ * is not in one.
+ *
+ * Since game-master controls landed, this flag is an experiment surface only:
+ * the day-to-day value lives in `game_settings` and is edited from the admin
+ * panel. Returning null rather than 0 is what keeps the two apart — an
+ * unassigned player must fall through to the game master's policy instead of
+ * silently overriding it with zero.
+ */
+function useExperimentStartLevel(): number | null {
     const payload = useFeatureFlagPayload('dailygame-auto-hint-level');
     const posthog = usePostHog();
 
     const level = typeof payload === 'object' && payload !== null && 'initialHintCount' in payload
         ? (payload as { initialHintCount: number }).initialHintCount
-        : 0;
+        : null;
 
     useEffect(() => {
-        log.debug('feature_flag', 'Auto-hint feature flag resolved', {
+        if (level === null) return;
+        log.debug('feature_flag', 'Auto-hint experiment assigned a start level', {
             resolved_level: level,
             variant: String(posthog.getFeatureFlag('dailygame-auto-hint-level')),
         });
@@ -89,6 +102,7 @@ function DailyGameBoard({
     theme,
     initialHints,
     initialConnectionScores,
+    hintSettings,
 }: DailyGameClientProps) {
     const router = useRouter();
     const { user: authUser, session, loading: authLoading } = useAuth();
@@ -99,9 +113,9 @@ function DailyGameBoard({
 
     const [isInfoOpen, setIsInfoOpen] = useState(false);
 
-    const initialHintLevel = useInitialHintLevel();
+    const experimentStartLevel = useExperimentStartLevel();
     const playSuccessSound = useSuccessSound();
-    const settings = useDailySettings(authUser, isInfoOpen);
+    const settings = useDailySettings(authUser, isInfoOpen, hintSettings, experimentStartLevel);
     const userType = authUser ? 'registered' : 'guest';
 
     /**
@@ -114,7 +128,8 @@ function DailyGameBoard({
     const game = useDailyGame({
         words: dailyWords,
         date,
-        initialHintLevel,
+        policy: settings.policy,
+        settingsRevision: hintSettings.revision,
         hints: initialHints,
         connectionScores: initialConnectionScores,
         playSuccessSound,
@@ -194,8 +209,7 @@ function DailyGameBoard({
     const autoHint = useAutoHint({
         targetMessage: game.targetMessage,
         gameOver: game.gameOver,
-        enabled: settings.autoHintEnabled,
-        duration: settings.autoHintDuration,
+        policy: settings.policy,
         onReveal: revealHint,
     });
 
@@ -263,10 +277,8 @@ function DailyGameBoard({
                 onRestartTutorial={tutorial.restart}
                 externalShowInfo={isInfoOpen}
                 onInfoToggle={setIsInfoOpen}
-                onAutoHintChange={(enabled, duration) => {
-                    settings.setAutoHintEnabled(enabled);
-                    settings.setAutoHintDuration(duration);
-                }}
+                onAutoHintChange={settings.setAutoHint}
+                hintPolicy={settings.policy}
                 shareText={shareText}
                 onWelcomeComplete={
                     GAME_CONFIG.DAILY_GAME_ANIMATE_START_MESSAGE ? animateStartWord : undefined

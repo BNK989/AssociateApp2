@@ -55,8 +55,8 @@ describe('calculateSolvePoints', () => {
 
 describe('getNextHintLevel', () => {
     // The ladder is now the app default; these still set it explicitly so the
-    // cases stay readable next to the 'ALL' one below.
-    const ladder = { revealType: 'STEP' };
+    // cases stay readable next to the 'jump' one below.
+    const ladder = { progression: 'ladder' as const };
 
     it('steps up one level at a time', () => {
         expect(getNextHintLevel({ currentLevel: 0, word: WORD, guesses: [], ...ladder })).toBe(1);
@@ -84,13 +84,13 @@ describe('getNextHintLevel', () => {
 
     it('jumps straight to the AI clue under the ALL reveal type', () => {
         for (const currentLevel of [0, 1, 2]) {
-            expect(getNextHintLevel({ currentLevel, word: WORD, guesses: [], revealType: 'ALL' }))
+            expect(getNextHintLevel({ currentLevel, word: WORD, guesses: [], progression: 'jump' }))
                 .toBe(MAX_HINT_LEVEL);
         }
     });
 
     it('climbs one step at a time by default, rather than handing over the answer', () => {
-        // The default used to be 'ALL', so the very first hint -- automatic or
+        // The default used to jump, so the very first hint -- automatic or
         // from the button -- jumped to the AI clue and cost 60% of the word.
         expect(getNextHintLevel({ currentLevel: 0, word: WORD, guesses: [] })).toBe(1);
         expect(getNextHintLevel({ currentLevel: 1, word: WORD, guesses: [] })).toBe(2);

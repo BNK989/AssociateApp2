@@ -49,7 +49,19 @@ vi.mock('sonner', () => ({
 vi.mock('@/lib/gameConfig', () => ({
     GAME_CONFIG: {
         MESSAGE_MAX_LENGTH: 50,
+        DEFAULT_AUTO_HINT_ENABLED: true,
+        DEFAULT_AUTO_HINT_DURATION: 20,
+        DEFAULT_AUTO_HINT_REVEAL_TYPE: 'STEP',
+        PERCENT_REVEALED_SHUFFLE_HINT: 0.66,
     },
+    // These moved here from gameLogic/dailyScoring when the balance constants
+    // were consolidated; the modules under test read them through this module.
+    HINT_COSTS: { TIER_1: 0.1, TIER_2: 0.1, TIER_3: 0.4 },
+    MAX_HINT_LEVEL: 3,
+    MAX_STRIKES: 3,
+    MATCH_THRESHOLD: 0.8,
+    STREAK_BONUS_AT: 3,
+    STREAK_MULTIPLIER: 1.5,
 }));
 
 vi.mock('@/lib/gameLogic', () => ({
