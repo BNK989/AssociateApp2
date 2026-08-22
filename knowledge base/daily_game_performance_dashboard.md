@@ -65,6 +65,25 @@ We track three key events to understand user behavior:
    - Math: Average.
 3. **Name**: "Average Completion Score".
 
+### Insight E: Completion by Configuration
+*Judge whether a game-settings change actually helped.*
+
+1. **Insight Type**: Funnel.
+2. **Steps**: `daily_game_entered` → `daily_game_completed`.
+3. **Breakdown by**: `settings_revision`.
+4. **Name**: "Completion by Settings Revision".
+
+All three daily events carry `settings_revision`, the `game_settings.revision` in
+force when that game was played. Break down by it rather than filtering by date:
+a player caches their game in `localStorage` and keeps playing the previous
+configuration for the rest of the day, so a date range mixes two configurations
+together. `0` means the settings table could not be read and the compiled
+defaults were used.
+
+The admin page at `/admin/game-settings` shows the same split computed from
+`daily_results`, including drop-off, which PostHog cannot see as cleanly. See
+[game_master_guide.md](game_master_guide.md).
+
 ## 3. Filtering by Date
 All events define a `date` property (e.g., `2023-10-27`).
 - To analyze a specific daily puzzle, add a global filter to the dashboard: `Property 'date' equals 'YYYY-MM-DD'`.

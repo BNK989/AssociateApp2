@@ -367,20 +367,40 @@ behind it — which is the pressure the number is there to create.
 Shown only from **2 days** (`MIN_SHAREABLE_STREAK`); a "1 day streak" is just a
 game of the daily.
 
-## 9. Feature Flags (PostHog)
+## 9. Hint Configuration
 
-The Daily Game uses **PostHog** feature flags to control rollout strategies and game difficulty adjustments without redeploying code.
+Day-to-day control over how the daily game hands out hints lives in the
+**`game_settings`** table, edited from `/admin/game-settings`. Start level, per-rung
+delays, whether each rung fires automatically, progression and stagger are all
+runtime settings — no deploy.
 
-### `dailygame-auto-hint-level`
-Controls the initial difficulty of the game by automatically revealing hints for the active word.
+Full reference: **[game_master_guide.md](game_master_guide.md)**.
+
+Resolution order, highest first:
+
+1. **Player** — `auto_hint_enabled` / `auto_hint_duration` in `profiles.settings`
+   or localStorage. Only consulted when the game master's scope is `default`.
+2. **Experiment** — the PostHog flag below. Start level only.
+3. **Game master** — the `daily_hint_policy` row.
+4. **Compiled defaults** — `GAME_CONFIG` in `src/lib/gameConfig.ts`. The floor;
+   used whenever the table is missing or unreadable, so the game cannot break.
+
+### `dailygame-auto-hint-level` (PostHog)
 
 *   **Key**: `dailygame-auto-hint-level`
 *   **Payload**: `{ "initialHintCount": number }` (0-3)
 
-#### Levels:
-*   **Level 0 (Default)**: Standard game. No auto-hints.
-*   **Level 1**: **First Letter** of the active word is revealed.
-*   **Level 2**: **Scramble Mode**. First letter is pinned (from L1), and 70% of the remaining letters are revealed but scrambled.
-*   **Level 3**: **AI Hint**. Includes Level 2 scramble + an automatic AI text hint.
+Since game-master controls landed this is an **experiment surface only** — for
+A/B tests, not for configuration. An unassigned player resolves to `null`, not
+`0`, so they fall through to the game master's policy rather than silently
+overriding it with zero.
 
-> **Note**: The game prioritizes local `localStorage` state. If a user has already started a game, changing the flag will not affect them until the next day (or if they clear storage).
+Levels: **0** nothing · **1** first letter · **2** scramble (first letter pinned,
+~70% of the rest revealed but shuffled) · **3** scramble plus the AI clue.
+
+> **In-progress games.** Progress lives in `localStorage`, and each save records
+> the `game_settings.revision` it started under. By default a configuration
+> change leaves those games alone, so it appears to take effect only the next
+> day. Setting `onRevisionChange` to `restart` discards them so a change lands at
+> once. This caveat has always applied to the PostHog flag; it is now explicit
+> and controllable.

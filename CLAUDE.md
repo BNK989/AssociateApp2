@@ -122,6 +122,12 @@ Server-side secrets (Gemini, Supabase service role) live in `.env` and are read
 server-side only. Operational controls that need a UI belong in the **admin area**
 (`src/app/[locale]/admin/`), gated by `profiles.is_admin`.
 
+Game balance that a game master should be able to change without a deploy lives
+in the `game_settings` table, edited at `/admin/game-settings`. The constants in
+`gameConfig.ts` remain the floor beneath it, so an unreachable table degrades to
+today's behaviour rather than breaking the game. See
+[knowledge base/game_master_guide.md](knowledge%20base/game_master_guide.md).
+
 ## 10. Documentation
 
 - `knowledge base/` is the project's living documentation — schema, game logic,
@@ -316,11 +322,22 @@ in Hebrew/Arabic (§13).
 - `src/types/database.types.ts` (590 lines) is a generated artifact and is
   exempt from the §2 line cap.
 - Emojis in ~8 component files and in `messages/*.json` copy (10–13 per locale).
-- Two migrations are written but **not yet applied**:
-  `20260822090000_lock_down_function_execute.sql` and
-  `20260822090100_pin_function_search_path.sql`. Deploy the app first — the
-  first migration removes the EXECUTE grant the pre-deploy code relied on for
-  `distribute_game_points`. See [knowledge base/database_security.md](knowledge%20base/database_security.md).
+- Five migrations are written but **not yet applied**:
+  `20260822090000_lock_down_function_execute.sql`,
+  `20260822090100_pin_function_search_path.sql`,
+  `20260822090200_document_api_usage_rls.sql`,
+  `20260822140000_create_game_settings.sql` and
+  `20260823090000_add_settings_revision_to_daily_results.sql`.
+  For the first, deploy the app first — it removes the EXECUTE grant the
+  pre-deploy code relied on for `distribute_game_points`. See
+  [knowledge base/database_security.md](knowledge%20base/database_security.md).
+  The last two are additive and independent of the others; until they are
+  applied the game runs on compiled defaults and results record without
+  attribution, both of which are logged with the filename to apply. See
+  [knowledge base/game_master_guide.md](knowledge%20base/game_master_guide.md).
+- `GameSettingsRow` in `src/types/app.ts` is hand-written because its table's
+  migration is not applied yet, so the generated types do not know it exists.
+  Regenerate `database.types.ts` after applying and swap in the generated alias.
 - Migration history drift: `add_message_type` and `create_translation_generations`
   exist as local files but were applied by hand and are absent from remote history;
   four remote migrations have no local file.

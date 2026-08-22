@@ -146,6 +146,63 @@ than served from the Next.js cache. Surfaced in the admin translations page.
 | `generated_at` | timestamptz | `now()` | Generation timestamp |
 | `meta` | jsonb | `'{}'` | Reserved for future generation metadata |
 
+### 10. daily_results
+Per-player outcome of a daily chain — the measurement layer for the daily game.
+Written **progressively** by `/api/daily/result` (service role) after every resolved
+word, not only on completion, because a player who abandons at word 8 of 12 never
+reaches a completion event and that abandonment is the signal. RLS allows a
+signed-in player to read their own rows; there is no write policy at all.
+
+| Column | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | uuid | `gen_random_uuid()` | Primary Key |
+| `client_id` | text | - | Stable per-browser id. Present for guests, who have no session |
+| `user_id` | uuid | `null` | References `auth.users.id`; null for guests |
+| `play_date` | date | - | The chain's date. Unique with `client_id` |
+| `words_total` | smallint | - | Chain length, taken from the stored game rather than the request |
+| `words_solved` | smallint | `0` | Words actually solved |
+| `score` | integer | `0` | Final score |
+| `hints_used` | smallint | `0` | Sum of hint levels taken |
+| `strikes` | smallint | `0` | Total wrong guesses |
+| `duration_ms` | integer | `0` | Active time; tab-hidden excluded, per-word capped |
+| `completed` | boolean | `false` | Whether the chain was finished |
+| `per_word` | jsonb | `'[]'` | `{index, outcome, hint_level, strikes, points, ms}` per resolved word. Its length is the drop-off histogram |
+| `settings_revision` | integer | `null` | `game_settings.revision` in force for this play. `0` = compiled defaults were used; `null` predates the column |
+| `created_at` / `updated_at` | timestamptz | `now()` | Timestamps |
+
+### 11. game_settings
+Game-master tunables, edited from `/admin/game-settings` without a deploy. One row
+per setting key; currently only `daily_hint_policy`. **Readable by anon** — guests
+play the daily game, so they must get the same settings as everyone else, which
+means **nothing secret may be stored here**. No write policy: writes go through
+`/api/admin/game-settings` on the service role after an `is_admin` check.
+
+| Column | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `key` | text | - | Primary Key. e.g. `daily_hint_policy` |
+| `value` | jsonb | `'{}'` | The policy. Parsed by a total parser that clamps and falls back per field, so a malformed value degrades to the compiled defaults |
+| `scope` | text | `'default'` | `default` seeds only players with no stored preference; `force` overrides everyone |
+| `revision` | integer | `1` | Bumped on every write and stamped onto `daily_results`, so outcomes can be attributed to a configuration |
+| `updated_by` | uuid | `null` | References `auth.users.id` |
+| `updated_at` / `created_at` | timestamptz | `now()` | Timestamps |
+
+### 12. game_settings_history
+Append-only audit trail of `game_settings` writes — answers "what changed on the
+14th, and who changed it" when a metric moves, and backs rollback. Service-role
+only: RLS is enabled with no policies.
+
+| Column | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | uuid | `gen_random_uuid()` | Primary Key |
+| `key` | text | - | The setting key written |
+| `value` | jsonb | - | The value as stored |
+| `scope` | text | - | Scope as stored |
+| `revision` | integer | - | The revision this write produced |
+| `updated_by` | uuid | `null` | References `auth.users.id` |
+| `created_at` | timestamptz | `now()` | When the change was made |
+
+> See [game_master_guide.md](game_master_guide.md) for what these settings do.
+
 ## Relationships
 
 - **profiles**
