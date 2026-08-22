@@ -17,8 +17,11 @@ The Daily Game is unique compared to Classic Mode because it is primarily a **Cl
     ```sql
     select * from daily_games where play_date = 'YYYY-MM-DD'
     ```
-    - **Pre-Planned**: If a row exists, it loads directly.
-    - **Dynamic AI Fallback (`src/lib/dailyGameGenerator.ts`)**: If no entry exists for today's date, the server dynamically invokes Google Gemini AI to generate a themed word chain (5–6 words), hints, and connection scores. The generated game is immediately saved into `daily_games` for `play_date = YYYY-MM-DD` so all players share the same daily game on that day. If AI is unreachable, a deterministic curated fallback pool is used.
+    - **Pre-Planned**: If a row exists, it loads directly. This is now the normal
+      case — puzzles are prepared a week ahead by the pre-generation cron (§6).
+    - **Lazy Fallback (`src/lib/dailyGameGenerator.ts`)**: If no row exists, the
+      server generates one on the spot and saves it, so every player that day
+      shares the same chain. This is a safety net, not the main path.
 4.  **Data Injection**: The fetched game data (specifically the `words` array, `theme`, and `date`) is passed as props to the client-side component `DailyGameClient`.
 
 ### The `daily_games` Table
@@ -154,7 +157,115 @@ slightly low. Pre-existing, tracked separately.
 
 ---
 
-## 5. Feature Flags (PostHog)
+## 5. How a Puzzle Is Chosen (`src/lib/daily/`)
+
+Puzzles used to be generated from the date and nothing else, and the model's
+own preferences decided the subject. That does not work: asked repeatedly for a
+word-association chain, it returns the same neighbourhoods. On **2026-08-20 and
+2026-08-21 it produced the same theme two days running**, sharing three words.
+
+The subject is now decided before the model is asked anything.
+
+### The wheel (`themeWheel.ts`)
+
+Each date deterministically draws a **domain** (20 subjects) and an **angle**
+(7 approaches) from shuffled cycles. Properties the tests enforce:
+
+- every domain is used exactly once per cycle, so none is starved;
+- a domain cannot return for at least **5 days** — a plain cycle guarantees no
+  repeat *within* a cycle but says nothing about the seam between two, which is
+  exactly where a consecutive repeat comes from;
+- no domain is pinned to one weekday, so a subject is not always easy or always
+  hard.
+
+Everything is a pure function of the date, so a given day always plans the same
+puzzle and the whole module is testable without a network.
+
+### The weekday ramp
+
+| | Mon | Tue | Wed | Thu | Fri | Sat | Sun |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Words | 6 | 7 | 8 | 9 | 10 | 12 | 8 |
+| Min mean connection | 0.82 | 0.80 | 0.76 | 0.72 | 0.68 | 0.60 | 0.78 |
+
+Length and link-tightness move together across the week; Sunday breaks the ramp
+deliberately so the week does not simply end. Verified end to end — the seven
+puzzles generated on 2026-08-22 came out at exactly 8/6/7/8/9/10/12.
+
+### The prompt (`generationPrompt.ts`)
+
+Two decisions are load-bearing and easy to undo by accident:
+
+1. **No worked example.** The old prompt showed
+   `["Sun","Morning","Coffee","Bean","Stalk"]` and the model kept returning that
+   chain's neighbourhood. A format example made of real words is a suggestion.
+   The shape is described with placeholders instead. A test asserts those words
+   never appear in a generated prompt.
+2. **Everyday vocabulary only.** Difficulty must live in the *links*, not the
+   dictionary. Without this rule the model reaches for specialist registers as
+   soon as a harder day is requested — an early run produced a mining chain
+   opening on "Headframe" and closing on "Slag". Those are not hard
+   associations, they are unfamiliar words, and no amount of clever linking lets
+   a player reason toward a word they have never met.
+
+The last 60 days of themes and 30 days of words are passed as explicit
+exclusions.
+
+### Validation and retry (`chainValidation.ts`)
+
+The model is agreeable rather than reliable, so its output is checked before it
+is accepted. A chain is rejected if it repeats one of its own words, reuses
+recent vocabulary, echoes a recent theme (compared on significant tokens, so
+"Symphony of Sound" and "A Symphony of Sounds" collide), misses the weekday
+length by more than one, carries a hint containing its own answer or pointing at
+the list ("the next word"), or has a mean connection outside the day's band.
+
+**Rejection reasons are fed back into the retry prompt**, so a second attempt is
+a correction rather than another roll of the dice. Two attempts per model across
+four models, then the curated fallback.
+
+Observed working in production on 2026-08-22: the first attempt for 2026-08-24
+repeated "Kiln" and returned the wrong number of connection scores; both reasons
+went back to the model and the retry was clean.
+
+### Fallback (`fallbackPool.ts`)
+
+One hand-written chain **per domain**, so a fallback day still honours the wheel
+instead of collapsing to the same handful. The old pool held five entries — one
+of which was the coffee-and-morning chain the model already gravitated to.
+
+Fallback chains carry no hints on purpose: the fallback fires when the model is
+unreachable, which is when hint generation would fail too. The existing hint
+pipeline fills them on its next run.
+
+## 6. Pre-Generation (`/api/daily/pregenerate`)
+
+Generation used to be lazy — the first player to open `/daily` created that
+day's chain. That meant no puzzle could be reviewed before going live, a day
+with no visitors produced no row at all (**2026-08-18 and 19 are simply
+missing**), and the first player of the day waited on the model.
+
+The route fills any missing date in `[today, today+7]`, capped at **3 dates per
+run** so a cold start cannot exhaust the function timeout. In steady state only
+one date is ever missing.
+
+Authorised with the service-role key, matching the `generate-daily-hints` job.
+It must run **before** the hint cron, so the hint job finds rows to work on.
+
+```sql
+select cron.schedule(
+    'pregenerate-daily-games',
+    '30 0 * * *',
+    $$
+    select net.http_post(
+        url:='https://<your-vercel-domain>/api/daily/pregenerate',
+        headers:='{"Content-Type": "application/json", "Authorization": "Bearer <service-role-key>"}'::jsonb
+    );
+    $$
+);
+```
+
+## 7. Feature Flags (PostHog)
 
 The Daily Game uses **PostHog** feature flags to control rollout strategies and game difficulty adjustments without redeploying code.
 

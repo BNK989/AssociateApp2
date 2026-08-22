@@ -29,7 +29,7 @@ scheduled job, the Daily Game page, and the Classic Game hint button).
 
 | Player-visible thing | Who makes it | When |
 | :--- | :--- | :--- |
-| The daily 5–6 word chain and its theme | Gemini, or a curated backup list | Only if nobody pre-planned that day's puzzle |
+| The daily 6–12 word chain and its theme | Gemini, or a curated backup list | Nightly, a week ahead; length follows the weekday ramp |
 | The written hints under each word | Gemini, nightly in advance | 1:00 AM UTC, up to 3 days ahead |
 | The "how strong is this link" score used for scoring | Gemini, nightly in advance | Same nightly job |
 | Hebrew / Arabic / Spanish / French / German / Romanian puzzle text | Gemini, on first request per language per day | Cached 24h, so one player pays the wait |
@@ -85,7 +85,7 @@ There is no SDK dependency.
 | # | Call site | Runs on | Trigger | Produces | Fallback |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | 1 | [supabase/functions/generate-daily-hints/index.ts](../supabase/functions/generate-daily-hints/index.ts) | Supabase Edge (Deno) | `pg_cron` 1:00 AM UTC | `hints[]` + `connection_scores[]` for up to 10 upcoming games | Skips the game, retries next night |
-| 2 | [src/lib/dailyGameGenerator.ts](../src/lib/dailyGameGenerator.ts) → `fetchAIGeneratedDailyGame` | Next.js server (Vercel) | `/[locale]/daily` when no row exists for today | Whole puzzle: `theme`, `words[]`, `hints[]`, `connection_scores[]` | `getFallbackDailyGame()` — deterministic pick from `FALLBACK_DAILY_GAMES` |
+| 2 | [src/lib/dailyGameGenerator.ts](../src/lib/dailyGameGenerator.ts) → `generateChain` | Next.js server (Vercel) | `/api/daily/pregenerate` nightly; `/[locale]/daily` only as a lazy fallback | Whole puzzle: `theme`, `words[]`, `hints[]`, `connection_scores[]` | `getFallbackChain()` — one curated chain per domain, see `src/lib/daily/fallbackPool.ts` |
 | 3 | [src/lib/dailyHintUtils.ts](../src/lib/dailyHintUtils.ts) → `generateDailyHints` | Next.js server | `/[locale]/daily` when the row exists but `hints` is missing or length-mismatched | `hints[]` + `connectionScores[]`, written back to `daily_games` | `Think about X...` per word |
 | 4 | [src/lib/dailyTranslation.ts](../src/lib/dailyTranslation.ts) → `translateDailyGame` | Next.js server | First non-`en` request per (game, locale) per 24h | Translated `theme`, `words[]`, `hints[]` | Returns `null`; page serves English content |
 | 5 | [src/app/api/game/[id]/action/route.ts](../src/app/api/game/[id]/action/route.ts) (`action === 'get_hint'`, `nextLevel === 3`) | Next.js API route | Classic player buys the AI hint | One-sentence hint stored in `messages.ai_hint` | First-letter string suffixed `(AI unavailable)` |
@@ -95,6 +95,14 @@ There is no SDK dependency.
 > Call site 7 is dead code as far as the app is concerned — nothing in `src/` fetches
 > `/api/hint`. It also skips the user check entirely (the file's own comments admit
 > this) and pins an old model. Treat it as a deletion candidate, not as a reference.
+
+> **Call site 2: the subject is assigned, not requested.** The prompt no longer
+> lets the model choose a theme, and carries no worked example -- both changes
+> exist because it repeated itself, returning the same theme on 2026-08-20 and
+> 2026-08-21. The day's domain comes from a deterministic wheel, the result is
+> validated before it is accepted, and rejection reasons are fed back into the
+> retry. Full pipeline in §5 of
+> [daily_game_backend_logic.md](daily_game_backend_logic.md).
 
 ### 3. Prompt contracts
 

@@ -1,8 +1,24 @@
 import { createAdminClient } from './supabase-admin';
 import { GAME_CONFIG } from './gameConfig';
 import { createLogger } from '@/lib/logger';
+import { planForDate, type DayPlan } from '@/lib/daily/themeWheel';
+import { buildChainPrompt } from '@/lib/daily/generationPrompt';
+import { validateChain, type ChainHistory, type GeneratedChain } from '@/lib/daily/chainValidation';
+import { getFallbackChain } from '@/lib/daily/fallbackPool';
 
 const log = createLogger('daily/generate');
+
+/** Days of themes the generator is told to avoid echoing. */
+const THEME_LOOKBACK_DAYS = 60;
+
+/** Days of vocabulary the generator may not reuse. */
+const WORD_LOOKBACK_DAYS = 30;
+
+/** Attempts per model before moving to the next one. */
+const ATTEMPTS_PER_MODEL = 2;
+
+/** Used when the model returns no scores of its own. */
+const DEFAULT_CONNECTION = 0.85;
 
 export interface DailyGameData {
     id?: string;
@@ -14,238 +30,227 @@ export interface DailyGameData {
     created_at?: string;
 }
 
-export const FALLBACK_DAILY_GAMES: Omit<DailyGameData, 'id' | 'play_date' | 'created_at'>[] = [
-    {
-        theme: "Space & Stars",
-        words: ["Star", "Light", "Bulb", "Idea", "Brain"],
-        hints: [
-            "A celestial body that shines bright in the night sky",
-            "Visible radiation that illuminates darkness",
-            "A glass container producing illumination when energized",
-            "A thought or suggestion formed in the mind",
-            "The central organ of the human nervous system"
-        ],
-        connection_scores: [0.95, 0.85, 0.9, 0.95, 1.0]
-    },
-    {
-        theme: "Ocean & Life",
-        words: ["Cloud", "Rain", "Water", "Ocean", "Whale"],
-        hints: [
-            "A visible mass of condensed water vapor floating in the atmosphere",
-            "Precipitation falling from clouds in liquid drops",
-            "Essential liquid forming rivers, lakes, and seas",
-            "Vast expanse of salt water covering most of the Earth",
-            "Giant marine mammal swimming in deep marine waters"
-        ],
-        connection_scores: [0.9, 0.95, 0.95, 0.85, 1.0]
-    },
-    {
-        theme: "Morning Routine",
-        words: ["Sun", "Morning", "Coffee", "Bean", "Stalk"],
-        hints: [
-            "The star at the center of our solar system providing daylight",
-            "The early period of the day from sunrise to noon",
-            "A brewed drink prepared from roasted beans enjoyed at dawn",
-            "The seed of a leguminous plant or coffee plant",
-            "The main stem of a herbaceous plant"
-        ],
-        connection_scores: [0.85, 0.9, 0.95, 0.9, 1.0]
-    },
-    {
-        theme: "Baking & Treats",
-        words: ["Apple", "Pie", "Crust", "Earth", "World"],
-        hints: [
-            "The crisp round fruit often baked into sweet pastries",
-            "A baked dish of fruit or meat with a pastry base",
-            "The hard outer layer of a baked pie or bread",
-            "The terrestrial planet we live on with a rocky outer shell",
-            "The globe and all living human society"
-        ],
-        connection_scores: [0.95, 0.9, 0.85, 0.8, 1.0]
-    },
-    {
-        theme: "Forest Adventure",
-        words: ["Tree", "Wood", "Campfire", "Smoke", "Signal"],
-        hints: [
-            "A tall perennial plant with a trunk and branches",
-            "The hard fibrous material derived from trees",
-            "An outdoor fire lit at a night campsite made of timber",
-            "Visible vapor and gas produced by burning campfire wood",
-            "A gesture or indicator sent to convey information"
-        ],
-        connection_scores: [0.9, 0.95, 0.9, 0.85, 1.0]
-    }
+const MODELS = [
+    GAME_CONFIG.AI_HINT_MODEL,
+    GAME_CONFIG.AI_HINT_BACKUP_MODEL,
+    'gemma-4-26b-a4b-it',
+    'gemini-2.5-flash-lite',
 ];
 
-/**
- * Gets a deterministic fallback daily game based on date string (YYYY-MM-DD)
- */
-export function getFallbackDailyGame(dateStr: string): Omit<DailyGameData, 'id' | 'play_date' | 'created_at'> {
-    let hash = 0;
-    for (let i = 0; i < dateStr.length; i++) {
-        hash = (hash << 5) - hash + dateStr.charCodeAt(i);
-        hash |= 0;
-    }
-    const index = Math.abs(hash) % FALLBACK_DAILY_GAMES.length;
-    return FALLBACK_DAILY_GAMES[index];
+function shiftDate(dateStr: string, days: number): string {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
 }
 
 /**
- * Uses Gemini API to generate a structured Daily Game word chain with hints & connection scores.
+ * What the last two months of puzzles already used.
+ *
+ * This is the single thing the old generator lacked. It was handed the date and
+ * nothing else, so it had no way to know it had written the same theme
+ * yesterday -- which, on 2026-08-20 and 2026-08-21, it did.
  */
-export async function fetchAIGeneratedDailyGame(dateStr: string): Promise<Omit<DailyGameData, 'id' | 'play_date' | 'created_at'> | null> {
-    const GEMINI_API_KEY = process.env.GEMINI_KEY;
-    if (!GEMINI_API_KEY) {
-        log.warn('generate', 'GEMINI_KEY not set, using the curated fallback pool');
+export async function fetchChainHistory(dateStr: string): Promise<ChainHistory> {
+    const supabase = createAdminClient();
+
+    const { data, error } = await supabase
+        .from('daily_games')
+        .select('play_date, theme, words')
+        .gte('play_date', shiftDate(dateStr, -THEME_LOOKBACK_DAYS))
+        .lt('play_date', dateStr)
+        .order('play_date', { ascending: false });
+
+    if (error) {
+        log.warn('history', 'Could not read recent puzzles; generating without an exclusion list', { play_date: dateStr }, error);
+        return { recentThemes: [], recentWords: [] };
+    }
+
+    const wordCutoff = shiftDate(dateStr, -WORD_LOOKBACK_DAYS);
+    const recentThemes: string[] = [];
+    const recentWords: string[] = [];
+
+    for (const row of data ?? []) {
+        if (row.theme) recentThemes.push(row.theme);
+        if (row.play_date >= wordCutoff && Array.isArray(row.words)) {
+            recentWords.push(...row.words);
+        }
+    }
+
+    return { recentThemes, recentWords };
+}
+
+/** Pulls a JSON object out of a model response that may be fenced or padded with prose. */
+export function parseChainResponse(rawText: string): GeneratedChain | null {
+    let text = rawText.trim();
+
+    if (text.startsWith('```json')) {
+        text = text.replace(/^```json/, '').replace(/```$/, '');
+    } else if (text.startsWith('```')) {
+        text = text.replace(/^```/, '').replace(/```$/, '');
+    }
+
+    const first = text.indexOf('{');
+    const last = text.lastIndexOf('}');
+    if (first === -1 || last === -1) return null;
+
+    try {
+        const parsed = JSON.parse(text.substring(first, last + 1));
+
+        if (!parsed || typeof parsed.theme !== 'string' || !Array.isArray(parsed.words)) return null;
+
+        return {
+            theme: parsed.theme.trim(),
+            words: parsed.words.map((w: unknown) => String(w).trim()),
+            hints: Array.isArray(parsed.hints) ? parsed.hints.map((h: unknown) => String(h).trim()) : undefined,
+            connection_scores: Array.isArray(parsed.connection_scores)
+                ? parsed.connection_scores.map((s: unknown) => (typeof s === 'number' ? s : DEFAULT_CONNECTION))
+                : undefined,
+        };
+    } catch {
+        return null;
+    }
+}
+
+async function callModel(model: string, prompt: string, apiKey: string): Promise<string | null> {
+    const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+        },
+    );
+
+    if (!response.ok) {
+        log.warn('generate', 'Model returned an HTTP error, moving on', { model, status: response.status });
         return null;
     }
 
-    const modelsToTry = [
-        GAME_CONFIG.AI_HINT_MODEL,
-        GAME_CONFIG.AI_HINT_BACKUP_MODEL,
-        "gemma-4-26b-a4b-it",
-        "gemini-2.5-flash-lite"
-    ];
-
-    const prompt = `
-You are generating a daily word association game for date "${dateStr}".
-
-REQUIREMENTS:
-1. "theme": A creative, fun subject title (2-4 words, e.g. "Cosmic Journey", "Culinary Marvels", "Deep Sea Discovery").
-2. "words": Array of 5 to 6 clear, uppercase-first English words forming a logical word association chain.
-   Example: ["Sun", "Morning", "Coffee", "Bean", "Stalk"]
-3. "hints": Array of strings matching the words array length.
-   - For the last word (Word N), hint is a clear definition.
-   - For any other word (Word i), the hint describes Word i in relation to Word i+1 (the next word in the array).
-   - DO NOT use meta-phrases like "the next word", "the following word", "below". Refer to the concept naturally.
-4. "connection_scores": Array of numbers between 0.5 and 1.0 matching the words array length.
-
-Return ONLY a valid JSON object matching this structure:
-{
-  "theme": "Theme Name",
-  "words": ["Word1", "Word2", "Word3", "Word4", "Word5"],
-  "hints": ["Hint 1", "Hint 2", "Hint 3", "Hint 4", "Hint 5"],
-  "connection_scores": [0.9, 0.85, 0.9, 0.95, 1.0]
+    const data = await response.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
 }
-`;
 
-    for (const model of modelsToTry) {
-        try {
-            const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }]
-                    })
+/**
+ * Asks for a chain until one passes validation.
+ *
+ * Rejection reasons are fed back into the next prompt rather than discarded, so
+ * a retry is a correction rather than another roll of the dice. Each model gets
+ * a couple of attempts before we try the next; if none of them produces a
+ * usable chain, the caller falls back to a hand-written one.
+ */
+export async function generateChain(plan: DayPlan, history: ChainHistory): Promise<GeneratedChain | null> {
+    const apiKey = process.env.GEMINI_KEY;
+
+    if (!apiKey) {
+        log.warn('generate', 'GEMINI_KEY not set, using the curated fallback pool', { play_date: plan.playDate });
+        return null;
+    }
+
+    let rejectionReasons: string[] | undefined;
+
+    for (const model of MODELS) {
+        for (let attempt = 1; attempt <= ATTEMPTS_PER_MODEL; attempt++) {
+            try {
+                const raw = await callModel(model, buildChainPrompt({ plan, history, rejectionReasons }), apiKey);
+                if (!raw) continue;
+
+                const chain = parseChainResponse(raw);
+                if (!chain) {
+                    rejectionReasons = ['the response was not valid JSON in the requested shape'];
+                    log.warn('generate', 'Model response could not be parsed', { model, attempt, play_date: plan.playDate });
+                    continue;
                 }
-            );
 
-            if (!response.ok) {
-                log.warn('generate', 'Gemini model returned an HTTP error, trying next model', { model, status: response.status });
-                continue;
+                const verdict = validateChain(chain, plan, history);
+
+                if (verdict.ok) {
+                    log.debug('generate', 'Accepted a chain', {
+                        play_date: plan.playDate,
+                        model,
+                        attempt,
+                        theme: chain.theme,
+                        domain: plan.domain,
+                    });
+                    return chain;
+                }
+
+                rejectionReasons = verdict.reasons;
+                log.warn('generate', 'Rejected a generated chain, retrying with feedback', {
+                    play_date: plan.playDate,
+                    model,
+                    attempt,
+                    theme: chain.theme,
+                    reasons: verdict.reasons.join('; '),
+                });
+            } catch (err) {
+                log.warn('generate', 'Model call failed, trying again', { model, attempt, play_date: plan.playDate }, err);
             }
-
-            const data = await response.json();
-            const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (!rawText) continue;
-
-            let cleanText = rawText.trim();
-            if (cleanText.startsWith('```json')) {
-                cleanText = cleanText.replace(/^```json/, '').replace(/```$/, '');
-            } else if (cleanText.startsWith('```')) {
-                cleanText = cleanText.replace(/^```/, '').replace(/```$/, '');
-            }
-
-            const firstBrace = cleanText.indexOf('{');
-            const lastBrace = cleanText.lastIndexOf('}');
-            if (firstBrace !== -1 && lastBrace !== -1) {
-                cleanText = cleanText.substring(firstBrace, lastBrace + 1);
-            }
-
-            const parsed = JSON.parse(cleanText);
-
-            if (
-                parsed &&
-                typeof parsed.theme === 'string' &&
-                Array.isArray(parsed.words) &&
-                parsed.words.length >= 4 &&
-                Array.isArray(parsed.hints) &&
-                parsed.hints.length === parsed.words.length
-            ) {
-                const connection_scores = Array.isArray(parsed.connection_scores) && parsed.connection_scores.length === parsed.words.length
-                    ? parsed.connection_scores.map((s: unknown) => typeof s === 'number' ? Math.max(0.1, Math.min(1.0, s)) : 0.8)
-                    : parsed.words.map(() => 0.85);
-
-                return {
-                    theme: parsed.theme.trim(),
-                    words: parsed.words.map((w: string) => String(w).trim()),
-                    hints: parsed.hints.map((h: string) => String(h).trim()),
-                    connection_scores
-                };
-            }
-        } catch (err) {
-            log.warn('generate', 'Model call failed, trying next model', { model }, err);
         }
     }
+
+    log.error('generate', 'No model produced a usable chain; falling back to a curated one', {
+        play_date: plan.playDate,
+        domain: plan.domain,
+        last_rejection: rejectionReasons?.join('; '),
+    });
 
     return null;
 }
 
+/** Fills in whatever the model left out, so the row is always well-formed. */
+function toGameContent(chain: GeneratedChain): Omit<DailyGameData, 'id' | 'play_date' | 'created_at'> {
+    return {
+        theme: chain.theme,
+        words: chain.words,
+        hints: chain.hints ?? [],
+        connection_scores: chain.connection_scores?.length === chain.words.length
+            ? chain.connection_scores.map((s) => Math.max(0.1, Math.min(1, s)))
+            : chain.words.map(() => DEFAULT_CONNECTION),
+    };
+}
+
 /**
- * Generates (via AI or deterministic fallback) and stores a Daily Game in Supabase for the given play_date.
- * Concurrent requests for the same date will safely fetch the existing game if already inserted.
+ * Generates (or reuses) the puzzle for a date and stores it.
+ *
+ * Safe to call concurrently: the first writer wins and everyone else re-reads
+ * the row it inserted, so every player on a date gets the same chain.
  */
 export async function generateAndStoreDailyGame(dateStr: string): Promise<DailyGameData> {
     const supabase = createAdminClient();
 
-    // 1. Check if game already exists for this date
     const { data: existingGame } = await supabase
         .from('daily_games')
         .select('*')
         .eq('play_date', dateStr)
         .maybeSingle();
 
-    if (existingGame) {
-        return existingGame as DailyGameData;
-    }
+    if (existingGame) return existingGame as DailyGameData;
 
-    // 2. Generate content via AI or Fallback
-    const aiContent = await fetchAIGeneratedDailyGame(dateStr);
-    const gameContent = aiContent || getFallbackDailyGame(dateStr);
+    const plan = planForDate(dateStr);
+    const history = await fetchChainHistory(dateStr);
+    const generated = await generateChain(plan, history);
 
-    // 3. Save to Supabase daily_games table
+    const gameContent = generated
+        ? toGameContent(generated)
+        : toGameContent(getFallbackChain(dateStr, plan.domain));
+
     const { data: insertedGame, error: insertError } = await supabase
         .from('daily_games')
-        .insert({
-            play_date: dateStr,
-            theme: gameContent.theme,
-            words: gameContent.words,
-            hints: gameContent.hints,
-            connection_scores: gameContent.connection_scores
-        })
+        .insert({ play_date: dateStr, ...gameContent })
         .select('*')
         .single();
 
     if (insertError) {
         log.warn('persist', 'Insert conflict, checking whether the game was created concurrently', { play_date: dateStr }, insertError);
-        // In case another request created it concurrently, re-fetch
+
         const { data: reFetchedGame } = await supabase
             .from('daily_games')
             .select('*')
             .eq('play_date', dateStr)
             .maybeSingle();
 
-        if (reFetchedGame) {
-            return reFetchedGame as DailyGameData;
-        }
+        if (reFetchedGame) return reFetchedGame as DailyGameData;
 
-        // Return volatile object with dateStr if DB write somehow fails completely
-        return {
-            play_date: dateStr,
-            ...gameContent
-        };
+        return { play_date: dateStr, ...gameContent };
     }
 
     return insertedGame as DailyGameData;
