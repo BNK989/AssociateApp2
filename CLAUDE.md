@@ -212,7 +212,7 @@ Run the dev server through the Browser pane (`.claude/launch.json`, config
 Measured 2026-08-21. These predate the rules above; they are exempt from
 "fix it now" but must not get worse.
 
-**Files over the 350-line cap (2).** Each is pinned at this exact length by the
+**Files over the 350-line cap (1).** Each is pinned at this exact length by the
 ratchet in [eslint.config.mjs](eslint.config.mjs) — see §2. Lower the pinned
 number whenever you shrink one.
 
@@ -234,13 +234,15 @@ number whenever you shrink one.
 >   (six hooks) and `src/lib/daily/` (messages, scoring, storage + 39 tests).
 > - `GameInput.tsx` **516 -> 200**, split into `src/components/game/input/`
 >   (three hooks, five components, `inputRules` + 23 tests).
+> - `CipherText.tsx` **546 -> 101**, split into `src/components/cipher/`
+>   (two hooks, two views, `cipherRules` + 34 tests). Its two
+>   `set-state-in-effect` warnings went with it.
 >
 > Their ratchet entries are gone. Use them as the template for the rest.
 
 | Lines | Over by | File | Refactor notes |
 | ---: | ---: | :--- | :--- |
 | 1104 | +754 | `src/hooks/useGameLogic.ts` | The classic-mode engine. Realtime, turn rotation, scoring, sending. **Least test-covered load-bearing code in the repo — write tests before splitting.** |
-| 546 | +196 | `src/components/CipherText.tsx` | Animation state machine. Highest-risk file to touch — it masks the answers. Carries the two `set-state-in-effect` warnings. |
 
 Approaching the cap and worth watching: `NotificationCenter.tsx` (349 — one line
 of headroom) and `Settings.tsx` (304).
@@ -256,14 +258,14 @@ enforced and green.
 | 0 | `no-restricted-syntax` (RTL) | error | cleared 2026-08-21, 3 annotated exceptions |
 | 0 | `no-console` | error | cleared 2026-08-21 |
 | 0 | `prefer-const`, `ban-ts-comment`, `no-require-imports`, `react/no-unescaped-entities`, `react-hooks/immutability`, `react-hooks/purity` | error | cleared 2026-08-21 |
-| 9 | `react-hooks/set-state-in-effect` | **warn** | deliberate, see below |
+| 16 | `react-hooks/set-state-in-effect` | **warn** | deliberate, see below |
 | 64 | `@typescript-eslint/no-unused-vars` | warn | |
 | 18 | `react-hooks/exhaustive-deps` | warn | |
 
 ### `react-hooks/set-state-in-effect` is warn, not error
 
 React 19's compiler lint flags every `setState` reachable from an effect body.
-The nine current sites are all legitimate external-system synchronisation, which
+The sixteen current sites are all legitimate external-system synchronisation, which
 is what effects exist for:
 
 - `LandingPage`, `Lobby` — read `localStorage` on mount (unavailable during SSR).
@@ -271,7 +273,9 @@ is what effects exist for:
 - `NotificationCenter`, `InvitePlayer`, `useLobbyGames` — kick off a fetch /
   realtime subscription.
 - `useOnboarding` — opens the tutorial once the profile has loaded.
-- `CipherText` (×2) — syncs animation state to changed props.
+- `useCountUp`, `useWelcomeOverlay`, `useHintNudge`, `useHintTooltip`,
+  `useAutoHint`, `useDailyGame`, `useDailySettings` — sync animation or
+  preference state to changed props.
 
 The count rises as files are split, which is expected rather than alarming:
 extracting an inline closure into a named hook makes a setState the analyser

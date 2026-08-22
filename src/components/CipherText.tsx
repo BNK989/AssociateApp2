@@ -1,546 +1,101 @@
 'use client';
-import { useEffect, useState, useRef } from 'react';
-import { motion, type Variants } from "framer-motion";
 
-const CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
-// Special chars used for hinting (must match gameLogic.ts)
-const SPECIAL_CHARS = new Set(['~', '•', '$', '^', '+', '*', '=', '?', '#', '@', '&', '%']);
+import { useMemo, useState } from 'react';
+import { CipherChars } from './cipher/CipherChars';
+import { ScrambleView } from './cipher/ScrambleView';
+import { buildRandomCipher, computeGuessState } from './cipher/cipherRules';
+import { useCipherAnimation } from './cipher/useCipherAnimation';
+import { useRevealFlash } from './cipher/useRevealFlash';
+
+/** Hebrew block; presence of it flips the word to right-to-left. */
+const RTL_RANGE = /[֐-׿]/;
 
 interface CipherTextProps {
     text: string;
+    /** Server-authored mask. Falls back to a locally generated one. */
     cipherText?: string;
+    /** True once the word is solved and may be shown in full. */
     visible: boolean;
     className?: string;
     isSolving?: boolean;
     hintLevel?: number;
+    /** Bumping this counter re-shuffles the tiles on demand. */
     forceScramble?: number;
     guesses?: string[];
 }
 
-interface ScrambleItem {
-    char: string;
-    id: string; // Stable ID for layout animations
-    isSpace: boolean;
-    isReal: boolean; // Tracking if it's a real char (Sans) or filler (Mono) during scramble
-    locked?: boolean; // If true, this item MUST NOT move (Green letter)
-}
+/**
+ * Renders a word either masked or revealed, and animates between the two.
+ *
+ * This is the component that hides the game's answers, so the rules governing
+ * what may be shown live in `./cipher/cipherRules` under test, rather than
+ * being tangled up with the animation.
+ */
+export function CipherText({
+    text,
+    cipherText,
+    visible,
+    className = '',
+    isSolving = false,
+    hintLevel = 0,
+    forceScramble,
+    guesses = [],
+}: CipherTextProps) {
+    const dir = RTL_RANGE.test(text) ? 'rtl' : 'ltr';
 
-/** Builds a random mask the same length as `text`, never repeating a source char. */
-function buildRandomCipher(text: string): string {
-    return [...text].map((originalChar) => {
-        if (originalChar === ' ') return ' ';
-        let randomChar;
-        do {
-            randomChar = CHARS[Math.floor(Math.random() * CHARS.length)];
-        } while (randomChar === originalChar);
-        return randomChar;
-    }).join('');
-}
-
-export function CipherText({ text, cipherText, visible, className = '', isSolving = false, hintLevel = 0, forceScramble, guesses = [] }: CipherTextProps) {
-    const cipherRef = useRef<string>('');
-
-    // Detect direction based on text logic (Hebrew range)
-    const isRtl = /[\u0590-\u05FF]/.test(text);
-    const dir = isRtl ? 'rtl' : 'ltr';
-
-    // Fallback mask, generated once. useState's initializer keeps the randomness
+    // Generated once. Keeping the randomness in useState's initialiser keeps it
     // off the render path on every subsequent render.
     const [generatedCipher] = useState(() => buildRandomCipher(text));
-
-    // The mask in force this render: the stored cipher when we have one, the
-    // generated fallback otherwise. Derived, so the render path touches no refs.
     const activeCipher = cipherText || generatedCipher;
 
-    const [display, setDisplay] = useState(visible ? text : activeCipher);
-    // For Scramble Effect: We use an array of items to allow layout animations
-    const [scrambleItems, setScrambleItems] = useState<ScrambleItem[] | null>(null);
-    const lastForceScrambleRef = useRef<number>(forceScramble || 0);
-
-    const isFirstRender = useRef(true);
-
-    // Calculate Wordle States
-    // Green: Correct char at correct index
-    // Orange: Correct char somewhere in the text, but not at this index (and not fully consumed by greens)
-    // Note: Simple version for game - if you guessed a letter and it is in the target, show it orange everywhere it appears (unless green).
-
-    // Convert to arrays to handle surrogate pairs (e.g. Alchemy symbols) correctly
-    const textChars = [...text];
-    const cipherChars = [...activeCipher];
-
-    // Calculate Wordle States
-    const greenIndices = new Set<number>();
-    const revealedChars = new Set<string>();
-
-    if (!visible) {
-        guesses.forEach(guess => {
-            const guessChars = [...guess.toLowerCase()];
-            const cleanTextChars = textChars.map(c => c.toLowerCase());
-
-            // 1. Check Greens and Reveals
-            const len = Math.min(guessChars.length, cleanTextChars.length);
-            for (let i = 0; i < len; i++) {
-                if (guessChars[i] === cleanTextChars[i]) {
-                    greenIndices.add(i);
-                }
-                // Track all guessed chars
-                if (cleanTextChars[i] && cleanTextChars.includes(guessChars[i])) {
-                    revealedChars.add(guessChars[i]);
-                }
-            }
-        });
-    }
-
-    useEffect(() => {
-        // Keep the ref the async animation paths read in sync with the render value.
-        cipherRef.current = activeCipher;
-
-        // Update the visible mask if the prop changed (e.g. a new hint was bought)
-        if (cipherText && !visible && !scrambleItems) {
-            setDisplay(cipherText);
-        }
-    }, [activeCipher, cipherText, visible, scrambleItems]);
-
     const guessesKey = guesses.join(',');
+    const guessState = useMemo(
+        () => (visible ? { greenIndices: new Set<number>(), revealedChars: new Set<string>() }
+            : computeGuessState(text, guesses)),
+        // guessesKey stands in for the array identity, which changes every render.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [text, guessesKey, visible],
+    );
 
-    useEffect(() => {
-        // ... (existing effect logic is fine, just changing dependency)
-        if (isFirstRender.current) {
-            isFirstRender.current = false;
-            return;
-        }
+    const { display, scrambleItems } = useCipherAnimation({
+        text,
+        activeCipher,
+        cipherText,
+        visible,
+        hintLevel,
+        forceScramble,
+        guesses,
+    });
 
-        let isCancelled = false;
+    const flashingIndices = useRevealFlash(cipherText, text, visible);
 
-        const animate = async () => {
-            // Target is what we want to end up at
-            const target = visible ? text : (cipherText || cipherRef.current);
-            const targetChars = [...target];
-            const start = display; // String
-
-            // 0. Handle Exit from Scramble Mode (Reveal)
-            if (visible && scrambleItems) {
-                setScrambleItems(null);
-                setDisplay(text);
-                return;
-            }
-
-            const isForced = forceScramble && forceScramble > lastForceScrambleRef.current;
-            if (isForced) {
-                lastForceScrambleRef.current = forceScramble!;
-            }
-
-            // Conditions to skip: 
-            // 1. Matched state and no forced animation
-            // 2. Already scrambling (unless forced re-trigger?)
-            if (display === target && !scrambleItems && !isForced) return;
-
-            // PRE-ANIMATION: Scramble Effect for Hint Level 2
-            if (!visible && (hintLevel >= 2 || isForced)) {
-                const duration = 600; // time to settle
-                const shuffles = Math.floor(Math.random() * 5) + 2;
-                const interval = duration / shuffles;
-
-                // Create stable items from the TARGET string (the Anagram/Cipher mixed)
-                // Create stable items from the TARGET string (the Anagram/Cipher mixed)
-                // NEW: Calculate budgets to prevent surplus letters (e.g. showing 2 'e's when only 1 exists)
-
-                // 1. Identify what is locked/used
-                const usedCounts: Record<string, number> = {};
-                textChars.forEach((char, i) => {
-                    const isGreen = greenIndices.has(i);
-                    const lower = char.toLowerCase();
-                    const isOrange = !isGreen && revealedChars.has(lower);
-
-                    if (isGreen || isOrange) {
-                        usedCounts[lower] = (usedCounts[lower] || 0) + 1;
-                    }
-                });
-
-                // 2. Calculate Remaining Budget (Real letters needed)
-                const targetCounts: Record<string, number> = {};
-                textChars.forEach(c => {
-                    const l = c.toLowerCase();
-                    targetCounts[l] = (targetCounts[l] || 0) + 1;
-                });
-
-                const remainingBudget: Record<string, number> = {};
-                Object.keys(targetCounts).forEach(k => {
-                    remainingBudget[k] = Math.max(0, targetCounts[k] - (usedCounts[k] || 0));
-                });
-
-
-                const baseItems: ScrambleItem[] = targetChars.map((c, i) => {
-                    const isGreen = greenIndices.has(i);
-                    // Use textChars[i] because i is the character index, not byte index
-                    const realChar = textChars[i];
-                    const isOrange = !isGreen && revealedChars.has(realChar.toLowerCase());
-
-                    const cipherChar = [...activeCipher][i];
-
-                    let charToShow = cipherChar;
-                    let isReal = false;
-                    let locked = false;
-
-                    const SPECIAL_CHARS_ARRAY = Array.from(SPECIAL_CHARS);
-
-                    if (isGreen) {
-                        charToShow = realChar;
-                        isReal = true;
-                        locked = true;
-                    } else if (isOrange) {
-                        charToShow = realChar;
-                        isReal = true; // Orange letters participate in "Real" styling
-                    } else {
-                        // Level 0/1 (and Level 2+): Use CipherText (stable)
-                        // This ensures Hint 2 respects the server-side generated cipherText (66% reveal)
-                        // and Reshuffle only changes positions, not content.
-                        // BUT: We must filter "Cipher Candidates" to ensure we don't show surplus real letters.
-
-                        const candidate = cipherChar;
-                        const candLower = candidate.toLowerCase();
-                        const isRealCandidate = text.toLowerCase().includes(candLower);
-                        const isCipherSpecial = SPECIAL_CHARS.has(candidate);
-
-                        // If the cipher provides a letter that is in the word...
-                        if (!isCipherSpecial && isRealCandidate) {
-                            // Check if we have budget for it
-                            if ((remainingBudget[candLower] || 0) > 0) {
-                                // ACCEPT: We need this letter
-                                remainingBudget[candLower]--;
-                                charToShow = candidate;
-                                isReal = true;
-                            } else {
-                                // REJECT: Surplus letter. Convert to symbol.
-                                // Pick a random special char that IS NOT in original text if possible, 
-                                // basically just any special char.
-                                charToShow = SPECIAL_CHARS_ARRAY[Math.floor(Math.random() * SPECIAL_CHARS_ARRAY.length)];
-                                isReal = false;
-                            }
-                        } else {
-                            // It's already a symbol or a wrong letter (if that ever happens)
-                            charToShow = candidate;
-                            isReal = !isCipherSpecial && isRealCandidate;
-                        }
-                    }
-
-                    return {
-                        char: charToShow,
-                        id: `${i}-${charToShow}`, // Stable-ish ID
-                        isSpace: realChar === ' ',
-                        isReal,
-                        locked: locked || realChar === ' ' // Spaces always locked effectively
-                    };
-                });
-
-                // Hint 1 Fix: Ensure the FIRST letter is actually the correct one before we start shuffling
-                if (hintLevel >= 1 && baseItems.length > 0) {
-                    // Force lock first char
-                    baseItems[0].locked = true;
-                    baseItems[0].isReal = true;
-                    baseItems[0].char = textChars[0]; // Ensure it's real char
-                }
-
-                // Initial shuffle
-                const shuffledStart = generateShuffledView(baseItems);
-                setScrambleItems(shuffledStart);
-
-                for (let i = 0; i < shuffles; i++) {
-                    if (isCancelled) return;
-                    await new Promise(r => setTimeout(r, interval));
-                    // Re-check after the wait: the word may have been solved in the
-                    // meantime. Writing scrambleItems now would resurrect the hint view
-                    // after the reveal effect already cleared it, leaving the solved
-                    // word stuck in its hinted form forever.
-                    if (isCancelled) return;
-
-                    if (i === shuffles - 1) {
-                        // Final step: settle to A RANDOM configuration
-                        const finalShuffle = generateShuffledView(baseItems);
-                        setScrambleItems(finalShuffle);
-                    } else {
-                        // Shuffle again
-                        setScrambleItems(prev => prev ? generateShuffledView(prev) : baseItems);
-                    }
-                }
-
-                await new Promise(r => setTimeout(r, 500));
-
-                if (!isCancelled) {
-                    if (!visible && hintLevel >= 2) {
-                        // Keep scramble view
-                    } else {
-                        setDisplay(target);
-                        setScrambleItems(null);
-                    }
-                }
-                return;
-            }
-
-            // Standard Morph Animation (Level 1 or Solve)
-            if (!scrambleItems) {
-                // ... (Morph animation is complex to fix for surrogate pairs perfectly without rewrite, 
-                // but usually fine as it just slices. If display is surrogate-aware it works best, 
-                // but keeping simple for now as scramble was the main issue).
-                const steps = Math.max(text.length, cipherRef.current.length);
-                const stepDuration = Math.max(30, Math.min(100, 1000 / steps));
-
-                for (let i = 0; i <= steps; i++) {
-                    if (isCancelled) return;
-                    // WARNING: Slice on string with surrogate pairs might split index. 
-                    // Ideally we used array slice and join.
-                    // But for 'text', we know length.
-                    if (visible) {
-                        // setDisplay(text.slice(0, i) + cipherRef.current.slice(i));
-                        // SAFE implementation:
-                        const p1 = textChars.slice(0, i).join('');
-                        const p2 = [...cipherRef.current].slice(i).join('');
-                        setDisplay(p1 + p2);
-                    } else {
-                        const targetPart = [...target].slice(0, i).join('');
-                        const startPart = [...start].slice(i).join('');
-                        setDisplay(targetPart + startPart);
-                    }
-
-                    await new Promise(r => setTimeout(r, stepDuration));
-                }
-                if (!isCancelled) setDisplay(target);
-            }
-        };
-
-        animate();
-        return () => { isCancelled = true; };
-    }, [visible, text, cipherText, hintLevel, forceScramble, guessesKey]); // Added guesses dependency
-
-    // Track changes
-    const prevCipherRef = useRef(cipherText || '');
-    const [changedIndices, setChangedIndices] = useState<Set<number>>(new Set());
-
-    useEffect(() => {
-        if (visible) return;
-
-        // Use arrays for comparison to handle surrogate pairs
-        const currentCipherChars = [...(cipherText || '')];
-        const prevCipherChars = [...prevCipherRef.current];
-        // Note: textChars matches `text` from outer scope, but careful with deps if extracted. 
-        // We can just re-spread here to be safe and local.
-        const currentTextChars = [...text];
-
-        const currentCipherStr = cipherText || '';
-        const prevCipherStr = prevCipherRef.current;
-
-        if (currentCipherStr !== prevCipherStr) {
-            const newChanged = new Set<number>();
-            const len = Math.max(currentCipherChars.length, prevCipherChars.length);
-            for (let i = 0; i < len; i++) {
-                const charNow = currentCipherChars[i] || '';
-                const charPrev = prevCipherChars[i] || '';
-                if (charNow !== charPrev && charNow === currentTextChars[i]) {
-                    newChanged.add(i);
-                }
-            }
-
-            if (newChanged.size > 0) {
-                setChangedIndices(newChanged);
-                const timer = setTimeout(() => setChangedIndices(new Set()), 1000);
-                return () => clearTimeout(timer);
-            }
-            prevCipherRef.current = currentCipherStr;
-        }
-    }, [cipherText, visible, text]);
-
-    // Render logic
+    // Colons bracket a locally masked word, marking it as not yet server-backed.
     const showColons = !visible && !cipherText;
-    const COLON = '\u2237';
-
-    // Animation variants
-    const bounceVariant = {
-        bounce: (i: number) => ({
-            y: [0, -3, 0],
-            transition: {
-                delay: i * 0.05,
-                duration: 0.6,
-                repeat: Infinity,
-                repeatDelay: 1
-            }
-        })
-    };
-
-    const popVariant = {
-        pop: (isMatch: boolean) => ({
-            scale: [1, 1.5, 1],
-            textShadow: isMatch
-                ? ['0px 0px 0px rgba(0,0,0,0)', '0px 0px 8px rgba(251, 191, 36, 0.8)', '0px 0px 0px rgba(0,0,0,0)']
-                : 'none',
-            transition: { duration: 0.4, ease: "easeOut" }
-        })
-    };
-
-    const floatVariant = {
-        float: (i: number) => {
-            const seed = i * 1337;
-            const sign = i % 2 === 0 ? 1 : -1;
-            const angleMagnitude = 5 + (seed % 20);
-            const randomRotation = sign * angleMagnitude;
-
-            return {
-                y: [0, -4, 0],
-                rotate: randomRotation,
-                transition: {
-                    y: {
-                        duration: 3,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                        delay: i * 0.2
-                    },
-                    rotate: { duration: 0 }
-                }
-            };
-        }
-    };
 
     if (scrambleItems && !visible) {
         return (
-            <motion.span dir={dir} className={`${className} break-words inline-flex flex-wrap gap-1`}>
-                {showColons && <span className="me-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
-                {scrambleItems.map((item, i) => {
-                    const shouldFloat = item.isReal && !visible;
-                    const isFirst = i === 0;
-
-                    const isGreen = item.locked && item.isReal;
-                    const isOrange = !item.locked && item.isReal; // It's moving, but it's a real char.
-
-                    let colorClass = 'text-inherit';
-                    if (isGreen) colorClass = 'text-green-600 dark:text-green-400';
-                    else if (isOrange) colorClass = 'text-orange-500 dark:text-orange-400';
-                    else colorClass = 'text-gray-400 dark:text-gray-500';
-
-                    return (
-                        <motion.span
-                            layout
-                            key={item.id}
-                            custom={i}
-                            variants={floatVariant as Variants}
-                            animate={shouldFloat ? "float" : undefined}
-                            className={`inline-block ${item.isSpace ? 'whitespace-pre' : ''} ${item.isReal
-                                ? `font-bold mx-0.5 drop-shadow-[0_0_2px_rgba(255,255,255,0.5)] ${colorClass}`
-                                : 'text-gray-400 dark:text-gray-500 font-medium'
-                                } ${isFirst && hintLevel >= 1 ? 'uppercase' : ''}`}
-                            transition={{
-                                layout: {
-                                    duration: 0.4,
-                                    ease: "easeInOut"
-                                }
-                            }}
-                        >
-                            {item.char}
-                        </motion.span>
-                    )
-                })}
-                {showColons && <span className="ms-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
-            </motion.span>
+            <ScrambleView
+                items={scrambleItems}
+                hintLevel={hintLevel}
+                className={className}
+                dir={dir}
+                showColons={showColons}
+            />
         );
     }
 
-    // Standard Render (No Scramble) - Use Array Map to handle surrogate pairs
-    const displayChars = [...display];
-
     return (
-        <motion.span dir={dir} className={`${className} break-words inline-flex flex-wrap ${(visible || hintLevel >= 1 || isSolving) ? '[&>span:first-child]:uppercase' : ''} ${isSolving ? 'gap-1' : ''}`}>
-            {showColons && <span className="me-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
-            {displayChars.map((char, i) => {
-                // textChars[i] correct? YES if displayChars and textChars are aligned by code point.
-                // Assuming display matches length of text in code points.
-                const isPositionalMatch = char === textChars[i];
-                const isSpecial = SPECIAL_CHARS.has(char);
-
-                const isGreen = greenIndices.has(i);
-
-                let renderChar = char;
-                let isEffectiveMatch = isPositionalMatch;
-                let colorClass = '';
-
-                if (!visible) {
-                    if (isGreen && textChars[i]) {
-                        renderChar = textChars[i];
-                        isEffectiveMatch = true;
-                        colorClass = 'text-green-600 dark:text-green-400';
-                    } else if (textChars[i] && revealedChars.has(textChars[i].toLowerCase())) {
-                        // Orange
-                        renderChar = textChars[i];
-                        isEffectiveMatch = true;
-                        colorClass = 'text-orange-500 dark:text-orange-400';
-                    } else {
-                        // Standard Cipher Logic
-                        const isScrambleMatch = hintLevel >= 2 && !isSpecial && char !== ' ';
-                        if (isScrambleMatch) isEffectiveMatch = true;
-                        if (!isEffectiveMatch) colorClass = 'text-gray-400 dark:text-gray-500 font-medium';
-                    }
-                }
-
-                if (visible) {
-                    return (
-                        <span key={i} className={`${char === ' ' ? 'whitespace-pre' : ''} ${isPositionalMatch ? '' : 'text-green-500 opacity-70'}`}>
-                            {char}
-                        </span>
-                    );
-                }
-
-                const isJustRevealed = changedIndices.has(i);
-
-                return (
-                    <motion.span
-                        layout
-                        key={`${i}-${renderChar}`}
-                        custom={isEffectiveMatch ? i : isEffectiveMatch}
-                        animate={isJustRevealed ? "pop" : (hintLevel >= 2 && isEffectiveMatch && !visible) ? "float" : undefined}
-                        variants={(isJustRevealed ? popVariant : floatVariant) as Variants}
-                        className={`inline-block ${char === ' ' ? 'whitespace-pre' : ''} ${isEffectiveMatch
-                            ? `font-bold drop-shadow-[0_0_2px_rgba(255,255,255,0.5)] ${colorClass || 'text-inherit'} ${(hintLevel >= 2 && !visible) ? 'mx-0.5' : ''}`
-                            : `${colorClass}`
-                            }`}
-                    >
-                        {renderChar}
-                    </motion.span>
-                );
-            })}
-            {showColons && <span className="ms-0.5 tracking-tighter opacity-75 select-none">{COLON}</span>}
-        </motion.span >
+        <CipherChars
+            display={display}
+            text={text}
+            visible={visible}
+            guessState={guessState}
+            hintLevel={hintLevel}
+            isSolving={isSolving}
+            flashingIndices={flashingIndices}
+            className={className}
+            dir={dir}
+            showColons={showColons}
+        />
     );
-}
-
-// Fixed Shuffler for array logic
-function generateShuffledView(baseItems: ScrambleItem[], preserveFirst: boolean = false): ScrambleItem[] {
-    const result = new Array(baseItems.length);
-    const movers: ScrambleItem[] = [];
-
-    // 1. Separate locked and movers
-    baseItems.forEach((item, idx) => {
-        if (item.locked || (preserveFirst && idx === 0)) {
-            result[idx] = item;
-            return;
-        }
-
-        if (item.isSpace) {
-            result[idx] = item;
-        } else {
-            movers.push(item);
-        }
-    });
-
-    // 2. Shuffle movers
-    for (let i = movers.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [movers[i], movers[j]] = [movers[j], movers[i]];
-    }
-
-    // 3. Fill back into empty slots
-    let mIdx = 0;
-    for (let i = 0; i < result.length; i++) {
-        if (!result[i]) {
-            result[i] = movers[mIdx++];
-        }
-    }
-
-    return result;
 }
