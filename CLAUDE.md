@@ -338,6 +338,29 @@ in Hebrew/Arabic (§13).
 - `GameSettingsRow` in `src/types/app.ts` is hand-written because its table's
   migration is not applied yet, so the generated types do not know it exists.
   Regenerate `database.types.ts` after applying and swap in the generated alias.
-- Migration history drift: `add_message_type` and `create_translation_generations`
-  exist as local files but were applied by hand and are absent from remote history;
-  four remote migrations have no local file.
+- Migration history drift, **reconciled 2026-08-23**. It was much worse than this
+  entry used to claim: 17 local files were absent from remote history, not two.
+  Most were idempotent rewrites of migrations that had already run under a
+  different timestamp, so `supabase db push` tried to re-apply them, failed on
+  the first, and silently never reached anything newer. That is why the
+  game-settings migrations appeared to apply and did not.
+
+  Fixed by repairing the 13 already-applied versions into remote history and
+  renaming `20260201_add_connection_scores.sql` to a valid 14-digit version.
+  `db push` now proposes exactly the three pending security migrations.
+
+  Two remote migrations had **no local file and no local equivalent**, so the
+  repo could not rebuild the database. Both recovered from the deployed
+  `supabase_migrations.schema_migrations.statements` and committed:
+  `20251231154158_add_hints_to_daily_games.sql` (without it a fresh database has
+  no `daily_games.hints`, and the daily game cannot serve a puzzle) and
+  `20251228093830_add_cascade_to_api_usage.sql` (the `game_id` key — the local
+  `fix_api_usage_fk` covers only the `user_id` one).
+
+  **Still open:** 14 remote ledger entries have no local file. Thirteen are
+  harmless — the same migration under a different version, already covered by a
+  local file. The exception is `20251216145125_player_leave_game_rpc_update`:
+  the deployed `player_leave_game` body does not match local
+  `20251216164500_player_leave_game_rpc.sql` (3965 vs 4235 bytes, different
+  md5), so production and a rebuilt database would disagree on that function.
+  Needs someone to diff the two and decide which is correct.

@@ -258,23 +258,35 @@ No migration is needed: the column is a single jsonb blob.
 
 ## 9. Operational
 
-Both migrations are **written but must be applied by hand** (the Supabase MCP is
-read-only):
+Both migrations were applied on 2026-08-23 and are recorded in migration
+history:
 
 | Migration | Adds |
 | :--- | :--- |
 | `20260822140000_create_game_settings.sql` | `game_settings`, `game_settings_history` |
 | `20260823090000_add_settings_revision_to_daily_results.sql` | `daily_results.settings_revision` |
 
-Until they are applied, everything keeps working: the game runs on compiled
-defaults, results record without attribution, and both the logs and the admin
-page say so and name the file to apply. After applying, regenerate
-`src/types/database.types.ts` and replace the hand-written `GameSettingsRow` in
-[`src/types/app.ts`](../src/types/app.ts) with the generated alias.
+The seed row is `daily_hint_policy` with an empty `{}` value at **revision 1**,
+which means "whatever the code says" — an absent field falls back to the
+compiled constant, so the seeded row cannot drift from `gameConfig.ts` the way a
+spelled-out copy of the defaults would.
 
-Every save also appends to `game_settings_history` (key, value, scope, revision,
-who, when) — service-role only, which is where "what changed on the 14th" is
-answered.
+**Still open:** `src/types/database.types.ts` has not been regenerated since,
+so `GameSettingsRow` in [`src/types/app.ts`](../src/types/app.ts) is still
+hand-written. Regenerate and swap in the generated alias.
+
+### If the tables are ever missing again
+
+Nothing breaks. The game runs on the compiled defaults, results record without
+attribution, and the logs and the admin page both say so and name the file to
+apply. This is worth knowing when standing up a fresh environment: deploy first,
+migrate second, in either order.
+
+### The audit trail
+
+Every save appends to `game_settings_history` (key, value, scope, revision, who,
+when) — service-role only, which is where "what changed on the 14th" is
+answered. `game_settings.revision` is the join key back to `daily_results`.
 
 ---
 
