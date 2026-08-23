@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 import type { Message } from '@/hooks/useGameLogic';
-import { generateCipherString } from '@/lib/gameLogic';
 import { createLogger } from '@/lib/logger';
-import { getNextHintLevel, MAX_HINT_LEVEL, needsScrambleVisuals } from '@/lib/daily/dailyScoring';
+import { getNextHintLevel, MAX_HINT_LEVEL } from '@/lib/daily/dailyScoring';
+import { hintLevelUpdates } from '@/lib/daily/hintVisuals';
 import type { DailyHintPolicy } from '@/lib/daily/hintPolicy';
 
 const log = createLogger('daily/hint');
@@ -53,16 +53,11 @@ export function useDailyHintReveal({
             progression: policy.progression,
         });
 
-        const cipherLevel = Math.min(nextLevel, 2);
-        const newCipherText = nextLevel < MAX_HINT_LEVEL || needsScrambleVisuals(currentLevel, nextLevel)
-            ? generateCipherString(targetMessage.content, cipherLevel, true)
-            : (targetMessage.cipher_text || generateCipherString(targetMessage.content, 2, true));
-
-        const updates: Partial<Message> = { hint_level: nextLevel, cipher_text: newCipherText };
+        let clue: string | undefined;
 
         if (nextLevel === MAX_HINT_LEVEL) {
             const index = words.indexOf(targetMessage.content);
-            let clue = hints?.[index] ?? fallbackHint(targetMessage.content);
+            clue = hints?.[index] ?? fallbackHint(targetMessage.content);
 
             if (!hints && fetchHint && index !== -1) {
                 try {
@@ -71,9 +66,15 @@ export function useDailyHintReveal({
                     log.error('fetch_hint', 'Failed to fetch AI hint', { play_date: date }, e);
                 }
             }
-
-            updates.ai_hint = clue;
         }
+
+        const updates: Partial<Message> = hintLevelUpdates({
+            word: targetMessage.content,
+            currentLevel,
+            nextLevel,
+            currentCipher: targetMessage.cipher_text,
+            clue,
+        });
 
         patchTarget(targetMessage.id, updates);
     }, [targetMessage, gameOver, words, hints, fallbackHint, patchTarget, date, policy]);

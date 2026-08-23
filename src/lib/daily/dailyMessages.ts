@@ -5,7 +5,7 @@ import { generateCipherString } from '@/lib/gameLogic';
 export { findTargetMessage } from '@/lib/gameLogic';
 import { MAX_HINT_LEVEL } from './dailyScoring';
 import { MAX_STRIKES } from '@/lib/gameLogic';
-import { DEFAULT_HINT_POLICY, startLevelFor, type DailyHintPolicy } from './hintPolicy';
+import { DEFAULT_HINT_POLICY, openingHintLevel, type DailyHintPolicy } from './hintPolicy';
 
 /** The daily chain is authored by a bot rather than a real player. */
 export const BOT_USER_ID = 'daily-bot';
@@ -51,7 +51,9 @@ type BuildArgs = {
  *
  * Which words open already hinted is the policy's call: under `first-word` only
  * the one immediately before the freebie does, which is how this has always
- * behaved, and under `every-word` the whole chain does.
+ * behaved, and under `every-word` the whole chain does. Under
+ * `every-word-on-arrival` the board opens like `first-word` and the rest are
+ * raised as the player reaches them, by `applyArrivalHint`.
  */
 export function buildInitialMessages({
     words,
@@ -64,7 +66,7 @@ export function buildInitialMessages({
     const startIndex = words.length - 1;
 
     return words.map((word, index) => {
-        const hintLevel = startLevelFor(policy, index, words.length);
+        const hintLevel = openingHintLevel(policy, index, words.length);
 
         let aiHint: string | undefined;
         if (hintLevel === MAX_HINT_LEVEL) {

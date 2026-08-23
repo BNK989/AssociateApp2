@@ -36,11 +36,31 @@ export type HintStagger = 'per-rung' | 'cumulative';
 /** `jump` skips the ladder and goes straight to the AI clue. */
 export type HintProgression = 'ladder' | 'jump';
 
+/**
+ * Which words the start level reaches, and when it is applied to them.
+ *
+ * - `first-word`: only the word the player faces first.
+ * - `every-word`: the whole chain, applied up front — so a player scrolling the
+ *   board sees every word already scrambled before reaching it.
+ * - `every-word-on-arrival`: the whole chain, but each word is left untouched
+ *   until it becomes the active one. Same entitlement, no lookahead.
+ *
+ * The last two score identically: the level is free (or charged) on every word
+ * either way. They differ only in what the board gives away early.
+ */
+export type StartLevelReach = 'first-word' | 'every-word' | 'every-word-on-arrival';
+
+export const START_LEVEL_REACHES: readonly StartLevelReach[] = [
+    'first-word',
+    'every-word',
+    'every-word-on-arrival',
+] as const;
+
 export type DailyHintPolicy = {
     /** Hint level a word is already at when it opens. */
     startLevel: number;
-    /** Whether `startLevel` applies to the whole chain or only the first word played. */
-    startLevelAppliesTo: 'first-word' | 'every-word';
+    /** Which words `startLevel` reaches, and whether it is applied up front. */
+    startLevelAppliesTo: StartLevelReach;
     /** Whether a hint the player never asked for still costs them points. */
     chargeForStartLevel: boolean;
     /** Master switch for the automatic clock. Manual hints are unaffected. */
@@ -111,13 +131,17 @@ export function autoRevealDelay(policy: DailyHintPolicy, currentLevel: number): 
 }
 
 /**
- * The hint level a word starts at, by its position in the chain.
+ * The hint level a word is *entitled* to by the time the player faces it.
  *
  * The chain is presented newest-last: the final word is the freebie the player
  * is given, and the one before it is the first they actually play. Under
  * `first-word` only that word carries a pre-applied level — which is what the
- * `dailygame-auto-hint-level` experiment has always done. `every-word` extends
- * it to the whole chain.
+ * `dailygame-auto-hint-level` experiment has always done. Both `every-word`
+ * reaches extend it to the whole chain.
+ *
+ * This is the level scoring reads when deciding which tiers were free, so it
+ * deliberately ignores *when* the level is applied — a word the player has not
+ * reached yet is still entitled to it.
  *
  * The freebie itself never carries a level; it is already solved.
  */
@@ -128,9 +152,29 @@ export function startLevelFor(policy: DailyHintPolicy, index: number, total: num
     const givenIndex = total - 1;
     if (index === givenIndex || index < 0) return 0;
 
-    if (policy.startLevelAppliesTo === 'every-word') return level;
+    if (policy.startLevelAppliesTo === 'first-word') return index === total - 2 ? level : 0;
 
-    return index === total - 2 ? level : 0;
+    return level;
+}
+
+/**
+ * The hint level a word *displays* on a freshly built board.
+ *
+ * The same as `startLevelFor` except under `every-word-on-arrival`, where only
+ * the first word played opens hinted and the rest are raised as the player
+ * reaches them (see `applyArrivalHint`). That is the difference the game master
+ * is choosing between: whether the whole board is scrambled from the outset or
+ * only the word in front of them.
+ */
+export function openingHintLevel(policy: DailyHintPolicy, index: number, total: number): number {
+    const level = startLevelFor(policy, index, total);
+    if (level === 0) return 0;
+
+    if (policy.startLevelAppliesTo === 'every-word-on-arrival') {
+        return index === total - 2 ? level : 0;
+    }
+
+    return level;
 }
 
 /** Game-master settings as stored, with the scope that decides who they bind. */
@@ -238,7 +282,7 @@ export function parseHintPolicy(raw: unknown): DailyHintPolicy {
             : DEFAULT_HINT_POLICY.startLevel,
         startLevelAppliesTo: parseEnum(
             raw.startLevelAppliesTo,
-            ['first-word', 'every-word'] as const,
+            START_LEVEL_REACHES,
             DEFAULT_HINT_POLICY.startLevelAppliesTo,
         ),
         chargeForStartLevel: typeof raw.chargeForStartLevel === 'boolean'

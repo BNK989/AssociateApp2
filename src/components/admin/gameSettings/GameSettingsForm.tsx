@@ -11,6 +11,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { DEFAULT_HINT_POLICY, type DailyHintPolicy } from '@/lib/daily/hintPolicy';
+import { DemoGame } from './demo/DemoGame';
 import { HintRungRow } from './HintRungRow';
 import { HintTimeline } from './HintTimeline';
 import { useGameSettingsForm, type GameSettingsScope } from './useGameSettingsForm';
@@ -115,16 +116,19 @@ export function GameSettingsForm({ policy, scope, revision, usingFallback }: Gam
 
                 <SettingField
                     label="Applies to"
-                    hint="Whether the start level covers the whole chain or only the first word the player faces."
+                    hint="Which words the start level reaches. Every word applies it up front, so the whole board is already hinted before the player gets there; as you reach it holds each word back until it is the one being played."
                     control={(
                         <Select
                             value={p.startLevelAppliesTo}
                             onValueChange={(v) => form.setField('startLevelAppliesTo', v as DailyHintPolicy['startLevelAppliesTo'])}
                         >
-                            <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="w-64"><SelectValue /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="first-word">First word only</SelectItem>
-                                <SelectItem value="every-word">Every word</SelectItem>
+                                <SelectItem value="every-word">Every word, up front</SelectItem>
+                                <SelectItem value="every-word-on-arrival">
+                                    Every word, as you reach it
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                     )}
@@ -226,6 +230,8 @@ export function GameSettingsForm({ policy, scope, revision, usingFallback }: Gam
                     )}
                 />
             </Section>
+
+            <DemoGame policy={p} />
 
             <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
                 <Button onClick={form.save} disabled={!form.isDirty || form.saving}>

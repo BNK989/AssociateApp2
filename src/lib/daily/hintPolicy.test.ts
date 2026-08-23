@@ -5,8 +5,10 @@ import {
     clockOrigin,
     DEFAULT_HINT_POLICY,
     MAX_RUNG_DELAY_SECONDS,
+    openingHintLevel,
     parseHintPolicy,
     resolveHintPolicy,
+    START_LEVEL_REACHES,
     startLevelFor,
     type DailyHintPolicy,
     type GameMasterHintSettings,
@@ -114,60 +116,6 @@ describe('clockOrigin', () => {
 
     it('measures from the word opening when cumulative', () => {
         expect(clockOrigin(policy({ stagger: 'cumulative' }))).toBe('word-opened');
-    });
-});
-
-describe('startLevelFor', () => {
-    const TOTAL = 6; // indices 0..5; 5 is the freebie, 4 is the first word played
-
-    it('gives nothing away when the start level is zero', () => {
-        const p = policy({ startLevel: 0, startLevelAppliesTo: 'every-word' });
-        for (let i = 0; i < TOTAL; i += 1) {
-            expect(startLevelFor(p, i, TOTAL)).toBe(0);
-        }
-    });
-
-    it('under first-word, only the word immediately before the freebie starts hinted', () => {
-        const p = policy({ startLevel: 1, startLevelAppliesTo: 'first-word' });
-
-        expect(startLevelFor(p, 4, TOTAL)).toBe(1);
-        expect(startLevelFor(p, 3, TOTAL)).toBe(0);
-        expect(startLevelFor(p, 0, TOTAL)).toBe(0);
-    });
-
-    it('under every-word, the whole chain starts hinted', () => {
-        const p = policy({ startLevel: 1, startLevelAppliesTo: 'every-word' });
-
-        for (let i = 0; i <= 4; i += 1) {
-            expect(startLevelFor(p, i, TOTAL)).toBe(1);
-        }
-    });
-
-    // The last word is handed to the player already solved, so a hint level on
-    // it would be both meaningless and visible.
-    it('never hints the freebie word, under either mode', () => {
-        for (const appliesTo of ['first-word', 'every-word'] as const) {
-            const p = policy({ startLevel: 3, startLevelAppliesTo: appliesTo });
-            expect(startLevelFor(p, TOTAL - 1, TOTAL)).toBe(0);
-        }
-    });
-
-    it('clamps a start level above the ladder', () => {
-        const p = policy({ startLevel: 99, startLevelAppliesTo: 'every-word' });
-        expect(startLevelFor(p, 0, TOTAL)).toBe(MAX_HINT_LEVEL);
-    });
-
-    it('clamps a negative start level', () => {
-        const p = policy({ startLevel: -2, startLevelAppliesTo: 'every-word' });
-        expect(startLevelFor(p, 0, TOTAL)).toBe(0);
-    });
-
-    it('handles a degenerate chain without going out of bounds', () => {
-        const p = policy({ startLevel: 2, startLevelAppliesTo: 'every-word' });
-
-        expect(startLevelFor(p, 0, 1)).toBe(0);
-        expect(startLevelFor(p, 0, 0)).toBe(0);
-        expect(startLevelFor(p, -1, TOTAL)).toBe(0);
     });
 });
 
@@ -281,10 +229,22 @@ describe('parseHintPolicy', () => {
     });
 
     it('rejects an unknown enum value rather than passing it through', () => {
-        const parsed = parseHintPolicy({ stagger: 'sideways', progression: 'sprint' });
+        const parsed = parseHintPolicy({
+            stagger: 'sideways',
+            progression: 'sprint',
+            startLevelAppliesTo: 'some-words',
+        });
 
         expect(parsed.stagger).toBe(DEFAULT_HINT_POLICY.stagger);
         expect(parsed.progression).toBe(DEFAULT_HINT_POLICY.progression);
+        expect(parsed.startLevelAppliesTo).toBe(DEFAULT_HINT_POLICY.startLevelAppliesTo);
+    });
+
+    it('round-trips every reach the panel can store', () => {
+        for (const appliesTo of START_LEVEL_REACHES) {
+            expect(parseHintPolicy({ startLevelAppliesTo: appliesTo }).startLevelAppliesTo)
+                .toBe(appliesTo);
+        }
     });
 
     it('clamps out-of-range numbers instead of rejecting the whole policy', () => {

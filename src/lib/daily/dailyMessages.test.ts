@@ -8,7 +8,7 @@ import {
     findTargetMessage,
     sanitizeRestoredMessages,
 } from './dailyMessages';
-import { DEFAULT_HINT_POLICY } from './hintPolicy';
+import { DEFAULT_HINT_POLICY, type StartLevelReach } from './hintPolicy';
 
 const WORDS = ['Conductor', 'Baton', 'Harmony', 'Chord'];
 
@@ -27,7 +27,7 @@ function makeMessage(overrides: Partial<Message> = {}): Message {
 }
 
 /** A policy that opens words at `startLevel`, applied where `appliesTo` says. */
-function policyAt(startLevel: number, appliesTo: 'first-word' | 'every-word' = 'first-word') {
+function policyAt(startLevel: number, appliesTo: StartLevelReach = 'first-word') {
     return { ...DEFAULT_HINT_POLICY, startLevel, startLevelAppliesTo: appliesTo };
 }
 
@@ -85,6 +85,17 @@ describe('buildInitialMessages', () => {
         expect(messages.slice(0, 3).every((m) => m.hint_level === 1)).toBe(true);
         // The freebie is already solved; a hint level on it would be meaningless.
         expect(messages[3].hint_level).toBe(0);
+    });
+
+    // The setting exists precisely so the board does not give away words the
+    // player has not reached; `applyArrivalHint` raises them one at a time.
+    it('opens only the first word played under every-word-on-arrival', () => {
+        const messages = buildInitialMessages({
+            words: WORDS,
+            policy: policyAt(2, 'every-word-on-arrival'),
+        });
+
+        expect(messages.map((m) => m.hint_level)).toEqual([0, 0, 2, 0]);
     });
 
     it('carries connection scores through by index', () => {

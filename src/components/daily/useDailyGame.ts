@@ -10,6 +10,7 @@ import {
     findTargetMessage,
     LOCAL_USER_ID,
 } from '@/lib/daily/dailyMessages';
+import { applyArrivalHint } from '@/lib/daily/arrivalHints';
 import { calculateSolvePoints, MATCH_THRESHOLD, MAX_STRIKES } from '@/lib/daily/dailyScoring';
 import { clearDailyGame, loadDailyGame, saveDailyGame } from '@/lib/daily/dailyStorage';
 import { startLevelFor, type DailyHintPolicy } from '@/lib/daily/hintPolicy';
@@ -122,9 +123,27 @@ export function useDailyGame({
         saveDailyGame(date, words, { messages, score, consecutive, gameOver }, settingsRevision);
     }, [messages, score, consecutive, gameOver, date, words, settingsRevision]);
 
+    /** Clue for a word, preferring the day's authored hint over the generic one. */
+    const resolveClue = useCallback(
+        (index: number, word: string) => hints?.[index] ?? fallbackHint(word),
+        [hints, fallbackHint],
+    );
+
+    /**
+     * Applies a change to one word, then brings whichever word is now the
+     * target up to the level the policy entitles it to.
+     *
+     * Every mutation goes through here, so the arrival pass runs wherever the
+     * target can have moved — a solve, a give-up, or a third strike — without
+     * each of those paths having to remember to do it.
+     */
     const patchTarget = useCallback((id: string, updates: Partial<Message>) => {
-        setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, ...updates } : m)));
-    }, []);
+        setMessages((prev) => applyArrivalHint(
+            prev.map((m) => (m.id === id ? { ...m, ...updates } : m)),
+            policy,
+            resolveClue,
+        ));
+    }, [policy, resolveClue]);
 
     /** Position of a word in the chain, which is how results are indexed. */
     const indexOfMessage = useCallback(
