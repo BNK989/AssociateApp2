@@ -98,6 +98,12 @@ export function useDailyGame({
         animateStartWord: GAME_CONFIG.DAILY_GAME_ANIMATE_START_MESSAGE,
     }), [words, policy, hints, connectionScores, fallbackHint]);
 
+    /** Clue for a word, preferring the day's authored hint over the generic one. */
+    const resolveClue = useCallback(
+        (index: number, word: string) => hints?.[index] ?? fallbackHint(word),
+        [hints, fallbackHint],
+    );
+
     // Restore the day's progress, or start a new chain.
     useEffect(() => {
         const restored = loadDailyGame(date, words, {
@@ -106,7 +112,12 @@ export function useDailyGame({
         });
 
         if (restored) {
-            setMessages(restored.messages);
+            // The arrival pass runs here too, not only on a move. A board saved
+            // under an older policy comes back with the word the player is
+            // sitting on below the level the current policy entitles it to —
+            // and scoring already reads the current policy, so those tiers are
+            // being given away free while the board still hides them.
+            setMessages(applyArrivalHint(restored.messages, policy, resolveClue));
             setScore(restored.score);
             setConsecutive(restored.consecutive);
             setGameOver(restored.gameOver);
@@ -115,19 +126,13 @@ export function useDailyGame({
         }
 
         setMessages(freshMessages());
-    }, [date, words, freshMessages, settingsRevision, policy.onRevisionChange]);
+    }, [date, words, freshMessages, settingsRevision, policy, resolveClue]);
 
     // Mirror every change back to storage.
     useEffect(() => {
         if (messages.length === 0) return;
         saveDailyGame(date, words, { messages, score, consecutive, gameOver }, settingsRevision);
     }, [messages, score, consecutive, gameOver, date, words, settingsRevision]);
-
-    /** Clue for a word, preferring the day's authored hint over the generic one. */
-    const resolveClue = useCallback(
-        (index: number, word: string) => hints?.[index] ?? fallbackHint(word),
-        [hints, fallbackHint],
-    );
 
     /**
      * Applies a change to one word, then brings whichever word is now the

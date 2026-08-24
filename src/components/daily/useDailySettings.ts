@@ -2,7 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { createLogger } from '@/lib/logger';
-import { resolveHintPolicy, type DailyHintPolicy } from '@/lib/daily/hintPolicy';
+import {
+    isGameMasterConfigured,
+    resolveHintPolicy,
+    type DailyHintPolicy,
+} from '@/lib/daily/hintPolicy';
 import type { DailyHintSettings } from '@/lib/gameSettings/settingsRow';
 import type { ProfileSettings } from '@/types/app';
 
@@ -31,6 +35,10 @@ function readGuestSettings(): ProfileSettings {
  *
  * Preferences are reloaded whenever the info screen closes, since that is where
  * the player changes them.
+ *
+ * A PostHog start-level assignment now loses to a saved game-master policy, so
+ * one being dropped is logged rather than left invisible — that override is
+ * what made the admin panel's preview disagree with the board players saw.
  */
 export function useDailySettings(
     authUser: User | null,
@@ -83,6 +91,24 @@ export function useDailySettings(
         ),
         [gameMaster, storedAutoEnabled, storedDuration, experimentStartLevel],
     );
+
+    // A live experiment that the stored policy outranks. Logged at warn rather
+    // than info so it emits without debug mode: an experiment PostHog believes
+    // is running but that changes nothing is a configuration mistake somebody
+    // has to see, and this line is the only place it surfaces.
+    const experimentOverruled = experimentStartLevel !== null
+        && experimentStartLevel !== undefined
+        && isGameMasterConfigured(gameMaster);
+
+    useEffect(() => {
+        if (!experimentOverruled) return;
+
+        log.warn('resolve', 'Auto-hint experiment ignored: the game master has a saved policy', {
+            experiment_start_level: experimentStartLevel,
+            game_master_start_level: gameMaster.policy.startLevel,
+            settings_revision: gameMaster.revision,
+        });
+    }, [experimentOverruled, experimentStartLevel, gameMaster]);
 
     /**
      * Applied while the player drags the info screen's controls. The info

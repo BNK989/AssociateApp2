@@ -380,10 +380,19 @@ Resolution order, highest first:
 
 1. **Player** — `auto_hint_enabled` / `auto_hint_duration` in `profiles.settings`
    or localStorage. Only consulted when the game master's scope is `default`.
-2. **Experiment** — the PostHog flag below. Start level only.
-3. **Game master** — the `daily_hint_policy` row.
+2. **Game master** — the `daily_hint_policy` row.
+3. **Experiment** — the PostHog flag below. Start level only, and only while
+   **no** policy has been saved (revision 0).
 4. **Compiled defaults** — `GAME_CONFIG` in `src/lib/gameConfig.ts`. The floor;
    used whenever the table is missing or unreadable, so the game cannot break.
+
+The experiment used to sit above the game master, which meant an assignment
+made before the admin panel existed silently overrode the saved start level:
+the panel previewed a scramble on every word and players were handed the first
+letter, with nothing in the UI to explain the gap. Fixed 2026-08-24. When a
+saved policy overrules a live assignment the daily game logs it —
+`[daily/settings] Auto-hint experiment ignored: the game master has a saved
+policy` — so the disagreement is visible rather than silent.
 
 ### `dailygame-auto-hint-level` (PostHog)
 
@@ -393,7 +402,10 @@ Resolution order, highest first:
 Since game-master controls landed this is an **experiment surface only** — for
 A/B tests, not for configuration. An unassigned player resolves to `null`, not
 `0`, so they fall through to the game master's policy rather than silently
-overriding it with zero.
+overriding it with zero. An assigned player falls through too, unless the
+`game_settings` row is missing: **a saved policy outranks the flag.** To run a
+real start-level experiment again, the flag is no longer enough — the row has
+to be cleared, or the experiment has to move into the policy itself.
 
 Levels: **0** nothing · **1** first letter · **2** scramble (first letter pinned,
 ~70% of the rest revealed but shuffled) · **3** scramble plus the AI clue.

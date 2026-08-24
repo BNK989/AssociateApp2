@@ -187,7 +187,23 @@ export type GameMasterHintSettings = {
      * info screen, will not move and the panel will look broken.
      */
     scope: 'default' | 'force';
+    /**
+     * Revision of the `game_settings` row these came from. Zero or absent means
+     * nobody has saved a policy and the game is running on the compiled
+     * defaults — the only state in which an experiment may still set the start
+     * level. See `resolveHintPolicy`.
+     */
+    revision?: number;
 };
+
+/**
+ * Whether a game master has actually saved a policy, as opposed to the game
+ * running on the compiled defaults. Exported so the daily game can log a
+ * discarded experiment assignment without re-deriving the question.
+ */
+export function isGameMasterConfigured(gm: GameMasterHintSettings): boolean {
+    return typeof gm.revision === 'number' && gm.revision > 0;
+}
 
 /** What a player may set for themselves, from `profiles.settings` or localStorage. */
 export type PlayerHintPreferences = {
@@ -199,10 +215,17 @@ export type PlayerHintPreferences = {
 /**
  * Folds the three sources into the policy the game actually runs.
  *
- * Precedence is player, then experiment, then game master, then the compiled
+ * Precedence is player, then game master, then experiment, then the compiled
  * defaults — but the player only reaches the two preferences they can express,
  * and only when the game master has left scope at `default`. Experiments touch
  * `startLevel` alone; the rest of the policy is not an A/B surface.
+ *
+ * The experiment sits *below* the game master rather than above it. It used to
+ * win, so a `dailygame-auto-hint-level` assignment left over from before the
+ * admin panel existed silently overrode the saved start level: the panel
+ * promised a scramble on every word and players got the first letter. A stored
+ * policy is someone's deliberate act, so it wins; the experiment still assigns
+ * a level to anyone playing on the compiled defaults.
  */
 export function resolveHintPolicy(
     gm: GameMasterHintSettings,
@@ -214,7 +237,11 @@ export function resolveHintPolicy(
         rungs: gm.policy.rungs.map((r) => ({ ...r })) as DailyHintPolicy['rungs'],
     };
 
-    if (experimentStartLevel !== undefined && experimentStartLevel !== null) {
+    if (
+        experimentStartLevel !== undefined
+        && experimentStartLevel !== null
+        && !isGameMasterConfigured(gm)
+    ) {
         policy.startLevel = clampLevel(experimentStartLevel);
     }
 

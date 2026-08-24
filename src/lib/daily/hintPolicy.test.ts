@@ -26,6 +26,11 @@ function gm(overrides: Partial<DailyHintPolicy> = {}, scope: 'default' | 'force'
     return { policy: policy(overrides), scope };
 }
 
+/** Settings as they come back from a saved `game_settings` row. */
+function saved(overrides: Partial<DailyHintPolicy> = {}, scope: 'default' | 'force' = 'default'): GameMasterHintSettings {
+    return { ...gm(overrides, scope), revision: 4 };
+}
+
 describe('DEFAULT_HINT_POLICY', () => {
     // The whole migration rests on this: the policy model has to be able to
     // express the behaviour that existed before it, or rolling it out is a
@@ -179,9 +184,25 @@ describe('resolveHintPolicy', () => {
         expect(resolveHintPolicy(gm({ startLevel: 1 }), {}, undefined).startLevel).toBe(1);
     });
 
-    it('honours an experiment even under force scope, since players do not set it', () => {
-        const resolved = resolveHintPolicy(gm({ startLevel: 0 }, 'force'), {}, 3);
-        expect(resolved.startLevel).toBe(3);
+    // The bug this ordering exists to prevent: a `dailygame-auto-hint-level`
+    // assignment from before the admin panel existed was overriding the start
+    // level a game master had saved, so the panel previewed a scramble on every
+    // word and players were handed the first letter instead.
+    it('ignores an experiment once a game master has saved a policy', () => {
+        const resolved = resolveHintPolicy(saved({ startLevel: 2 }), {}, 1);
+        expect(resolved.startLevel).toBe(2);
+    });
+
+    it('ignores an experiment under force scope too', () => {
+        const resolved = resolveHintPolicy(saved({ startLevel: 0 }, 'force'), {}, 3);
+        expect(resolved.startLevel).toBe(0);
+    });
+
+    // Revision 0 is what `settingsFromRow` reports when the table is missing or
+    // unreadable, which is exactly the case the experiment should still cover.
+    it('still applies an experiment when the settings read fell back to the defaults', () => {
+        const settings: GameMasterHintSettings = { ...gm({ startLevel: 0 }), revision: 0 };
+        expect(resolveHintPolicy(settings, {}, 3).startLevel).toBe(3);
     });
 
     it('does not mutate the stored policy it was handed', () => {

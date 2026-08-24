@@ -240,8 +240,8 @@ a file that has grown past it needs splitting, not pinning.
 
 **Other open items:**
 
-`npm run lint` reports **0 errors, 91 warnings**. Every rule in this document is
-enforced and green.
+`npm run lint` reports **0 errors, 67 warnings** (measured 2026-08-24). Every
+rule in this document is enforced and green.
 
 | Count | Rule | Severity | Note |
 | ---: | :--- | :--- | :--- |
@@ -249,9 +249,10 @@ enforced and green.
 | 0 | `no-restricted-syntax` (RTL) | error | cleared 2026-08-21, 3 annotated exceptions |
 | 0 | `no-console` | error | cleared 2026-08-21 |
 | 0 | `prefer-const`, `ban-ts-comment`, `no-require-imports`, `react/no-unescaped-entities`, `react-hooks/immutability`, `react-hooks/purity` | error | cleared 2026-08-21 |
-| 16 | `react-hooks/set-state-in-effect` | **warn** | deliberate, see below |
-| 64 | `@typescript-eslint/no-unused-vars` | warn | |
-| 18 | `react-hooks/exhaustive-deps` | warn | |
+| 19 | `react-hooks/set-state-in-effect` | **warn** | deliberate, see below |
+| 38 | `@typescript-eslint/no-unused-vars` | warn | |
+| 7 | `react-hooks/exhaustive-deps` | warn | |
+| 3 | `@next/next/no-img-element` | warn | |
 
 ### `react-hooks/set-state-in-effect` is warn, not error
 
