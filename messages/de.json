@@ -238,7 +238,8 @@
         "preferences": "Einstellungen",
         "guest_badge": "Gast",
         "guest_message": "Anmelden, um Fortschritt zu speichern",
-        "theme_toggle": "Design wechseln"
+        "theme_toggle": "Design wechseln",
+        "admin": "Admin-Bereich"
     },
     "Auth": {
         "tabs": {

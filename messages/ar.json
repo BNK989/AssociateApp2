@@ -238,7 +238,8 @@
         "preferences": "التفضيلات",
         "guest_badge": "ضيف",
         "guest_message": "سجل لحفظ التقدم",
-        "theme_toggle": "تبديل السمة"
+        "theme_toggle": "تبديل السمة",
+        "admin": "لوحة الإدارة"
     },
     "Auth": {
         "tabs": {

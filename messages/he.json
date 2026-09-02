@@ -244,7 +244,8 @@
         "preferences": "הגדרות",
         "guest_badge": "אורח",
         "guest_message": "הירשמו כדי לשמור התקדמות",
-        "theme_toggle": "החלף נושא"
+        "theme_toggle": "החלף נושא",
+        "admin": "פאנל ניהול"
     },
     "Auth": {
         "tabs": {

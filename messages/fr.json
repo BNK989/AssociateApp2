@@ -238,7 +238,8 @@
         "preferences": "Préférences",
         "guest_badge": "Invité",
         "guest_message": "Inscrivez-vous pour sauvegarder la progression",
-        "theme_toggle": "Changer de thème"
+        "theme_toggle": "Changer de thème",
+        "admin": "Panneau d'administration"
     },
     "Auth": {
         "tabs": {

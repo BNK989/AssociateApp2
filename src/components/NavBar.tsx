@@ -14,10 +14,11 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { LogOut, Sun, Moon } from 'lucide-react';
+import { LogOut, Sun, Moon, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { deleteGuestAccount } from '@/app/actions/auth';
 import { useTheme } from 'next-themes';
+import { useAdmin } from '@/hooks/useAdmin';
 
 import { usePathname } from 'next/navigation';
 import { createLogger } from '@/lib/logger';
@@ -30,6 +31,7 @@ export function NavBar() {
     const dir = locale === 'he' ? 'rtl' : 'ltr';
     const { user, profile, refreshProfile } = useAuth();
     const { setTheme, resolvedTheme } = useTheme();
+    const { isAdmin } = useAdmin();
     const pathname = usePathname();
 
     const handleSignOut = async () => {
@@ -151,6 +153,14 @@ export function NavBar() {
                                         {t('preferences')}
                                     </Link>
                                 </DropdownMenuItem>
+                                {isAdmin && (
+                                    <DropdownMenuItem asChild className="focus:bg-gray-100 dark:focus:bg-gray-800 cursor-pointer">
+                                        <Link href="/admin">
+                                            <ShieldCheck className="me-2 h-4 w-4" />
+                                            {t('admin')}
+                                        </Link>
+                                    </DropdownMenuItem>
+                                )}
                                 <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-800" />
                                 <DropdownMenuItem
                                     className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-gray-100 dark:focus:bg-gray-800 cursor-pointer"

@@ -238,7 +238,8 @@
         "preferences": "Preferencias",
         "guest_badge": "Invitado",
         "guest_message": "Regístrate para guardar progreso",
-        "theme_toggle": "Alternar tema"
+        "theme_toggle": "Alternar tema",
+        "admin": "Panel de Administración"
     },
     "Auth": {
         "tabs": {

@@ -238,7 +238,8 @@
         "preferences": "Preferințe",
         "guest_badge": "Oaspete",
         "guest_message": "Înregistrează-te pentru a salva progresul",
-        "theme_toggle": "Schimbă tema"
+        "theme_toggle": "Schimbă tema",
+        "admin": "Panou de administrare"
     },
     "Auth": {
         "tabs": {

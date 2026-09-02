@@ -244,7 +244,8 @@
         "preferences": "Preferences",
         "guest_badge": "Guest",
         "guest_message": "Sign up to save progress",
-        "theme_toggle": "Toggle theme"
+        "theme_toggle": "Toggle theme",
+        "admin": "Admin Panel"
     },
     "Auth": {
         "tabs": {
