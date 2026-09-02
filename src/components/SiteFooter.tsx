@@ -2,6 +2,7 @@
 
 import { Link } from "@/navigation";
 import { usePathname } from "@/navigation";
+import { isImmersiveGameRoute } from "@/lib/gameChrome";
 import { FeedbackForm } from "@/components/FeedbackForm";
 import { useTranslations } from "next-intl";
 import { LanguagePicker } from "@/components/LanguagePicker";
@@ -11,9 +12,7 @@ export function SiteFooter() {
     const t = useTranslations('Footer');
 
     // Don't show footer on game pages
-    if (pathname?.startsWith("/game/") || pathname?.startsWith("/daily")) {
-        return null;
-    }
+    if (isImmersiveGameRoute(pathname)) return null;
 
     return (
         <footer className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-6 mt-auto">

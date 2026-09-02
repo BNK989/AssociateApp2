@@ -80,7 +80,7 @@ export function ChatArea({
 
             <div
                 ref={containerRef}
-                className="relative z-10 flex-1 overflow-y-auto p-4 space-y-4 flex flex-col"
+                className="game-scroll relative z-10 flex-1 overflow-y-auto p-4 md:px-6 space-y-4 flex flex-col"
             >
                 {/* Before any words exist the indicators sit at the top instead. */}
                 {!hasTextMessages && typingBlock}

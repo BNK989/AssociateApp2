@@ -72,7 +72,7 @@ export function MessageBubble({
                 <div
                     id={`msg-${message.id}`}
                     data-message-id={message.id}
-                    className={`flex items-end gap-2 ${flags.isMe ? 'flex-row-reverse' : 'flex-row'} ${isShaking ? 'animate-shake' : ''} ${message.ai_hint ? 'my-2' : ''}`}
+                    className={`flex items-end md:items-start gap-2 ${flags.isMe ? 'flex-row-reverse' : 'flex-row'} ${isShaking ? 'animate-shake' : ''} ${message.ai_hint ? 'my-2' : ''}`}
                 >
                     <Avatar className="w-8 h-8">
                         <AvatarImage src={message.profiles?.avatar_url} />
@@ -90,7 +90,7 @@ export function MessageBubble({
                             }
                         }}
                         onMouseDown={(e) => e.preventDefault()}
-                        className={`relative max-w-[70%] rounded-lg transition-all duration-300 ${flags.isMe ? 'bg-indigo-600 text-white glow-me' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white glow-gray'} ${flags.isTarget ? 'target-message-glow' : ''} ${isJustSolved ? 'scale-110 ring-2 ring-green-500 dark:ring-green-400 shadow-[0_0_15px_rgba(34,197,94,0.3)]' : ''} ${flags.needsExtraPadding ? 'p-3 pb-5 cursor-pointer hover:ring-2 hover:ring-indigo-400/50' : 'p-3'}`}
+                        className={`relative max-w-[70%] md:max-w-[85%] rounded-lg transition-all duration-300 ${flags.isMe ? 'bg-indigo-600 text-white glow-me' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white glow-gray'} ${flags.isTarget ? 'target-message-glow' : ''} ${isJustSolved ? 'scale-110 ring-2 ring-green-500 dark:ring-green-400 shadow-[0_0_15px_rgba(34,197,94,0.3)]' : ''} ${flags.needsExtraPadding ? 'p-3 pb-5 cursor-pointer hover:ring-2 hover:ring-indigo-400/50' : 'p-3'}`}
                     >
                         <CipherText
                             text={message.content}

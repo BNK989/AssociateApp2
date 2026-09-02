@@ -11,8 +11,8 @@ import { ChatArea } from '@/components/game/ChatArea';
 import { GameInput } from '@/components/game/GameInput';
 import { EndGamePopover } from '@/components/game/EndGamePopover';
 import { GameLoading } from '@/components/game/GameLoading';
+import { GameShell } from '@/components/game/GameShell';
 import { useTurnNotifications } from '@/hooks/useTurnNotifications';
-import { useVisualViewport } from '@/hooks/useVisualViewport';
 
 import { toast } from "sonner";
 
@@ -26,7 +26,6 @@ export default function GameRoom() {
     const router = useRouter();
     const t = useTranslations('GameRoom.Errors');
     const gameId = Array.isArray(id) ? id[0] : id;
-    const viewportHeight = useVisualViewport();
 
     const {
         user,
@@ -91,10 +90,7 @@ export default function GameRoom() {
     if (!game) return <div className="flex items-center justify-center h-[100dvh]">Game not found</div>;
 
     return (
-        <div
-            className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-white dark:bg-gray-900 max-w-md mx-auto"
-            style={{ height: viewportHeight }}
-        >
+        <GameShell>
             <GameHeader
                 game={game}
                 user={user}
@@ -153,6 +149,6 @@ export default function GameRoom() {
                 gameHandle={game.handle}
                 teamPot={game.team_pot}
             />
-        </div>
+        </GameShell>
     );
 }

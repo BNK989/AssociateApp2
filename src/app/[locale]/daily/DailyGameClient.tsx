@@ -6,10 +6,10 @@ import { toast } from 'sonner';
 import { usePostHog, useFeatureFlagPayload } from 'posthog-js/react';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthProvider';
-import { useVisualViewport } from '@/hooks/useVisualViewport';
 import { ChatArea } from '@/components/game/ChatArea';
 import { GameHeader } from '@/components/game/GameHeader';
 import { GameInput } from '@/components/game/GameInput';
+import { GameShell } from '@/components/game/GameShell';
 import { DailyEndGamePopover } from '@/components/game/DailyEndGamePopover';
 import { WalkthroughProvider } from '@/components/ui/walkthrough';
 import { GAME_CONFIG } from '@/lib/gameConfig';
@@ -108,7 +108,6 @@ function DailyGameBoard({
     const { user: authUser, session, loading: authLoading } = useAuth();
     const posthog = usePostHog();
     const t = useTranslations('GameRoom.Chat');
-    const viewportHeight = useVisualViewport();
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const [isInfoOpen, setIsInfoOpen] = useState(false);
@@ -258,10 +257,7 @@ function DailyGameBoard({
     );
 
     return (
-        <div
-            className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-white dark:bg-gray-900 max-w-md mx-auto"
-            style={{ height: viewportHeight }}
-        >
+        <GameShell>
             <GameHeader
                 game={gameState}
                 user={MOCK_USER}
@@ -339,6 +335,6 @@ function DailyGameBoard({
                 streak={results.streak}
                 onClose={() => router.push('/')}
             />
-        </div>
+        </GameShell>
     );
 }

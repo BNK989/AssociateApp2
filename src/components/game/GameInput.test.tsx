@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { GameInput } from './GameInput';
 import { GameState, Message, Player } from '@/hooks/useGameLogic';
 import type { User } from '@supabase/supabase-js';
@@ -97,6 +97,92 @@ vi.mock('@/components/ui/dropdown-menu', () => ({
     DropdownMenuContent: ({ children }: MockComponentProps) => <div>{children}</div>,
     DropdownMenuItem: ({ children, onClick }: MockComponentProps) => <div onClick={onClick}>{children}</div>,
 }));
+
+/**
+ * Stubs `matchMedia` for one test. jsdom ships without it, which is also the
+ * production fallback path: no matchMedia means no autofocus.
+ */
+function stubPointer(kind: 'fine' | 'coarse' | 'absent') {
+    if (kind === 'absent') {
+        Reflect.deleteProperty(window, 'matchMedia');
+        return;
+    }
+    Object.defineProperty(window, 'matchMedia', {
+        configurable: true,
+        writable: true,
+        value: (query: string) => ({
+            matches: query.includes(`pointer: ${kind}`),
+            media: query,
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+        }),
+    });
+}
+
+describe('GameInput desktop autofocus', () => {
+    const props = {
+        game: { id: '1', status: 'solving', current_turn_user_id: 'user1' } as GameState,
+        user: { id: 'user1' } as unknown as User,
+        players: [{ user_id: 'user1', profiles: { username: 'User 1' } }] as unknown as Player[],
+        input: '',
+        setInput: vi.fn(),
+        sending: false,
+        solvingTimeLeft: 60,
+        targetMessage: {
+            id: 'msg1',
+            content: 'Hello World',
+            user_id: 'user2',
+            hint_level: 0,
+            guesses: [],
+        } as unknown as Message,
+        onSendMessage: vi.fn(),
+        onGetHint: vi.fn(),
+        onGiveUp: vi.fn(),
+        isSinglePlayer: false,
+    };
+
+    afterEach(() => {
+        stubPointer('absent');
+    });
+
+    it('focuses the field on a fine pointer so desktop players can just type', () => {
+        stubPointer('fine');
+        render(<GameInput {...props} />);
+
+        expect(document.activeElement).toBe(screen.getByRole('textbox'));
+    });
+
+    it('leaves the field alone on touch, where focusing would open the keyboard', () => {
+        stubPointer('coarse');
+        render(<GameInput {...props} />);
+
+        expect(document.activeElement).not.toBe(screen.getByRole('textbox'));
+    });
+
+    it('leaves the field alone when matchMedia is unavailable', () => {
+        stubPointer('absent');
+        render(<GameInput {...props} />);
+
+        expect(document.activeElement).not.toBe(screen.getByRole('textbox'));
+    });
+
+    it('refocuses when the chain advances to the next word', () => {
+        stubPointer('fine');
+        const { rerender } = render(<GameInput {...props} />);
+
+        screen.getByRole('textbox').blur();
+        expect(document.activeElement).not.toBe(screen.getByRole('textbox'));
+
+        rerender(
+            <GameInput
+                {...props}
+                targetMessage={{ ...props.targetMessage, id: 'msg2' } as unknown as Message}
+            />,
+        );
+
+        expect(document.activeElement).toBe(screen.getByRole('textbox'));
+    });
+});
 
 describe('GameInput Character Counter', () => {
     const mockSetInput = vi.fn();

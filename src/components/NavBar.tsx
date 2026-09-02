@@ -19,7 +19,8 @@ import { supabase } from '@/lib/supabase';
 import { deleteGuestAccount } from '@/app/actions/auth';
 import { useTheme } from 'next-themes';
 
-import { usePathname } from 'next/navigation';
+import { usePathname } from '@/navigation';
+import { isImmersiveGameRoute } from '@/lib/gameChrome';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('navbar');
@@ -79,7 +80,9 @@ export function NavBar() {
     };
 
     if (!user) return null;
-    if (pathname?.startsWith('/game/')) return null;
+    // The game shell is a fixed overlay; leaving the nav mounted paints it
+    // around the board and hands the player a second set of controls.
+    if (isImmersiveGameRoute(pathname)) return null;
 
     const getInitials = (name: string) => {
         return name?.slice(0, 2).toUpperCase() || '??';

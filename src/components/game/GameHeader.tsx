@@ -131,11 +131,11 @@ export function GameHeader({
         >
             <WelcomeOverlay show={showWelcome} theme={theme} />
 
-            <div className="p-2 flex justify-between items-center relative">
+            <div className="p-2 md:px-4 md:py-3 flex justify-between items-center relative">
                 <div className={`flex items-center gap-3 ${theme ? 'flex-1 min-w-0 me-4' : 'w-1/3'}`}>
                     <button
                         onClick={handleBackClick}
-                        className="p-2 -ms-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-900 dark:text-white shrink-0"
+                        className="p-2 -ms-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-900 dark:text-white shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         aria-label={t('go_home')}
                     >
                         <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
@@ -157,7 +157,7 @@ export function GameHeader({
                             {/* Shares layoutId with the welcome overlay so the theme flies into place. */}
                             <motion.span
                                 layoutId="theme-text"
-                                className="text-base sm:text-lg md:text-xl font-bold text-gray-900 dark:text-white leading-tight break-words w-full"
+                                className="text-base sm:text-lg md:text-2xl font-bold text-gray-900 dark:text-white leading-tight break-words w-full"
                             >
                                 {theme}
                             </motion.span>
@@ -196,7 +196,7 @@ export function GameHeader({
                             e.stopPropagation();
                             toggleInfo(true);
                         }}
-                        className="p-2 -me-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                        className="p-2 -me-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         aria-label="Settings"
                     >
                         <MoreVertical className="w-5 h-5" />

@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
+import { CARD_BOX } from '@/components/game/cardBox';
 
 type WelcomeOverlayProps = {
     show: boolean;
@@ -41,7 +42,7 @@ export function WelcomeOverlay({ show, theme }: WelcomeOverlayProps) {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     aria-hidden="true"
-                    className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-6"
+                    className={`pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-6 ${CARD_BOX}`}
                 >
                     <motion.div
                         initial={{ opacity: 0 }}

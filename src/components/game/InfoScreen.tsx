@@ -12,6 +12,7 @@ import { useGameInstructions } from './info/gameInstructions';
 import { useInfoSettings } from './info/useInfoSettings';
 import type { DailyHintPolicy } from '@/lib/daily/hintPolicy';
 import { useShareResults } from './info/useShareResults';
+import { CARD_BOX } from '@/components/game/cardBox';
 
 type InfoScreenProps = {
     game: GameState;
@@ -65,7 +66,7 @@ export function InfoScreen({
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex flex-col bg-white/95 dark:bg-gray-950/95 backdrop-blur-md animate-in fade-in duration-200">
+        <div className={`fixed inset-0 z-50 flex flex-col bg-white/95 dark:bg-gray-950/95 backdrop-blur-md animate-in fade-in duration-200 ${CARD_BOX}`}>
             <InfoScreenHeader
                 isDaily={isDaily}
                 date={date}

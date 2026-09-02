@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Loader2, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
@@ -42,6 +43,21 @@ export function MessageInput({
 }: MessageInputProps) {
     const t = useTranslations('GameRoom.Input');
     const isSolving = game.status === 'solving';
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    /**
+     * Desktop players expect to type the moment a word comes up, and re-focus
+     * after each solve so the chain never needs a click. Gated on a fine
+     * pointer: on touch, focusing would throw the keyboard over the board.
+     */
+    const targetId = targetMessage?.id;
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        // Optional-called: jsdom and older embedded webviews have no matchMedia,
+        // and there the pre-existing click-to-focus behaviour is the right one.
+        if (!window.matchMedia?.('(pointer: fine)').matches) return;
+        inputRef.current?.focus();
+    }, [targetId]);
 
     const typedCount = countMeaningfulChars(input);
     const targetCount = targetMessage ? countMeaningfulChars(targetMessage.content) : 0;
@@ -53,6 +69,7 @@ export function MessageInput({
         <div id="game-input-area" className="flex gap-2 flex-1">
             <div className="relative flex-1">
                 <input
+                    ref={inputRef}
                     id="chat_message_input"
                     name="chat_message_v1"
                     type="text"
@@ -84,7 +101,7 @@ export function MessageInput({
                     }}
                     onFocus={onInteract}
                     placeholder={placeholder}
-                    className={`h-10 w-full px-3 py-2 pe-14 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none transition-colors ${isSolving ? 'border-purple-500' : ''}`}
+                    className={`h-10 w-full px-3 py-2 pe-14 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring ${isSolving ? 'border-purple-500' : ''}`}
                 />
 
                 {showCounter && (
@@ -108,7 +125,7 @@ export function MessageInput({
                 onClick={(e) => onSend(e as unknown as React.FormEvent)}
                 disabled={submitDisabled}
                 onMouseDown={(e) => e.preventDefault()}
-                className={`h-10 w-10 flex items-center justify-center rounded-lg text-white font-bold shrink-0 transition-colors ${isSolving ? 'bg-purple-600 hover:bg-purple-700' : 'bg-green-600 hover:bg-green-700'} ${submitDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`h-10 w-10 flex items-center justify-center rounded-lg text-white font-bold shrink-0 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${isSolving ? 'bg-purple-600 hover:bg-purple-700' : 'bg-green-600 hover:bg-green-700'} ${submitDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
                 {sending
                     ? <Loader2 className="h-5 w-5 animate-spin" />

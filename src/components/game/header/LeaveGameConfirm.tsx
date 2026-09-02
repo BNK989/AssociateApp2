@@ -1,4 +1,5 @@
 import { useTranslations } from 'next-intl';
+import { CARD_BOX } from '@/components/game/cardBox';
 
 type LeaveGameConfirmProps = {
     onLeavePermanently: () => void;
@@ -19,7 +20,7 @@ export function LeaveGameConfirm({ onLeavePermanently, onGoHome, onCancel }: Lea
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 ${CARD_BOX}`}>
             <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-xl max-w-xs w-full border border-gray-200 dark:border-gray-800">
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
                     {t('back_confirm_title')}
