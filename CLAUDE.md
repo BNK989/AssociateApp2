@@ -149,7 +149,15 @@ today's behaviour rather than breaking the game. See
   No ORM — raw `@supabase/supabase-js`.
 - Schema changes go through **migrations** in `supabase/migrations/`. Never apply
   DDL by hand in the SQL editor — it desyncs migration history from the repo.
-- **Never edit `.env`.** If a variable needs to change, ask the human.
+- **Never edit an existing `.env` that already holds real values** (your local
+  machine or VPS). If a variable there needs to change, ask the human.
+- **Exception — bootstrapping a fresh remote/cloud session.** A Claude Code
+  cloud container is a freshly cloned checkout with no secrets of its own —
+  there is no live `.env` to clobber. In that situation the agent may create
+  `.env.local` (already gitignored) from values the human pastes in chat or
+  sets in the environment's config, purely so the app can run for local QA in
+  that session. Never commit or push it; never overwrite a populated `.env`
+  this way without showing a diff first.
 - Next.js 16+: middleware is deprecated and renamed to **proxy**.
 - PostHog is available for analytics and debugging.
 
