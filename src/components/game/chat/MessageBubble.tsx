@@ -4,8 +4,8 @@ import { CipherText } from '@/components/CipherText';
 import type { GameState, Message } from '@/hooks/useGameLogic';
 import { getAvatarColor, getInitials } from '@/lib/avatarUtils';
 import { deriveMessageFlags, shouldShowStrikeLabel } from './messageFlags';
+import { HintPanel } from './HintPanel';
 import {
-    AiHintPanel,
     ConnectionScoreBadge,
     ShuffleHintButton,
     StrikeIndicator,
@@ -63,8 +63,23 @@ export function MessageBubble({
     });
 
     const username = message.profiles?.username || 'User';
-    const hasAiHint = message.hint_level === 3 || Boolean(message.ai_hint);
     const scramble = () => onForceScramble(message.id);
+
+    // Only a shuffleable bubble is actually clickable. The reserved strip at the
+    // bottom is also there for the strike dots and the outcome mark, and those
+    // do nothing when tapped — pointing a cursor at them promised an
+    // interaction that was never wired.
+    const isClickable = flags.canShuffle;
+
+    // A settled word's outcome, drawn as a spine down the leading edge so the
+    // chain can be scanned for wins and losses without reading every mark.
+    const outcomeSpine = flags.stage !== 'settled'
+        ? ''
+        : flags.isCorrect
+            ? 'border-s-2 border-green-500/60'
+            : flags.isFailed
+                ? 'border-s-2 border-gray-400/50 dark:border-gray-500/50'
+                : '';
 
     return (
         <ContextMenu>
@@ -72,7 +87,7 @@ export function MessageBubble({
                 <div
                     id={`msg-${message.id}`}
                     data-message-id={message.id}
-                    className={`flex items-end md:items-start gap-2 ${flags.isMe ? 'flex-row-reverse' : 'flex-row'} ${isShaking ? 'animate-shake' : ''} ${message.ai_hint ? 'my-2' : ''}`}
+                    className={`flex items-end md:items-start gap-2 ${flags.isMe ? 'flex-row-reverse' : 'flex-row'} ${isShaking ? 'animate-shake' : ''} ${flags.hintDisplay === 'open' ? 'my-2' : ''}`}
                 >
                     <Avatar className="w-8 h-8">
                         <AvatarImage src={message.profiles?.avatar_url} />
@@ -90,7 +105,7 @@ export function MessageBubble({
                             }
                         }}
                         onMouseDown={(e) => e.preventDefault()}
-                        className={`relative max-w-[70%] md:max-w-[85%] rounded-lg transition-all duration-300 ${flags.isMe ? 'bg-indigo-600 text-white glow-me' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white glow-gray'} ${flags.isTarget ? 'target-message-glow' : ''} ${isJustSolved ? 'scale-110 ring-2 ring-green-500 dark:ring-green-400 shadow-[0_0_15px_rgba(34,197,94,0.3)]' : ''} ${flags.needsExtraPadding ? 'p-3 pb-5 cursor-pointer hover:ring-2 hover:ring-indigo-400/50' : 'p-3'}`}
+                        className={`relative max-w-[70%] md:max-w-[85%] rounded-lg transition-all duration-300 ${flags.isMe ? 'bg-indigo-600 text-white glow-me' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white glow-gray'} ${flags.isTarget ? 'target-message-glow' : ''} ${outcomeSpine} ${flags.isDimmed ? 'opacity-60 hover:opacity-100' : ''} ${isJustSolved ? 'scale-110 ring-2 ring-green-500 dark:ring-green-400 shadow-[0_0_15px_rgba(34,197,94,0.3)]' : ''} ${flags.needsExtraPadding ? 'p-3 pb-5' : 'p-3'} ${isClickable ? 'cursor-pointer hover:ring-2 hover:ring-indigo-400/50' : ''}`}
                     >
                         <CipherText
                             text={message.content}
@@ -111,7 +126,7 @@ export function MessageBubble({
                         )}
 
                         {flags.canShuffle && (
-                            <ShuffleHintButton compact={hasAiHint} onShuffle={scramble} />
+                            <ShuffleHintButton compact={flags.hintDisplay === 'open'} onShuffle={scramble} />
                         )}
 
                         {flags.showStrikeIndicator && (
@@ -123,7 +138,7 @@ export function MessageBubble({
                             />
                         )}
 
-                        {hasAiHint && <AiHintPanel hint={message.ai_hint} />}
+                        <HintPanel display={flags.hintDisplay} hint={message.ai_hint} />
 
                         {isJustSolved && justSolvedPoints !== undefined && justSolvedPoints > 0 && (
                             <div className="absolute -top-10 -end-4 text-3xl font-black text-green-500 dark:text-green-400 animate-float-up z-20 drop-shadow-xl whitespace-nowrap pointer-events-none">

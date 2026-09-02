@@ -72,6 +72,7 @@
             "toast_word_lost": "الكلمة المفقودة: {word}",
             "toast_reset_success": "تم إعادة تعيين اللعبة للحالة الأولية",
             "hint_fallback": "تحتوي على {length} أحرف. الحرف الأول هو {firstLetter}.",
+            "hint_used": "تم استخدام التلميح",
             "link_strong": "Strong Link",
             "link_medium": "Loose Link",
             "link_weak": "Weak Link"

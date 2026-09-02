@@ -72,6 +72,7 @@
             "toast_word_lost": "Verlorenes Wort: {word}",
             "toast_reset_success": "Spiel auf Ausgangszustand zurückgesetzt",
             "hint_fallback": "Enthält {length} Buchstaben. Der erste Buchstabe ist {firstLetter}.",
+            "hint_used": "Hinweis genutzt",
             "link_strong": "Strong Link",
             "link_medium": "Loose Link",
             "link_weak": "Weak Link"

@@ -72,6 +72,7 @@
             "toast_word_lost": "Cuvânt pierdut: {word}",
             "toast_reset_success": "Joc resetat la starea inițială",
             "hint_fallback": "Conține {length} litere. Prima literă este {firstLetter}.",
+            "hint_used": "Indiciu folosit",
             "link_strong": "Strong Link",
             "link_medium": "Loose Link",
             "link_weak": "Weak Link"

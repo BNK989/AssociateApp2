@@ -78,6 +78,7 @@
             "toast_word_lost": "הפסדתם מילה: {word}",
             "toast_reset_success": "המשחק אופס למצב הקודם",
             "hint_fallback": "מכיל {length} אותיות. האות הראשונה היא {firstLetter}.",
+            "hint_used": "נעשה שימוש ברמז",
             "link_strong": "קשר חזק",
             "link_medium": "קשר רופף",
             "link_weak": "קשר חלש"
