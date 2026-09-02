@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Check, Lightbulb, Shuffle, X } from 'lucide-react';
+import { Check, Shuffle, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -10,7 +10,7 @@ const FADE_OUT_LABEL = {
     transition: { delay: 3, duration: 0.8, ease: 'easeInOut' as const },
 };
 
-const PANEL_REVEAL = {
+const SHUFFLE_REVEAL = {
     layout: true,
     initial: { opacity: 0, height: 0, scale: 0.95 },
     animate: { opacity: 1, height: 'auto', scale: 1 },
@@ -53,7 +53,7 @@ export function ShuffleHintButton({ compact, onShuffle }: { compact: boolean; on
 
     return (
         <motion.div
-            {...PANEL_REVEAL}
+            {...SHUFFLE_REVEAL}
             className={`absolute bottom-0.5 start-1 z-10 ${compact ? 'scale-75 origin-bottom-left rtl:origin-bottom-right' : ''}`}
         >
             <TooltipProvider delayDuration={0}>
@@ -134,35 +134,6 @@ export function StrikeIndicator({ strikes, isCorrect, isFailed, showLabel }: Str
                             {strikes === 1 ? t('counter_remain', { count: 2 }) : t('counter_last')}
                         </motion.span>
                     )}
-                </div>
-            )}
-        </motion.div>
-    );
-}
-
-/** The level-3 AI hint, or its loading state while Gemini is being consulted. */
-export function AiHintPanel({ hint }: { hint?: string }) {
-    const t = useTranslations('GameRoom.Chat');
-
-    return (
-        <motion.div
-            {...PANEL_REVEAL}
-            className={`mt-2 text-xs font-medium p-2 rounded border overflow-hidden ${hint
-                ? 'text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/40 border-yellow-200 dark:border-yellow-800'
-                : 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800'
-                }`}
-        >
-            {hint ? (
-                <div className="flex items-start gap-1.5 animate-in fade-in duration-300">
-                    <Lightbulb className="w-4 h-4 shrink-0 mt-px" aria-hidden="true" />
-                    <span className="leading-snug">{hint}</span>
-                </div>
-            ) : (
-                <div className="flex items-center gap-2 h-5">
-                    <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                    <span className="ms-1">{t('consulting_ai')}</span>
                 </div>
             )}
         </motion.div>

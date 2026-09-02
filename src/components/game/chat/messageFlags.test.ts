@@ -150,6 +150,63 @@ describe('deriveMessageFlags — identity', () => {
     });
 });
 
+describe('deriveMessageFlags — lifecycle stage', () => {
+    const solving = makeGame({ status: 'solving' });
+
+    it('marks the word being solved as active', () => {
+        const flags = derive(makeMessage(), solving, { targetMessageId: 'msg-1' });
+        expect(flags.stage).toBe('active');
+        expect(flags.isDimmed).toBe(false);
+    });
+
+    it('marks a solved word as settled', () => {
+        expect(derive(makeMessage({ is_solved: true }), solving).stage).toBe('settled');
+    });
+
+    it('marks an unreached word as upcoming and holds it back', () => {
+        const flags = derive(makeMessage(), solving, { targetMessageId: 'msg-other' });
+        expect(flags.stage).toBe('upcoming');
+        expect(flags.isDimmed).toBe(true);
+    });
+
+    it('never dims outside the solving phase', () => {
+        expect(derive(makeMessage(), makeGame({ status: 'texting' })).isDimmed).toBe(false);
+    });
+});
+
+describe('deriveMessageFlags — hint display', () => {
+    const solving = makeGame({ status: 'solving' });
+    const hinted = { hint_level: 3, ai_hint: 'A low, throaty sound.' };
+
+    it('shows nothing when the word carries no clue', () => {
+        expect(derive(makeMessage(), solving, { targetMessageId: 'msg-1' }).hintDisplay).toBe('none');
+    });
+
+    it('opens the clue on the word being solved', () => {
+        const flags = derive(makeMessage(hinted), solving, { targetMessageId: 'msg-1' });
+        expect(flags.hintDisplay).toBe('open');
+    });
+
+    it('opens the clue while it is still being fetched', () => {
+        const flags = derive(makeMessage({ hint_level: 3 }), solving, { targetMessageId: 'msg-1' });
+        expect(flags.hintDisplay).toBe('open');
+    });
+
+    it('collapses the clue once the word is settled', () => {
+        const flags = derive(makeMessage({ ...hinted, is_solved: true }), solving);
+        expect(flags.hintDisplay).toBe('collapsed');
+    });
+
+    it('withholds a clue on a word the player has not reached yet', () => {
+        const flags = derive(makeMessage(hinted), solving, { targetMessageId: 'msg-other' });
+        expect(flags.hintDisplay).toBe('none');
+    });
+
+    it('withholds nothing while texting, where there is no word to look ahead to', () => {
+        expect(derive(makeMessage(hinted), makeGame({ status: 'texting' })).hintDisplay).toBe('open');
+    });
+});
+
 describe('getMessagesLeftWarning', () => {
     it('warns on the final three messages', () => {
         const game = makeGame({ max_messages: 25 });

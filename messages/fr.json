@@ -72,6 +72,7 @@
             "toast_word_lost": "Mot perdu : {word}",
             "toast_reset_success": "Jeu réinitialisé à l'état initial",
             "hint_fallback": "Contient {length} lettres. La première lettre est {firstLetter}.",
+            "hint_used": "Indice utilisé",
             "link_strong": "Strong Link",
             "link_medium": "Loose Link",
             "link_weak": "Weak Link"

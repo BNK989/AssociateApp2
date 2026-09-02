@@ -78,6 +78,7 @@
             "toast_word_lost": "Lost word: {word}",
             "toast_reset_success": "Game reset to initial state",
             "hint_fallback": "Contains {length} letters. First letter is {firstLetter}.",
+            "hint_used": "Hint used",
             "link_strong": "Strong Link",
             "link_medium": "Loose Link",
             "link_weak": "Weak Link"

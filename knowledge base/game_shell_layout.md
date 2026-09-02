@@ -75,6 +75,13 @@ The helper takes a **locale-stripped** pathname. Use `usePathname` from
 non-default locale fails a naive prefix check. `NavBar` had exactly that bug —
 the nav stayed visible over the board for every locale but English.
 
+### What a bubble looks like depends on its stage
+
+`ChatArea` frames the list; the individual bubble changes shape across its own
+life — ciphered promise, active workspace, settled record — and the clue it
+carries is only open on the word being solved. See
+[chat_bubble_lifecycle.md](chat_bubble_lifecycle.md).
+
 ## Logical / user flow
 
 On a phone nothing changed: the game is the screen, edge to edge.
