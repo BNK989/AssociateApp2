@@ -211,12 +211,18 @@
             "title": "Ce que signifient les couleurs",
             "placed_title": "Vert",
             "placed_desc": "Position confirmée. Cette lettre va exactement ici.",
+            "placed_short": "Bonne place",
             "present_title": "Orange",
             "present_desc": "Présente dans le mot. Vous avez trouvé cette lettre.",
+            "present_short": "Dans le mot",
             "unknown_title": "Gris",
             "unknown_desc": "Encore masqué. Un symbole de remplissage, pas une lettre.",
+            "unknown_short": "Masqué",
             "ordered_note": "Les lettres révélées apparaissent à leur place.",
-            "shuffled_note": "Une fois les lettres mélangées, leur ordre n'est plus un indice. Les tuiles qui flottent sont celles qu'il reste à placer."
+            "ordered_note_short": "Les lettres sont à leur place.",
+            "shuffled_note": "Une fois les lettres mélangées, leur ordre n'est plus un indice. Les tuiles qui flottent sont celles qu'il reste à placer.",
+            "shuffled_note_short": "Mélangées : l'ordre n'est plus un indice.",
+            "dismiss": "Fermer"
         }
     },
     "HomePage": {

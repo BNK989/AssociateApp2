@@ -49,9 +49,22 @@ forgotten in the other.
 - `LetterLegend` (`src/components/game/LetterLegend.tsx`) — the key itself,
   rendered from the same `--tile-*` variables the board uses, so the samples are
   the exact colours on screen.
+- **The bubble itself**, the first time a word of theirs colours a tile
+  (`chat/InlineLegend.tsx` + `chat/useLegendIntro.ts`). This is the only route
+  that is *pushed* rather than waited for, and it is the one that reaches a
+  player who does not yet know there is a key to look for. It opens inside the
+  bubble, under the word it explains, in the condensed `inline` variant of
+  `LetterLegend`; it closes on the next guess, on dismiss, or when the word
+  settles, and it never opens again on that device
+  (`associ8-legend-intro-seen`). `hasColouredTiles` in `chat/legendRules.ts`
+  decides the moment by asking `readMaskTile` — the very function the board
+  draws with — rather than inferring it from `hint_level`, because a guess can
+  colour a tile at level 0 and an all-filler mask can colour none at level 1.
 - **The palette button** in the input row (`input/LegendButton.tsx`), available
   for the whole of solving, showing only the half of the position rule that
-  currently applies.
+  currently applies. It costs 48px of the composer, and whether it earns that
+  is now a measured question rather than an argued one — see `legend_opened` in
+  [events.md](events.md).
 - **How to play** (`info/HowToPlayDialog.tsx`), both modes, showing both halves.
 - **The daily walkthrough**, step 3 (`GameRoom.Info.Daily.tutorial.step3_*`).
 

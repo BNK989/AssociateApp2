@@ -248,7 +248,7 @@ a file that has grown past it needs splitting, not pinning.
 
 **Other open items:**
 
-`npm run lint` reports **0 errors, 67 warnings** (measured 2026-08-24). Every
+`npm run lint` reports **0 errors, 70 warnings** (measured 2026-09-05). Every
 rule in this document is enforced and green.
 
 | Count | Rule | Severity | Note |
@@ -257,7 +257,7 @@ rule in this document is enforced and green.
 | 0 | `no-restricted-syntax` (RTL) | error | cleared 2026-08-21, 3 annotated exceptions |
 | 0 | `no-console` | error | cleared 2026-08-21 |
 | 0 | `prefer-const`, `ban-ts-comment`, `no-require-imports`, `react/no-unescaped-entities`, `react-hooks/immutability`, `react-hooks/purity` | error | cleared 2026-08-21 |
-| 19 | `react-hooks/set-state-in-effect` | **warn** | deliberate, see below |
+| 22 | `react-hooks/set-state-in-effect` | **warn** | deliberate, see below |
 | 38 | `@typescript-eslint/no-unused-vars` | warn | |
 | 7 | `react-hooks/exhaustive-deps` | warn | |
 | 3 | `@next/next/no-img-element` | warn | |
@@ -273,6 +273,8 @@ is what effects exist for:
 - `NotificationCenter`, `InvitePlayer`, `useLobbyGames` — kick off a fetch /
   realtime subscription.
 - `useOnboarding` — opens the tutorial once the profile has loaded.
+- `useLegendIntro` — reads the seen-key from `localStorage` on mount, then opens
+  the in-bubble colour key when the word being solved first shows a colour.
 - `useCountUp`, `useWelcomeOverlay`, `useHintNudge`, `useHintTooltip`,
   `useAutoHint`, `useDailyGame`, `useDailySettings` — sync animation or
   preference state to changed props.

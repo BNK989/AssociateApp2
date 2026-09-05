@@ -1,5 +1,6 @@
 import { Palette } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { usePostHog } from 'posthog-js/react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { LetterLegend } from '@/components/game/LetterLegend';
@@ -18,9 +19,15 @@ type LegendButtonProps = {
  */
 export function LegendButton({ hintLevel }: LegendButtonProps) {
     const t = useTranslations('GameRoom.Legend');
+    const posthog = usePostHog();
 
     return (
-        <Popover>
+        <Popover
+            onOpenChange={(open) => {
+                // Measured so the composer's 48px can be judged on use, not guesswork.
+                if (open) posthog?.capture('legend_opened', { source: 'palette', hint_level: hintLevel });
+            }}
+        >
             <PopoverTrigger asChild>
                 <Button
                     type="button"

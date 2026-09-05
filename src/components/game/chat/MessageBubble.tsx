@@ -4,7 +4,10 @@ import { CipherText } from '@/components/CipherText';
 import type { GameState, Message } from '@/hooks/useGameLogic';
 import { getAvatarColor, getInitials } from '@/lib/avatarUtils';
 import { deriveMessageFlags, shouldShowStrikeLabel } from './messageFlags';
+import { hasColouredTiles } from './legendRules';
+import { useLegendIntro } from './useLegendIntro';
 import { HintPanel } from './HintPanel';
+import { InlineLegend } from './InlineLegend';
 import {
     ConnectionScoreBadge,
     ShuffleHintButton,
@@ -60,6 +63,21 @@ export function MessageBubble({
         currentUserId,
         targetMessageId,
         isRevealed,
+    });
+
+    // The colour key teaches itself on the word being solved, the first time that
+    // word actually has a colour to explain.
+    const guesses = message.guesses || [];
+    const showsColour = flags.isTarget && !flags.isVisible && hasColouredTiles({
+        text: message.content,
+        cipherText: message.cipher_text,
+        guesses,
+        hintLevel: message.hint_level,
+    });
+    const legendIntro = useLegendIntro({
+        active: showsColour,
+        hintLevel: message.hint_level,
+        guessCount: guesses.length,
     });
 
     const username = message.profiles?.username || 'User';
@@ -124,6 +142,12 @@ export function MessageBubble({
                                 compact={activeBubbleWidth > 0 && activeBubbleWidth < NARROW_BUBBLE_PX}
                             />
                         )}
+
+                        <InlineLegend
+                            open={legendIntro.isOpen}
+                            positionNote={message.hint_level >= 2 ? 'shuffled' : 'ordered'}
+                            onDismiss={legendIntro.dismiss}
+                        />
 
                         {flags.canShuffle && (
                             <ShuffleHintButton compact={flags.hintDisplay === 'open'} onShuffle={scramble} />

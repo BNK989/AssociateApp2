@@ -211,12 +211,18 @@
             "title": "Qué significan los colores",
             "placed_title": "Verde",
             "placed_desc": "Confirmada en su sitio. Esta letra va exactamente aquí.",
+            "placed_short": "En su sitio",
             "present_title": "Naranja",
             "present_desc": "Está en la palabra. Has encontrado esta letra.",
+            "present_short": "En la palabra",
             "unknown_title": "Gris",
             "unknown_desc": "Aún oculta. Un marcador de posición, no una letra.",
+            "unknown_short": "Oculta",
             "ordered_note": "Las letras reveladas aparecen en el lugar que les corresponde.",
-            "shuffled_note": "Una vez mezcladas las letras, su orden deja de ser una pista. Las fichas que flotan son las que faltan por colocar."
+            "ordered_note_short": "Las letras están en su sitio.",
+            "shuffled_note": "Una vez mezcladas las letras, su orden deja de ser una pista. Las fichas que flotan son las que faltan por colocar.",
+            "shuffled_note_short": "Mezcladas: el orden ya no es una pista.",
+            "dismiss": "Cerrar"
         }
     },
     "HomePage": {

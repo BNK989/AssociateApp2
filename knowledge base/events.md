@@ -75,3 +75,32 @@ Fired when a user solves all words in the Daily Game.
 ## Implementation Details
 - **Client-Side**: Uses `usePostHog()` hook from `posthog-js/react`.
 - **Server-Side**: Uses `getPostHogServer()` singleton from `src/app/posthog-server.ts` and `posthog-node`. Events are flushed immediately using `await posthog.flush()`.
+
+
+### 8. `legend_intro_shown`
+Fired when the colour key opens by itself inside a chat bubble — the first time
+a word shows the player a coloured tile, once per device.
+
+- **Trigger**: Client-side in `chat/useLegendIntro.ts`, gated on
+  `hasColouredTiles` and the `associ8-legend-intro-seen` key.
+- **Properties**:
+    - `hint_level`: number (level of the word that triggered it)
+
+### 9. `legend_intro_closed`
+Fired when that in-bubble key goes away, whichever way it went.
+
+- **Trigger**: Client-side in `chat/useLegendIntro.ts`.
+- **Properties**:
+    - `reason`: 'dismissed' | 'guessed' | 'word_settled'
+
+### 10. `legend_opened`
+Fired when a player opens the colour key deliberately. The point of counting it
+is the composer's palette button: it holds 48px of the input row for the whole
+of solving, and this event says whether players actually reach for it or only
+ever meet the key when it introduces itself.
+
+- **Trigger**: Client-side, on open, in `input/LegendButton.tsx` and
+  `info/HowToPlayDialog.tsx`.
+- **Properties**:
+    - `source`: 'palette' | 'how_to_play'
+    - `hint_level`: number (palette only — the dialog is read away from any word)

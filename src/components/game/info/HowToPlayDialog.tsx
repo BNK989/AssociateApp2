@@ -1,5 +1,6 @@
 import { ChevronRight, HelpCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { usePostHog } from 'posthog-js/react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { LetterLegend } from '@/components/game/LetterLegend';
@@ -13,9 +14,16 @@ type HowToPlayDialogProps = {
 export function HowToPlayDialog({ instructions }: HowToPlayDialogProps) {
     const t = useTranslations('GameRoom.Info');
     const tLegend = useTranslations('GameRoom.Legend');
+    const posthog = usePostHog();
 
     return (
-        <Dialog>
+        <Dialog
+            onOpenChange={(open) => {
+                // The reference route to the same key, counted against the
+                // composer's palette button so the two can be compared.
+                if (open) posthog?.capture('legend_opened', { source: 'how_to_play' });
+            }}
+        >
             <DialogTrigger asChild>
                 <Button
                     variant="secondary"

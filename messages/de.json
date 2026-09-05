@@ -211,12 +211,18 @@
             "title": "Was die Farben bedeuten",
             "placed_title": "Grün",
             "placed_desc": "Position bestätigt. Dieser Buchstabe gehört genau hierher.",
+            "placed_short": "Richtige Stelle",
             "present_title": "Orange",
             "present_desc": "Im Wort enthalten. Du hast diesen Buchstaben gefunden.",
+            "present_short": "Im Wort",
             "unknown_title": "Grau",
             "unknown_desc": "Noch verborgen. Ein Platzhalter, kein Buchstabe.",
+            "unknown_short": "Verborgen",
             "ordered_note": "Aufgedeckte Buchstaben stehen dort, wo sie hingehören.",
-            "shuffled_note": "Sobald die Buchstaben gemischt sind, verrät ihre Reihenfolge nichts mehr. Die schwebenden Kacheln sind die noch zu platzierenden."
+            "ordered_note_short": "Buchstaben stehen an ihrem Platz.",
+            "shuffled_note": "Sobald die Buchstaben gemischt sind, verrät ihre Reihenfolge nichts mehr. Die schwebenden Kacheln sind die noch zu platzierenden.",
+            "shuffled_note_short": "Gemischt — die Reihenfolge verrät nichts mehr.",
+            "dismiss": "Schließen"
         }
     },
     "HomePage": {

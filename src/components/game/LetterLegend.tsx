@@ -22,8 +22,19 @@ const SAMPLES: { state: TileState; char: string }[] = [
  */
 type PositionNote = 'ordered' | 'shuffled' | 'both';
 
+/**
+ * How much room the key has.
+ *
+ * `stacked` is the reference reading — one row per state with its full
+ * description. `inline` is the same three states condensed to a single wrapped
+ * row, for the key that opens inside a chat bubble, where a hundred pixels of
+ * prose would push the word being solved off the screen.
+ */
+type LegendVariant = 'stacked' | 'inline';
+
 type LetterLegendProps = {
     positionNote?: PositionNote;
+    variant?: LegendVariant;
     className?: string;
 };
 
@@ -40,12 +51,47 @@ type LetterLegendProps = {
  * all. The moment a player needs the key is the first time a tile changes
  * colour, which is not the moment they arrived.
  */
-export function LetterLegend({ positionNote = 'both', className = '' }: LetterLegendProps) {
+export function LetterLegend({
+    positionNote = 'both',
+    variant = 'stacked',
+    className = '',
+}: LetterLegendProps) {
     const t = useTranslations('GameRoom.Legend');
+    const isInline = variant === 'inline';
 
     const notes: string[] = [];
-    if (positionNote === 'ordered' || positionNote === 'both') notes.push(t('ordered_note'));
-    if (positionNote === 'shuffled' || positionNote === 'both') notes.push(t('shuffled_note'));
+    if (positionNote === 'ordered' || positionNote === 'both') {
+        notes.push(t(isInline ? 'ordered_note_short' : 'ordered_note'));
+    }
+    if (positionNote === 'shuffled' || positionNote === 'both') {
+        notes.push(t(isInline ? 'shuffled_note_short' : 'shuffled_note'));
+    }
+
+    if (isInline) {
+        return (
+            <div className={`space-y-1.5 ${className}`}>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                    {SAMPLES.map(({ state, char }) => (
+                        <span key={state} className="flex items-center gap-1.5">
+                            <span
+                                aria-hidden="true"
+                                className={`grid h-6 w-6 flex-none place-items-center rounded border border-border bg-muted font-mono text-xs ${tileClassName(state)}`}
+                            >
+                                {char}
+                            </span>
+                            <span className="text-[11px] font-bold leading-none">
+                                {t(`${state}_short`)}
+                            </span>
+                        </span>
+                    ))}
+                </div>
+
+                {notes.map((note) => (
+                    <p key={note} className="text-[11px] leading-snug opacity-75">{note}</p>
+                ))}
+            </div>
+        );
+    }
 
     return (
         <div className={`space-y-2.5 ${className}`}>

@@ -211,12 +211,18 @@
             "title": "Ce înseamnă culorile",
             "placed_title": "Verde",
             "placed_desc": "Confirmată la locul ei. Această literă stă exact aici.",
+            "placed_short": "La locul ei",
             "present_title": "Portocaliu",
             "present_desc": "Se află în cuvânt. Ai găsit această literă.",
+            "present_short": "În cuvânt",
             "unknown_title": "Gri",
             "unknown_desc": "Încă ascuns. Un simbol de umplutură, nu o literă.",
+            "unknown_short": "Ascuns",
             "ordered_note": "Literele dezvăluite apar acolo unde le este locul.",
-            "shuffled_note": "După ce literele sunt amestecate, ordinea lor nu mai este un indiciu. Plăcuțele care plutesc sunt cele rămase de așezat."
+            "ordered_note_short": "Literele stau la locul lor.",
+            "shuffled_note": "După ce literele sunt amestecate, ordinea lor nu mai este un indiciu. Plăcuțele care plutesc sunt cele rămase de așezat.",
+            "shuffled_note_short": "Amestecate — ordinea nu mai este un indiciu.",
+            "dismiss": "Închide"
         }
     },
     "HomePage": {
