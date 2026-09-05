@@ -75,6 +75,36 @@ The helper takes a **locale-stripped** pathname. Use `usePathname` from
 non-default locale fails a naive prefix check. `NavBar` had exactly that bug —
 the nav stayed visible over the board for every locale but English.
 
+### The chat field is a contenteditable, not an `<input>`
+
+`src/components/game/input/PlainTextField.tsx` is the single-line text field
+behind `MessageInput`. It is a `contenteditable` div with `role="textbox"`,
+not a form control, and that is the whole point: Chrome for Android reports
+every focused `<input>` to the Android Autofill framework, and the keyboard
+answers by drawing an autofill strip (passwords / cards / addresses) above its
+own toolbar. That strip costs roughly 55px of an already short mobile board.
+`autocomplete="off"`, `data-lpignore`, `data-1p-ignore` and `data-form-type`
+were all tried first and none of them close it — the strip belongs to the
+platform, not to the page. A non-form-control host is never announced as
+fillable, so the row never opens.
+
+What the field re-implements, because `<input>` gave it away for free:
+
+| Behaviour | How |
+| :--- | :--- |
+| Controlled value | An effect writes `value` back into the DOM only when the two drift apart (a send clearing the field), so typing never disturbs the caret. |
+| Placeholder | A sibling div rendered while the value is empty, positioned with logical `start`/`end` insets. |
+| Max length | Over `GAME_CONFIG.MESSAGE_MAX_LENGTH` the edit is rolled back to the last accepted value, the caret moves to the end, and the caller raises the existing toast. |
+| Single line | `white-space: pre` plus `overflow-x: auto`; the browser scrolls to the caret. Enter is intercepted by `MessageInput` and sends. |
+| Plain text only | Paste is intercepted, read as `text/plain`, whitespace-collapsed and inserted with `insertText`; drops are refused. |
+| Empty means empty | Browsers leave a stray `<br>` behind on the last delete, which would keep the placeholder hidden; the input handler clears it. |
+| Trailing space | `contenteditable` stores it as U+00A0, so reads normalise it back to a plain space — otherwise the DOM and the React value never compare equal and the field re-syncs on every keystroke. |
+
+One knock-on: a `contenteditable` clips at its padding box, so long text scrolls
+*under* the trailing padding where an `<input>` would have stopped. The
+character counter is therefore anchored to the field edge and paints on the
+field's own background, which hides the text passing beneath it.
+
 ### What a bubble looks like depends on its stage
 
 `ChatArea` frames the list; the individual bubble changes shape across its own
@@ -97,6 +127,11 @@ Typing works without a click: when a word comes up — on entry and after every
 solve — the input takes focus. This is gated on `(pointer: fine)`, so a touch
 device never has the keyboard thrown over the board, and an environment with no
 `matchMedia` at all falls back to click-to-focus.
+
+On a phone the keyboard no longer opens with an autofill row above it. That row
+was never ours to style — it is the Android keyboard offering saved passwords,
+cards and addresses for what it took to be a form field — and removing it gives
+the message list back about 55px on every device that showed it.
 
 ## Deliberately not done
 

@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { GAME_CONFIG } from '@/lib/gameConfig';
 import type { GameState, Message } from '@/hooks/useGameLogic';
 import { countMeaningfulChars } from './inputRules';
+import { PlainTextField } from './PlainTextField';
 
 type MessageInputProps = {
     game: GameState;
@@ -43,7 +44,7 @@ export function MessageInput({
 }: MessageInputProps) {
     const t = useTranslations('GameRoom.Input');
     const isSolving = game.status === 'solving';
-    const inputRef = useRef<HTMLInputElement>(null);
+    const inputRef = useRef<HTMLDivElement>(null);
 
     /**
      * Desktop players expect to type the moment a word comes up, and re-focus
@@ -68,28 +69,16 @@ export function MessageInput({
     return (
         <div id="game-input-area" className="flex gap-2 flex-1">
             <div className="relative flex-1">
-                <input
-                    ref={inputRef}
+                <PlainTextField
                     id="chat_message_input"
-                    name="chat_message_v1"
-                    type="text"
-                    inputMode="text"
-                    enterKeyHint="send"
+                    fieldRef={inputRef}
                     value={input}
-                    autoComplete="off"
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    spellCheck="false"
-                    // Keep password managers out of a game input.
-                    data-lpignore="true"
-                    data-1p-ignore="true"
-                    data-form-type="other"
-                    onChange={(e) => {
-                        const value = e.target.value;
-                        if (value.length > GAME_CONFIG.MESSAGE_MAX_LENGTH) {
-                            toast.error(t('toast_max_length', { max: GAME_CONFIG.MESSAGE_MAX_LENGTH }));
-                            return;
-                        }
+                    placeholder={placeholder}
+                    maxLength={GAME_CONFIG.MESSAGE_MAX_LENGTH}
+                    onOverflow={() =>
+                        toast.error(t('toast_max_length', { max: GAME_CONFIG.MESSAGE_MAX_LENGTH }))
+                    }
+                    onChange={(value) => {
                         setInput(value);
                         onInteract();
                         if (onTyping && value.length > 0) onTyping();
@@ -100,14 +89,17 @@ export function MessageInput({
                         onSend(e as unknown as React.FormEvent);
                     }}
                     onFocus={onInteract}
-                    placeholder={placeholder}
-                    className={`h-10 w-full px-3 py-2 pe-14 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring ${isSolving ? 'border-purple-500' : ''}`}
+                    className={`h-10 w-full px-3 py-2 pe-14 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white leading-6 whitespace-pre overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus:border-blue-500 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring ${isSolving ? 'border-purple-500' : ''}`}
+                    placeholderClassName="absolute start-3 end-14 top-1/2 -translate-y-1/2 truncate select-none pointer-events-none text-gray-500 dark:text-gray-400"
                 />
 
                 {showCounter && (
                     <div
                         data-testid="char-counter"
-                        className={`absolute end-3 top-1/2 -translate-y-1/2 text-xs font-medium select-none pointer-events-none transition-colors ${isOverLength
+                        // Anchored to the field's edge and painted on its own
+                        // background: the text now scrolls under the counter
+                        // (a contenteditable clips at its padding box, an input did not).
+                        className={`absolute end-px top-1/2 -translate-y-1/2 px-3 bg-gray-100 dark:bg-gray-800 text-xs font-medium select-none pointer-events-none transition-colors ${isOverLength
                             ? 'text-red-500 dark:text-red-400'
                             : 'text-gray-400 dark:text-gray-500'
                             }`}
