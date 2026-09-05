@@ -23,6 +23,7 @@ vi.mock('lucide-react', () => ({
     Lightbulb: () => <div data-testid="lightbulb-icon" />,
     Flag: () => <div data-testid="flag-icon" />,
     Clock: () => <div data-testid="clock-icon" />,
+    Palette: () => <div data-testid="palette-icon" />,
 }));
 
 // Mock Framer Motion

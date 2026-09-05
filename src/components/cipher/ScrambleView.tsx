@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { floatVariant } from './cipherVariants';
-import type { ScrambleItem } from './cipherRules';
+import { tileClassName } from './tileStyles';
+import type { ScrambleItem, TileState } from './cipherRules';
 
 type ScrambleViewProps = {
     items: ScrambleItem[];
@@ -15,10 +16,15 @@ const COLON = '∷';
 /**
  * The shuffled-tile view used from hint level 2.
  *
- * Colour carries the information: green is a letter in its confirmed position,
- * orange is a letter known to be in the word but still loose, grey is filler.
- * Green tiles are pinned, so a tile that moves is one the player still has to
- * place.
+ * Colour says what a tile is; motion says whether its slot can be trusted.
+ * Pinned letters sit at their real index and are drawn still, loose ones have
+ * been shuffled and drift — so a tile that moves is one the player still has to
+ * place, and one that does not is settled.
+ *
+ * That was always the intent, and the docstring said so, but the animation was
+ * gated on `isReal`, which is true of pinned tiles too. Every revealed letter
+ * drifted, including the ones already in position, and the only cue that could
+ * carry "not placed yet" carried nothing.
  */
 export function ScrambleView({ items, hintLevel, className, dir, showColons }: ScrambleViewProps) {
     return (
@@ -31,11 +37,7 @@ export function ScrambleView({ items, hintLevel, className, dir, showColons }: S
                 const isPlaced = Boolean(item.locked) && item.isReal;
                 const isLoose = !item.locked && item.isReal;
 
-                const colorClass = isPlaced
-                    ? 'text-green-600 dark:text-green-400'
-                    : isLoose
-                        ? 'text-orange-500 dark:text-orange-400'
-                        : 'text-gray-400 dark:text-gray-500';
+                const state: TileState = isPlaced ? 'placed' : isLoose ? 'present' : 'unknown';
 
                 return (
                     <motion.span
@@ -43,11 +45,8 @@ export function ScrambleView({ items, hintLevel, className, dir, showColons }: S
                         key={item.id}
                         custom={i}
                         variants={floatVariant}
-                        animate={item.isReal ? 'float' : undefined}
-                        className={`inline-block ${item.isSpace ? 'whitespace-pre' : ''} ${item.isReal
-                            ? `font-bold mx-0.5 drop-shadow-[0_0_2px_rgba(255,255,255,0.5)] ${colorClass}`
-                            : 'text-gray-400 dark:text-gray-500 font-medium'
-                            } ${i === 0 && hintLevel >= 1 ? 'uppercase' : ''}`}
+                        animate={isLoose ? 'float' : undefined}
+                        className={`inline-block ${item.isSpace ? 'whitespace-pre' : ''} ${tileClassName(state)} ${item.isReal ? 'mx-0.5' : ''} ${i === 0 && hintLevel >= 1 ? 'uppercase' : ''}`}
                         transition={{ layout: { duration: 0.4, ease: 'easeInOut' } }}
                     >
                         {item.char}

@@ -1,13 +1,17 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { render, act, cleanup } from '@testing-library/react';
 import { CipherText } from './CipherText';
+import { CIPHER_SIGNS } from '@/lib/gameConfig';
 
 afterEach(() => cleanup());
 
 const WORD = 'Wood';
-const CIPHER_L0 = '~*^%';
+// Masks are built from CIPHER_SIGNS, the alphabet the server actually emits.
+// These fixtures used ASCII symbols that no mask has ever contained, which is
+// how the filler-detection drift went unnoticed for so long.
+const CIPHER_L0 = CIPHER_SIGNS.slice(0, 4).join('');
 // Hint cipher: first letter revealed, the rest still masked
-const CIPHER_L2 = 'W#+*';
+const CIPHER_L2 = `W${CIPHER_SIGNS.slice(1, 4).join('')}`;
 // A wrong guess that only reveals 'd' -> 'o' stays masked
 const GUESSES = ['dial'];
 

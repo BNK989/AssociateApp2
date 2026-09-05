@@ -157,16 +157,14 @@
                 "tutorial": {
                     "step1_title": "Défi Quotidien 📅",
                     "step1_desc": "Bienvenue dans votre entraînement cérébral quotidien ! Chaque jour, nous publions une nouvelle chaîne de quelques mots connectés.",
-                    "step2_title": "Travaillez à Rebours ⬆️",
-                    "step2_desc": "Le dernier mot est déjà révélé. Votre objectif est de deviner le mot qui vient AVANT lui. Résoudre un mot révèle le suivant dans la chaîne !",
-                    "step3_title": "Besoin d'un Indice ? 💡",
-                    "step3_desc": "Coincé sur une connexion délicate ? Appuyez sur l'icône de l'ampoule pour un indice. Cela coûte quelques points, mais c'est mieux que de briser votre série !",
+                    "step2_title": "Devinez le mot",
+                    "step2_desc": "Saisissez votre réponse ici. Vous avez 3 essais par mot.",
+                    "step3_title": "Signification des couleurs",
+                    "step3_desc": "Les lettres vertes sont confirmées à leur place. Les lettres orange sont dans le mot : vous les avez trouvées. Les symboles gris restent masqués. Vous résolvez toujours le message au bord coloré.",
                     "play_now": "Jouer Maintenant",
                     "next": "Suivant",
-                    "step4_title": "Need a Hint? 💡",
-                    "step4_desc": "Stuck? Tap 💡 for a hint or 🏳️ to giveup the current text. You can reveal length, letters, or ask AI.",
-                    "step5_title": "Shuffle",
-                    "step5_desc": "Tap the shuffle icon to rearrange the letters for a fresh perspective."
+                    "step4_title": "Besoin d'un indice ?",
+                    "step4_desc": "Bloqué ? Appuyez sur l'ampoule pour un indice, ou sur le drapeau pour abandonner le mot en cours. Les indices peuvent révéler des lettres ou interroger l'IA."
                 }
             },
             "restart_tutorial": "Restart Tutorial"
@@ -207,6 +205,17 @@
             "toast_copied": "Résultats copiés dans le presse-papiers !",
             "toast_share_fail": "Échec du partage des résultats",
             "streak_badge": "{streak} jours d’affilée"
+        },
+        "Legend": {
+            "title": "Ce que signifient les couleurs",
+            "placed_title": "Vert",
+            "placed_desc": "Position confirmée. Cette lettre va exactement ici.",
+            "present_title": "Orange",
+            "present_desc": "Présente dans le mot. Vous avez trouvé cette lettre.",
+            "unknown_title": "Gris",
+            "unknown_desc": "Encore masqué. Un symbole de remplissage, pas une lettre.",
+            "ordered_note": "Les lettres révélées apparaissent à leur place.",
+            "shuffled_note": "Une fois les lettres mélangées, leur ordre n'est plus un indice. Les tuiles qui flottent sont celles qu'il reste à placer."
         }
     },
     "HomePage": {

@@ -5,9 +5,11 @@ import {
     computeGuessState,
     findNewlyRevealedIndices,
     generateShuffledView,
-    SPECIAL_CHARS,
+    isFillerChar,
+    readMaskTile,
     type ScrambleItem,
 } from './cipherRules';
+import { CIPHER_SIGNS } from '@/lib/gameConfig';
 
 const FILLER = '#';
 const build = (text: string, cipher: string, guesses: string[] = [], hintLevel = 0) =>
@@ -241,10 +243,78 @@ describe('findNewlyRevealedIndices', () => {
     });
 });
 
-describe('SPECIAL_CHARS', () => {
+describe('isFillerChar', () => {
+    it('recognises every sign the server actually masks with', () => {
+        // The regression this guards: the filler set was a hand-written ASCII
+        // list documented as matching gameLogic.ts that shared no character
+        // with it, so every real mask glyph was mistaken for a revealed letter.
+        for (const char of CIPHER_SIGNS) {
+            expect(isFillerChar(char)).toBe(true);
+        }
+    });
+
     it('contains no character that could be mistaken for a letter', () => {
-        for (const char of SPECIAL_CHARS) {
+        for (const char of CIPHER_SIGNS) {
             expect(/[a-z0-9]/i.test(char)).toBe(false);
         }
+    });
+
+    it('does not treat an answer letter as filler', () => {
+        for (const char of [...'abcdefghijklmnopqrstuvwxyz']) {
+            expect(isFillerChar(char)).toBe(false);
+        }
+    });
+});
+
+describe('buildRandomCipher fills from the shared alphabet', () => {
+    it('emits only filler signs, never letters that look like the answer', () => {
+        for (const char of [...buildRandomCipher('Harmony Chord')]) {
+            if (char === ' ') continue;
+            expect(isFillerChar(char)).toBe(true);
+        }
+    });
+});
+
+describe('readMaskTile', () => {
+    const SIGN = CIPHER_SIGNS[0];
+    const state = (text: string, guesses: string[]) => computeGuessState(text, guesses);
+
+    it('calls a letter guessed in position placed', () => {
+        const tile = readMaskTile(SIGN, 'H', 0, state('Harmony', ['harpoon']), 0);
+        expect(tile).toEqual({ char: 'H', state: 'placed', displaced: false });
+    });
+
+    it('calls a letter known only to be present "present", and not displaced', () => {
+        // The renderer draws it at its true index, so claiming otherwise would
+        // invite the player to rule out the one arrangement that is right.
+        const tile = readMaskTile(SIGN, 'n', 4, state('Harmony', ['xxxxxny']), 0);
+        expect(tile.state).toBe('present');
+        expect(tile.displaced).toBe(false);
+    });
+
+    it('treats a mask letter below hint 2 as placed, since that mask is positional', () => {
+        const tile = readMaskTile('H', 'H', 0, state('Harmony', []), 1);
+        expect(tile).toEqual({ char: 'H', state: 'placed', displaced: false });
+    });
+
+    it('treats a mask letter from hint 2 as displaced, since that mask is an anagram', () => {
+        const tile = readMaskTile('y', 'H', 0, state('Harmony', []), 2);
+        expect(tile).toEqual({ char: 'y', state: 'present', displaced: true });
+    });
+
+    it('never promotes a hint-2 letter that coincidentally sits on its own index', () => {
+        const tile = readMaskTile('H', 'H', 0, state('Harmony', []), 2);
+        expect(tile.state).toBe('present');
+        expect(tile.displaced).toBe(true);
+    });
+
+    it('calls a filler sign unknown, and never displaced', () => {
+        const tile = readMaskTile(SIGN, 'H', 0, state('Harmony', []), 2);
+        expect(tile).toEqual({ char: SIGN, state: 'unknown', displaced: false });
+    });
+
+    it('leaves spaces unknown rather than styling them as letters', () => {
+        const tile = readMaskTile(' ', ' ', 0, state('a b', []), 2);
+        expect(tile.state).toBe('unknown');
     });
 });

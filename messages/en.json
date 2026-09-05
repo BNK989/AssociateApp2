@@ -167,11 +167,9 @@
                     "step2_title": "Guess the Word",
                     "step2_desc": "Type in your guess here. You have 3 tries per word.",
                     "step3_title": "Colors Meaning",
-                    "step3_desc": "Green letters are in the correct position. Orange letters are in the word but wrong spot. You are always solving the message with the colorful border.",
-                    "step4_title": "Need a Hint? 💡",
-                    "step4_desc": "Stuck? Tap 💡 for a hint or 🏳️ to giveup the current text. You can reveal length, letters, or ask AI.",
-                    "step5_title": "Shuffle",
-                    "step5_desc": "Tap the shuffle icon to rearrange the letters for a fresh perspective.",
+                    "step3_desc": "Green letters are confirmed in place. Orange letters are in the word — you have found them. Grey symbols are still hidden. You are always solving the message with the colorful border.",
+                    "step4_title": "Need a Hint?",
+                    "step4_desc": "Stuck? Tap the lightbulb for a hint, or the flag to give up the current word. Hints can reveal letters or ask the AI.",
                     "play_now": "Play Now",
                     "next": "Next"
                 }
@@ -213,6 +211,17 @@
             "toast_copied": "Results copied to clipboard!",
             "toast_share_fail": "Failed to share results",
             "streak_badge": "{streak} day streak"
+        },
+        "Legend": {
+            "title": "What the colors mean",
+            "placed_title": "Green",
+            "placed_desc": "Confirmed in place. This letter belongs exactly here.",
+            "present_title": "Orange",
+            "present_desc": "In the word. You've found this letter.",
+            "unknown_title": "Grey",
+            "unknown_desc": "Still hidden. A placeholder, not a letter.",
+            "ordered_note": "Revealed letters are shown where they belong.",
+            "shuffled_note": "Once letters are shuffled their order is no longer a clue. The drifting tiles are the ones still to place."
         }
     },
     "HomePage": {

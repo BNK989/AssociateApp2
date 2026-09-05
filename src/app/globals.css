@@ -43,6 +43,49 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+
+/* ---------------------------------------------------------------------------
+   Letter feedback tokens
+
+   The three states a masked word's tiles can be in: `placed` (letter and slot
+   both confirmed), `present` (letter is in the word) and `unknown` (filler).
+
+   These are per *surface*, not per theme, because one theme is not enough
+   information. A light-theme board shows pale `bg-gray-300` peer bubbles and
+   deep `bg-indigo-600` own-message bubbles side by side, and no single green
+   or orange is legible on both. Every value below clears 4.5:1 against the
+   bubble it is scoped to; the previous palette sat at 1.9:1 in light mode,
+   which is well under the 3:1 large-text floor, never mind AA.
+--------------------------------------------------------------------------- */
+:root {
+  /* On the light peer bubble, bg-gray-300. */
+  --tile-placed: #166534;  /* green-800   4.84:1 */
+  --tile-present: #9a3412; /* orange-800  4.96:1 */
+  --tile-unknown: #4b5563; /* gray-600    5.13:1 */
+  --tile-glow: transparent;
+}
+
+.dark {
+  /* On the dark peer bubble, bg-gray-700. */
+  --tile-placed: #86efac;  /* green-300   7.34:1 */
+  --tile-present: #fdba74; /* orange-300  6.11:1 */
+  --tile-unknown: #9ca3af; /* gray-400    4.06:1 */
+  --tile-glow: rgb(0 0 0 / 0.45);
+}
+
+/*
+ * The player's own bubble is indigo in both themes, so it carries its own set
+ * rather than following the theme. Applied by MessageBubble.
+ */
+.tile-surface-own,
+.dark .tile-surface-own {
+  /* On bg-indigo-600. */
+  --tile-placed: #bbf7d0;  /* green-200   5.19:1 */
+  --tile-present: #fed7aa; /* orange-200  4.65:1 */
+  --tile-unknown: #c7d2fe; /* indigo-200  4.22:1 */
+  --tile-glow: rgb(0 0 0 / 0.35);
+}
+
 /* RTL Font Usage (Hebrew) - Prioritize Rubik */
 /* RTL Font Usage (Hebrew) - Prioritize Rubik */
 html[dir="rtl"] body {

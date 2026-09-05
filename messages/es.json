@@ -157,16 +157,14 @@
                 "tutorial": {
                     "step1_title": "Desafío Diario 📅",
                     "step1_desc": "¡Bienvenido a tu entrenamiento mental diario! Cada día, lanzamos una nueva cadena de palabras conectadas.",
-                    "step2_title": "Trabaja Hacia Atrás ⬆️",
-                    "step2_desc": "La última palabra ya está revelada. Tu objetivo es adivinar la palabra que viene ANTES de ella. ¡Resolver una palabra revela la siguiente en la cadena!",
-                    "step3_title": "¿Necesitas una Pista? 💡",
-                    "step3_desc": "¿Atascado en una conexión difícil? Toca el icono de la bombilla para una pista. ¡Cuesta algunos puntos, pero es mejor que romper tu racha!",
+                    "step2_title": "Adivina la palabra",
+                    "step2_desc": "Escribe aquí tu respuesta. Tienes 3 intentos por palabra.",
+                    "step3_title": "Significado de los colores",
+                    "step3_desc": "Las letras verdes están confirmadas en su sitio. Las naranjas están en la palabra: ya las has encontrado. Los símbolos grises siguen ocultos. Siempre resuelves el mensaje con el borde de color.",
                     "play_now": "Jugar Ahora",
                     "next": "Siguiente",
-                    "step4_title": "Need a Hint? 💡",
-                    "step4_desc": "Stuck? Tap 💡 for a hint or 🏳️ to giveup the current text. You can reveal length, letters, or ask AI.",
-                    "step5_title": "Shuffle",
-                    "step5_desc": "Tap the shuffle icon to rearrange the letters for a fresh perspective."
+                    "step4_title": "¿Necesitas una pista?",
+                    "step4_desc": "¿Atascado? Toca la bombilla para una pista, o la bandera para rendirte con la palabra actual. Las pistas pueden revelar letras o preguntar a la IA."
                 }
             },
             "restart_tutorial": "Restart Tutorial"
@@ -207,6 +205,17 @@
             "toast_copied": "¡Resultados copiados al portapapeles!",
             "toast_share_fail": "Error al compartir resultados",
             "streak_badge": "{streak} días seguidos"
+        },
+        "Legend": {
+            "title": "Qué significan los colores",
+            "placed_title": "Verde",
+            "placed_desc": "Confirmada en su sitio. Esta letra va exactamente aquí.",
+            "present_title": "Naranja",
+            "present_desc": "Está en la palabra. Has encontrado esta letra.",
+            "unknown_title": "Gris",
+            "unknown_desc": "Aún oculta. Un marcador de posición, no una letra.",
+            "ordered_note": "Las letras reveladas aparecen en el lugar que les corresponde.",
+            "shuffled_note": "Una vez mezcladas las letras, su orden deja de ser una pista. Las fichas que flotan son las que faltan por colocar."
         }
     },
     "HomePage": {

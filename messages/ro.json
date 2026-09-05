@@ -157,16 +157,14 @@
                 "tutorial": {
                     "step1_title": "Provocare Zilnică 📅",
                     "step1_desc": "Bine ai venit la antrenamentul tău mental zilnic! În fiecare zi, lansăm un lanț nou de câteva cuvinte conectate.",
-                    "step2_title": "Lucrează Înapoi ⬆️",
-                    "step2_desc": "Ultimul cuvânt este deja dezvăluit. Scopul tău este să ghicești cuvântul care vine ÎNAINTEA lui. Rezolvarea unui cuvânt îl dezvăluie pe următorul din lanț!",
-                    "step3_title": "Ai nevoie de un Indiciu? 💡",
-                    "step3_desc": "Blocat la o conexiune dificilă? Apasă pe iconița bec pentru un indiciu. Costă câteva puncte, dar e mai bine decât să-ți strici seria!",
+                    "step2_title": "Ghicește cuvântul",
+                    "step2_desc": "Scrie aici răspunsul tău. Ai 3 încercări pentru fiecare cuvânt.",
+                    "step3_title": "Semnificația culorilor",
+                    "step3_desc": "Literele verzi sunt confirmate la locul lor. Cele portocalii se află în cuvânt — le-ai găsit. Simbolurile gri sunt încă ascunse. Rezolvi mereu mesajul cu chenarul colorat.",
                     "play_now": "Joacă Acum",
                     "next": "Următorul",
-                    "step4_title": "Need a Hint? 💡",
-                    "step4_desc": "Stuck? Tap 💡 for a hint or 🏳️ to giveup the current text. You can reveal length, letters, or ask AI.",
-                    "step5_title": "Shuffle",
-                    "step5_desc": "Tap the shuffle icon to rearrange the letters for a fresh perspective."
+                    "step4_title": "Ai nevoie de un indiciu?",
+                    "step4_desc": "Blocat? Apasă pe bec pentru un indiciu sau pe steag ca să renunți la cuvântul curent. Indiciile pot dezvălui litere sau pot întreba IA."
                 }
             },
             "restart_tutorial": "Restart Tutorial"
@@ -207,6 +205,17 @@
             "toast_copied": "Rezultate copiate în clipboard!",
             "toast_share_fail": "Partajare rezultate eșuată",
             "streak_badge": "{streak} zile la rând"
+        },
+        "Legend": {
+            "title": "Ce înseamnă culorile",
+            "placed_title": "Verde",
+            "placed_desc": "Confirmată la locul ei. Această literă stă exact aici.",
+            "present_title": "Portocaliu",
+            "present_desc": "Se află în cuvânt. Ai găsit această literă.",
+            "unknown_title": "Gri",
+            "unknown_desc": "Încă ascuns. Un simbol de umplutură, nu o literă.",
+            "ordered_note": "Literele dezvăluite apar acolo unde le este locul.",
+            "shuffled_note": "După ce literele sunt amestecate, ordinea lor nu mai este un indiciu. Plăcuțele care plutesc sunt cele rămase de așezat."
         }
     },
     "HomePage": {

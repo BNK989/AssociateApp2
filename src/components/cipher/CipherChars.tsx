@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
-import { SPECIAL_CHARS, type GuessState } from './cipherRules';
+import { readMaskTile, type GuessState } from './cipherRules';
+import { tileClassName } from './tileStyles';
 import { floatVariant, popVariant } from './cipherVariants';
 
 type CipherCharsProps = {
@@ -22,8 +23,7 @@ const COLON = '∷';
  * its shuffled state.
  *
  * When the word is solved it renders plainly. While masked, each position is
- * upgraded to the real letter only where the player has earned it — green for
- * a confirmed position, orange for a letter known to be present.
+ * upgraded to the real letter only where the player has earned it.
  */
 export function CipherChars({
     display,
@@ -39,7 +39,6 @@ export function CipherChars({
 }: CipherCharsProps) {
     const textChars = [...text];
     const displayChars = [...display];
-    const { greenIndices, revealedChars } = guessState;
 
     const wrapperClass = `${className} break-words inline-flex flex-wrap ${(visible || hintLevel >= 1 || isSolving) ? '[&>span:first-child]:uppercase' : ''} ${isSolving ? 'gap-1' : ''}`;
 
@@ -51,57 +50,34 @@ export function CipherChars({
 
             {displayChars.map((char, i) => {
                 const realChar = textChars[i];
-                const isPositionalMatch = char === realChar;
 
                 if (visible) {
                     return (
                         <span
                             key={i}
-                            className={`${char === ' ' ? 'whitespace-pre' : ''} ${isPositionalMatch ? '' : 'text-green-500 opacity-70'}`}
+                            className={`${char === ' ' ? 'whitespace-pre' : ''} ${char === realChar ? '' : 'text-[var(--tile-placed)] opacity-70'}`}
                         >
                             {char}
                         </span>
                     );
                 }
 
-                let renderChar = char;
-                let isEffectiveMatch = isPositionalMatch;
-                let colorClass = '';
-
-                if (greenIndices.has(i) && realChar) {
-                    renderChar = realChar;
-                    isEffectiveMatch = true;
-                    colorClass = 'text-green-600 dark:text-green-400';
-                } else if (realChar && revealedChars.has(realChar.toLowerCase())) {
-                    renderChar = realChar;
-                    isEffectiveMatch = true;
-                    colorClass = 'text-orange-500 dark:text-orange-400';
-                } else {
-                    // From level 2 the mask is an anagram of real letters, so
-                    // anything that is not filler is styled as a letter tile.
-                    if (hintLevel >= 2 && !SPECIAL_CHARS.has(char) && char !== ' ') {
-                        isEffectiveMatch = true;
-                    }
-                    if (!isEffectiveMatch) {
-                        colorClass = 'text-gray-400 dark:text-gray-500 font-medium';
-                    }
-                }
-
+                const tile = readMaskTile(char, realChar, i, guessState, hintLevel);
                 const isFlashing = flashingIndices.has(i);
 
                 return (
                     <motion.span
                         layout
-                        key={`${i}-${renderChar}`}
-                        custom={isEffectiveMatch ? i : isEffectiveMatch}
-                        animate={isFlashing ? 'pop' : (hintLevel >= 2 && isEffectiveMatch) ? 'float' : undefined}
+                        key={`${i}-${tile.char}`}
+                        custom={isFlashing ? tile.state !== 'unknown' : i}
+                        // Motion means one thing only: this slot is not the
+                        // letter's own. Anything settled stays still, so
+                        // stillness is what marks a position as trustworthy.
+                        animate={isFlashing ? 'pop' : tile.displaced ? 'float' : undefined}
                         variants={isFlashing ? popVariant : floatVariant}
-                        className={`inline-block ${char === ' ' ? 'whitespace-pre' : ''} ${isEffectiveMatch
-                            ? `font-bold drop-shadow-[0_0_2px_rgba(255,255,255,0.5)] ${colorClass || 'text-inherit'} ${hintLevel >= 2 ? 'mx-0.5' : ''}`
-                            : colorClass
-                            }`}
+                        className={`inline-block ${char === ' ' ? 'whitespace-pre' : ''} ${tileClassName(tile.state)} ${tile.displaced ? 'mx-0.5' : ''}`}
                     >
-                        {renderChar}
+                        {tile.char}
                     </motion.span>
                 );
             })}

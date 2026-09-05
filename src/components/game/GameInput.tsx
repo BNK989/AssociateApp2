@@ -7,6 +7,7 @@ import type { GameState, Message, Player } from '@/hooks/useGameLogic';
 import { MAX_HINT_LEVEL } from '@/lib/daily/dailyScoring';
 import { GiveUpButton } from './input/GiveUpButton';
 import { HintButton } from './input/HintButton';
+import { LegendButton } from './input/LegendButton';
 import { MessageInput } from './input/MessageInput';
 import { getEffectiveHintLevel, getHintTier, getTurnState, isSubmitDisabled } from './input/inputRules';
 import { useHintNudge } from './input/useHintNudge';
@@ -173,6 +174,8 @@ export function GameInput({
                     {showGuestGiveUp && (
                         <GiveUpButton disabled={controlsDisabled} onGiveUp={onGiveUp} />
                     )}
+
+                    {showHintControls && <LegendButton hintLevel={effectiveLevel} />}
 
                     <MessageInput
                         game={game}

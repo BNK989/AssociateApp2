@@ -40,6 +40,23 @@ A new unique puzzle drops every day!
 
 ---
 
+## Reading a partly-revealed word
+
+As you guess and buy hints, letters start showing through the mask. Each colour
+says exactly one thing:
+
+*   **Green** — confirmed in place. This letter belongs exactly here.
+*   **Orange** — the letter is in the word. You have found it.
+*   **Grey** — still hidden. A placeholder symbol, not a letter.
+
+Orange never tells you where a letter *isn't*. Below the shuffle hint, revealed
+letters are shown where they belong; from the shuffle hint onward the letters
+are rearranged, their order stops being a clue, and the drifting tiles are the
+ones still to place. The key is always available from the palette button beside
+the input.
+
+---
+
 ## 🏆 Scoring
 
 *   **Correct Guess**: Points based on word difficulty and length.

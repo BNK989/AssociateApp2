@@ -1,16 +1,24 @@
 import type { Variants } from 'framer-motion';
 
+/** Widest tilt a loose tile may take. */
+const MAX_TILT_DEG = 6;
+
 /**
- * Idle drift for revealed letters, so they read as "loose" tiles waiting to be
- * placed rather than settled text.
+ * Idle drift for loose letters, so they read as tiles waiting to be placed
+ * rather than settled text.
  *
- * The rotation is derived from the index rather than randomised, so a letter
- * keeps the same tilt across re-renders instead of twitching.
+ * Only applied to tiles whose slot is not the letter's own — see `ScrambleView`.
+ * The rotation is derived rather than randomised, so a tile keeps its tilt
+ * across re-renders instead of twitching.
+ *
+ * The tilt used to reach 24 degrees, which costs real legibility for no added
+ * meaning; the drift alone carries the signal. It is worst in Hebrew and
+ * Arabic, where the app's own script is already doing more work.
  */
 export const floatVariant: Variants = {
     float: (i: number) => {
         const sign = i % 2 === 0 ? 1 : -1;
-        const magnitude = 5 + ((i * 1337) % 20);
+        const magnitude = 2 + ((i * 1337) % (MAX_TILT_DEG - 1));
 
         return {
             y: [0, -4, 0],

@@ -157,16 +157,14 @@
                 "tutorial": {
                     "step1_title": "Tägliche Herausforderung 📅",
                     "step1_desc": "Willkommen zu deinem täglichen Gehirntraining! Jeden Tag veröffentlichen wir eine neue Kette von wenigen verbundenen Wörtern.",
-                    "step2_title": "Rückwärts arbeiten ⬆️",
-                    "step2_desc": "Das letzte Wort ist bereits aufgedeckt. Dein Ziel ist es, das Wort davor zu erraten. Das Lösen eines Wortes deckt das nächste in der Kette auf!",
-                    "step3_title": "Brauchst du einen Hinweis? 💡",
-                    "step3_desc": "Hängst du an einer kniffligen Verbindung fest? Tippe auf das Glühbirnen-Symbol für einen Hinweis. Es kostet ein paar Punkte, aber besser als deine Serie zu brechen!",
+                    "step2_title": "Errate das Wort",
+                    "step2_desc": "Gib hier deine Vermutung ein. Du hast 3 Versuche pro Wort.",
+                    "step3_title": "Bedeutung der Farben",
+                    "step3_desc": "Grüne Buchstaben stehen bestätigt an ihrem Platz. Orange Buchstaben kommen im Wort vor — du hast sie gefunden. Graue Symbole sind noch verborgen. Du löst immer die Nachricht mit dem farbigen Rahmen.",
                     "play_now": "Jetzt spielen",
                     "next": "Weiter",
-                    "step4_title": "Need a Hint? 💡",
-                    "step4_desc": "Stuck? Tap 💡 for a hint or 🏳️ to giveup the current text. You can reveal length, letters, or ask AI.",
-                    "step5_title": "Shuffle",
-                    "step5_desc": "Tap the shuffle icon to rearrange the letters for a fresh perspective."
+                    "step4_title": "Brauchst du einen Hinweis?",
+                    "step4_desc": "Hängst du fest? Tippe auf die Glühbirne für einen Hinweis oder auf die Flagge, um das aktuelle Wort aufzugeben. Hinweise können Buchstaben aufdecken oder die KI fragen."
                 }
             },
             "restart_tutorial": "Restart Tutorial"
@@ -207,6 +205,17 @@
             "toast_copied": "Ergebnisse in die Zwischenablage kopiert!",
             "toast_share_fail": "Ergebnisse konnten nicht geteilt werden",
             "streak_badge": "{streak} Tage in Folge"
+        },
+        "Legend": {
+            "title": "Was die Farben bedeuten",
+            "placed_title": "Grün",
+            "placed_desc": "Position bestätigt. Dieser Buchstabe gehört genau hierher.",
+            "present_title": "Orange",
+            "present_desc": "Im Wort enthalten. Du hast diesen Buchstaben gefunden.",
+            "unknown_title": "Grau",
+            "unknown_desc": "Noch verborgen. Ein Platzhalter, kein Buchstabe.",
+            "ordered_note": "Aufgedeckte Buchstaben stehen dort, wo sie hingehören.",
+            "shuffled_note": "Sobald die Buchstaben gemischt sind, verrät ihre Reihenfolge nichts mehr. Die schwebenden Kacheln sind die noch zu platzierenden."
         }
     },
     "HomePage": {
