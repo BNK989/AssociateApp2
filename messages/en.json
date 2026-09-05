@@ -55,6 +55,7 @@
             "start_desc": "Be the first to send a message or start with a random word.",
             "consulting_ai": "Consulting AI...",
             "shuffle": "Shuffle letters",
+            "shuffle_explainer": "Rearranges the tiles for a fresh look. It never reveals anything new.",
             "solved": "Solved",
             "word_lost": "Word Lost",
             "menu": {

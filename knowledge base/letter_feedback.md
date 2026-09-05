@@ -10,11 +10,16 @@ component.
 
 Three states, and each says exactly one thing:
 
-| Tile | Means | Behaviour |
-| :--- | :--- | :--- |
-| **Green** (`--tile-placed`) | Confirmed in place. The letter belongs exactly here. | Still |
-| **Orange** (`--tile-present`) | The letter is in the word. | Still, or drifting when the word is shuffled |
-| **Grey** (`--tile-unknown`) | Still hidden. A filler glyph, not a letter. | Still |
+| Tile | Means | Underline | Behaviour |
+| :--- | :--- | :--- | :--- |
+| **Green** (`--tile-placed`) | Confirmed in place. The letter belongs exactly here. | Solid | Still |
+| **Orange** (`--tile-present`) | The letter is in the word. | Dotted | Still, or drifting when the word is shuffled |
+| **Grey** (`--tile-unknown`) | Still hidden. A filler glyph, not a letter. | None | Still |
+
+The underline is a **second channel**, carrying the same three states with no
+reference to hue. Green and orange converge under deuteranopia and hue used to
+be the only thing separating them (WCAG 1.4.1); the states now survive
+greyscale, a colour filter, or a screenshot.
 
 The invariant everything else follows from:
 
@@ -31,6 +36,13 @@ whose slots are meaningless.
 **Motion means one thing: this slot is not the letter's own.** Anything settled
 is drawn still, so stillness is what marks a position as trustworthy. Green
 therefore never moves.
+
+Under `prefers-reduced-motion` a displaced tile **keeps its tilt and loses the
+drift**. A static angle is not movement, and it is the only per-tile cue that a
+slot is meaningless, so dropping it would cost the signal entirely; the endless
+vertical drift is the part that troubles vestibular sensitivity. `motionState()`
+in `cipherVariants.ts` owns that mapping so it cannot be applied in one view and
+forgotten in the other.
 
 ### Where the player meets the rule
 
@@ -55,8 +67,13 @@ MessageBubble                     declares the tile palette for its surface
 ```
 
 Both views take their look from **one** place, `cipher/tileStyles.ts`, so the
-same state cannot render two ways. The rules that decide state are pure and
-tested in `cipher/cipherRules.ts`:
+same state cannot render two ways. **Which** view runs is derived from the word's
+state, not from what has happened to it: `useCipherAnimation` seeds
+`scrambleItems` at mount for any word already at hint 2, so a word scrolled into
+view on a seeded board does not render positionally and then change look for no
+visible reason.
+
+The rules that decide state are pure and tested in `cipher/cipherRules.ts`:
 
 - `computeGuessState(text, guesses)` — `greenIndices` (guessed in position) and
   `revealedChars` (letters shown to be in the answer). `revealedChars` is a set
@@ -67,6 +84,16 @@ tested in `cipher/cipherRules.ts`:
   letter budget that stops a mask leaking a letter the player has not earned.
 - `isFillerChar(char)` — filler test, **derived from `CIPHER_SIGNS`** in
   `gameConfig.ts`, the same array the server masks with.
+
+`cipher/cipherVariants.ts` owns how a tile is *drawn in motion*: `tiltSeed(id)`
+keys a tile's angle to its identity rather than its slot (passing the array
+index re-rolled every tilt on every shuffle, producing exactly the twitching the
+derivation exists to avoid), and `motionState()` maps `{flashing, displaced,
+reduced}` onto a variant.
+
+> **`CIPHER_SIGNS` contains astral glyphs** (`🜁`, `🜂`, …), which are surrogate
+> pairs. Index and slice masks **by code point** — `[...cipher][i]`, never
+> `cipher[i]` — or a single astral glyph shifts every index after it.
 
 ### Colour is per surface, not per theme
 
@@ -100,6 +127,13 @@ Three defects motivated the current shape; each has a test guarding it.
 3. **Pinned letters drifted.** The float was gated on "is a real letter" rather
    than "is loose", so green tiles bobbed exactly like unplaced ones and motion
    carried no signal.
+4. **Green meant three things** — placed, resolving, solved. The collision that
+   mattered was on *letters*: mid-reveal, the unresolved tail was painted green
+   at the one moment the player watches tiles most closely. It is now toned as
+   filler, which is what it is. The bubble-level success green (the just-solved
+   ring, the spine, the points float) is deliberately kept: it fires when the
+   word is fully revealed and no coloured tiles are on screen, and green-for-
+   success is a strong convention worth more than the theoretical tidiness.
 
 Full review, with traced examples and contrast measurements:
 `The Orange Problem` (UX review, 2026-09-05).
@@ -108,14 +142,11 @@ Full review, with traced examples and contrast measurements:
 
 ## Still open
 
-Reviewed but deliberately out of the change that produced this document:
-
-- No `prefers-reduced-motion` support anywhere in the app, while the drift runs
-  `repeat: Infinity`.
-- Colour is the only channel separating placed from present — no shape or
-  underline redundancy (WCAG 1.4.1).
-- `CipherChars` and `ScrambleView` still differ in *when* they are used: a hint-2
-  word renders positionally until a scramble animation has run.
-- Green also marks the solve morph and the just-solved ring, so the hue carries
-  three meanings.
-- Tapping a bubble reshuffles it; the affordance has no copy explaining it.
+- Tapping anywhere on a hint-2 bubble reshuffles it, not just the shuffle
+  button. The button is the discoverable path and its tooltip now explains that
+  a shuffle reveals nothing new; the whole-bubble hit target remains
+  undocumented.
+- Under reduced motion, a displaced tile and an ordered one differ only by tilt,
+  which is subtle. The word-level rule is still stated in the legend, so the
+  information is available, just not per tile.
+- `CipherText.test.tsx` drives real timers and takes ~7s for four tests.

@@ -49,6 +49,7 @@
             "start_desc": "Sei der Erste, der eine Nachricht sendet, oder starte mit einem zufälligen Wort.",
             "consulting_ai": "Konsultiere KI...",
             "shuffle": "Buchstaben mischen",
+            "shuffle_explainer": "Ordnet die Kacheln neu an, für einen frischen Blick. Es wird nie etwas Neues aufgedeckt.",
             "solved": "Gelöst",
             "word_lost": "Wort Verloren",
             "menu": {

@@ -45,7 +45,30 @@ export function useCipherAnimation({
     guesses,
 }: UseCipherAnimationArgs) {
     const [display, setDisplay] = useState(visible ? text : activeCipher);
-    const [scrambleItems, setScrambleItems] = useState<ScrambleItem[] | null>(null);
+
+    /**
+     * A word that opens already at hint 2 gets its tiles up front.
+     *
+     * The scramble used to exist only as the *output* of an animation, so a word
+     * mounted at hint 2 — scrolled into view on a board seeded by the
+     * `every-word` start reach, or restored on reload — rendered through
+     * `CipherChars` until something happened to trigger a shuffle, and then
+     * changed appearance for no reason the player could see. Which view runs is
+     * now a function of the word's state, not of what has happened to it.
+     *
+     * Built without shuffling: from level 2 the server's mask is already an
+     * anagram, so its own order is the resting arrangement.
+     */
+    const [scrambleItems, setScrambleItems] = useState<ScrambleItem[] | null>(() => (
+        !visible && hintLevel >= 2
+            ? buildScrambleItems({
+                textChars: [...text],
+                cipherChars: [...activeCipher],
+                guessState: computeGuessState(text, guesses),
+                hintLevel,
+            })
+            : null
+    ));
 
     const isFirstRender = useRef(true);
     const lastForceScrambleRef = useRef(forceScramble || 0);

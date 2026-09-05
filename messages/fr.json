@@ -49,6 +49,7 @@
             "start_desc": "Soyez le premier à envoyer un message ou commencez avec un mot aléatoire.",
             "consulting_ai": "Consultation IA...",
             "shuffle": "Mélanger les lettres",
+            "shuffle_explainer": "Réarrange les tuiles pour un regard neuf. Cela ne révèle jamais rien de nouveau.",
             "solved": "Résolu",
             "word_lost": "Mot Perdu",
             "menu": {

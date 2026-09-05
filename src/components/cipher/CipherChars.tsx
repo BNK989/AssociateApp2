@@ -1,7 +1,7 @@
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { readMaskTile, type GuessState } from './cipherRules';
 import { tileClassName } from './tileStyles';
-import { floatVariant, popVariant } from './cipherVariants';
+import { floatVariant, motionState, popVariant } from './cipherVariants';
 
 type CipherCharsProps = {
     display: string;
@@ -39,6 +39,7 @@ export function CipherChars({
 }: CipherCharsProps) {
     const textChars = [...text];
     const displayChars = [...display];
+    const reduced = Boolean(useReducedMotion());
 
     const wrapperClass = `${className} break-words inline-flex flex-wrap ${(visible || hintLevel >= 1 || isSolving) ? '[&>span:first-child]:uppercase' : ''} ${isSolving ? 'gap-1' : ''}`;
 
@@ -52,10 +53,15 @@ export function CipherChars({
                 const realChar = textChars[i];
 
                 if (visible) {
+                    // Mid-reveal, the tail is still cipher being swept away, so
+                    // it recedes as filler. It used to be painted green, which
+                    // gave the hue a third meaning — placed, resolving, solved —
+                    // at the one moment the player is watching tiles most
+                    // closely. Green on a letter now only ever means placed.
                     return (
                         <span
                             key={i}
-                            className={`${char === ' ' ? 'whitespace-pre' : ''} ${char === realChar ? '' : 'text-[var(--tile-placed)] opacity-70'}`}
+                            className={`${char === ' ' ? 'whitespace-pre' : ''} ${char === realChar ? '' : 'text-[var(--tile-unknown)] opacity-70'}`}
                         >
                             {char}
                         </span>
@@ -73,7 +79,7 @@ export function CipherChars({
                         // Motion means one thing only: this slot is not the
                         // letter's own. Anything settled stays still, so
                         // stillness is what marks a position as trustworthy.
-                        animate={isFlashing ? 'pop' : tile.displaced ? 'float' : undefined}
+                        animate={motionState({ flashing: isFlashing, displaced: tile.displaced, reduced })}
                         variants={isFlashing ? popVariant : floatVariant}
                         className={`inline-block ${char === ' ' ? 'whitespace-pre' : ''} ${tileClassName(tile.state)} ${tile.displaced ? 'mx-0.5' : ''}`}
                     >

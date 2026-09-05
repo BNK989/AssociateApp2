@@ -27,7 +27,10 @@ describe('buildRandomCipher', () => {
     });
 
     it('preserves spaces in place', () => {
-        const cipher = buildRandomCipher('a b');
+        // Indexed by code point, not code unit: CIPHER_SIGNS contains astral
+        // glyphs, so a surrogate pair earlier in the string shifts every
+        // code-unit index after it.
+        const cipher = [...buildRandomCipher('a b')];
         expect(cipher[1]).toBe(' ');
     });
 

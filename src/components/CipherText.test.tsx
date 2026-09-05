@@ -21,6 +21,29 @@ const flush = async (ms: number) => {
     });
 };
 
+describe('CipherText view selection', () => {
+    it('shows the scrambled view immediately for a word that opens at hint 2', async () => {
+        // Regression: the scramble existed only as the output of an animation,
+        // so a word mounted already at hint 2 rendered positionally until
+        // something happened to shuffle it, then changed look for no visible
+        // reason. Tiles are spaced with gap-1 in the scrambled view, which is
+        // the cheapest observable difference between the two renderers.
+        const { container } = render(
+            <CipherText text={WORD} cipherText={CIPHER_L2} visible={false} hintLevel={2} guesses={[]} />
+        );
+
+        expect(container.querySelector('.gap-1')).not.toBeNull();
+    });
+
+    it('shows the positional view for a word below hint 2', async () => {
+        const { container } = render(
+            <CipherText text={WORD} cipherText={CIPHER_L0} visible={false} hintLevel={0} guesses={[]} />
+        );
+
+        expect(container.querySelector('.gap-1')).toBeNull();
+    });
+});
+
 describe('CipherText reveal after solve', () => {
     it('shows the full word once solved (scramble already settled)', async () => {
         const { container, rerender } = render(

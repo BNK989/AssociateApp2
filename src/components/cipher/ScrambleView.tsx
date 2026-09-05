@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion';
-import { floatVariant } from './cipherVariants';
+import { motion, useReducedMotion } from 'framer-motion';
+import { floatVariant, motionState, tiltSeed } from './cipherVariants';
 import { tileClassName } from './tileStyles';
 import type { ScrambleItem, TileState } from './cipherRules';
 
@@ -27,6 +27,8 @@ const COLON = '∷';
  * carry "not placed yet" carried nothing.
  */
 export function ScrambleView({ items, hintLevel, className, dir, showColons }: ScrambleViewProps) {
+    const reduced = Boolean(useReducedMotion());
+
     return (
         <motion.span dir={dir} className={`${className} break-words inline-flex flex-wrap gap-1`}>
             {showColons && (
@@ -43,11 +45,13 @@ export function ScrambleView({ items, hintLevel, className, dir, showColons }: S
                     <motion.span
                         layout
                         key={item.id}
-                        custom={i}
+                        // Seeded from the tile's identity, not its slot, so a
+                        // shuffle moves a letter without re-rolling its tilt.
+                        custom={tiltSeed(item.id)}
                         variants={floatVariant}
-                        animate={isLoose ? 'float' : undefined}
+                        animate={motionState({ flashing: false, displaced: isLoose, reduced })}
                         className={`inline-block ${item.isSpace ? 'whitespace-pre' : ''} ${tileClassName(state)} ${item.isReal ? 'mx-0.5' : ''} ${i === 0 && hintLevel >= 1 ? 'uppercase' : ''}`}
-                        transition={{ layout: { duration: 0.4, ease: 'easeInOut' } }}
+                        transition={{ layout: { duration: reduced ? 0 : 0.4, ease: 'easeInOut' } }}
                     >
                         {item.char}
                     </motion.span>

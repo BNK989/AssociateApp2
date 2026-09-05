@@ -75,8 +75,8 @@ export function ShuffleHintButton({ compact, onShuffle }: { compact: boolean; on
                             )}
                         </div>
                     </TooltipTrigger>
-                    <TooltipContent side="left" className="text-xs px-2 py-1">
-                        <p>{t('shuffle')}</p>
+                    <TooltipContent side="left" className="max-w-52 text-xs px-2 py-1">
+                        <p>{t('shuffle_explainer')}</p>
                     </TooltipContent>
                 </Tooltip>
             </TooltipProvider>

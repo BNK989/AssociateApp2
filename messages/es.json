@@ -49,6 +49,7 @@
             "start_desc": "Sé el primero en enviar un mensaje o empieza con una palabra aleatoria.",
             "consulting_ai": "Consultando IA...",
             "shuffle": "Mezclar letras",
+            "shuffle_explainer": "Reordena las fichas para verlas con otros ojos. Nunca revela nada nuevo.",
             "solved": "Resuelto",
             "word_lost": "Palabra Perdida",
             "menu": {
