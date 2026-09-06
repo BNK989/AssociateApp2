@@ -273,8 +273,10 @@ is what effects exist for:
 - `NotificationCenter`, `InvitePlayer`, `useLobbyGames` — kick off a fetch /
   realtime subscription.
 - `useOnboarding` — opens the tutorial once the profile has loaded.
-- `useLegendIntro` — reads the seen-key from `localStorage` on mount, then opens
-  the in-bubble colour key when the word being solved first shows a colour.
+- `useLegendIntro` — opens the in-bubble colour key when the word being solved
+  first shows a colour. It asks `localStorage` at that moment rather than on
+  mount: every bubble mounts up front, so a cached answer was stale for all but
+  the first word and the key reopened on each word in turn.
 - `useCountUp`, `useWelcomeOverlay`, `useHintNudge`, `useHintTooltip`,
   `useAutoHint`, `useDailyGame`, `useDailySettings` — sync animation or
   preference state to changed props.

@@ -45,6 +45,38 @@ describe('useLegendIntro', () => {
         expect(capture).toHaveBeenCalledTimes(1);
     });
 
+    it('never opens on a sibling bubble that mounted before the key was written', () => {
+        // The board mounts every bubble up front, so the word that shows colour
+        // second was already on screen -- and had already read storage -- when
+        // the first one wrote the key.
+        const { rerender } = render(
+            <>
+                <Harness active={false} />
+                <Harness active={false} />
+            </>,
+        );
+
+        // The first word starts showing colour and teaches the key.
+        rerender(
+            <>
+                <Harness active />
+                <Harness active={false} />
+            </>,
+        );
+        expect(screen.getAllByTestId('state')[0].textContent).toBe('open');
+
+        // It settles, and the chain moves on to the next word.
+        rerender(
+            <>
+                <Harness active={false} />
+                <Harness active />
+            </>,
+        );
+        expect(screen.getAllByTestId('state')[1].textContent).toBe('closed');
+        expect(capture).toHaveBeenCalledWith('legend_intro_shown', { hint_level: 1 });
+        expect(capture.mock.calls.filter(([name]) => name === 'legend_intro_shown')).toHaveLength(1);
+    });
+
     it('closes when the player dismisses it', () => {
         render(<Harness active />);
         fireEvent.click(screen.getByText('dismiss'));

@@ -25,27 +25,28 @@ type UseLegendIntroArgs = {
  *
  * It closes on the player's next move — a dismiss, a guess, or the word
  * settling — because by then it has either been read or is in the way.
+ *
+ * "Seen" is asked of storage at the moment the key would open, never cached in
+ * state. Every bubble on the board is mounted from the start, so an instance
+ * that read the flag on mount would hold the answer from before any bubble had
+ * written it — and would go on opening itself on each word in turn, which is
+ * precisely what a first-time player saw.
  */
 export function useLegendIntro({ active, hintLevel, guessCount }: UseLegendIntroArgs) {
     const posthog = usePostHog();
     const [isOpen, setIsOpen] = useState(false);
-    // Assume seen until storage says otherwise: nothing should flash open during
-    // the first paint and then take itself back.
-    const [hasSeen, setHasSeen] = useState(true);
     const openedAtGuessCount = useRef(0);
 
+    // Nothing flashes open on the first paint: `isOpen` starts shut and this
+    // only runs after mount, so storage has always answered before anything
+    // is drawn.
     useEffect(() => {
-        setHasSeen(readSeen());
-    }, []);
-
-    useEffect(() => {
-        if (!active || hasSeen) return;
+        if (!active || readSeen()) return;
         openedAtGuessCount.current = guessCount;
         setIsOpen(true);
-        setHasSeen(true);
         writeSeen();
         posthog?.capture('legend_intro_shown', { hint_level: hintLevel });
-    }, [active, hasSeen, hintLevel, guessCount, posthog]);
+    }, [active, hintLevel, guessCount, posthog]);
 
     useEffect(() => {
         if (!isOpen) return;
