@@ -195,7 +195,16 @@
         },
         "DailyEndGame": {
             "title": "Tägliche Herausforderung abgeschlossen!",
-            "subtitle": "Du hast alle {totalWords} Wörter gelöst!",
+            "title_perfect": "Perfekte Kette!",
+            "title_strong": "Starker Lauf!",
+            "title_partial": "Kette unterbrochen",
+            "title_blank": "Heute war's hart",
+            "subtitle_perfect": "Du hast alle {totalWords} Wörter gelöst.",
+            "subtitle_progress": "Du hast {solved} von {totalWords} Wörtern gelöst.",
+            "grid_label": "Die heutige Kette",
+            "grid_alt": "Dein Ergebnis für die {total} Wörter von heute",
+            "grid_spoiler_free": "Keine Lösungen, kein Thema – gefahrlos teilbar.",
+            "come_back": "Morgen kommt eine neue Kette.",
             "score_label": "Endpunktzahl",
             "upsell_title": "Mit Freunden spielen?",
             "upsell_text": "Erstelle ein kostenloses Konto, um deine eigenen Spiele zu hosten, Statistiken zu verfolgen und Freunde herauszufordern!",
@@ -206,6 +215,12 @@
             "toast_copied": "Ergebnisse in die Zwischenablage kopiert!",
             "toast_share_fail": "Ergebnisse konnten nicht geteilt werden",
             "streak_badge": "{streak} Tage in Folge"
+        },
+        "Progress": {
+            "cue_final_word": "Letztes Wort. Bring die Kette zu Ende.",
+            "cue_recover": "Das war knapp – noch {remaining} zu spielen.",
+            "cue_streak": "{consecutive} in Folge! Die nächste Lösung zählt ×{multiplier}.",
+            "cue_halfway": "Halbzeit – noch {remaining} übrig."
         },
         "Legend": {
             "title": "Was die Farben bedeuten",

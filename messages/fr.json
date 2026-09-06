@@ -195,7 +195,16 @@
         },
         "DailyEndGame": {
             "title": "Défi Quotidien Terminé !",
-            "subtitle": "Vous avez résolu les {totalWords} mots !",
+            "title_perfect": "Chaîne parfaite !",
+            "title_strong": "Belle série !",
+            "title_partial": "Chaîne brisée",
+            "title_blank": "Journée difficile",
+            "subtitle_perfect": "Tu as trouvé les {totalWords} mots.",
+            "subtitle_progress": "Tu as trouvé {solved} mots sur {totalWords}.",
+            "grid_label": "La chaîne du jour",
+            "grid_alt": "Ton résultat sur les {total} mots du jour",
+            "grid_spoiler_free": "Ni réponses ni thème : partage sans risque.",
+            "come_back": "Une nouvelle chaîne arrive demain.",
             "score_label": "Score Final",
             "upsell_title": "Jouer avec des Amis ?",
             "upsell_text": "Créez un compte gratuit pour héberger vos propres jeux, suivre les statistiques et défier vos amis !",
@@ -206,6 +215,12 @@
             "toast_copied": "Résultats copiés dans le presse-papiers !",
             "toast_share_fail": "Échec du partage des résultats",
             "streak_badge": "{streak} jours d’affilée"
+        },
+        "Progress": {
+            "cue_final_word": "Dernier mot. Termine la chaîne.",
+            "cue_recover": "Celui-ci t'échappe — il en reste {remaining}.",
+            "cue_streak": "{consecutive} d'affilée ! La prochaine vaut ×{multiplier}.",
+            "cue_halfway": "À mi-parcours — encore {remaining}."
         },
         "Legend": {
             "title": "Ce que signifient les couleurs",

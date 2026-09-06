@@ -201,7 +201,16 @@
         },
         "DailyEndGame": {
             "title": "Daily Challenge Complete!",
-            "subtitle": "You solved all {totalWords} words!",
+            "title_perfect": "Perfect Chain!",
+            "title_strong": "Strong Run!",
+            "title_partial": "Chain Broken",
+            "title_blank": "Tough One Today",
+            "subtitle_perfect": "You solved all {totalWords} words.",
+            "subtitle_progress": "You solved {solved} of {totalWords} words.",
+            "grid_label": "Today's chain",
+            "grid_alt": "Your result for today's {total} words",
+            "grid_spoiler_free": "No answers, no theme — safe to share.",
+            "come_back": "A new chain lands tomorrow.",
             "score_label": "Final Score",
             "upsell_title": "Play with Friends?",
             "upsell_text": "Create a free account to host your own games, track stats, and challenge friends!",
@@ -212,6 +221,12 @@
             "toast_copied": "Results copied to clipboard!",
             "toast_share_fail": "Failed to share results",
             "streak_badge": "{streak} day streak"
+        },
+        "Progress": {
+            "cue_final_word": "Last word. Finish the chain.",
+            "cue_recover": "That one got away — {remaining} still to play.",
+            "cue_streak": "{consecutive} in a row! Next solve scores ×{multiplier}.",
+            "cue_halfway": "Halfway there — {remaining} to go."
         },
         "Legend": {
             "title": "What the colors mean",

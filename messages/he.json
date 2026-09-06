@@ -201,7 +201,16 @@
         },
         "DailyEndGame": {
             "title": "האתגר היומי הושלם!",
-            "subtitle": "!פתרתם את כל {totalWords} המילים",
+            "title_perfect": "שרשרת מושלמת!",
+            "title_strong": "רצף חזק!",
+            "title_partial": "השרשרת נקטעה",
+            "title_blank": "יום קשה",
+            "subtitle_perfect": "פתרתם את כל {totalWords} המילים.",
+            "subtitle_progress": "פתרתם {solved} מתוך {totalWords} מילים.",
+            "grid_label": "השרשרת של היום",
+            "grid_alt": "התוצאה שלכם ל־{total} המילים של היום",
+            "grid_spoiler_free": "בלי תשובות ובלי נושא — אפשר לשתף.",
+            "come_back": "מחר מגיעה שרשרת חדשה.",
             "score_label": "ניקוד סופי",
             "upsell_title": "לשחק עם חברים?",
             "upsell_text": "צרו חשבון בחינם כדי לארח משחקים משלכם, לעקוב אחר סטטיסטיקות ולאתגר חברים!",
@@ -212,6 +221,12 @@
             "toast_copied": "התוצאות הועתקו ללוח!",
             "toast_share_fail": "שיתוף התוצאות נכשל",
             "streak_badge": "{streak} ימים ברצף"
+        },
+        "Progress": {
+            "cue_final_word": "המילה האחרונה. סיימו את השרשרת.",
+            "cue_recover": "זו ברחה — נשארו עוד {remaining}.",
+            "cue_streak": "{consecutive} ברצף! הפתרון הבא שווה ×{multiplier}.",
+            "cue_halfway": "חצי הדרך — נשארו {remaining}."
         },
         "Legend": {
             "title": "מה המשמעות של הצבעים",

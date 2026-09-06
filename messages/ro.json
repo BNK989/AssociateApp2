@@ -195,7 +195,16 @@
         },
         "DailyEndGame": {
             "title": "Provocare Zilnică Completă!",
-            "subtitle": "Ai rezolvat toate cele {totalWords} cuvinte!",
+            "title_perfect": "Lanț perfect!",
+            "title_strong": "Serie bună!",
+            "title_partial": "Lanț întrerupt",
+            "title_blank": "O zi grea",
+            "subtitle_perfect": "Ai rezolvat toate cele {totalWords} cuvinte.",
+            "subtitle_progress": "Ai rezolvat {solved} din {totalWords} cuvinte.",
+            "grid_label": "Lanțul de azi",
+            "grid_alt": "Rezultatul tău pentru cele {total} cuvinte de azi",
+            "grid_spoiler_free": "Fără răspunsuri și fără temă — poți da mai departe.",
+            "come_back": "Mâine apare un lanț nou.",
             "score_label": "Scor Final",
             "upsell_title": "Joci cu Prieteni?",
             "upsell_text": "Creează un cont gratuit pentru a găzdui propriile jocuri, a urmări statistici și a provoca prieteni!",
@@ -206,6 +215,12 @@
             "toast_copied": "Rezultate copiate în clipboard!",
             "toast_share_fail": "Partajare rezultate eșuată",
             "streak_badge": "{streak} zile la rând"
+        },
+        "Progress": {
+            "cue_final_word": "Ultimul cuvânt. Termină lanțul.",
+            "cue_recover": "Ăsta ți-a scăpat — mai sunt {remaining}.",
+            "cue_streak": "{consecutive} la rând! Următorul valorează ×{multiplier}.",
+            "cue_halfway": "Ești la jumătate — au mai rămas {remaining}."
         },
         "Legend": {
             "title": "Ce înseamnă culorile",

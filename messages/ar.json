@@ -195,7 +195,16 @@
         },
         "DailyEndGame": {
             "title": "اكتمل التحدي اليومي!",
-            "subtitle": "لقد قمت بحل جميع الكلمات البالغ عددها {totalWords}!",
+            "title_perfect": "سلسلة مثالية!",
+            "title_strong": "أداء قوي!",
+            "title_partial": "انقطعت السلسلة",
+            "title_blank": "يوم صعب",
+            "subtitle_perfect": "حللت كل الكلمات الـ{totalWords}.",
+            "subtitle_progress": "حللت {solved} من {totalWords} كلمة.",
+            "grid_label": "سلسلة اليوم",
+            "grid_alt": "نتيجتك في كلمات اليوم الـ{total}",
+            "grid_spoiler_free": "بلا إجابات ولا موضوع — يمكنك المشاركة.",
+            "come_back": "سلسلة جديدة غدًا.",
             "score_label": "النتيجة النهائية",
             "upsell_title": "اللعب مع الأصدقاء؟",
             "upsell_text": "أنشئ حساباً مجانياً لاستضافة ألعابك الخاصة، وتتبع الإحصائيات، وتحدي الأصدقاء!",
@@ -206,6 +215,12 @@
             "toast_copied": "تم نسخ النتائج للحافظة!",
             "toast_share_fail": "فشل مشاركة النتائج",
             "streak_badge": "{streak} أيام متتالية"
+        },
+        "Progress": {
+            "cue_final_word": "الكلمة الأخيرة. أكمل السلسلة.",
+            "cue_recover": "أفلتت هذه — بقيت {remaining}.",
+            "cue_streak": "{consecutive} على التوالي! الحل التالي يساوي ×{multiplier}.",
+            "cue_halfway": "قطعت نصف الطريق — بقيت {remaining}."
         },
         "Legend": {
             "title": "معنى الألوان",

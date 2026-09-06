@@ -195,7 +195,16 @@
         },
         "DailyEndGame": {
             "title": "¡Desafío Diario Completo!",
-            "subtitle": "¡Has resuelto las {totalWords} palabras!",
+            "title_perfect": "¡Cadena perfecta!",
+            "title_strong": "¡Buena racha!",
+            "title_partial": "Cadena rota",
+            "title_blank": "Hoy tocó difícil",
+            "subtitle_perfect": "Resolviste las {totalWords} palabras.",
+            "subtitle_progress": "Resolviste {solved} de {totalWords} palabras.",
+            "grid_label": "La cadena de hoy",
+            "grid_alt": "Tu resultado de las {total} palabras de hoy",
+            "grid_spoiler_free": "Sin respuestas ni tema: se puede compartir.",
+            "come_back": "Mañana llega una cadena nueva.",
             "score_label": "Puntuación Final",
             "upsell_title": "¿Jugar con Amigos?",
             "upsell_text": "¡Crea una cuenta gratuita para alojar tus propios juegos, seguir estadísticas y desafiar amigos!",
@@ -206,6 +215,12 @@
             "toast_copied": "¡Resultados copiados al portapapeles!",
             "toast_share_fail": "Error al compartir resultados",
             "streak_badge": "{streak} días seguidos"
+        },
+        "Progress": {
+            "cue_final_word": "Última palabra. Termina la cadena.",
+            "cue_recover": "Esa se escapó: quedan {remaining} por jugar.",
+            "cue_streak": "¡{consecutive} seguidas! La próxima vale ×{multiplier}.",
+            "cue_halfway": "Vas por la mitad: quedan {remaining}."
         },
         "Legend": {
             "title": "Qué significan los colores",

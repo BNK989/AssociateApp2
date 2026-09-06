@@ -9,21 +9,26 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Trophy, Share2, Users, ArrowRight, Flame } from "lucide-react";
-import confetti from 'canvas-confetti';
+import { Trophy, Share2, Users, ArrowRight, Flame, Target } from "lucide-react";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { createLogger, getErrorMessage } from '@/lib/logger';
-import { MIN_SHAREABLE_STREAK } from '@/lib/daily/dailyShare';
+import { MIN_SHAREABLE_STREAK, type ShareSquare } from '@/lib/daily/dailyShare';
+import type { ChainOutcome } from '@/lib/daily/endOutcome';
+import { ChainGrid } from './endgame/ChainGrid';
+import { useEndGameConfetti } from './endgame/useEndGameConfetti';
 
 const log = createLogger('daily/endgame');
 
 type DailyEndGamePopoverProps = {
     open: boolean;
     score: number;
-    totalWords: number;
+    /** How the day actually went, so the screen can say so honestly. */
+    outcome: ChainOutcome;
+    /** The day's grid, previewed before the player shares it. */
+    squares: ShareSquare[];
     /**
      * The finished, spoiler-free result. Built by the client so both share
      * buttons say the same thing; see useDailyShareText.
@@ -34,7 +39,25 @@ type DailyEndGamePopoverProps = {
     onClose: () => void;
 };
 
-export function DailyEndGamePopover({ open, score, totalWords, shareText, streak, onClose }: DailyEndGamePopoverProps) {
+/**
+ * The end-of-day summary.
+ *
+ * It opens on *every* finished chain, not only a cleared one -- the share grid
+ * is the game's growth engine and a player who struggled is no less likely to
+ * post it, so the one thing this screen must never do is fail to appear. What
+ * it says is tiered by outcome instead: congratulations are earned, and a thin
+ * day gets an honest reading and a reason to come back rather than fireworks
+ * over an empty grid.
+ */
+export function DailyEndGamePopover({
+    open,
+    score,
+    outcome,
+    squares,
+    shareText,
+    streak,
+    onClose,
+}: DailyEndGamePopoverProps) {
     const router = useRouter();
     const t = useTranslations('GameRoom.DailyEndGame');
     const [internalOpen, setInternalOpen] = useState(open);
@@ -43,32 +66,7 @@ export function DailyEndGamePopover({ open, score, totalWords, shareText, streak
         setInternalOpen(open);
     }, [open]);
 
-    useEffect(() => {
-        if (internalOpen && open) {
-            const duration = 3 * 1000;
-            const animationEnd = Date.now() + duration;
-            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-
-            const randomInRange = (min: number, max: number) => {
-                return Math.random() * (max - min) + min;
-            }
-
-            const interval: ReturnType<typeof setInterval> = setInterval(function () {
-                const timeLeft = animationEnd - Date.now();
-
-                if (timeLeft <= 0) {
-                    return clearInterval(interval);
-                }
-
-                const particleCount = 50 * (timeLeft / duration);
-                // since particles fall down, start a bit higher than random
-                confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
-                confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
-            }, 250);
-
-            return () => clearInterval(interval);
-        }
-    }, [internalOpen, open]);
+    useEndGameConfetti(internalOpen && open && outcome.celebrate);
 
     const handleShare = async () => {
         try {
@@ -87,6 +85,9 @@ export function DailyEndGamePopover({ open, score, totalWords, shareText, streak
                 await navigator.clipboard.writeText(shareText);
                 toast.success(t('toast_copied'));
             } catch (clipboardError) {
+                log.warn('share', 'Clipboard fallback failed, the result could not be shared', {
+                    tier: outcome.tier,
+                }, clipboardError);
                 toast.error(t('toast_share_fail'));
             }
         }
@@ -96,22 +97,31 @@ export function DailyEndGamePopover({ open, score, totalWords, shareText, streak
         router.push('/');
     };
 
+    const ScoreIcon = outcome.celebrate ? Trophy : Target;
+
+    const scoreCardClass = outcome.celebrate
+        ? 'from-yellow-50 to-orange-50 dark:from-yellow-900/10 dark:to-orange-900/10 border-yellow-200 dark:border-yellow-800/30'
+        : 'from-muted/60 to-muted/30 border-border';
+
     return (
         <Dialog open={internalOpen} onOpenChange={setInternalOpen}>
             <DialogContent className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle className="text-center text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
-                        {t('title')}
+                        {t(`title_${outcome.tier}`)}
                     </DialogTitle>
                     <DialogDescription className="text-center text-gray-400 text-lg">
-                        {t('subtitle', { totalWords })}
+                        {outcome.tier === 'perfect'
+                            ? t('subtitle_perfect', { totalWords: outcome.total })
+                            : t('subtitle_progress', { solved: outcome.solved, totalWords: outcome.total })}
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="py-6 space-y-6">
-                    {/* Score Display */}
-                    <div className="flex flex-col items-center justify-center p-6 bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/10 dark:to-orange-900/10 rounded-2xl border border-yellow-200 dark:border-yellow-800/30 shadow-inner">
-                        <Trophy className="w-12 h-12 text-yellow-500 mb-2 drop-shadow-md" />
+                <div className="py-4 space-y-5">
+                    <div className={`flex flex-col items-center justify-center p-6 bg-gradient-to-br rounded-2xl border shadow-inner ${scoreCardClass}`}>
+                        <ScoreIcon
+                            className={`w-12 h-12 mb-2 drop-shadow-md ${outcome.celebrate ? 'text-yellow-500' : 'text-muted-foreground'}`}
+                        />
                         <span className="text-gray-500 dark:text-gray-400 text-sm font-medium uppercase tracking-widest">{t('score_label')}</span>
                         <div className="text-5xl font-black text-gray-900 dark:text-white mt-1 tabular-nums tracking-tight">
                             {score}
@@ -124,6 +134,12 @@ export function DailyEndGamePopover({ open, score, totalWords, shareText, streak
                             </div>
                         )}
                     </div>
+
+                    <ChainGrid squares={squares} />
+
+                    {!outcome.celebrate && (
+                        <p className="text-center text-sm text-muted-foreground">{t('come_back')}</p>
+                    )}
 
                     {/* Upsell Card */}
                     <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-4 border border-indigo-100 dark:border-indigo-800/30 relative overflow-hidden group">

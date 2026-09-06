@@ -148,12 +148,24 @@ The route enforces what it can of an inherently client-scored game:
 A failed write is logged and swallowed. The daily game has never depended on the
 server and still does not — the player sees nothing.
 
-### Known gap
+### Ending the chain (fixed 2026-09-06)
 
-Striking out on the **final** unsolved word does not set `gameOver`
-(`useDailyGame.solve` patches the message but never re-checks the remaining
-count). Those players never record `completed = true`, so completion rates read
-slightly low. Pre-existing, tracked separately.
+Every route a word can leave the board by — solved, given up on, or struck out
+on a third wrong guess — now goes through `finishWord` in `useDailyGame`, which
+patches the word and re-checks the remaining count in the same step.
+
+The strike path used to patch the message directly and skip that check, so a
+chain whose **final** unsolved word was struck out never set `gameOver`. The
+player was left on a board with no target, no summary and no share sheet, and
+because the state is mirrored to localStorage, a reload restored the same dead
+end. Those days also never recorded `completed = true`, so completion rates read
+low, and `daily_game_completed` was only ever fired for a final word that was
+*solved* — a give-up on the last word ended the game correctly but was invisible
+to analytics.
+
+`onCompleted` now fires from all three paths and carries `ended_on`
+(`solved` | `gave_up` | `struck_out`), so a completion can be attributed to how
+it ended. Guarded by `src/components/daily/useDailyGame.test.tsx`.
 
 ---
 
@@ -336,6 +348,30 @@ Two details that look like bugs and are not:
   board by any route. Points are the discriminator: a real solve always scores
   something, even after every hint, while a surrender scores zero.
 
+### The summary reads the day it actually was
+
+The end screen opens on **every** finished chain, whatever ended it — the grid
+is the game's only organic growth surface, and a player who struggled is no
+less likely to post it than one who cleared the day.
+
+What it *says* is tiered instead of fixed. `resolveChainOutcome`
+(`src/lib/daily/endOutcome.ts`) reads the tier off the share squares, so the
+headline can never contradict the grid beneath it:
+
+| Tier | When | Treatment |
+| :--- | :--- | :--- |
+| `perfect` | every word solved | trophy, gold card, firework |
+| `strong` | 60% or more solved | trophy, gold card, firework |
+| `partial` | some solved | neutral card, no confetti, "come back tomorrow" |
+| `blank` | nothing solved | neutral card, no confetti, "come back tomorrow" |
+
+Before this, the screen congratulated everyone identically and told a player who
+had missed most of the chain that they had "solved all 8 words", over a
+firework. The grid is now also **previewed in the dialog** (`ChainGrid`) rather
+than being invisible until after someone has already pressed Share — the tiles
+mirror the emoji the share text uses, and are elements rather than emoji because
+§3's exception covers the shared artefact, not a preview of it.
+
 ### One wording, two buttons
 
 `useDailyShareText` builds the string; both the end-of-game summary and the
@@ -347,6 +383,25 @@ language-neutral. They are emoji in component code, which CLAUDE.md §3
 otherwise forbids; the exception is the same one `CIPHER_SIGNS` gets. They are
 the shared artefact itself, and they must survive being pasted into a chat app,
 which an SVG icon cannot do.
+
+### Progress cues
+
+The chain gave a player no reason to keep going once a word got away from them:
+the board simply advanced. `nextProgressCue`
+(`src/lib/daily/progressCues.ts`) turns each finished word into **at most one**
+toast, chosen by how time-critical it is rather than how good the news is:
+
+| Cue | Fires when | Why |
+| :--- | :--- | :--- |
+| `final_word` | one word left | the strongest pull to the finish line |
+| `recover` | the word was missed, with words left | a miss is where the run gets abandoned |
+| `streak` | the solve that reaches `STREAK_BONUS_AT` | names the multiplier as it switches on |
+| `halfway` | the move that crosses the midpoint | a run has a middle worth marking |
+
+Each can only fire on the single move that makes it true, so nothing repeats
+per word — anything that fires on every word stops being read. The results log
+(§4) is the reason this exists at all: mid-chain abandonment is the number that
+matters most, and these target the two moments where a player decides to stop.
 
 ### Streaks
 

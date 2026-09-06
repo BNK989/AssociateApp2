@@ -3,9 +3,7 @@ import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 import type { Message } from '@/hooks/useGameLogic';
 import { calculateSimilarity } from '@/lib/gameLogic';
-import { GAME_CONFIG } from '@/lib/gameConfig';
 import {
-    buildInitialMessages,
     countRemainingAfterSolve,
     findTargetMessage,
     LOCAL_USER_ID,
@@ -14,17 +12,20 @@ import { applyArrivalHint } from '@/lib/daily/arrivalHints';
 import { calculateSolvePoints, MATCH_THRESHOLD, MAX_STRIKES } from '@/lib/daily/dailyScoring';
 import { clearDailyGame, loadDailyGame, saveDailyGame } from '@/lib/daily/dailyStorage';
 import { startLevelFor, type DailyHintPolicy } from '@/lib/daily/hintPolicy';
+import { useChainClues } from './useChainClues';
 import { useDailyHintReveal } from './useDailyHintReveal';
+import { useMoveFeedback } from './useMoveFeedback';
 import type { WordOutcome } from '@/lib/daily/dailyResults';
-
-/** How long the "+points" flourish stays on a solved word. */
-const SOLVED_FLASH_MS = 1500;
-
-/** Shake duration on a wrong guess. */
-const SHAKE_MS = 500;
 
 /** Deliberate pause before resolving a guess, so the answer does not snap in. */
 const RESOLVE_DELAY_MS = 300;
+
+/** Marks a word as taken by the player, for `points`. */
+const takenBy = (points: number): Partial<Message> => ({
+    is_solved: true,
+    solved_by: LOCAL_USER_ID,
+    winner_points: points,
+});
 
 type UseDailyGameArgs = {
     words: string[];
@@ -36,7 +37,8 @@ type UseDailyGameArgs = {
     hints?: string[] | null;
     connectionScores?: number[] | null;
     onSolved?: (args: { word: string; points: number; totalScore: number; consecutive: number }) => void;
-    onCompleted?: (finalScore: number) => void;
+    /** Fires once when the last word leaves the board, however it left. */
+    onCompleted?: (finalScore: number, endedOn: WordOutcome) => void;
     /** Fires once per word as it leaves the board, however it left. */
     onWordFinished?: (args: {
         index: number;
@@ -45,6 +47,10 @@ type UseDailyGameArgs = {
         strikes: number;
         points: number;
         totalScore: number;
+        /** Words still in play after this one left. */
+        remaining: number;
+        /** Solves in a row, counted after this word. */
+        consecutive: number;
         completed: boolean;
     }) => void;
     playSuccessSound?: () => void;
@@ -79,30 +85,13 @@ export function useDailyGame({
 
     const [input, setInput] = useState('');
     const [sending, setSending] = useState(false);
-    const [shakeMessageId, setShakeMessageId] = useState<string | null>(null);
-    const [justSolvedData, setJustSolvedData] = useState<{ id: string; points: number } | null>(null);
+    const { shakeMessageId, justSolvedData, flashSolved, shakeWord } = useMoveFeedback();
 
     const targetMessage = useMemo(() => findTargetMessage(messages), [messages]);
 
-    const fallbackHint = useCallback((word: string) => t('hint_fallback', {
-        length: word.length,
-        firstLetter: word[0].toUpperCase(),
-    }), [t]);
-
-    const freshMessages = useCallback(() => buildInitialMessages({
-        words,
-        policy,
-        hints,
-        connectionScores,
-        fallbackHint,
-        animateStartWord: GAME_CONFIG.DAILY_GAME_ANIMATE_START_MESSAGE,
-    }), [words, policy, hints, connectionScores, fallbackHint]);
-
-    /** Clue for a word, preferring the day's authored hint over the generic one. */
-    const resolveClue = useCallback(
-        (index: number, word: string) => hints?.[index] ?? fallbackHint(word),
-        [hints, fallbackHint],
-    );
+    const { fallbackHint, freshMessages, resolveClue } = useChainClues({
+        words, policy, hints, connectionScores,
+    });
 
     // Restore the day's progress, or start a new chain.
     useEffect(() => {
@@ -156,25 +145,48 @@ export function useDailyGame({
         [messages],
     );
 
-    const flashSolved = useCallback((id: string, points: number) => {
-        setJustSolvedData({ id, points });
-        setTimeout(() => setJustSolvedData(null), SOLVED_FLASH_MS);
-    }, []);
+    /**
+     * Takes a word off the board and reports whether that finished the chain.
+     *
+     * Every exit routes through here -- solve, give-up and third strike alike.
+     * The strike path used to patch the board directly and skip the
+     * remaining-words check, so a chain whose *last* word was struck out never
+     * set `gameOver`: no summary and no share sheet, on a board with nothing
+     * left to guess. It persisted that way, so a reload restored the dead end.
+     */
+    const finishWord = useCallback((message: Message, updates: Partial<Message>) => {
+        patchTarget(message.id, updates);
 
-    /** Marks a word solved for zero points and ends the game if it was the last. */
-    const finishWord = useCallback((message: Message, points: number) => {
-        patchTarget(message.id, {
-            is_solved: true,
-            solved_by: LOCAL_USER_ID,
-            winner_points: points,
-        });
+        const remaining = countRemainingAfterSolve(messages, message.id);
+        if (remaining === 0) setGameOver(true);
 
-        if (countRemainingAfterSolve(messages, message.id) === 0) {
-            setGameOver(true);
-            return true;
-        }
-        return false;
+        return remaining;
     }, [messages, patchTarget]);
+
+    /**
+     * Announces a word leaving the board. `strikes` defaults to what the word
+     * carried, since only the strike path changes it on the way out.
+     */
+    const reportWord = useCallback((message: Message, report: {
+        outcome: WordOutcome;
+        points: number;
+        totalScore: number;
+        remaining: number;
+        consecutive: number;
+        strikes?: number;
+    }) => {
+        onWordFinished?.({
+            index: indexOfMessage(message.id),
+            outcome: report.outcome,
+            hintLevel: message.hint_level || 0,
+            strikes: report.strikes ?? message.strikes ?? 0,
+            points: report.points,
+            totalScore: report.totalScore,
+            remaining: report.remaining,
+            consecutive: report.consecutive,
+            completed: report.remaining === 0,
+        });
+    }, [onWordFinished, indexOfMessage]);
 
     const solve = useCallback((guess: string) => {
         if (!targetMessage || gameOver) return;
@@ -188,28 +200,29 @@ export function useDailyGame({
 
             if (!isMatch) {
                 const strikes = (targetMessage.strikes || 0) + 1;
-                patchTarget(targetMessage.id, {
+                const struckOut = strikes >= MAX_STRIKES;
+                const updates: Partial<Message> = {
                     strikes,
-                    is_solved: strikes >= MAX_STRIKES,
+                    is_solved: struckOut,
                     guesses: [...(targetMessage.guesses || []), guess],
-                });
+                };
 
                 setConsecutive(0);
-                setShakeMessageId(targetMessage.id);
-                setTimeout(() => setShakeMessageId(null), SHAKE_MS);
+                shakeWord(targetMessage.id);
 
-                if (strikes >= MAX_STRIKES) {
-                    toast.error(t('toast_word_lost', { word: targetMessage.content }));
-                    onWordFinished?.({
-                        index: indexOfMessage(targetMessage.id),
-                        outcome: 'struck_out',
-                        hintLevel: targetMessage.hint_level || 0,
-                        strikes,
-                        points: 0,
-                        totalScore: score,
-                        completed: false,
-                    });
+                if (!struckOut) {
+                    patchTarget(targetMessage.id, updates);
+                    return;
                 }
+
+                const remaining = finishWord(targetMessage, updates);
+
+                toast.error(t('toast_word_lost', { word: targetMessage.content }));
+                reportWord(targetMessage, {
+                    outcome: 'struck_out', points: 0, totalScore: score, remaining, strikes, consecutive: 0,
+                });
+
+                if (remaining === 0) onCompleted?.(score, 'struck_out');
                 return;
             }
 
@@ -237,46 +250,34 @@ export function useDailyGame({
                 consecutive: consecutive + 1,
             });
 
-            const completed = finishWord(targetMessage, points);
+            const remaining = finishWord(targetMessage, takenBy(points));
 
-            onWordFinished?.({
-                index: indexOfMessage(targetMessage.id),
-                outcome: 'solved',
-                hintLevel: targetMessage.hint_level || 0,
-                strikes: targetMessage.strikes || 0,
-                points,
-                totalScore,
-                completed,
+            reportWord(targetMessage, {
+                outcome: 'solved', points, totalScore, remaining, consecutive: consecutive + 1,
             });
 
-            if (completed) {
-                onCompleted?.(totalScore);
-            }
+            if (remaining === 0) onCompleted?.(totalScore, 'solved');
         }, RESOLVE_DELAY_MS);
     }, [
         targetMessage, gameOver, consecutive, score, patchTarget, flashSolved,
-        finishWord, onSolved, onCompleted, onWordFinished, indexOfMessage,
-        playSuccessSound, t, policy, words.length,
+        shakeWord, finishWord, reportWord, onSolved, onCompleted,
+        indexOfMessage, playSuccessSound, t, policy, words.length,
     ]);
 
     const giveUp = useCallback(() => {
         if (!targetMessage || gameOver) return;
 
         setConsecutive(0);
-        const completed = finishWord(targetMessage, 0);
+        const remaining = finishWord(targetMessage, takenBy(0));
 
-        onWordFinished?.({
-            index: indexOfMessage(targetMessage.id),
-            outcome: 'gave_up',
-            hintLevel: targetMessage.hint_level || 0,
-            strikes: targetMessage.strikes || 0,
-            points: 0,
-            totalScore: score,
-            completed,
+        reportWord(targetMessage, {
+            outcome: 'gave_up', points: 0, totalScore: score, remaining, consecutive: 0,
         });
 
+        if (remaining === 0) onCompleted?.(score, 'gave_up');
+
         setInput('');
-    }, [targetMessage, gameOver, finishWord, onWordFinished, indexOfMessage, score]);
+    }, [targetMessage, gameOver, finishWord, reportWord, onCompleted, score]);
 
     const revealHint = useDailyHintReveal({
         targetMessage,

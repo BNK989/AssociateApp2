@@ -26,21 +26,27 @@ function celebrate() {
 }
 
 /**
- * Fires confetti when the chain is finished, then reveals the summary.
+ * Reveals the summary when the chain is finished, with a firework first if the
+ * day earned one.
+ *
+ * The summary opens however the chain ended -- solved, given up on or struck
+ * out -- because the share sheet lives behind it. The celebration is the part
+ * that is conditional: it used to fire on any finish, so a player who missed
+ * every word got confetti on their way to an empty grid.
  *
  * A game restored from storage as already-complete opens the summary straight
  * away, without replaying the celebration.
  */
-export function useDailyCompletion(gameOver: boolean, alreadyComplete: boolean) {
+export function useDailyCompletion(gameOver: boolean, alreadyComplete: boolean, worthCelebrating: boolean) {
     const [showSummary, setShowSummary] = useState(alreadyComplete);
 
     useEffect(() => {
         if (!gameOver || showSummary) return;
 
-        celebrate();
+        if (worthCelebrating) celebrate();
         const timer = setTimeout(() => setShowSummary(true), SUMMARY_DELAY_MS);
         return () => clearTimeout(timer);
-    }, [gameOver, showSummary]);
+    }, [gameOver, showSummary, worthCelebrating]);
 
     return { showSummary, setShowSummary };
 }

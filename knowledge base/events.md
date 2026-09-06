@@ -63,12 +63,15 @@ Fired when a user successfully solves a word in the Daily Game.
     - `date`: string
 
 ### 7. `daily_game_completed`
-Fired when a user solves all words in the Daily Game.
+Fired when the last word leaves the board in the Daily Game — however it left.
 
 - **Trigger**: Client-side in `DailyGameClient.tsx` when remaining words is 0.
+  Until 2026-09-06 this only fired when the final word was *solved*, so days
+  ending on a give-up or a third strike were never counted.
 - **Properties**:
     - `final_score`: number
     - `total_words`: number
+    - `ended_on`: 'solved' | 'gave_up' | 'struck_out' (how the chain ended)
     - `user_type`: 'registered' | 'guest'
     - `date`: string
 

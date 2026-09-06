@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { usePostHog, useFeatureFlagPayload } from 'posthog-js/react';
+import { usePostHog } from 'posthog-js/react';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthProvider';
 import { ChatArea } from '@/components/game/ChatArea';
@@ -13,22 +13,20 @@ import { GameShell } from '@/components/game/GameShell';
 import { DailyEndGamePopover } from '@/components/game/DailyEndGamePopover';
 import { WalkthroughProvider } from '@/components/ui/walkthrough';
 import { GAME_CONFIG } from '@/lib/gameConfig';
-import { createLogger } from '@/lib/logger';
 import { buildDailyGameState, buildDailyPlayers, MOCK_USER } from '@/components/daily/dailyPlayers';
 import { useAutoHint } from '@/components/daily/useAutoHint';
 import { useDailyCompletion } from '@/components/daily/useDailyCompletion';
 import { useDailyGame } from '@/components/daily/useDailyGame';
+import { useDailyOutcome } from '@/components/daily/useDailyOutcome';
 import { useDailyResults, type RecordWordArgs } from '@/components/daily/useDailyResults';
 import { useDailyShareText } from '@/components/daily/useDailyShareText';
 import { useDailySettings } from '@/components/daily/useDailySettings';
 import { useDailyTutorial } from '@/components/daily/useDailyTutorial';
+import { useExperimentStartLevel } from '@/components/daily/useExperimentStartLevel';
+import { useProgressCue } from '@/components/daily/useProgressCue';
 import { useStartWordAnimation } from '@/components/daily/useStartWordAnimation';
+import { useSuccessSound } from '@/components/daily/useSuccessSound';
 import type { DailyHintSettings } from '@/lib/gameSettings/settingsRow';
-
-const log = createLogger('daily/client');
-
-const SUCCESS_SOUND_SRC = '/sounds/notifications/correct-choice.mp3';
-const SUCCESS_SOUND_VOLUME = 0.6;
 
 type DailyGameClientProps = {
     dailyWords: string[];
@@ -46,54 +44,6 @@ export default function DailyGameClient(props: DailyGameClientProps) {
             <DailyGameBoard {...props} />
         </WalkthroughProvider>
     );
-}
-
-/**
- * The start level assigned by the PostHog experiment, or null when the player
- * is not in one.
- *
- * Since game-master controls landed, this flag is an experiment surface only:
- * the day-to-day value lives in `game_settings` and is edited from the admin
- * panel. Returning null rather than 0 is what keeps the two apart — an
- * unassigned player must fall through to the game master's policy instead of
- * silently overriding it with zero.
- */
-function useExperimentStartLevel(): number | null {
-    const payload = useFeatureFlagPayload('dailygame-auto-hint-level');
-    const posthog = usePostHog();
-
-    const level = typeof payload === 'object' && payload !== null && 'initialHintCount' in payload
-        ? (payload as { initialHintCount: number }).initialHintCount
-        : null;
-
-    useEffect(() => {
-        if (level === null) return;
-        log.debug('feature_flag', 'Auto-hint experiment assigned a start level', {
-            resolved_level: level,
-            variant: String(posthog.getFeatureFlag('dailygame-auto-hint-level')),
-        });
-    }, [level, posthog]);
-
-    return level;
-}
-
-/** Preloads the solve chime so the first correct answer is not silent. */
-function useSuccessSound() {
-    const audioRef = useRef<HTMLAudioElement | null>(null);
-
-    useEffect(() => {
-        const audio = new Audio(SUCCESS_SOUND_SRC);
-        audio.volume = SUCCESS_SOUND_VOLUME;
-        audio.preload = 'auto';
-        audioRef.current = audio;
-    }, []);
-
-    return useCallback(() => {
-        const audio = audioRef.current;
-        if (!audio) return;
-        audio.currentTime = 0;
-        audio.play().catch((e) => log.warn('play_audio', 'Success sound playback failed', undefined, e));
-    }, []);
 }
 
 function DailyGameBoard({
@@ -124,6 +74,13 @@ function DailyGameBoard({
      */
     const recordWordRef = useRef<((args: RecordWordArgs) => void) | null>(null);
 
+    const showProgressCue = useProgressCue();
+
+    // The free starting word is not one the player guesses, so it is not part
+    // of the run they are being encouraged through -- same reasoning as the
+    // share grid, which drops it too.
+    const guessableWords = dailyWords.length - 1;
+
     const game = useDailyGame({
         words: dailyWords,
         date,
@@ -143,16 +100,29 @@ function DailyGameBoard({
                 settings_revision: hintSettings.revision,
             });
         },
-        onCompleted: (finalScore) => {
+        onCompleted: (finalScore, endedOn) => {
             posthog.capture('daily_game_completed', {
                 final_score: finalScore,
                 total_words: dailyWords.length,
+                // How the chain actually ended. Completions used to be reported
+                // only for a final word that was solved, so every day that
+                // ended on a give-up or a third strike went uncounted.
+                ended_on: endedOn,
                 user_type: userType,
                 date,
                 settings_revision: hintSettings.revision,
             });
         },
-        onWordFinished: (args) => recordWordRef.current?.(args),
+        onWordFinished: (args) => {
+            recordWordRef.current?.(args);
+            showProgressCue({
+                outcome: args.outcome,
+                remaining: args.remaining,
+                total: guessableWords,
+                consecutive: args.consecutive,
+                completed: args.completed,
+            });
+        },
     });
 
     const results = useDailyResults({
@@ -174,7 +144,8 @@ function DailyGameBoard({
         streak: results.streak,
     });
 
-    const { showSummary } = useDailyCompletion(game.gameOver, game.restoredComplete);
+    const { squares, outcome } = useDailyOutcome(game.messages);
+    const { showSummary } = useDailyCompletion(game.gameOver, game.restoredComplete, outcome.celebrate);
     const tutorial = useDailyTutorial({ authUser, authLoading, words: dailyWords, date });
 
     /**
@@ -330,7 +301,8 @@ function DailyGameBoard({
             <DailyEndGamePopover
                 open={showSummary}
                 score={game.score}
-                totalWords={dailyWords.length}
+                outcome={outcome}
+                squares={squares}
                 shareText={shareText}
                 streak={results.streak}
                 onClose={() => router.push('/')}
