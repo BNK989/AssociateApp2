@@ -58,12 +58,20 @@ forgotten in the other.
   bubble, under the word it explains, in the condensed `inline` variant of
   `LetterLegend`; it closes on the next guess, on dismiss, or when the word
   settles, and it never opens again on that device
-  (`associ8-legend-intro-seen`). Its three samples are `pickLegendSamples`
-  (`chat/legendRules.ts`) — the first tile of each state taken from the word
-  directly above, so the green in the key is the player's own green rather than
-  a letter they have to map onto theirs. It reads them back through
-  `readMaskTile`, so a letter can only reach the key if it is already on screen;
-  a state the word has not reached falls back to the generic sample.
+  (`associ8-legend-intro-seen`). Its samples are `pickLegendSamples`
+  (`chat/legendRules.ts`) — tiles taken from the word directly above, so the
+  green in the key is the player's own green rather than a letter they have to
+  map onto theirs. Up to two greens, **four** oranges and one filler sign: a
+  single orange reads as an arbitrary pick, several read as "the letters you
+  have found". A state the word has not reached falls back to the generic
+  sample, and nothing can leak, because the characters come from the same
+  readers the board draws with — which is also the trap: `readMaskTile` is the
+  right reader only below hint level 2. From level 2 the player is looking at
+  `ScrambleView`, which pins known letters and paints them green, while the
+  positional reader calls every letter of an anagram `present`. Reading a
+  shuffled word the positional way reported *no* green at all, so the key
+  showed a stand-in `A` while a green `W` sat in the bubble above it. The picker
+  therefore switches readers at level 2, exactly as `CipherText` does.
   `hasColouredTiles`, in the same module, decides the *moment* by asking
   `readMaskTile` rather than inferring it from `hint_level`, because a guess can
   colour a tile at level 0 and an all-filler mask can colour none at level 1.

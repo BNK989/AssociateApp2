@@ -4,7 +4,7 @@ import { InlineLegend } from './InlineLegend';
 import type { LegendSamples } from './legendRules';
 
 /** Stands in for the tiles of the word the key is opened on. */
-const SAMPLES: LegendSamples = { placed: 'T', present: 'a', unknown: '⊗' };
+const SAMPLES: LegendSamples = { placed: ['T'], present: ['a', 'e'], unknown: ['⊗'] };
 
 vi.mock('next-intl', () => ({ useTranslations: () => (key: string) => key }));
 
@@ -80,6 +80,7 @@ describe('InlineLegend', () => {
         render(<InlineLegend open samples={SAMPLES} positionNote="ordered" onDismiss={() => { }} />);
         expect(screen.getByText('T')).toBeTruthy();
         expect(screen.getByText('a')).toBeTruthy();
+        expect(screen.getByText('e')).toBeTruthy();
         expect(screen.getByText('⊗')).toBeTruthy();
     });
 });

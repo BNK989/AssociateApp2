@@ -83,7 +83,7 @@ describe('pickLegendSamples', () => {
             cipherText: mask.join(''),
             guesses: [],
             hintLevel: 1,
-        }).unknown).toBe(CIPHER_SIGNS[5]);
+        }).unknown).toEqual([CIPHER_SIGNS[5]]);
     });
 
     it("uses the word's own revealed letters, capitalising only the opening tile", () => {
@@ -91,7 +91,7 @@ describe('pickLegendSamples', () => {
         mask[0] = 't';
 
         // 'cap' shares c, a and p with the answer but lands none of them on its
-        // own index, so the first orange tile is the 'a' at index 2.
+        // own index, so every one of them is orange and none is green.
         const samples = pickLegendSamples({
             text: 'teacup',
             cipherText: mask.join(''),
@@ -99,8 +99,8 @@ describe('pickLegendSamples', () => {
             hintLevel: 1,
         });
 
-        expect(samples.placed).toBe('T');
-        expect(samples.present).toBe('a');
+        expect(samples.placed).toEqual(['T']);
+        expect(samples.present).toEqual(['a', 'c', 'p']);
     });
 
     it('leaves a letter found away from the opening tile in lower case', () => {
@@ -112,7 +112,53 @@ describe('pickLegendSamples', () => {
             cipherText: mask.join(''),
             guesses: [],
             hintLevel: 1,
-        }).placed).toBe('c');
+        }).placed).toEqual(['c']);
+    });
+
+    it('reads a shuffled word the way the scramble view draws it', () => {
+        // The bug this pins: from hint level 2 the mask is an anagram, so the
+        // positional reader calls every letter in it `present` and the key
+        // showed a stand-in `A` for green while a pinned green letter — the
+        // guaranteed first letter — sat in the bubble above it.
+        const mask = [...maskFor('whisper')];
+        mask[0] = 'w';
+        mask[2] = 'h';
+        mask[4] = 's';
+
+        const samples = pickLegendSamples({
+            text: 'whisper',
+            cipherText: mask.join(''),
+            guesses: [],
+            hintLevel: 2,
+        });
+
+        expect(samples.placed).toEqual(['W']);
+        expect(samples.present).toEqual(['h', 's']);
+        expect(samples.unknown).toEqual([CIPHER_SIGNS[0]]);
+    });
+
+    it('offers several oranges, since one letter reads as an arbitrary pick', () => {
+        const samples = pickLegendSamples({
+            text: 'whisper',
+            cipherText: maskFor('whisper'),
+            guesses: ['wisher'],
+            hintLevel: 0,
+        });
+
+        expect(samples.present.length).toBeGreaterThan(1);
+    });
+
+    it('caps each state so the key cannot outgrow the bubble', () => {
+        const samples = pickLegendSamples({
+            text: 'whisper',
+            cipherText: 'whisper',
+            guesses: ['whisper'],
+            hintLevel: 1,
+        });
+
+        expect(samples.placed.length).toBeLessThanOrEqual(2);
+        expect(samples.present.length).toBeLessThanOrEqual(4);
+        expect(samples.unknown.length).toBeLessThanOrEqual(1);
     });
 
     it('never offers a space as an example', () => {
@@ -123,7 +169,7 @@ describe('pickLegendSamples', () => {
             hintLevel: 0,
         });
 
-        expect(Object.values(samples).every((char) => char.trim().length > 0)).toBe(true);
+        expect(Object.values(samples).flat().every((char) => char.trim().length > 0)).toBe(true);
     });
 
     it('survives a missing cipher text', () => {

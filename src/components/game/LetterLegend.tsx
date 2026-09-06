@@ -77,11 +77,16 @@ export function LetterLegend({
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
                     {SAMPLE_ORDER.map((state) => (
                         <span key={state} className="flex items-center gap-1.5">
-                            <span
-                                aria-hidden="true"
-                                className={`grid h-6 w-6 flex-none place-items-center rounded border border-border bg-muted font-mono text-xs ${tileClassName(state)}`}
-                            >
-                                {samples[state]}
+                            <span className="flex items-center gap-0.5">
+                                {samples[state].map((char, i) => (
+                                    <span
+                                        key={`${char}-${i}`}
+                                        aria-hidden="true"
+                                        className={`grid h-6 w-6 flex-none place-items-center rounded border border-border bg-muted font-mono text-xs ${tileClassName(state)}`}
+                                    >
+                                        {char}
+                                    </span>
+                                ))}
                             </span>
                             <span className="text-[11px] font-bold leading-none">
                                 {t(`${state}_short`)}
@@ -101,11 +106,16 @@ export function LetterLegend({
         <div className={`space-y-2.5 ${className}`}>
             {SAMPLE_ORDER.map((state) => (
                 <div key={state} className="flex items-start gap-3">
-                    <span
-                        aria-hidden="true"
-                        className={`mt-0.5 grid h-8 w-8 flex-none place-items-center rounded-md border border-border bg-muted font-mono text-base ${tileClassName(state)}`}
-                    >
-                        {samples[state]}
+                    <span className="mt-0.5 flex flex-none items-center gap-1">
+                        {samples[state].map((char, i) => (
+                            <span
+                                key={`${char}-${i}`}
+                                aria-hidden="true"
+                                className={`grid h-8 w-8 flex-none place-items-center rounded-md border border-border bg-muted font-mono text-base ${tileClassName(state)}`}
+                            >
+                                {char}
+                            </span>
+                        ))}
                     </span>
                     <p className="text-sm leading-snug text-muted-foreground">
                         <span className="font-bold text-foreground">{t(`${state}_title`)}</span>
