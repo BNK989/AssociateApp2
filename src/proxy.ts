@@ -1,16 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 import createMiddleware from 'next-intl/middleware';
-import { defineRouting } from 'next-intl/routing';
 import { createLogger } from '@/lib/logger';
+import { routing } from '@/i18n/routing';
 
 const log = createLogger('proxy');
 
-export const routing = defineRouting({
-    locales: ['en', 'he', 'es', 'fr', 'de', 'it', 'pt', 'ja', 'zh', 'ru', 'ar', 'hi', 'tr', 'nl', 'pl', 'sv', 'vi', 'th', 'ro'],
-    defaultLocale: 'en',
-    localePrefix: 'as-needed'
-});
+// Re-exported for the modules that historically imported `routing` from here.
+// New code should import from '@/i18n/routing'.
+export { routing };
 
 const intlMiddleware = createMiddleware(routing);
 
@@ -52,9 +50,11 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
+    // The catch-all below already covers every locale-prefixed path, so the
+    // matcher deliberately does NOT restate the locale list — that duplicate
+    // is what drifted out of sync with `routing.locales` before.
     matcher: [
         '/',
-        '/(he|en|es|fr|de|it|pt|ja|zh|ru|ar|hi|tr|nl|pl|sv|vi|th)/:path*',
         "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp3|wav|ogg|json|js)$).*)",
     ],
 };

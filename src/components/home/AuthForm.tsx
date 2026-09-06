@@ -14,14 +14,15 @@ import { clearAuthCookies } from '@/app/actions/auth';
 import { getURL } from '@/lib/utils';
 import { useTranslations, useLocale } from 'next-intl';
 import { createLogger, getErrorMessage } from '@/lib/logger';
+import { getLocaleDirection } from '@/i18n/locales';
 
 const log = createLogger('auth/form');
 
 export default function AuthForm() {
     const t = useTranslations('Auth');
     const locale = useLocale();
-    const isRtl = locale === 'he';
-    const dir = isRtl ? 'rtl' : 'ltr';
+    const dir = getLocaleDirection(locale);
+    const isRtl = dir === 'rtl';
     const [loadingMethod, setLoadingMethod] = useState<string | null>(null);
     const [message, setMessage] = useState('');
     const [guestUsername, setGuestUsername] = useState('');

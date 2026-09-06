@@ -75,6 +75,9 @@ The helper takes a **locale-stripped** pathname. Use `usePathname` from
 non-default locale fails a naive prefix check. `NavBar` had exactly that bug —
 the nav stayed visible over the board for every locale but English.
 
+See [localization.md](localization.md) for the supported-locale list and how a
+new player's language is detected.
+
 ### The chat field is a contenteditable, not an `<input>`
 
 `src/components/game/input/PlainTextField.tsx` is the single-line text field

@@ -7,6 +7,7 @@ import { Globe } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/context/AuthProvider';
 import { supabase } from '@/lib/supabase';
+import { locales, localeLabels } from '@/i18n/locales';
 
 type LanguagePickerProps = {
     variant?: 'select' | 'icon';
@@ -44,13 +45,9 @@ export function LanguagePicker({ variant = 'select', className }: LanguagePicker
                     <span className="sr-only">{t('switch_language')}</span>
                 </SelectTrigger>
                 <SelectContent position="popper" align="end">
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="he">עברית</SelectItem>
-                    <SelectItem value="ar">العربية</SelectItem>
-                    <SelectItem value="es">Español</SelectItem>
-                    <SelectItem value="fr">Français</SelectItem>
-                    <SelectItem value="de">Deutsch</SelectItem>
-                    <SelectItem value="ro">Română</SelectItem>
+                    {locales.map((code) => (
+                        <SelectItem key={code} value={code}>{localeLabels[code]}</SelectItem>
+                    ))}
                 </SelectContent>
             </Select>
         );
@@ -63,13 +60,9 @@ export function LanguagePicker({ variant = 'select', className }: LanguagePicker
                 <SelectValue placeholder="Language" />
             </SelectTrigger>
             <SelectContent>
-                <SelectItem value="en">English</SelectItem>
-                <SelectItem value="he">עברית</SelectItem>
-                <SelectItem value="ar">العربية</SelectItem>
-                <SelectItem value="es">Español</SelectItem>
-                <SelectItem value="fr">Français</SelectItem>
-                <SelectItem value="de">Deutsch</SelectItem>
-                <SelectItem value="ro">Română</SelectItem>
+                {locales.map((code) => (
+                    <SelectItem key={code} value={code}>{localeLabels[code]}</SelectItem>
+                ))}
             </SelectContent>
         </Select>
     );

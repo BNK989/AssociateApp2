@@ -1,7 +1,7 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import { routing } from '@/proxy';
+import { getLocaleDirection, isSupportedLocale } from '@/i18n/locales';
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Noto_Sans_Symbols_2, Rubik } from "next/font/google";
 import "../globals.css";
@@ -99,21 +99,21 @@ export default async function RootLayout({
   const { locale } = await params;
 
   // Ensure that the incoming `locale` is valid
-  if (!routing.locales.includes(locale as (typeof routing.locales)[number])) {
+  if (!isSupportedLocale(locale)) {
     notFound();
   }
 
   // Providing all messages to the client
   // side is the easiest way to get started
   const messages = await getMessages();
-  const isRtl = locale === 'he' || locale === 'ar';
+  const dir = getLocaleDirection(locale);
 
   // Fetch session server-side
   const supabase = await createSupabaseServerClient();
   const { data: { session } } = await supabase.auth.getSession();
 
   return (
-    <html lang={locale} dir={isRtl ? 'rtl' : 'ltr'} translate="no" suppressHydrationWarning>
+    <html lang={locale} dir={dir} translate="no" suppressHydrationWarning>
       <body
         suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} ${rubik.variable} ${notoSymbols.variable} antialiased font-sans bg-background text-foreground flex flex-col min-h-screen`}

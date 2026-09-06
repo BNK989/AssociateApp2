@@ -22,13 +22,14 @@ import { useTheme } from 'next-themes';
 import { usePathname } from '@/navigation';
 import { isImmersiveGameRoute } from '@/lib/gameChrome';
 import { createLogger } from '@/lib/logger';
+import { getLocaleDirection } from '@/i18n/locales';
 
 const log = createLogger('navbar');
 
 export function NavBar() {
     const t = useTranslations('NavBar');
     const locale = useLocale();
-    const dir = locale === 'he' ? 'rtl' : 'ltr';
+    const dir = getLocaleDirection(locale);
     const { user, profile, refreshProfile } = useAuth();
     const { setTheme, resolvedTheme } = useTheme();
     const pathname = usePathname();

@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { getCachedTranslatedDailyGame, translationContext, TranslatedGameData } from '@/lib/dailyTranslation';
+import { defaultLocale, locales } from '@/i18n/locales';
 import {
     Table,
     TableBody,
@@ -75,7 +76,8 @@ export default async function AdminTranslationsPage({
         log.warn('fetch_logs', 'Could not fetch translation generation logs, table may be missing', undefined, e);
     }
 
-    const TARGET_LOCALES = ['he', 'ar', 'es', 'fr', 'de', 'ro'];
+    // Every shipped locale except the authoring language (CLAUDE.md §6).
+    const TARGET_LOCALES = locales.filter((code) => code !== defaultLocale);
 
     // 4. Translation Check & Combine
     const processedGames = await Promise.all((games || []).map(async (game) => {

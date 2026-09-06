@@ -43,13 +43,14 @@ type Notification = {
 
 import { useTranslations } from 'next-intl';
 import { createLogger } from '@/lib/logger';
+import { getLocaleDirection } from '@/i18n/locales';
 
 const log = createLogger('notifications');
 
 export function NotificationCenter() {
     const t = useTranslations('Notifications');
     const locale = useLocale();
-    const dir = locale === 'he' ? 'rtl' : 'ltr';
+    const dir = getLocaleDirection(locale);
     const { user } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
