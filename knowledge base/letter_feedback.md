@@ -48,7 +48,9 @@ forgotten in the other.
 
 - `LetterLegend` (`src/components/game/LetterLegend.tsx`) — the key itself,
   rendered from the same `--tile-*` variables the board uses, so the samples are
-  the exact colours on screen.
+  the exact colours on screen. Its sample *characters* are a prop: generic
+  `A` / `B` / a filler glyph where there is no word to point at (the dialog, the
+  palette popover), and the live word's own tiles wherever there is one.
 - **The bubble itself**, the first time a word of theirs colours a tile
   (`chat/InlineLegend.tsx` + `chat/useLegendIntro.ts`). This is the only route
   that is *pushed* rather than waited for, and it is the one that reaches a
@@ -56,9 +58,14 @@ forgotten in the other.
   bubble, under the word it explains, in the condensed `inline` variant of
   `LetterLegend`; it closes on the next guess, on dismiss, or when the word
   settles, and it never opens again on that device
-  (`associ8-legend-intro-seen`). `hasColouredTiles` in `chat/legendRules.ts`
-  decides the moment by asking `readMaskTile` — the very function the board
-  draws with — rather than inferring it from `hint_level`, because a guess can
+  (`associ8-legend-intro-seen`). Its three samples are `pickLegendSamples`
+  (`chat/legendRules.ts`) — the first tile of each state taken from the word
+  directly above, so the green in the key is the player's own green rather than
+  a letter they have to map onto theirs. It reads them back through
+  `readMaskTile`, so a letter can only reach the key if it is already on screen;
+  a state the word has not reached falls back to the generic sample.
+  `hasColouredTiles`, in the same module, decides the *moment* by asking
+  `readMaskTile` rather than inferring it from `hint_level`, because a guess can
   colour a tile at level 0 and an all-filler mask can colour none at level 1.
 - **The palette button** in the input row (`input/LegendButton.tsx`), available
   for the whole of solving, showing only the half of the position rule that
@@ -156,9 +163,10 @@ Full review, with traced examples and contrast measurements:
 ## Still open
 
 - Tapping anywhere on a hint-2 bubble reshuffles it, not just the shuffle
-  button. The button is the discoverable path and its tooltip now explains that
-  a shuffle reveals nothing new; the whole-bubble hit target remains
-  undocumented.
+  button. `shuffled_note` now states the tap outright ("Tap to reshuffle"), so
+  the affordance is documented in the one place that is on screen while it
+  applies; the button remains the discoverable path, and its tooltip still
+  carries the part the note does not — that a shuffle reveals nothing new.
 - Under reduced motion, a displaced tile and an ordered one differ only by tilt,
   which is subtle. The word-level rule is still stated in the legend, so the
   information is available, just not per tile.

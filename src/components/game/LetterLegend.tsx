@@ -3,13 +3,10 @@
 import { useTranslations } from 'next-intl';
 import { tileClassName } from '@/components/cipher/tileStyles';
 import type { TileState } from '@/components/cipher/cipherRules';
+import { DEFAULT_LEGEND_SAMPLES, type LegendSamples } from '@/components/game/chat/legendRules';
 
-/** One example tile per state, so the key shows the thing it describes. */
-const SAMPLES: { state: TileState; char: string }[] = [
-    { state: 'placed', char: 'A' },
-    { state: 'present', char: 'B' },
-    { state: 'unknown', char: '⊗' },
-];
+/** The order the states are read in: earned, half-earned, still hidden. */
+const SAMPLE_ORDER: TileState[] = ['placed', 'present', 'unknown'];
 
 /**
  * Whether tile order currently carries information.
@@ -34,6 +31,12 @@ type LegendVariant = 'stacked' | 'inline';
 
 type LetterLegendProps = {
     positionNote?: PositionNote;
+    /**
+     * Characters to draw the sample tiles with. Defaults to generic examples;
+     * pass the live word's own tiles (`pickLegendSamples`) wherever the key is
+     * opened next to a word, so the player recognises the samples.
+     */
+    samples?: LegendSamples;
     variant?: LegendVariant;
     className?: string;
 };
@@ -54,6 +57,7 @@ type LetterLegendProps = {
 export function LetterLegend({
     positionNote = 'both',
     variant = 'stacked',
+    samples = DEFAULT_LEGEND_SAMPLES,
     className = '',
 }: LetterLegendProps) {
     const t = useTranslations('GameRoom.Legend');
@@ -71,13 +75,13 @@ export function LetterLegend({
         return (
             <div className={`space-y-1.5 ${className}`}>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-                    {SAMPLES.map(({ state, char }) => (
+                    {SAMPLE_ORDER.map((state) => (
                         <span key={state} className="flex items-center gap-1.5">
                             <span
                                 aria-hidden="true"
                                 className={`grid h-6 w-6 flex-none place-items-center rounded border border-border bg-muted font-mono text-xs ${tileClassName(state)}`}
                             >
-                                {char}
+                                {samples[state]}
                             </span>
                             <span className="text-[11px] font-bold leading-none">
                                 {t(`${state}_short`)}
@@ -95,13 +99,13 @@ export function LetterLegend({
 
     return (
         <div className={`space-y-2.5 ${className}`}>
-            {SAMPLES.map(({ state, char }) => (
+            {SAMPLE_ORDER.map((state) => (
                 <div key={state} className="flex items-start gap-3">
                     <span
                         aria-hidden="true"
                         className={`mt-0.5 grid h-8 w-8 flex-none place-items-center rounded-md border border-border bg-muted font-mono text-base ${tileClassName(state)}`}
                     >
-                        {char}
+                        {samples[state]}
                     </span>
                     <p className="text-sm leading-snug text-muted-foreground">
                         <span className="font-bold text-foreground">{t(`${state}_title`)}</span>

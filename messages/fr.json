@@ -220,8 +220,8 @@
             "unknown_short": "Masqué",
             "ordered_note": "Les lettres révélées apparaissent à leur place.",
             "ordered_note_short": "Les lettres sont à leur place.",
-            "shuffled_note": "Une fois les lettres mélangées, leur ordre n'est plus un indice. Les tuiles qui flottent sont celles qu'il reste à placer.",
-            "shuffled_note_short": "Mélangées : l'ordre n'est plus un indice.",
+            "shuffled_note": "Les lettres apparaissent dans un ordre aléatoire, leur position n'indique donc rien. Touchez le mot pour les mélanger à nouveau.",
+            "shuffled_note_short": "Mélangées : ordre aléatoire. Touchez pour remélanger.",
             "dismiss": "Fermer"
         }
     },

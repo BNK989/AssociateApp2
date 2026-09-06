@@ -220,8 +220,8 @@
             "unknown_short": "Ascuns",
             "ordered_note": "Literele dezvăluite apar acolo unde le este locul.",
             "ordered_note_short": "Literele stau la locul lor.",
-            "shuffled_note": "După ce literele sunt amestecate, ordinea lor nu mai este un indiciu. Plăcuțele care plutesc sunt cele rămase de așezat.",
-            "shuffled_note_short": "Amestecate — ordinea nu mai este un indiciu.",
+            "shuffled_note": "Literele apar într-o ordine aleatorie, așa că poziția lor nu îți spune nimic. Atinge cuvântul pentru a le amesteca din nou.",
+            "shuffled_note_short": "Amestecate — ordine aleatorie. Atinge pentru a reamesteca.",
             "dismiss": "Închide"
         }
     },

@@ -220,8 +220,8 @@
             "unknown_short": "Verborgen",
             "ordered_note": "Aufgedeckte Buchstaben stehen dort, wo sie hingehören.",
             "ordered_note_short": "Buchstaben stehen an ihrem Platz.",
-            "shuffled_note": "Sobald die Buchstaben gemischt sind, verrät ihre Reihenfolge nichts mehr. Die schwebenden Kacheln sind die noch zu platzierenden.",
-            "shuffled_note_short": "Gemischt — die Reihenfolge verrät nichts mehr.",
+            "shuffled_note": "Die Buchstaben erscheinen in zufälliger Reihenfolge, ihre Position verrät also nichts. Tippe auf das Wort, um sie neu zu mischen.",
+            "shuffled_note_short": "Gemischt — zufällige Reihenfolge. Zum Neumischen tippen.",
             "dismiss": "Schließen"
         }
     },

@@ -220,8 +220,8 @@
             "unknown_short": "Oculta",
             "ordered_note": "Las letras reveladas aparecen en el lugar que les corresponde.",
             "ordered_note_short": "Las letras están en su sitio.",
-            "shuffled_note": "Una vez mezcladas las letras, su orden deja de ser una pista. Las fichas que flotan son las que faltan por colocar.",
-            "shuffled_note_short": "Mezcladas: el orden ya no es una pista.",
+            "shuffled_note": "Las letras aparecen en orden aleatorio, así que su posición no dice nada. Toca la palabra para volver a mezclarlas.",
+            "shuffled_note_short": "Mezcladas: orden aleatorio. Toca para volver a mezclar.",
             "dismiss": "Cerrar"
         }
     },

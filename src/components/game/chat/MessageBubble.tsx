@@ -4,7 +4,7 @@ import { CipherText } from '@/components/CipherText';
 import type { GameState, Message } from '@/hooks/useGameLogic';
 import { getAvatarColor, getInitials } from '@/lib/avatarUtils';
 import { deriveMessageFlags, shouldShowStrikeLabel } from './messageFlags';
-import { hasColouredTiles } from './legendRules';
+import { DEFAULT_LEGEND_SAMPLES, hasColouredTiles, pickLegendSamples } from './legendRules';
 import { useLegendIntro } from './useLegendIntro';
 import { HintPanel } from './HintPanel';
 import { InlineLegend } from './InlineLegend';
@@ -80,6 +80,19 @@ export function MessageBubble({
         guessCount: guesses.length,
     });
 
+    // The key explains itself with this word's own tiles rather than stand-in
+    // letters, so there is nothing to map from the sample onto the board. Kept
+    // for as long as the word is the target rather than only while the key is
+    // open, so the samples do not revert to `A`/`B` mid close-animation.
+    const legendSamples = flags.isTarget
+        ? pickLegendSamples({
+            text: message.content,
+            cipherText: message.cipher_text,
+            guesses,
+            hintLevel: message.hint_level,
+        })
+        : DEFAULT_LEGEND_SAMPLES;
+
     const username = message.profiles?.username || 'User';
     const scramble = () => onForceScramble(message.id);
 
@@ -146,6 +159,7 @@ export function MessageBubble({
                         <InlineLegend
                             open={legendIntro.isOpen}
                             positionNote={message.hint_level >= 2 ? 'shuffled' : 'ordered'}
+                            samples={legendSamples}
                             onDismiss={legendIntro.dismiss}
                         />
 

@@ -63,6 +63,8 @@ vi.mock('@/lib/gameConfig', () => ({
     MATCH_THRESHOLD: 0.8,
     STREAK_BONUS_AT: 3,
     STREAK_MULTIPLIER: 1.5,
+    // Reached through the colour key's default sample tile, not by the input itself.
+    CIPHER_SIGNS: [...'⊗⊕⊖'],
 }));
 
 vi.mock('@/lib/gameLogic', () => ({

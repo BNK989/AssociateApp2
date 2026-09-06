@@ -2,11 +2,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { LetterLegend } from '@/components/game/LetterLegend';
+import type { LegendSamples } from './legendRules';
 
 type InlineLegendProps = {
     open: boolean;
     /** Which half of the position rule currently applies to this word. */
     positionNote: 'ordered' | 'shuffled';
+    /** The word's own tiles, so the samples are the ones just above them. */
+    samples: LegendSamples;
     onDismiss: () => void;
 };
 
@@ -17,7 +20,7 @@ type InlineLegendProps = {
  * so the sample tiles resolve the same `--tile-*` variables as the word above
  * them — the key and the thing it describes cannot drift apart.
  */
-export function InlineLegend({ open, positionNote, onDismiss }: InlineLegendProps) {
+export function InlineLegend({ open, positionNote, samples, onDismiss }: InlineLegendProps) {
     const t = useTranslations('GameRoom.Legend');
 
     return (
@@ -50,7 +53,7 @@ export function InlineLegend({ open, positionNote, onDismiss }: InlineLegendProp
                             <X className="h-3 w-3" aria-hidden="true" />
                         </button>
 
-                        <LetterLegend variant="inline" positionNote={positionNote} />
+                        <LetterLegend variant="inline" positionNote={positionNote} samples={samples} />
                     </div>
                 </motion.div>
             )}

@@ -226,8 +226,8 @@
             "unknown_short": "Hidden",
             "ordered_note": "Revealed letters are shown where they belong.",
             "ordered_note_short": "Letters sit where they belong.",
-            "shuffled_note": "Once letters are shuffled their order is no longer a clue. The drifting tiles are the ones still to place.",
-            "shuffled_note_short": "Shuffled — the order is no longer a clue.",
+            "shuffled_note": "Letters appear in a random order, so where a tile sits tells you nothing. Tap the word to shuffle them again.",
+            "shuffled_note_short": "Shuffled — letters are in a random order. Tap to reshuffle.",
             "dismiss": "Dismiss"
         }
     },
