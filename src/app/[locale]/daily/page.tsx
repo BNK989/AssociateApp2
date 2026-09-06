@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { createLogger } from '@/lib/logger';
 import { getDailyHintSettings } from '@/lib/gameSettings/server';
 import { defaultLocale, isSupportedLocale } from '@/i18n/locales';
+import type { TranslatedGameData } from '@/lib/dailyTranslation';
 
 const log = createLogger('daily/page');
 
@@ -85,30 +86,48 @@ export default async function DailyGamePage({
 
     if (targetLocale !== 'en') {
         const { getCachedTranslatedDailyGame } = await import('@/lib/dailyTranslation');
+        const { checkTranslationScript } = await import('@/lib/daily/translationScript');
 
-        // Use the cache-wrapped translation
-        const translated = await getCachedTranslatedDailyGame(
-            dailyGame.id,
-            dailyGame.words,
-            dailyGame.theme,
-            targetLocale
-        );
+        // Use the cache-wrapped translation. A rejected translation throws
+        // rather than returning, so the bad payload never enters the 24h cache;
+        // this request simply serves the English chain.
+        let translated: TranslatedGameData | null = null;
+        try {
+            translated = await getCachedTranslatedDailyGame(
+                dailyGame.id,
+                dailyGame.words,
+                dailyGame.theme,
+                targetLocale
+            );
+        } catch (e) {
+            log.warn('translate', 'Translation rejected, serving the English chain for this request', { play_date: todayStr, locale: targetLocale }, e);
+        }
+
+        if (!translated) {
+            log.warn('translate', 'No translation available, falling back to English', { play_date: todayStr, locale: targetLocale });
+        }
+
+        // Re-checked on the way out as well as on the way in: the data cache
+        // survives deploys, so an entry written before the script guard existed
+        // (a Hebrew chain carrying Arabic words, say) would otherwise still be
+        // served for the rest of its 24h life.
+        if (translated) {
+            const check = checkTranslationScript(translated, targetLocale, dailyGame.words.length);
+            if (!check.ok) {
+                log.error('translate', 'Cached translation failed the script check, serving English instead', {
+                    play_date: todayStr,
+                    locale: targetLocale,
+                    game_id: dailyGame.id,
+                    reasons: check.reasons.join(' | '),
+                });
+                translated = null;
+            }
+        }
 
         if (translated) {
             dailyGame.theme = translated.theme;
             dailyGame.words = translated.words;
             dailyGame.hints = translated.hints;
-            // Ensure ID doesn't change so local storage tracks stats correctly? 
-            // Actually, we might want SEPARATE stats for Hebrew vs English daily games?
-            // If we keep the SAME ID, the progress "level 1, level 2" is shared.
-            // But the words are different. It might break logic if user switches lang mid-game.
-            // Requirement check: "prefer to not change any db datapoints".
-            // If we use the same ID, the client uses `daily_game_state_YYYY-MM-DD`.
-            // Ideally we suffix the date for storage key in Client if we want separate progress.
-            // But let's stick to the request scope. 
-            // We just serve translated content.
-        } else {
-            log.warn('translate', 'Translation failed, falling back to English', { play_date: todayStr, locale: targetLocale });
         }
     }
 
