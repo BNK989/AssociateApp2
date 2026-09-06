@@ -78,6 +78,29 @@ the nav stayed visible over the board for every locale but English.
 See [localization.md](localization.md) for the supported-locale list and how a
 new player's language is detected.
 
+### Toasts flip to the bottom on a game route
+
+[`DynamicToaster`](../src/components/DynamicToaster.tsx) is the app's single
+toast host and it reads the same `isImmersiveGameRoute` helper. On a game route
+toasts anchor **bottom-centre**, offset 65px to clear the composer; everywhere
+else they stay top-centre.
+
+This is load-bearing, not taste. Top-centre puts a toast directly over
+`GameHeader`, which carries the theme and the running score — so a lost-word
+error or a progress cue masks exactly the state it is commenting on. The daily
+game shipped that way: the host used an inline `startsWith('/game/')` check that
+`/daily` never matched, on a **raw** `next/navigation` pathname that also failed
+for every non-default locale. Both faults are the reason the helper exists; use
+it rather than re-deriving the route inline.
+
+The 65px offset is the composer's height plus a gap. It is a constant in
+`DynamicToaster`, so it must move if `GameInput` gets meaningfully taller.
+
+Known gap: the toast is fixed to the *layout* viewport while the board is sized
+from `useVisualViewport()`, so on a phone with the keyboard open a
+bottom-anchored toast can sit behind the keyboard. This predates the daily fix
+and applies to a multiplayer room too.
+
 ### The chat field is a contenteditable, not an `<input>`
 
 `src/components/game/input/PlainTextField.tsx` is the single-line text field
