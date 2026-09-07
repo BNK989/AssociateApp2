@@ -76,7 +76,9 @@
             "hint_used": "Pista usada",
             "link_strong": "Strong Link",
             "link_medium": "Loose Link",
-            "link_weak": "Weak Link"
+            "link_weak": "Weak Link",
+            "burst_announce": "Correcto: {points} puntos.",
+            "burst_announce_streak": "Correcto: {points} puntos, con bonificación de racha de {multiplier}×."
         },
         "Loading": {
             "app_name": "Associate",
@@ -98,7 +100,7 @@
             "instructions_dialog_title": "Instrucciones del Juego",
             "preferences_title": "Preferencias",
             "sounds_title": "Sonidos del Juego",
-            "sounds_desc": "Reproducir sonidos en turnos",
+            "sounds_desc": "Sonidos de aviso y de recompensa",
             "dark_mode_title": "Modo Oscuro",
             "dark_mode_desc": "Cambiar entre temas claro y oscuro",
             "language_title": "Idioma",
@@ -168,7 +170,8 @@
                     "step4_desc": "¿Atascado? Toca la bombilla para una pista, o la bandera para rendirte con la palabra actual. Las pistas pueden revelar letras o preguntar a la IA."
                 }
             },
-            "restart_tutorial": "Restart Tutorial"
+            "restart_tutorial": "Restart Tutorial",
+            "volume_title": "Volumen"
         },
         "EndGame": {
             "title": "¡Bien Jugado!",

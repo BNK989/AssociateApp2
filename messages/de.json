@@ -76,7 +76,9 @@
             "hint_used": "Hinweis genutzt",
             "link_strong": "Strong Link",
             "link_medium": "Loose Link",
-            "link_weak": "Weak Link"
+            "link_weak": "Weak Link",
+            "burst_announce": "Richtig — {points} Punkte.",
+            "burst_announce_streak": "Richtig — {points} Punkte, mit {multiplier}× Serienbonus."
         },
         "Loading": {
             "app_name": "Associate",
@@ -98,7 +100,7 @@
             "instructions_dialog_title": "Spielanleitung",
             "preferences_title": "Einstellungen",
             "sounds_title": "Spielgeräusche",
-            "sounds_desc": "Geräusche bei Runden abspielen",
+            "sounds_desc": "Klänge und Belohnungstöne",
             "dark_mode_title": "Dunkelmodus",
             "dark_mode_desc": "Zwischen hellem und dunklem Design wechseln",
             "language_title": "Sprache",
@@ -168,7 +170,8 @@
                     "step4_desc": "Hängst du fest? Tippe auf die Glühbirne für einen Hinweis oder auf die Flagge, um das aktuelle Wort aufzugeben. Hinweise können Buchstaben aufdecken oder die KI fragen."
                 }
             },
-            "restart_tutorial": "Restart Tutorial"
+            "restart_tutorial": "Restart Tutorial",
+            "volume_title": "Lautstärke"
         },
         "EndGame": {
             "title": "Gut gespielt!",

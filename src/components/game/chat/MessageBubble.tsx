@@ -14,6 +14,14 @@ import {
     StrikeIndicator,
 } from './MessageIndicators';
 import { MessageContextMenu } from './MessageContextMenu';
+import { SolveBurst } from './SolveBurst';
+import { solvedRingClass } from './solveBurstStyles';
+import {
+    DEFAULT_FEEDBACK_POLICY,
+    shouldBurst,
+    type DailyFeedbackPolicy,
+} from '@/lib/daily/feedbackPolicy';
+import { UNGRADED_FEEDBACK, type JustSolved } from '@/lib/daily/feedbackTiers';
 
 /** Below this width the connection badge drops its text label. */
 const NARROW_BUBBLE_PX = 120;
@@ -25,8 +33,10 @@ type MessageBubbleProps = {
     currentUserId?: string;
     targetMessageId?: string;
     isShaking: boolean;
-    justSolvedPoints?: number;
-    isJustSolved: boolean;
+    /** Set for the ~1.5s after this word was solved; null the rest of the time. */
+    justSolved?: JustSolved | null;
+    /** How rewarding the flourish is allowed to be. Defaults to the compiled floor. */
+    feedbackPolicy?: DailyFeedbackPolicy;
     isRevealed: boolean;
     scrambleTrigger?: number;
     activeBubbleWidth: number;
@@ -45,8 +55,8 @@ export function MessageBubble({
     currentUserId,
     targetMessageId,
     isShaking,
-    justSolvedPoints,
-    isJustSolved,
+    justSolved,
+    feedbackPolicy = DEFAULT_FEEDBACK_POLICY,
     isRevealed,
     scrambleTrigger,
     activeBubbleWidth,
@@ -56,6 +66,11 @@ export function MessageBubble({
     onTestEndSequence,
     onResetGame,
 }: MessageBubbleProps) {
+    // Classic multiplayer does not grade solves, so an ungraded one renders at
+    // the middle tier -- exactly the flourish it had before grading existed.
+    const feedback = justSolved?.feedback ?? UNGRADED_FEEDBACK;
+    const isJustSolved = Boolean(justSolved);
+
     const flags = deriveMessageFlags({
         message,
         isLastMessage,
@@ -136,7 +151,7 @@ export function MessageBubble({
                             }
                         }}
                         onMouseDown={(e) => e.preventDefault()}
-                        className={`relative max-w-[70%] md:max-w-[85%] rounded-lg transition-all duration-300 ${flags.isMe ? 'tile-surface-own bg-indigo-600 text-white glow-me' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white glow-gray'} ${flags.isTarget ? 'target-message-glow' : ''} ${outcomeSpine} ${flags.isDimmed ? 'opacity-60 hover:opacity-100' : ''} ${isJustSolved ? 'scale-110 ring-2 ring-green-500 dark:ring-green-400 shadow-[0_0_15px_rgba(34,197,94,0.3)]' : ''} ${flags.needsExtraPadding ? 'p-3 pb-5' : 'p-3'} ${isClickable ? 'cursor-pointer hover:ring-2 hover:ring-indigo-400/50' : ''}`}
+                        className={`relative max-w-[70%] md:max-w-[85%] rounded-lg transition-all duration-300 ${flags.isMe ? 'tile-surface-own bg-indigo-600 text-white glow-me' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white glow-gray'} ${flags.isTarget ? 'target-message-glow' : ''} ${outcomeSpine} ${flags.isDimmed ? 'opacity-60 hover:opacity-100' : ''} ${isJustSolved ? solvedRingClass(feedback.tier) : ''} ${flags.needsExtraPadding ? 'p-3 pb-5' : 'p-3'} ${isClickable ? 'cursor-pointer hover:ring-2 hover:ring-indigo-400/50' : ''}`}
                     >
                         <CipherText
                             text={message.content}
@@ -178,10 +193,15 @@ export function MessageBubble({
 
                         <HintPanel display={flags.hintDisplay} hint={message.ai_hint} />
 
-                        {isJustSolved && justSolvedPoints !== undefined && justSolvedPoints > 0 && (
-                            <div className="absolute -top-10 -end-4 text-3xl font-black text-green-500 dark:text-green-400 animate-float-up z-20 drop-shadow-xl whitespace-nowrap pointer-events-none">
-                                +{justSolvedPoints}
-                            </div>
+                        {justSolved && justSolved.points > 0 && (
+                            <SolveBurst
+                                points={justSolved.points}
+                                tier={feedback.tier}
+                                streakStep={feedback.streakStep}
+                                intensity={feedback.intensity}
+                                flourish={feedbackPolicy.flourish}
+                                withSparks={shouldBurst(feedbackPolicy, feedback.tier)}
+                            />
                         )}
                     </div>
                 </div>

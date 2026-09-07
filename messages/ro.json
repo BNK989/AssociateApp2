@@ -76,7 +76,9 @@
             "hint_used": "Indiciu folosit",
             "link_strong": "Strong Link",
             "link_medium": "Loose Link",
-            "link_weak": "Weak Link"
+            "link_weak": "Weak Link",
+            "burst_announce": "Corect — {points} puncte.",
+            "burst_announce_streak": "Corect — {points} puncte, cu bonus de serie de {multiplier}×."
         },
         "Loading": {
             "app_name": "Associate",
@@ -98,7 +100,7 @@
             "instructions_dialog_title": "Instrucțiuni Joc",
             "preferences_title": "Preferințe",
             "sounds_title": "Sunete Joc",
-            "sounds_desc": "Redă sunete la rând",
+            "sounds_desc": "Sunete de joc și de recompensă",
             "dark_mode_title": "Mod Întunecat",
             "dark_mode_desc": "Comută între temă luminoasă și întunecată",
             "language_title": "Limbă",
@@ -168,7 +170,8 @@
                     "step4_desc": "Blocat? Apasă pe bec pentru un indiciu sau pe steag ca să renunți la cuvântul curent. Indiciile pot dezvălui litere sau pot întreba IA."
                 }
             },
-            "restart_tutorial": "Restart Tutorial"
+            "restart_tutorial": "Restart Tutorial",
+            "volume_title": "Volum"
         },
         "EndGame": {
             "title": "Bine Jucat!",

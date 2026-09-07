@@ -9,6 +9,7 @@ import {
     mergeIncomingMessage,
 } from '@/lib/classicGame/realtimeEvents';
 import type { FloatingAnimationData, GameState, Message, Player } from './types';
+import type { JustSolved } from '@/lib/daily/feedbackTiers';
 
 /** How long a floating points figure stays on screen. */
 const POINTS_DISPLAY_MS = 3000;
@@ -35,7 +36,7 @@ type UseGameRealtimeArgs = {
     setGame: React.Dispatch<React.SetStateAction<GameState | null>>;
     setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
     setPlayers: React.Dispatch<React.SetStateAction<Player[]>>;
-    setJustSolved: (value: { id: string; points: number } | null) => void;
+    setJustSolved: (value: JustSolved | null) => void;
     setFloatingAnimation: (value: FloatingAnimationData | null) => void;
     onTyping: (userId: string) => void;
     onTypingStopped: (userId: string) => void;

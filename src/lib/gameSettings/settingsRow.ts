@@ -3,6 +3,11 @@ import {
     parseHintPolicy,
     type GameMasterHintSettings,
 } from '@/lib/daily/hintPolicy';
+import {
+    DEFAULT_FEEDBACK_POLICY,
+    parseFeedbackPolicy,
+    type DailyFeedbackPolicy,
+} from '@/lib/daily/feedbackPolicy';
 
 // Re-exported so callers of this module do not need to know where the error
 // codes live; the definition is shared with the daily-results write path.
@@ -60,6 +65,46 @@ export function settingsFromRow(row: SettingsRow | null | undefined): DailyHintS
     return {
         policy: parseHintPolicy(row.value),
         scope: row.scope === 'force' ? 'force' : 'default',
+        revision: typeof row.revision === 'number' && Number.isFinite(row.revision)
+            ? row.revision
+            : NO_REVISION,
+    };
+}
+
+/* ------------------------------------------------------------------ *
+ * Reward feedback
+ * ------------------------------------------------------------------ */
+
+export type DailyFeedbackSettings = {
+    policy: DailyFeedbackPolicy;
+    /** The configuration's revision, so a change can be attributed. */
+    revision: number;
+};
+
+/**
+ * What reward feedback falls back to when the row is absent or unreadable.
+ *
+ * Same floor rule as the hint settings: a missing `daily_feedback` row is a
+ * normal state (the code ships before the migration is applied) and must play
+ * exactly like the compiled defaults rather than fall silent.
+ */
+export const FALLBACK_DAILY_FEEDBACK_SETTINGS: DailyFeedbackSettings = {
+    policy: DEFAULT_FEEDBACK_POLICY,
+    revision: NO_REVISION,
+};
+
+/**
+ * Narrows a row into reward-feedback settings.
+ *
+ * `scope` is ignored on purpose. Reward audio has no `force`: a player who
+ * muted the game stays muted whatever a game master sets, so there is no
+ * scope for the column to express. See `resolveFeedbackPolicy`.
+ */
+export function feedbackFromRow(row: SettingsRow | null | undefined): DailyFeedbackSettings {
+    if (!row) return FALLBACK_DAILY_FEEDBACK_SETTINGS;
+
+    return {
+        policy: parseFeedbackPolicy(row.value),
         revision: typeof row.revision === 'number' && Number.isFinite(row.revision)
             ? row.revision
             : NO_REVISION,

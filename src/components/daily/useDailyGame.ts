@@ -10,9 +10,11 @@ import {
 } from '@/lib/daily/dailyMessages';
 import { applyArrivalHint } from '@/lib/daily/arrivalHints';
 import { calculateSolvePoints, MATCH_THRESHOLD, MAX_STRIKES } from '@/lib/daily/dailyScoring';
-import { clearDailyGame, loadDailyGame, saveDailyGame } from '@/lib/daily/dailyStorage';
+import { clearDailyGame } from '@/lib/daily/dailyStorage';
 import { startLevelFor, type DailyHintPolicy } from '@/lib/daily/hintPolicy';
+import { solveFeedback } from '@/lib/daily/feedbackTiers';
 import { useChainClues } from './useChainClues';
+import { useDailyPersistence } from './useDailyPersistence';
 import { useDailyHintReveal } from './useDailyHintReveal';
 import { useMoveFeedback } from './useMoveFeedback';
 import type { WordOutcome } from '@/lib/daily/dailyResults';
@@ -53,7 +55,10 @@ type UseDailyGameArgs = {
         consecutive: number;
         completed: boolean;
     }) => void;
-    playSuccessSound?: () => void;
+    /** Reward chime and haptics for a correct guess, graded by how it was earned. */
+    playSolveSound?: (feedback: ReturnType<typeof solveFeedback>) => void;
+    /** The wrong-guess tone. Fires on every miss, struck out or not. */
+    playMissSound?: () => void;
 };
 
 /**
@@ -73,7 +78,8 @@ export function useDailyGame({
     onSolved,
     onCompleted,
     onWordFinished,
-    playSuccessSound,
+    playSolveSound,
+    playMissSound,
 }: UseDailyGameArgs) {
     const t = useTranslations('GameRoom.Chat');
 
@@ -93,14 +99,13 @@ export function useDailyGame({
         words, policy, hints, connectionScores,
     });
 
-    // Restore the day's progress, or start a new chain.
-    useEffect(() => {
-        const restored = loadDailyGame(date, words, {
-            settingsRevision,
-            onRevisionChange: policy.onRevisionChange,
-        });
-
-        if (restored) {
+    useDailyPersistence({
+        date,
+        words,
+        policy,
+        settingsRevision,
+        snapshot: { messages, score, consecutive, gameOver },
+        onRestore: (restored) => {
             // The arrival pass runs here too, not only on a move. A board saved
             // under an older policy comes back with the word the player is
             // sitting on below the level the current policy entitles it to —
@@ -111,17 +116,9 @@ export function useDailyGame({
             setConsecutive(restored.consecutive);
             setGameOver(restored.gameOver);
             setRestoredComplete(restored.gameOver);
-            return;
-        }
-
-        setMessages(freshMessages());
-    }, [date, words, freshMessages, settingsRevision, policy, resolveClue]);
-
-    // Mirror every change back to storage.
-    useEffect(() => {
-        if (messages.length === 0) return;
-        saveDailyGame(date, words, { messages, score, consecutive, gameOver }, settingsRevision);
-    }, [messages, score, consecutive, gameOver, date, words, settingsRevision]);
+        },
+        onFresh: () => setMessages(freshMessages()),
+    });
 
     /**
      * Applies a change to one word, then brings whichever word is now the
@@ -209,6 +206,7 @@ export function useDailyGame({
 
                 setConsecutive(0);
                 shakeWord(targetMessage.id);
+                playMissSound?.();
 
                 if (!struckOut) {
                     patchTarget(targetMessage.id, updates);
@@ -226,8 +224,6 @@ export function useDailyGame({
                 return;
             }
 
-            playSuccessSound?.();
-
             const points = calculateSolvePoints(
                 targetMessage.content,
                 targetMessage.hint_level,
@@ -241,7 +237,18 @@ export function useDailyGame({
 
             setScore(totalScore);
             setConsecutive((prev) => prev + 1);
-            flashSolved(targetMessage.id, points);
+
+            // Graded once, here, and handed to both halves of the feedback. The
+            // chime used to fire before the points were known, so it could not
+            // reflect them; now the sound and the burst are the same decision.
+            const feedback = solveFeedback({
+                word: targetMessage.content,
+                points,
+                consecutive: consecutive + 1,
+            });
+
+            playSolveSound?.(feedback);
+            flashSolved(targetMessage.id, points, feedback);
 
             onSolved?.({
                 word: targetMessage.content,
@@ -261,7 +268,7 @@ export function useDailyGame({
     }, [
         targetMessage, gameOver, consecutive, score, patchTarget, flashSolved,
         shakeWord, finishWord, reportWord, onSolved, onCompleted,
-        indexOfMessage, playSuccessSound, t, policy, words.length,
+        indexOfMessage, playSolveSound, playMissSound, t, policy, words.length,
     ]);
 
     const giveUp = useCallback(() => {

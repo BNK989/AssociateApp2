@@ -7,6 +7,7 @@ import { InvitePlayer } from '@/components/InvitePlayer';
 import type { GameState, Message, Player } from '@/hooks/useGameLogic';
 import { InfoScreen } from './InfoScreen';
 import type { DailyHintPolicy } from '@/lib/daily/hintPolicy';
+import type { SolveTier } from '@/lib/daily/feedbackTiers';
 import { LeaveGameConfirm } from './header/LeaveGameConfirm';
 import { PlayerAvatarStack } from './header/PlayerAvatarStack';
 import { ScoreCounter } from './header/ScoreCounter';
@@ -55,6 +56,10 @@ type GameHeaderProps = {
     onAutoHintChange?: (enabled: boolean, duration: number) => void;
     /** Game-master policy, forwarded to the info screen's preference defaults. */
     hintPolicy?: DailyHintPolicy;
+    /** Applies a sound change to the running game before it is persisted. */
+    onAudioChange?: (enabled: boolean, volume?: number) => void;
+    /** Plays a sample chime from the info screen's sound controls. */
+    onPreviewSound?: (tier: SolveTier) => void;
 };
 
 /**
@@ -88,6 +93,8 @@ export function GameHeader({
     onRestartTutorial,
     onAutoHintChange,
     hintPolicy,
+    onAudioChange,
+    onPreviewSound,
 }: GameHeaderProps) {
     const t = useTranslations('GameRoom.Header');
 
@@ -250,6 +257,8 @@ export function GameHeader({
                         onRestartTutorial={onRestartTutorial}
                         onAutoHintChange={onAutoHintChange}
                         hintPolicy={hintPolicy}
+                        onAudioChange={onAudioChange}
+                        onPreviewSound={onPreviewSound}
                     />
                 </div>
             )}

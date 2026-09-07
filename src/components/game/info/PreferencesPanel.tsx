@@ -1,6 +1,7 @@
 import { Globe, Moon, Settings, Sun, Volume2, VolumeX } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Switch } from '@/components/ui/switch';
+import { Slider } from '@/components/ui/slider';
 import { LanguagePicker } from '@/components/LanguagePicker';
 import { AutoHintSetting } from './AutoHintSetting';
 import { SettingRow } from './SettingRow';
@@ -9,10 +10,15 @@ type PreferencesPanelProps = {
     autoHintEnabled: boolean;
     duration: number;
     audioEnabled: boolean;
+    /** 0-1 scale on top of the game master's volume. */
+    volume: number;
     theme?: string;
     updating: boolean;
     onAutoHintChange: (enabled: boolean, duration: number) => void;
     onToggleAudio: (checked: boolean) => void;
+    onVolumeChange: (volume: number) => void;
+    /** Fired when the volume slider is released, so dragging is not a chord. */
+    onVolumeCommit: () => void;
     onToggleTheme: (checked: boolean) => void;
     onPreviewChime: () => void;
 };
@@ -22,10 +28,13 @@ export function PreferencesPanel({
     autoHintEnabled,
     duration,
     audioEnabled,
+    volume,
     theme,
     updating,
     onAutoHintChange,
     onToggleAudio,
+    onVolumeChange,
+    onVolumeCommit,
     onToggleTheme,
     onPreviewChime,
 }: PreferencesPanelProps) {
@@ -62,6 +71,33 @@ export function PreferencesPanel({
             >
                 <Switch checked={audioEnabled} onCheckedChange={onToggleAudio} disabled={updating} />
             </SettingRow>
+
+            {/*
+              * Only shown once sound is on. A volume slider above a mute switch
+              * is a control that visibly does nothing, and players read that as
+              * the setting being broken rather than as it being irrelevant.
+              */}
+            {audioEnabled && (
+                <div className="ps-1 pe-1">
+                    <div className="mb-2 flex items-center justify-between">
+                        <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                            {t('volume_title')}
+                        </span>
+                        <span className="text-xs tabular-nums text-gray-400">
+                            {Math.round(volume * 100)}%
+                        </span>
+                    </div>
+                    <Slider
+                        value={[volume]}
+                        min={0}
+                        max={1}
+                        step={0.05}
+                        onValueChange={([next]) => onVolumeChange(next)}
+                        onValueCommit={onVolumeCommit}
+                        aria-label={t('volume_title')}
+                    />
+                </div>
+            )}
 
             <SettingRow
                 icon={<Globe className="w-4 h-4" />}

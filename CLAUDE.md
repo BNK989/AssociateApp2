@@ -248,7 +248,7 @@ a file that has grown past it needs splitting, not pinning.
 
 **Other open items:**
 
-`npm run lint` reports **0 errors, 70 warnings** (measured 2026-09-05). Every
+`npm run lint` reports **0 errors, 68 warnings** (measured 2026-09-07). Every
 rule in this document is enforced and green.
 
 | Count | Rule | Severity | Note |
@@ -257,7 +257,7 @@ rule in this document is enforced and green.
 | 0 | `no-restricted-syntax` (RTL) | error | cleared 2026-08-21, 3 annotated exceptions |
 | 0 | `no-console` | error | cleared 2026-08-21 |
 | 0 | `prefer-const`, `ban-ts-comment`, `no-require-imports`, `react/no-unescaped-entities`, `react-hooks/immutability`, `react-hooks/purity` | error | cleared 2026-08-21 |
-| 22 | `react-hooks/set-state-in-effect` | **warn** | deliberate, see below |
+| 20 | `react-hooks/set-state-in-effect` | **warn** | deliberate, see below |
 | 38 | `@typescript-eslint/no-unused-vars` | warn | |
 | 7 | `react-hooks/exhaustive-deps` | warn | |
 | 3 | `@next/next/no-img-element` | warn | |
@@ -283,7 +283,9 @@ is what effects exist for:
 
 The count rises as files are split, which is expected rather than alarming:
 extracting an inline closure into a named hook makes a setState the analyser
-could not previously trace visible to it. Nothing new is introduced.
+could not previously trace visible to it. Nothing new is introduced. It fell by
+two on 2026-09-07 when `useDailyGame`'s two persistence effects moved into
+`useDailyPersistence`, which sets no state of its own.
 
 The `CipherText` pair are the only two worth revisiting: they are genuinely
 derived-state-in-an-effect, but untangling them means rewriting an animation
@@ -335,12 +337,13 @@ in Hebrew/Arabic (§13).
 - `src/types/database.types.ts` (590 lines) is a generated artifact and is
   exempt from the §2 line cap.
 - Emojis in ~8 component files and in `messages/*.json` copy (10–13 per locale).
-- Five migrations are written but **not yet applied**:
+- Six migrations are written but **not yet applied**:
   `20260822090000_lock_down_function_execute.sql`,
   `20260822090100_pin_function_search_path.sql`,
   `20260822090200_document_api_usage_rls.sql`,
-  `20260822140000_create_game_settings.sql` and
-  `20260823090000_add_settings_revision_to_daily_results.sql`.
+  `20260822140000_create_game_settings.sql`,
+  `20260823090000_add_settings_revision_to_daily_results.sql` and
+  `20260907120000_seed_daily_feedback_settings.sql`.
   For the first, deploy the app first — it removes the EXECUTE grant the
   pre-deploy code relied on for `distribute_game_points`. See
   [knowledge base/database_security.md](knowledge%20base/database_security.md).
@@ -348,6 +351,11 @@ in Hebrew/Arabic (§13).
   applied the game runs on compiled defaults and results record without
   attribution, both of which are logged with the filename to apply. See
   [knowledge base/game_master_guide.md](knowledge%20base/game_master_guide.md).
+  The last one seeds the `daily_feedback` row and depends on
+  `20260822140000_create_game_settings.sql` having run first; until then reward
+  feedback plays on the compiled `REWARD_FEEDBACK` defaults and the admin
+  panel's feedback section cannot save. See
+  [knowledge base/reward_feedback.md](knowledge%20base/reward_feedback.md).
 - `GameSettingsRow` in `src/types/app.ts` is hand-written because its table's
   migration is not applied yet, so the generated types do not know it exists.
   Regenerate `database.types.ts` after applying and swap in the generated alias.

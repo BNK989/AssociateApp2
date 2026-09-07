@@ -25,8 +25,8 @@ import { useDailyTutorial } from '@/components/daily/useDailyTutorial';
 import { useExperimentStartLevel } from '@/components/daily/useExperimentStartLevel';
 import { useProgressCue } from '@/components/daily/useProgressCue';
 import { useStartWordAnimation } from '@/components/daily/useStartWordAnimation';
-import { useSuccessSound } from '@/components/daily/useSuccessSound';
-import type { DailyHintSettings } from '@/lib/gameSettings/settingsRow';
+import { useRewardFeedback } from '@/hooks/useRewardFeedback';
+import type { DailyFeedbackSettings, DailyHintSettings } from '@/lib/gameSettings/settingsRow';
 
 type DailyGameClientProps = {
     dailyWords: string[];
@@ -36,6 +36,8 @@ type DailyGameClientProps = {
     initialConnectionScores?: number[] | null;
     /** Game-master hint policy, resolved on the server so there is no flash. */
     hintSettings: DailyHintSettings;
+    /** Game-master reward-feedback policy, resolved on the server for the same reason. */
+    feedbackSettings: DailyFeedbackSettings;
 };
 
 export default function DailyGameClient(props: DailyGameClientProps) {
@@ -53,6 +55,7 @@ function DailyGameBoard({
     initialHints,
     initialConnectionScores,
     hintSettings,
+    feedbackSettings,
 }: DailyGameClientProps) {
     const router = useRouter();
     const { user: authUser, session, loading: authLoading } = useAuth();
@@ -63,8 +66,10 @@ function DailyGameBoard({
     const [isInfoOpen, setIsInfoOpen] = useState(false);
 
     const experimentStartLevel = useExperimentStartLevel();
-    const playSuccessSound = useSuccessSound();
-    const settings = useDailySettings(authUser, isInfoOpen, hintSettings, experimentStartLevel);
+    const settings = useDailySettings(
+        authUser, isInfoOpen, hintSettings, experimentStartLevel, feedbackSettings,
+    );
+    const { playSolve, playMiss, preview } = useRewardFeedback(settings.feedback);
     const userType = authUser ? 'registered' : 'guest';
 
     /**
@@ -88,7 +93,8 @@ function DailyGameBoard({
         settingsRevision: hintSettings.revision,
         hints: initialHints,
         connectionScores: initialConnectionScores,
-        playSuccessSound,
+        playSolveSound: playSolve,
+        playMissSound: playMiss,
         onSolved: ({ word, points, totalScore, consecutive }) => {
             posthog.capture('daily_word_solved', {
                 word,
@@ -252,6 +258,8 @@ function DailyGameBoard({
                 externalShowInfo={isInfoOpen}
                 onInfoToggle={setIsInfoOpen}
                 onAutoHintChange={settings.setAutoHint}
+                onAudioChange={settings.setAudio}
+                onPreviewSound={preview}
                 hintPolicy={settings.policy}
                 shareText={shareText}
                 onWelcomeComplete={
@@ -267,6 +275,7 @@ function DailyGameBoard({
                 targetMessage={game.targetMessage}
                 shakeMessageId={game.shakeMessageId}
                 justSolvedData={game.justSolvedData}
+                feedbackPolicy={settings.feedback}
                 players={players}
                 onTestEndSequence={game.forceGameOver}
                 onResetGame={game.reset}

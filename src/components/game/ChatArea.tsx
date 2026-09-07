@@ -14,6 +14,8 @@ import { useAdminMessageActions } from './chat/useAdminMessageActions';
 import { useBubbleWidth } from './chat/useBubbleWidth';
 import { useChatScroll } from './chat/useChatScroll';
 import { useSolvingConfetti } from './chat/useSolvingConfetti';
+import type { DailyFeedbackPolicy } from '@/lib/daily/feedbackPolicy';
+import type { JustSolved } from '@/lib/daily/feedbackTiers';
 
 type ChatAreaProps = {
     messages: Message[];
@@ -22,7 +24,9 @@ type ChatAreaProps = {
     messagesEndRef: React.RefObject<HTMLDivElement | null>;
     targetMessage?: Message;
     shakeMessageId?: string | null;
-    justSolvedData?: { id: string; points: number } | null;
+    justSolvedData?: JustSolved | null;
+    /** How rewarding solve flourishes may be. Omitted, the compiled floor applies. */
+    feedbackPolicy?: DailyFeedbackPolicy;
     onStartRandom?: () => void;
     typingUsers?: Set<string>;
     players?: Player[];
@@ -46,6 +50,7 @@ export function ChatArea({
     targetMessage,
     shakeMessageId,
     justSolvedData,
+    feedbackPolicy,
     onStartRandom,
     typingUsers,
     players,
@@ -108,8 +113,8 @@ export function ChatArea({
                                     currentUserId={user?.id}
                                     targetMessageId={targetMessage?.id}
                                     isShaking={shakeMessageId === message.id}
-                                    isJustSolved={justSolvedData?.id === message.id}
-                                    justSolvedPoints={justSolvedData?.points}
+                                    justSolved={justSolvedData?.id === message.id ? justSolvedData : null}
+                                    feedbackPolicy={feedbackPolicy}
                                     isRevealed={Boolean(revealedMessages[message.id])}
                                     scrambleTrigger={scrambleTriggerMap[message.id]}
                                     activeBubbleWidth={activeBubbleWidth}

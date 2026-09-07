@@ -12,6 +12,7 @@ import {
     MAX_STRIKES,
 } from '@/lib/classicGame/classicRules';
 import type { FloatingAnimationData, GameState, Message, Player } from './types';
+import type { JustSolved } from '@/lib/daily/feedbackTiers';
 
 const log = createLogger('game');
 
@@ -27,7 +28,7 @@ type UseSolveActionsArgs = {
     setGame: React.Dispatch<React.SetStateAction<GameState | null>>;
     setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
     setInput: (value: string) => void;
-    setJustSolved: (value: { id: string; points: number } | null) => void;
+    setJustSolved: (value: JustSolved | null) => void;
     setFloatingAnimation: (value: FloatingAnimationData | null) => void;
     markAction: () => void;
     refetch: () => void;

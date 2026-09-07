@@ -263,32 +263,6 @@ html[dir="rtl"] body {
   animation: thumbs-up 2s ease-out forwards;
 }
 
-@keyframes float-up {
-  0% {
-    opacity: 0;
-    transform: translateY(0) scale(0.5);
-  }
-
-  15% {
-    opacity: 1;
-    transform: translateY(-10px) scale(1.2);
-  }
-
-  30% {
-    transform: translateY(-15px) scale(1);
-  }
-
-  70% {
-    opacity: 1;
-    transform: translateY(-25px);
-  }
-
-  100% {
-    opacity: 0;
-    transform: translateY(-40px);
-  }
-}
-
 @keyframes welcome-scale {
   0% {
     transform: scale(0.8);

@@ -11,6 +11,7 @@ import { ScoreSummary } from './info/ScoreSummary';
 import { useGameInstructions } from './info/gameInstructions';
 import { useInfoSettings } from './info/useInfoSettings';
 import type { DailyHintPolicy } from '@/lib/daily/hintPolicy';
+import type { SolveTier } from '@/lib/daily/feedbackTiers';
 import { useShareResults } from './info/useShareResults';
 import { CARD_BOX } from '@/components/game/cardBox';
 
@@ -28,6 +29,10 @@ type InfoScreenProps = {
     onAutoHintChange?: (enabled: boolean, duration: number) => void;
     /** Game-master policy the preference defaults are read from. */
     hintPolicy?: DailyHintPolicy;
+    /** Applies a sound change to the running game before it is persisted. */
+    onAudioChange?: (enabled: boolean, volume?: number) => void;
+    /** Plays a sample chime, so a sound change can be heard as it is made. */
+    onPreviewSound?: (tier: SolveTier) => void;
 };
 
 /**
@@ -50,11 +55,18 @@ export function InfoScreen({
     onRestartTutorial,
     onAutoHintChange,
     hintPolicy,
+    onAudioChange,
+    onPreviewSound,
 }: InfoScreenProps) {
     const t = useTranslations('GameRoom.Info');
     const isDaily = Boolean(dailyTheme);
 
-    const settings = useInfoSettings(onAutoHintChange, hintPolicy);
+    const settings = useInfoSettings({
+        onAutoHintChange,
+        policy: hintPolicy,
+        onAudioChange,
+        onPreviewSound,
+    });
     const instructions = useGameInstructions(isDaily);
 
     const myScore = players.find((p) => p.user_id === user?.id)?.score || 0;
@@ -89,12 +101,15 @@ export function InfoScreen({
                         autoHintEnabled={settings.autoHintEnabled}
                         duration={settings.duration}
                         audioEnabled={settings.audioEnabled}
+                        volume={settings.volume}
                         theme={settings.theme}
                         updating={settings.updating}
                         onAutoHintChange={settings.updateAutoHint}
                         onToggleAudio={settings.toggleAudio}
+                        onVolumeChange={settings.updateVolume}
+                        onVolumeCommit={settings.previewVolume}
                         onToggleTheme={settings.toggleTheme}
-                        onPreviewChime={settings.playChime}
+                        onPreviewChime={settings.previewVolume}
                     />
 
                     <div className="flex items-center gap-2 pt-2">

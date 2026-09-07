@@ -84,3 +84,28 @@ export const GAME_MODES = [
    to view executions:
    select * from cron.job_run_details order by start_time desc;
 */
+
+/**
+ * Compiled floor for the reward-feedback policy (sound, flourish, haptics).
+ *
+ * Same contract as the hint policy: these are what the game plays by when the
+ * `daily_feedback` row in `game_settings` is absent, unreadable, or malformed,
+ * so reward feedback never depends on a table being present. Overrides are
+ * edited at /admin/game-settings and parsed by `src/lib/daily/feedbackPolicy.ts`.
+ */
+export const REWARD_FEEDBACK = {
+  /** Master switch for the solve chime. A player's own mute still wins. */
+  SOUND_ENABLED: true,
+  /** Ceiling on how loud reward audio may play, 0–1. */
+  VOLUME: 0.7,
+  /** Whether a running streak transposes the chime up the pentatonic ladder. */
+  STREAK_PITCH: true,
+  /** A short, quiet descending tone on a wrong guess. */
+  MISS_SOUND: true,
+  /** Lowest solve tier that earns a particle burst; 'off' disables bursts. */
+  BURST_FROM: 'solid',
+  /** Scales the size and travel of every solve flourish, 0–1. */
+  FLOURISH: 1,
+  /** Short vibration on devices that support it. */
+  HAPTICS: true,
+};

@@ -9,6 +9,7 @@ describe('resolveInfoSettings', () => {
             autoHintEnabled: GAME_CONFIG.DEFAULT_AUTO_HINT_ENABLED,
             duration: GAME_CONFIG.DEFAULT_AUTO_HINT_DURATION,
             audioEnabled: true,
+            volume: 1,
         });
     });
 
@@ -22,7 +23,7 @@ describe('resolveInfoSettings', () => {
             auto_hint_enabled: false,
             auto_hint_duration: 3,
             enable_audio_chime: false,
-        })).toEqual({ autoHintEnabled: false, duration: 3, audioEnabled: false });
+        })).toEqual({ autoHintEnabled: false, duration: 3, audioEnabled: false, volume: 1 });
     });
 
     it('keeps an explicit zero delay rather than falling back', () => {
@@ -43,6 +44,25 @@ describe('resolveInfoSettings', () => {
         expect(resolveInfoSettings({ enable_audio_chime: true }).audioEnabled).toBe(true);
     });
 
+    // Volume follows the audio rule, not the auto-hint one: a player who has
+    // never touched it has not asked to be quieter.
+    it('defaults volume to full when nothing is stored', () => {
+        expect(resolveInfoSettings({}).volume).toBe(1);
+    });
+
+    it('keeps a stored volume, including an explicit zero', () => {
+        expect(resolveInfoSettings({ audio_volume: 0.4 }).volume).toBe(0.4);
+        expect(resolveInfoSettings({ audio_volume: 0 }).volume).toBe(0);
+    });
+
+    // A stored 5 would multiply the game master's ceiling instead of scaling
+    // it, which is how a settings blob becomes a bug report about the volume.
+    it('clamps a volume outside 0-1 rather than passing it on', () => {
+        expect(resolveInfoSettings({ audio_volume: 5 }).volume).toBe(1);
+        expect(resolveInfoSettings({ audio_volume: -2 }).volume).toBe(0);
+        expect(resolveInfoSettings({ audio_volume: Number.NaN }).volume).toBe(1);
+    });
+
     describe('with a game-master policy', () => {
         const policy = {
             ...DEFAULT_HINT_POLICY,
@@ -61,6 +81,7 @@ describe('resolveInfoSettings', () => {
                 autoHintEnabled: false,
                 duration: 45,
                 audioEnabled: true,
+                volume: 1,
             });
         });
 
@@ -72,7 +93,7 @@ describe('resolveInfoSettings', () => {
 
         it('still prefers what the player stored', () => {
             expect(resolveInfoSettings({ auto_hint_enabled: true, auto_hint_duration: 5 }, policy))
-                .toEqual({ autoHintEnabled: true, duration: 5, audioEnabled: true });
+                .toEqual({ autoHintEnabled: true, duration: 5, audioEnabled: true, volume: 1 });
         });
 
         it('keeps an explicit zero delay against a non-zero policy', () => {

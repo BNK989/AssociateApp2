@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import DailyGameClient from './DailyGameClient';
 import { notFound } from 'next/navigation';
 import { createLogger } from '@/lib/logger';
-import { getDailyHintSettings } from '@/lib/gameSettings/server';
+import { getDailyFeedbackSettings, getDailyHintSettings } from '@/lib/gameSettings/server';
 import { defaultLocale, isSupportedLocale } from '@/i18n/locales';
 import type { TranslatedGameData } from '@/lib/dailyTranslation';
 
@@ -131,10 +131,14 @@ export default async function DailyGamePage({
         }
     }
 
-    // Read on the server so the board is built with the right hint levels from
-    // the first paint — resolving this on the client would show the default
-    // policy first and then rewrite the board underneath the player.
-    const hintSettings = await getDailyHintSettings();
+    // Read on the server so the board is built with the right hint levels — and
+    // the right reward feel — from the first paint. Resolving either on the
+    // client would show the defaults first and then rewrite the board
+    // underneath the player.
+    const [hintSettings, feedbackSettings] = await Promise.all([
+        getDailyHintSettings(),
+        getDailyFeedbackSettings(),
+    ]);
 
     return (
         <DailyGameClient
@@ -144,6 +148,7 @@ export default async function DailyGamePage({
             initialHints={dailyGame.hints}
             initialConnectionScores={dailyGame.connection_scores}
             hintSettings={hintSettings}
+            feedbackSettings={feedbackSettings}
         />
     );
 }

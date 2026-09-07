@@ -7,13 +7,16 @@ import { DEFAULT_HINT_POLICY, type DailyHintPolicy } from '@/lib/daily/hintPolic
 import { createLogger } from '@/lib/logger';
 import { useAuth } from '@/context/AuthProvider';
 import type { ProfileSettings } from '@/types/app';
+import type { SolveTier } from '@/lib/daily/feedbackTiers';
 import { resolveInfoSettings } from './resolveInfoSettings';
 
 const log = createLogger('game/info');
 
 /** Guests keep their preferences here; signed-in players use `profiles.settings`. */
 const GUEST_SETTINGS_KEY = 'daily_game_settings';
-const CHIME_SRC = '/sounds/notifications/chime1.mp3';
+
+/** The tier previewed when the player changes a sound control. */
+const PREVIEW_TIER: SolveTier = 'clean';
 
 function readGuestSettings(): ProfileSettings {
     try {
@@ -36,24 +39,30 @@ function writeGuestSettings(patch: ProfileSettings): void {
     }
 }
 
-function playChime(): void {
-    new Audio(CHIME_SRC)
-        .play()
-        .catch((e) => log.warn('play_audio', 'Chime playback failed', undefined, e));
-}
+type UseInfoSettingsArgs = {
+    onAutoHintChange?: (enabled: boolean, duration: number) => void;
+    policy?: DailyHintPolicy;
+    /** Applies a sound change to the running game before it is persisted. */
+    onAudioChange?: (enabled: boolean, volume?: number) => void;
+    /** Plays a sample so the player hears what they just changed. */
+    onPreviewSound?: (tier: SolveTier) => void;
+};
 
 /**
  * Player preferences shown in the info screen, backed by the profile row for
  * signed-in players and by localStorage for guests.
  *
- * Auto-hint changes are applied locally as the player fiddles with them and
- * only persisted on close — the time picker would otherwise write on every tick.
- * The audio and theme toggles persist immediately, since each is a single act.
+ * Auto-hint and volume changes are applied locally as the player fiddles with
+ * them and only persisted on close — a slider would otherwise write on every
+ * tick. The sound and theme toggles persist immediately, since each is a single
+ * act.
  */
-export function useInfoSettings(
-    onAutoHintChange?: (enabled: boolean, duration: number) => void,
-    policy: DailyHintPolicy = DEFAULT_HINT_POLICY,
-) {
+export function useInfoSettings({
+    onAutoHintChange,
+    policy = DEFAULT_HINT_POLICY,
+    onAudioChange,
+    onPreviewSound,
+}: UseInfoSettingsArgs = {}) {
     const t = useTranslations('GameRoom.Info');
     const { user: authUser, profile, refreshProfile } = useAuth();
     const { theme, setTheme } = useTheme();
@@ -62,6 +71,7 @@ export function useInfoSettings(
     const [autoHintEnabled, setAutoHintEnabled] = useState(policy.autoEnabled);
     const [duration, setDuration] = useState(policy.rungs[0].delaySeconds);
     const [audioEnabled, setAudioEnabled] = useState(true);
+    const [volume, setVolume] = useState(1);
 
     useEffect(() => {
         const stored: ProfileSettings = authUser && profile?.settings
@@ -72,21 +82,17 @@ export function useInfoSettings(
         setAutoHintEnabled(resolved.autoHintEnabled);
         setDuration(resolved.duration);
         setAudioEnabled(resolved.audioEnabled);
+        setVolume(resolved.volume);
     }, [authUser, profile, policy]);
 
-    /** Applied immediately so the game reacts; persisted later by `save()`. */
-    const updateAutoHint = useCallback((enabled: boolean, newDuration: number) => {
-        setAutoHintEnabled(enabled);
-        setDuration(newDuration);
-        onAutoHintChange?.(enabled, newDuration);
-    }, [onAutoHintChange]);
-
-    const save = useCallback(async () => {
-        const patch: ProfileSettings = {
-            auto_hint_enabled: autoHintEnabled,
-            auto_hint_duration: duration,
-        };
-
+    /**
+     * Merges a patch into `profiles.settings`.
+     *
+     * Deliberately spreads the existing blob: `settings` is a single jsonb
+     * column, so writing a bare patch would drop every preference not named in
+     * it.
+     */
+    const persist = useCallback(async (patch: ProfileSettings) => {
         if (!authUser) {
             writeGuestSettings(patch);
             return;
@@ -101,38 +107,55 @@ export function useInfoSettings(
 
             if (error) throw error;
             await refreshProfile();
-        } catch (e: unknown) {
-            log.error('save_settings', 'Failed to save settings', { user_id: authUser.id }, e);
+        } catch (e) {
+            log.error('save_settings', 'Failed to save settings', {
+                user_id: authUser.id,
+                fields: Object.keys(patch).join(','),
+            }, e);
+            toast.error(t('toast_settings_fail'));
         } finally {
             setUpdating(false);
         }
-    }, [authUser, profile?.settings, autoHintEnabled, duration, refreshProfile]);
+    }, [authUser, profile?.settings, refreshProfile, t]);
+
+    /** Applied immediately so the game reacts; persisted later by `save()`. */
+    const updateAutoHint = useCallback((enabled: boolean, newDuration: number) => {
+        setAutoHintEnabled(enabled);
+        setDuration(newDuration);
+        onAutoHintChange?.(enabled, newDuration);
+    }, [onAutoHintChange]);
+
+    /** Persists what the screen holds. Called when the info screen closes. */
+    const save = useCallback(
+        () => persist({
+            auto_hint_enabled: autoHintEnabled,
+            auto_hint_duration: duration,
+            audio_volume: volume,
+        }),
+        [persist, autoHintEnabled, duration, volume],
+    );
 
     const toggleAudio = useCallback(async (checked: boolean) => {
         setAudioEnabled(checked);
+        onAudioChange?.(checked, volume);
 
-        if (!authUser) {
-            writeGuestSettings({ enable_audio_chime: checked });
-        } else if (!updating) {
-            setUpdating(true);
-            try {
-                const { error } = await supabase
-                    .from('profiles')
-                    .update({ settings: { ...profile?.settings, enable_audio_chime: checked } })
-                    .eq('id', authUser.id);
+        // A single deliberate act, so it lands now rather than on close: a
+        // player who mutes and then closes the tab should stay muted.
+        await persist({ enable_audio_chime: checked });
 
-                if (error) throw error;
-                await refreshProfile();
-            } catch (e) {
-                log.error('toggle_chime', 'Failed to save audio chime preference', { user_id: authUser.id }, e);
-                toast.error(t('toast_settings_fail'));
-            } finally {
-                setUpdating(false);
-            }
-        }
+        if (checked) onPreviewSound?.(PREVIEW_TIER);
+    }, [persist, onAudioChange, onPreviewSound, volume]);
 
-        if (checked) playChime();
-    }, [authUser, profile?.settings, updating, refreshProfile, t]);
+    /** Live while dragging; written by `save()` when the screen closes. */
+    const updateVolume = useCallback((next: number) => {
+        setVolume(next);
+        onAudioChange?.(audioEnabled, next);
+    }, [onAudioChange, audioEnabled]);
+
+    /** Fired on release rather than on every tick, so dragging is not a chord. */
+    const previewVolume = useCallback(() => {
+        if (audioEnabled) onPreviewSound?.(PREVIEW_TIER);
+    }, [audioEnabled, onPreviewSound]);
 
     const toggleTheme = useCallback(async (checked: boolean) => {
         const newTheme = checked ? 'dark' : 'light';
@@ -141,23 +164,21 @@ export function useInfoSettings(
         if (!authUser) return;
 
         // next-themes drives the visual change; this is purely for persistence.
-        await supabase
-            .from('profiles')
-            .update({ settings: { ...profile?.settings, theme: newTheme } })
-            .eq('id', authUser.id);
-        refreshProfile();
-    }, [authUser, profile?.settings, setTheme, refreshProfile]);
+        await persist({ theme: newTheme });
+    }, [authUser, setTheme, persist]);
 
     return {
         updating,
         autoHintEnabled,
         duration,
         audioEnabled,
+        volume,
         theme,
         updateAutoHint,
         save,
         toggleAudio,
+        updateVolume,
+        previewVolume,
         toggleTheme,
-        playChime,
     };
 }

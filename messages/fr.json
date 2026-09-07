@@ -76,7 +76,9 @@
             "hint_used": "Indice utilisé",
             "link_strong": "Strong Link",
             "link_medium": "Loose Link",
-            "link_weak": "Weak Link"
+            "link_weak": "Weak Link",
+            "burst_announce": "Correct — {points} points.",
+            "burst_announce_streak": "Correct — {points} points, avec un bonus de série de {multiplier}×."
         },
         "Loading": {
             "app_name": "Associate",
@@ -98,7 +100,7 @@
             "instructions_dialog_title": "Instructions du Jeu",
             "preferences_title": "Préférences",
             "sounds_title": "Sons du Jeu",
-            "sounds_desc": "Jouer des sons aux tours",
+            "sounds_desc": "Sons de jeu et de récompense",
             "dark_mode_title": "Mode Sombre",
             "dark_mode_desc": "Basculer entre les thèmes clair et sombre",
             "language_title": "Langue",
@@ -168,7 +170,8 @@
                     "step4_desc": "Bloqué ? Appuyez sur l'ampoule pour un indice, ou sur le drapeau pour abandonner le mot en cours. Les indices peuvent révéler des lettres ou interroger l'IA."
                 }
             },
-            "restart_tutorial": "Restart Tutorial"
+            "restart_tutorial": "Restart Tutorial",
+            "volume_title": "Volume"
         },
         "EndGame": {
             "title": "Bien Joué !",

@@ -10,6 +10,7 @@ import { useSolveActions } from './classic/useSolveActions';
 import { useSolveProposal } from './classic/useSolveProposal';
 import { useTypingIndicator } from './classic/useTypingIndicator';
 import type { FloatingAnimationData } from './classic/types';
+import type { JustSolved } from '@/lib/daily/feedbackTiers';
 
 export type { FloatingAnimationData, GameState, Message, Player } from './classic/types';
 
@@ -38,7 +39,7 @@ export function useGameLogic(gameId: string) {
     } = useGameData(gameId, user);
 
     const [input, setInput] = useState('');
-    const [justSolvedData, setJustSolved] = useState<{ id: string; points: number } | null>(null);
+    const [justSolvedData, setJustSolved] = useState<JustSolved | null>(null);
     const [floatingAnimation, setFloatingAnimation] = useState<FloatingAnimationData | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 

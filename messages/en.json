@@ -82,7 +82,9 @@
             "hint_used": "Hint used",
             "link_strong": "Strong Link",
             "link_medium": "Loose Link",
-            "link_weak": "Weak Link"
+            "link_weak": "Weak Link",
+            "burst_announce": "Correct — {points} points.",
+            "burst_announce_streak": "Correct — {points} points, with a {multiplier}× streak bonus."
         },
         "Loading": {
             "app_name": "Associate",
@@ -105,7 +107,7 @@
             "instructions_dialog_title": "Game Instructions",
             "preferences_title": "Preferences",
             "sounds_title": "Game Sounds",
-            "sounds_desc": "Play chimes for turns",
+            "sounds_desc": "Chimes and reward sounds",
             "dark_mode_title": "Dark Mode",
             "dark_mode_desc": "Switch between light and dark themes",
             "language_title": "Language",
@@ -174,7 +176,8 @@
                     "play_now": "Play Now",
                     "next": "Next"
                 }
-            }
+            },
+            "volume_title": "Volume"
         },
         "EndGame": {
             "title": "Well Played!",

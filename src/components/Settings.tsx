@@ -121,10 +121,15 @@ export default function Settings() {
             id: user.id,
             username,
             avatar_url: avatarUrl,
+            // `settings` is one jsonb column, so it has to be merged rather
+            // than replaced: writing only the three keys this page knows about
+            // silently dropped every preference set anywhere else -- the sound
+            // toggle, the auto-hint settings and the debug flag among them.
             settings: {
+                ...profile?.settings,
                 theme, // Save current theme to profile for consistency/backup
                 language: profile?.settings?.language || 'en',
-                audio_volume: profile?.settings?.audio_volume || 1.0,
+                audio_volume: profile?.settings?.audio_volume ?? 1.0,
             },
             updated_at: new Date().toISOString(),
         };

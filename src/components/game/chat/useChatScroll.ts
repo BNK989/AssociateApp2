@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, type RefObject } from 'react';
 import type { GameState, Message } from '@/hooks/useGameLogic';
+import type { JustSolved } from '@/lib/daily/feedbackTiers';
 
 type UseChatScrollArgs = {
     containerRef: RefObject<HTMLDivElement | null>;
     messages: Message[];
     game: GameState;
     targetMessage?: Message;
-    justSolvedData?: { id: string; points: number } | null;
+    justSolvedData?: JustSolved | null;
 };
 
 /**

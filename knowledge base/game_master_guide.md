@@ -20,7 +20,8 @@ no cron wait.
 
 | Layer | Where it lives | Editable at runtime? |
 | :--- | :--- | :--- |
-| Game-master policy | `game_settings` table, key `daily_hint_policy` | **Yes** — the admin page |
+| Game-master hint policy | `game_settings` table, key `daily_hint_policy` | **Yes** — the admin page |
+| Game-master reward feel | `game_settings` table, key `daily_feedback` | **Yes** — the admin page |
 | Player preference | `profiles.settings` / localStorage | By the player, in the info screen |
 | Experiment start level | PostHog `dailygame-auto-hint-level` | Yes — the PostHog console, but see below |
 | Compiled default | [`src/lib/gameConfig.ts`](../src/lib/gameConfig.ts) | No — needs a deploy |
@@ -40,6 +41,14 @@ has to go, or the experiment has to move into the policy itself.
 ---
 
 ## 2. What you control
+
+The page has two halves. Everything in sections 2–6 below is the **hint policy**
+(key `daily_hint_policy`). The second half — *How a correct guess feels* — is the
+**reward-feedback policy** (key `daily_feedback`): the solve chime, its streak
+pitch, the wrong-guess tone, the spark burst and the flourish scale. It has its
+own guide, because its resolution rules differ in one important way (a player's
+mute always wins, and there is no `force` scope):
+**[reward_feedback.md](reward_feedback.md)**.
 
 ### How words open
 
@@ -392,3 +401,5 @@ answered. `game_settings.revision` is the join key back to `daily_results`.
 - [database_structure.md](database_structure.md) — schema
 - [daily_game_performance_dashboard.md](daily_game_performance_dashboard.md) —
   the PostHog side
+- [reward_feedback.md](reward_feedback.md) — the other half of the admin page:
+  how a correct guess sounds and looks

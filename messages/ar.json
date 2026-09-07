@@ -76,7 +76,9 @@
             "hint_used": "تم استخدام التلميح",
             "link_strong": "Strong Link",
             "link_medium": "Loose Link",
-            "link_weak": "Weak Link"
+            "link_weak": "Weak Link",
+            "burst_announce": "صحيح — {points} نقطة.",
+            "burst_announce_streak": "صحيح — {points} نقطة، مع مكافأة تتابع ×{multiplier}."
         },
         "Loading": {
             "app_name": "Associate",
@@ -98,7 +100,7 @@
             "instructions_dialog_title": "تعليمات اللعبة",
             "preferences_title": "التفضيلات",
             "sounds_title": "أصوات اللعبة",
-            "sounds_desc": "تشغيل نغمات للأدوار",
+            "sounds_desc": "أصوات اللعبة وأصوات المكافأة",
             "dark_mode_title": "الوضع الداكن",
             "dark_mode_desc": "التبديل بين السمات الفاتحة والداكنة",
             "language_title": "اللغة",
@@ -168,7 +170,8 @@
                     "step4_desc": "عالق؟ اضغط على المصباح للحصول على تلميح، أو على العلم للتخلي عن الكلمة الحالية. يمكن للتلميحات كشف حروف أو سؤال الذكاء الاصطناعي."
                 }
             },
-            "restart_tutorial": "Restart Tutorial"
+            "restart_tutorial": "Restart Tutorial",
+            "volume_title": "مستوى الصوت"
         },
         "EndGame": {
             "title": "أحسنت اللعب!",

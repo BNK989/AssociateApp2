@@ -82,7 +82,9 @@
             "hint_used": "נעשה שימוש ברמז",
             "link_strong": "קשר חזק",
             "link_medium": "קשר רופף",
-            "link_weak": "קשר חלש"
+            "link_weak": "קשר חלש",
+            "burst_announce": "נכון — {points} נקודות.",
+            "burst_announce_streak": "נכון — {points} נקודות, עם בונוס רצף של {multiplier}×."
         },
         "Loading": {
             "app_name": "Associate",
@@ -105,7 +107,7 @@
             "instructions_dialog_title": "הוראות משחק",
             "preferences_title": "הגדרות",
             "sounds_title": "צלילים",
-            "sounds_desc": "הפעל צלילים בתורות",
+            "sounds_desc": "צלילי משחק וצלילי תגמול",
             "dark_mode_title": "מצב כהה",
             "dark_mode_desc": "החלף בין מצב אור לחושך",
             "language_title": "שפה",
@@ -174,7 +176,8 @@
                     "play_now": "שחקו עכשיו",
                     "next": "הבא"
                 }
-            }
+            },
+            "volume_title": "עוצמת שמע"
         },
         "EndGame": {
             "title": "משחק נהדר!",

@@ -1,23 +1,60 @@
 import { NextResponse } from 'next/server';
-import { revalidateTag } from 'next/cache';
-import { createAdminClient } from '@/lib/supabase-admin';
 import { requireAdmin } from '@/lib/adminAuth';
 import { createLogger } from '@/lib/logger';
 import { DEFAULT_HINT_POLICY, parseHintPolicy } from '@/lib/daily/hintPolicy';
+import { DEFAULT_FEEDBACK_POLICY, parseFeedbackPolicy } from '@/lib/daily/feedbackPolicy';
 import {
+    DAILY_FEEDBACK_KEY,
     DAILY_HINT_POLICY_KEY,
-    GAME_SETTINGS_TAG,
+    getDailyFeedbackSettings,
     getDailyHintSettings,
 } from '@/lib/gameSettings/server';
+import { writeSetting } from '@/lib/gameSettings/writeSetting';
 
 export const dynamic = 'force-dynamic';
 
 const log = createLogger('api/admin/game-settings');
 
 /**
- * Reads the daily hint policy for the admin panel.
+ * The settings keys this route will write, and how each one is normalised.
  *
- * Returns the compiled defaults alongside the stored value so the panel can
+ * A registry rather than a second route per key: the revision counter, the
+ * audit entry and the cache expiry are identical for every key and are exactly
+ * the parts that must not be reimplemented. What differs is the parser, so that
+ * is the only thing a key contributes.
+ *
+ * `hasScope` marks the keys where `default` and `force` mean something. Reward
+ * feedback has no scope — a player's mute always wins, so there is nothing for
+ * `force` to express — and a scope sent for it is rejected rather than stored
+ * as a setting that would silently do nothing.
+ */
+const KEYS = {
+    [DAILY_HINT_POLICY_KEY]: {
+        parse: parseHintPolicy,
+        codeDefault: DEFAULT_HINT_POLICY,
+        hasScope: true,
+    },
+    [DAILY_FEEDBACK_KEY]: {
+        parse: parseFeedbackPolicy,
+        codeDefault: DEFAULT_FEEDBACK_POLICY,
+        hasScope: false,
+    },
+} as const;
+
+type SettingsKey = keyof typeof KEYS;
+
+function isSettingsKey(value: unknown): value is SettingsKey {
+    return typeof value === 'string' && value in KEYS;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Reads both settings keys for the admin panel.
+ *
+ * Returns the compiled defaults alongside each stored value so the panel can
  * show, per field, what the code would do if the setting were cleared — which
  * is what makes "reset to default" meaningful rather than a guess.
  */
@@ -29,29 +66,33 @@ export async function GET() {
         return NextResponse.json({ error: auth.reason }, { status: auth.status });
     }
 
-    const settings = await getDailyHintSettings();
+    const [hints, feedback] = await Promise.all([
+        getDailyHintSettings(),
+        getDailyFeedbackSettings(),
+    ]);
 
     return NextResponse.json({
         key: DAILY_HINT_POLICY_KEY,
-        policy: settings.policy,
-        scope: settings.scope,
-        revision: settings.revision,
+        policy: hints.policy,
+        scope: hints.scope,
+        revision: hints.revision,
         codeDefault: DEFAULT_HINT_POLICY,
+        feedback: {
+            key: DAILY_FEEDBACK_KEY,
+            policy: feedback.policy,
+            revision: feedback.revision,
+            codeDefault: DEFAULT_FEEDBACK_POLICY,
+        },
     });
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-    return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
 /**
- * Saves a new daily hint policy.
+ * Saves one settings key.
  *
- * The write runs through the service-role client: `game_settings` has RLS with
- * no write policy, so the anon key in the browser bundle cannot reach it. The
- * `requireAdmin` check above is therefore the whole of the authorisation.
+ * `key` is optional and defaults to the hint policy, so the shape this route
+ * answered before reward feedback existed still works unchanged.
  *
- * The submitted policy is normalised through `parseHintPolicy` and the stored
+ * The submitted policy is normalised through the key's parser and the stored
  * result is echoed back, so the panel always shows what was actually written
  * rather than what it hoped to write.
  */
@@ -76,98 +117,45 @@ export async function PUT(request: Request) {
         return NextResponse.json({ error: 'Body must be an object' }, { status: 400 });
     }
 
+    const key = body.key === undefined ? DAILY_HINT_POLICY_KEY : body.key;
+
+    if (!isSettingsKey(key)) {
+        log.warn('validate', 'Settings write rejected: unknown key', {
+            user_id: auth.userId,
+            received: String(key),
+        });
+        return NextResponse.json({ error: `Unknown settings key: ${String(key)}` }, { status: 400 });
+    }
+
+    const entry = KEYS[key];
+
     // Scope is rejected rather than normalised. Silently coercing it would flip
     // whether the policy binds every player or only new ones, which is too
     // consequential to guess at on the player's behalf.
-    if (body.scope !== 'default' && body.scope !== 'force') {
+    if (entry.hasScope && body.scope !== 'default' && body.scope !== 'force') {
         log.warn('validate', 'Settings write rejected: scope must be "default" or "force"', {
             user_id: auth.userId,
+            key,
             received: String(body.scope),
         });
         return NextResponse.json({ error: 'scope must be "default" or "force"' }, { status: 400 });
     }
 
-    const scope = body.scope;
-    const policy = parseHintPolicy(body.policy);
+    const scope = entry.hasScope ? (body.scope as 'default' | 'force') : 'default';
+    const policy = entry.parse(body.policy);
 
-    const supabase = createAdminClient();
+    const result = await writeSetting({ key, value: policy, scope, userId: auth.userId });
 
-    // Read-then-write rather than `revision = revision + 1`, which supabase-js
-    // cannot express. The panel has a single writer, so the race window between
-    // the two statements is not worth an RPC.
-    const { data: current, error: readError } = await supabase
-        .from('game_settings')
-        .select('revision')
-        .eq('key', DAILY_HINT_POLICY_KEY)
-        .maybeSingle<{ revision: number | null }>();
-
-    if (readError) {
-        log.error('read', 'Could not read the current revision before saving', {
-            user_id: auth.userId,
-            key: DAILY_HINT_POLICY_KEY,
-        }, readError);
-        return NextResponse.json({ error: 'Could not read the current settings' }, { status: 500 });
+    if (!result.ok) {
+        return NextResponse.json({ error: result.error }, { status: result.status });
     }
 
-    const revision = (current?.revision ?? 0) + 1;
-
-    const { error: writeError } = await supabase
-        .from('game_settings')
-        .upsert({
-            key: DAILY_HINT_POLICY_KEY,
-            value: policy,
-            scope,
-            revision,
-            updated_by: auth.userId,
-            updated_at: new Date().toISOString(),
-        }, { onConflict: 'key' });
-
-    if (writeError) {
-        log.error('write', 'Failed to save the daily hint policy', {
-            user_id: auth.userId,
-            key: DAILY_HINT_POLICY_KEY,
-            revision,
-        }, writeError);
-        return NextResponse.json({ error: 'Could not save the settings' }, { status: 500 });
-    }
-
-    // Audit trail. A failure here does not fail the request — the setting is
-    // already live, and refusing to report that would be worse than a gap in
-    // the history — but it is logged as an error because a missing entry breaks
-    // the "what changed on the 14th" question the table exists to answer.
-    const { error: historyError } = await supabase
-        .from('game_settings_history')
-        .insert({
-            key: DAILY_HINT_POLICY_KEY,
-            value: policy,
-            scope,
-            revision,
-            updated_by: auth.userId,
-        });
-
-    if (historyError) {
-        log.error('history', 'Settings saved but the history entry failed to write', {
-            user_id: auth.userId,
-            key: DAILY_HINT_POLICY_KEY,
-            revision,
-        }, historyError);
-    }
-
-    // 'max' fully expires the tag rather than merely marking it stale, so the
-    // next read of the daily page gets the new policy instead of serving the
-    // previous one for the remainder of its 60s window.
-    revalidateTag(GAME_SETTINGS_TAG, 'max');
-
-    log.info('write', 'Daily hint policy saved', {
+    log.info('write', 'Game setting saved', {
         user_id: auth.userId,
-        revision,
+        key,
+        revision: result.revision,
         scope,
-        start_level: policy.startLevel,
-        applies_to: policy.startLevelAppliesTo,
-        stagger: policy.stagger,
-        progression: policy.progression,
-        auto_enabled: policy.autoEnabled,
     });
 
-    return NextResponse.json({ policy, scope, revision });
+    return NextResponse.json({ key, policy, scope, revision: result.revision });
 }

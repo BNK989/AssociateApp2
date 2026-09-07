@@ -7,7 +7,12 @@ import {
     resolveHintPolicy,
     type DailyHintPolicy,
 } from '@/lib/daily/hintPolicy';
-import type { DailyHintSettings } from '@/lib/gameSettings/settingsRow';
+import {
+    DEFAULT_FEEDBACK_POLICY,
+    resolveFeedbackPolicy,
+    type DailyFeedbackPolicy,
+} from '@/lib/daily/feedbackPolicy';
+import type { DailyFeedbackSettings, DailyHintSettings } from '@/lib/gameSettings/settingsRow';
 import type { ProfileSettings } from '@/types/app';
 
 const log = createLogger('daily/settings');
@@ -45,12 +50,15 @@ export function useDailySettings(
     isInfoOpen: boolean,
     gameMaster: DailyHintSettings,
     experimentStartLevel?: number | null,
+    feedbackSettings?: DailyFeedbackSettings,
 ) {
     // Held as separate scalars rather than one object so the resolved policy
     // keeps a stable identity: it feeds effects that rebuild the board, and a
     // fresh object on every reload would restart the game mid-play.
     const [storedAutoEnabled, setStoredAutoEnabled] = useState<boolean | undefined>(undefined);
     const [storedDuration, setStoredDuration] = useState<number | undefined>(undefined);
+    const [storedSound, setStoredSound] = useState<boolean | undefined>(undefined);
+    const [storedVolume, setStoredVolume] = useState<number | undefined>(undefined);
 
     const reload = useCallback(async () => {
         let stored: ProfileSettings = {};
@@ -72,6 +80,8 @@ export function useDailySettings(
 
         setStoredAutoEnabled(stored.auto_hint_enabled);
         setStoredDuration(stored.auto_hint_duration);
+        setStoredSound(stored.enable_audio_chime);
+        setStoredVolume(stored.audio_volume);
     }, [authUser]);
 
     useEffect(() => {
@@ -120,8 +130,34 @@ export function useDailySettings(
         setStoredDuration(duration);
     }, []);
 
+    /**
+     * The reward feel this player is actually playing under.
+     *
+     * Resolved here, off the same profile read as the hint policy, rather than
+     * in a hook of its own: a second fetch of the same row on every info-screen
+     * close is a wasted round trip and a second chance for the two to disagree.
+     *
+     * Note that unlike the hint policy this can never be forced. A player who
+     * muted the game stays muted — see `resolveFeedbackPolicy`.
+     */
+    const feedback: DailyFeedbackPolicy = useMemo(
+        () => resolveFeedbackPolicy(
+            feedbackSettings?.policy ?? DEFAULT_FEEDBACK_POLICY,
+            { soundEnabled: storedSound, volume: storedVolume },
+        ),
+        [feedbackSettings, storedSound, storedVolume],
+    );
+
+    /** Applied while the info screen's sound controls are being changed. */
+    const setAudio = useCallback((enabled: boolean, volume?: number) => {
+        setStoredSound(enabled);
+        if (volume !== undefined) setStoredVolume(volume);
+    }, []);
+
     return {
         policy,
+        feedback,
+        setAudio,
         /** First-rung delay, which is what the info screen's single slider shows. */
         autoHintDuration: policy.rungs[0].delaySeconds,
         autoHintEnabled: policy.autoEnabled,
