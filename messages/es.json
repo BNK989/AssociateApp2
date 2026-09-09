@@ -492,6 +492,20 @@
             "link_copied": "¡Enlace copiado al portapapeles!"
         }
     },
+    "Share": {
+        "button": "Compartir",
+        "title": "Associate",
+        "aria_label": "Comparte Associate con tus amigos",
+        "message": "Juega a Associate conmigo: un juego de asociación de palabras. Una cadena nueva cada día y partidas en vivo con amigos.",
+        "card": {
+            "title": "¿Te gusta el juego? Pásalo.",
+            "description": "Envía el enlace a un amigo: el juego es mejor con gente que conoces."
+        },
+        "toasts": {
+            "copied": "Enlace copiado. Pégalo donde quieras para invitar a un amigo.",
+            "failed": "No se pudo compartir el enlace. Inténtalo de nuevo."
+        }
+    },
     "Notifications": {
         "title": "Notificaciones",
         "empty": "No hay notificaciones nuevas",

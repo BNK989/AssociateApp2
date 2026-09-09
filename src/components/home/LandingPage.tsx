@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Calendar, CheckCircle, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from '../../navigation'; // Use localized router
+import { ShareAppButton } from '@/components/share/ShareAppButton';
 import { useState, useEffect } from 'react';
 
 function DailyChallengeButton() {
@@ -80,12 +81,15 @@ export default function LandingPage() {
                         {t('title')}
                     </span>
                 </div>
-                <button
-                    onClick={() => document.getElementById('auth-form')?.scrollIntoView({ behavior: 'smooth' })}
-                    className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
-                >
-                    {t('login')}
-                </button>
+                <div className="flex items-center gap-3">
+                    <ShareAppButton surface="landing_header" variant="ghost" size="sm" compact />
+                    <button
+                        onClick={() => document.getElementById('auth-form')?.scrollIntoView({ behavior: 'smooth' })}
+                        className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
+                    >
+                        {t('login')}
+                    </button>
+                </div>
             </header>
 
             <main className="flex-1 flex flex-col lg:flex-row items-center justify-center container mx-auto px-4 max-w-6xl gap-12 lg:gap-24 py-8 lg:py-0">

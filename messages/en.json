@@ -498,6 +498,20 @@
             "link_copied": "Link copied to clipboard!"
         }
     },
+    "Share": {
+        "button": "Share",
+        "title": "Associate",
+        "aria_label": "Share Associate with a friend",
+        "message": "Play Associate with me — a word association game. A new chain every day, plus live games with friends.",
+        "card": {
+            "title": "Enjoying the game? Pass it on.",
+            "description": "Send a friend the link — the game is better with people you know."
+        },
+        "toasts": {
+            "copied": "Link copied. Paste it anywhere to invite a friend.",
+            "failed": "Could not share the link. Please try again."
+        }
+    },
     "Notifications": {
         "title": "Notifications",
         "empty": "No new notifications",

@@ -13,6 +13,8 @@ import { CreateGameDialog } from './lobby/CreateGameDialog';
 import { DailyChallengeCard } from './lobby/DailyChallengeCard';
 import { EmptyLobbyState } from './lobby/EmptyLobbyState';
 import { LeaveGameDialog } from './lobby/LeaveGameDialog';
+import { ShareAppCard } from './share/ShareAppCard';
+import { ShareAppButton } from './share/ShareAppButton';
 import { useCreateGame } from './lobby/useCreateGame';
 import { useGameActions } from './lobby/useGameActions';
 import { useLobbyGames } from './lobby/useLobbyGames';
@@ -79,14 +81,17 @@ export default function Lobby() {
             <section>
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold text-purple-400">{t('title')}</h2>
-                    <Button
-                        onClick={() => setIsCreateOpen(true)}
-                        disabled={creating}
-                        className="bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 transition-all duration-300 transform hover:-translate-y-0.5"
-                    >
-                        <Plus className="w-4 h-4 me-2" />
-                        {t('new_game')}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <ShareAppButton surface="lobby_header" size="sm" compact />
+                        <Button
+                            onClick={() => setIsCreateOpen(true)}
+                            disabled={creating}
+                            className="bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 transition-all duration-300 transform hover:-translate-y-0.5"
+                        >
+                            <Plus className="w-4 h-4 me-2" />
+                            {t('new_game')}
+                        </Button>
+                    </div>
                 </div>
 
                 {loading ? (
@@ -112,6 +117,8 @@ export default function Lobby() {
                     </>
                 )}
             </section>
+
+            <ShareAppCard />
 
             {completed.length > 0 && (
                 <section>

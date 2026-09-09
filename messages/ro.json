@@ -492,6 +492,20 @@
             "link_copied": "Link copiat în clipboard!"
         }
     },
+    "Share": {
+        "button": "Distribuie",
+        "title": "Associate",
+        "aria_label": "Distribuie Associate prietenilor",
+        "message": "Joacă Associate cu mine — un joc de asociere de cuvinte. Un lanț nou în fiecare zi și partide live cu prietenii.",
+        "card": {
+            "title": "Îți place jocul? Trimite-l mai departe.",
+            "description": "Trimite linkul unui prieten — jocul e mai bun cu oameni pe care îi cunoști."
+        },
+        "toasts": {
+            "copied": "Link copiat. Lipește-l oriunde pentru a invita un prieten.",
+            "failed": "Linkul nu a putut fi distribuit. Încearcă din nou."
+        }
+    },
     "Notifications": {
         "title": "Notificări",
         "empty": "Nicio notificare nouă",

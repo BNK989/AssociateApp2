@@ -107,3 +107,32 @@ ever meet the key when it introduces itself.
 - **Properties**:
     - `source`: 'palette' | 'how_to_play'
     - `hint_level`: number (palette only — the dialog is read away from any word)
+
+
+### 11. `app_shared`
+Fired when a player passes the game itself on — not a result, but the front
+door. The point of counting it is that growth by word of mouth is a product
+goal, and a share is the only step of it the app can see.
+
+- **Trigger**: Client-side in `src/hooks/useShareApp.ts`, after the share
+  actually goes through (the native sheet resolved, or the link reached the
+  clipboard).
+- **Properties**:
+    - `surface`: 'landing_header' | 'lobby_header' | 'lobby_card' (where the
+      player started the share)
+    - `method`: 'native' | 'clipboard' (the share sheet, or the fallback used
+      where the browser has no Web Share API)
+
+The shared link carries the same surface as a `?ref=` parameter, so arrivals in
+`$current_url` join back to the share that produced them. Nothing in the app
+reads `ref`; a link stripped of it still works.
+
+### 12. `app_share_dismissed`
+Fired when the native share sheet opens and the player closes it without
+choosing a target. Kept separate from `app_shared` so the funnel can tell
+"never asked" from "asked and declined".
+
+- **Trigger**: Client-side in `src/hooks/useShareApp.ts`, on an `AbortError`
+  from `navigator.share`.
+- **Properties**:
+    - `surface`: 'landing_header' | 'lobby_header' | 'lobby_card'

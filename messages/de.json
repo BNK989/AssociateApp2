@@ -492,6 +492,20 @@
             "link_copied": "Link in die Zwischenablage kopiert!"
         }
     },
+    "Share": {
+        "button": "Teilen",
+        "title": "Associate",
+        "aria_label": "Associate mit Freunden teilen",
+        "message": "Spiel Associate mit mir — ein Wortassoziationsspiel. Jeden Tag eine neue Kette und Live-Spiele mit Freunden.",
+        "card": {
+            "title": "Gefällt dir das Spiel? Gib es weiter.",
+            "description": "Schick einem Freund den Link — mit Leuten, die du kennst, macht es mehr Spaß."
+        },
+        "toasts": {
+            "copied": "Link kopiert. Füge ihn überall ein, um Freunde einzuladen.",
+            "failed": "Der Link konnte nicht geteilt werden. Bitte versuche es erneut."
+        }
+    },
     "Notifications": {
         "title": "Benachrichtigungen",
         "empty": "Keine neuen Benachrichtigungen",
