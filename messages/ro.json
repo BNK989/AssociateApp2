@@ -33,7 +33,7 @@
             "hint_ai": "Indiciu AI",
             "cost_pts": "{cost} pct",
             "cost_deducted": "Dedus din valoarea cuvântului",
-            "give_up": "Renunță",
+            "reveal_word": "Dezvăluie",
             "counter_remain": "{count} încercări rămase",
             "counter_last": "ultima încercare",
             "free_for_all": "TOȚI PENTRU TOȚI",

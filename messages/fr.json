@@ -33,7 +33,7 @@
             "hint_ai": "Indice IA",
             "cost_pts": "{cost} pts",
             "cost_deducted": "Déduit de la valeur du mot",
-            "give_up": "Abandonner",
+            "reveal_word": "Révéler",
             "counter_remain": "{count} essais restants",
             "counter_last": "dernier essai",
             "free_for_all": "TOUS CONTRE TOUS",

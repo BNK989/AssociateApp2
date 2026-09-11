@@ -165,6 +165,15 @@ export function useDailyResults({
         restartTimer();
     }, [activeWordId, restartTimer]);
 
+    /**
+     * Logs a finished word and returns the active time it took.
+     *
+     * The return value exists so analytics can stamp the *same* number this
+     * logs rather than reading the clock again — by the time a caller could,
+     * `restartTimer` below has already zeroed it. Two sources for one duration
+     * is how a PostHog dashboard and the results table end up disagreeing about
+     * the same word.
+     */
     const recordWord = useCallback(({
         index,
         outcome,
@@ -173,15 +182,19 @@ export function useDailyResults({
         points,
         totalScore,
         completed,
-    }: RecordWordArgs) => {
+    }: RecordWordArgs): number => {
+        const ms = readElapsed();
+
         perWordRef.current = [
             ...perWordRef.current,
-            { index, outcome, hint_level: hintLevel, strikes, points, ms: readElapsed() },
+            { index, outcome, hint_level: hintLevel, strikes, points, ms },
         ];
 
         restartTimer();
         syncRef.current(totalScore, completed);
+
+        return ms;
     }, [readElapsed, restartTimer]);
 
-    return { recordWord, streak };
+    return { recordWord, readElapsed, streak };
 }

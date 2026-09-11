@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Flag, Lightbulb, Loader2, Pause, Play, Settings, Shuffle } from 'lucide-react';
+import { Eye, Lightbulb, Loader2, Pause, Play, Settings, Shuffle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
     DropdownMenu,
@@ -27,7 +27,7 @@ type HintButtonProps = {
     isHintPaused: boolean;
     onGetHint: () => void;
     onToggleHintPause?: () => void;
-    onGiveUp?: () => void;
+    onReveal?: () => void;
     onOpenSettings?: () => void;
     onInteract: () => void;
 };
@@ -59,7 +59,7 @@ export function HintButton({
     isHintPaused,
     onGetHint,
     onToggleHintPause,
-    onGiveUp,
+    onReveal,
     onOpenSettings,
     onInteract,
 }: HintButtonProps) {
@@ -150,9 +150,9 @@ export function HintButton({
                     </DropdownMenuItem>
                 )}
 
-                <DropdownMenuItem onClick={() => onGiveUp?.()} className="text-red-600 focus:text-red-600">
-                    <Flag className="w-4 h-4 me-2" />
-                    {t('give_up')}
+                <DropdownMenuItem onClick={() => onReveal?.()}>
+                    <Eye className="w-4 h-4 me-2" />
+                    {t('reveal_word')}
                 </DropdownMenuItem>
 
                 <DropdownMenuItem onClick={() => onOpenSettings?.()}>

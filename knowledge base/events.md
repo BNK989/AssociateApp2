@@ -42,42 +42,122 @@ Fired when a user successfully completes the onboarding tutorial.
 - **Trigger**: Client-side in `Lobby.tsx` via `handleTutorialComplete`.
 - **Properties**: None (Default PostHog person properties apply).
 
-### 5. `daily_game_entered`
-Fired when a user visits the Daily Game page.
+## The daily game's event contract
 
-- **Trigger**: Client-side in `DailyGameClient.tsx` on mount (once auth is resolved).
-- **Properties**:
-    - `user_type`: 'registered' | 'guest'
-    - `date`: string (The date of the daily game, e.g., '2023-10-27')
+Every daily-game event is declared in
+[src/lib/daily/dailyAnalytics.ts](../src/lib/daily/dailyAnalytics.ts) and
+captured through
+[useDailyTracking](../src/components/daily/useDailyTracking.ts), which is the
+only place in the daily game that talks to PostHog. Nothing captures inline.
+
+That matters because an event is only useful if it can be *broken down*, and a
+property present on one event but missing from its sibling cannot be compared
+across the two. Building every event through `dailyEvent` guarantees they share
+a context, and building the per-word half through `wordContext` guarantees two
+events about the same word describe it identically — asserted in
+`dailyAnalytics.test.ts` rather than hoped for.
+
+### Context on every daily event
+
+| Property | Meaning |
+| :--- | :--- |
+| `play_date` | The chain's date, `YYYY-MM-DD`. |
+| `date` | The same value. Kept because the original events shipped it under this name and existing insights filter on it. |
+| `puzzle_number` | Which puzzle this is, counting the first chain as #1 — the number players see and share. Derived, never passed, so it cannot disagree with the grid. |
+| `user_type` | `registered` \| `guest`. |
+| `settings_revision` | The `game_settings` revision the game was played under. `0` means the table was unreadable and compiled defaults were used, which is a real answer rather than a missing one. Grouping outcomes by this is how a game-master change is judged. |
+| `words_total` | Length of the day's chain. |
+
+### Context on every *word-level* event
+
+`word_index` (position in the chain, the same index the results table uses),
+`hint_level`, `strikes`, `park_count`, and `ms_on_word` — active time on the
+word, taken from the same reading the results table stores, so a PostHog
+dashboard and the `daily_results` row can never disagree about one duration.
+
+### 5. `daily_game_entered`
+Fired once when a user visits the Daily Game page, after auth resolves so
+`user_type` is truthful. It is the denominator of every drop-off rate the daily
+game has.
+
+- **Properties**: context only.
 
 ### 6. `daily_word_solved`
-Fired when a user successfully solves a word in the Daily Game.
+Fired when a word leaves the board solved.
 
-- **Trigger**: Client-side in `DailyGameClient.tsx` inside `handleSolve`.
-- **Properties**:
-    - `word`: string (The solved word)
-    - `score_gained`: number
-    - `total_score`: number (Cumulative score)
-    - `consecutive`: number (Streak count)
-    - `user_type`: 'registered' | 'guest'
-    - `date`: string
+- **Properties**: word context, plus `word`, `score_gained`, `total_score`,
+  `consecutive`, `solved_after_park`.
+- The answer itself only ever leaves the client for a word already off the board.
+
+### 6a. `daily_word_revealed`
+Fired when the player asks to see a word rather than keep guessing.
+
+Named `revealed`, not `gave_up`: the product no longer frames this as surrender,
+and an event name that still did would keep the old framing alive in every
+dashboard built on it. The underlying `WordOutcome` is still `gave_up`, since
+that is the value written to `daily_results`.
+
+- **Properties**: word context, plus `hints_exhausted` (whether the ladder was
+  spent before they reached for it), `total_score`, `consecutive`.
+
+### 6b. `daily_word_struck_out`
+Fired when a word runs out of strikes.
+
+- **Properties**: word context, plus `total_score`.
+
+### 6c. `daily_guess_missed`
+Fired on every wrong guess, struck out or not.
+
+- **Properties**: word context, plus `band` (`near` \| `off`), `similarity`
+  (the raw Levenshtein ratio, to three places) and `strike_forgiven`.
+- `similarity` rides along with `band` on purpose: `NEAR_MISS_THRESHOLD` is a
+  starting value, and shipping the raw number is what lets it be re-cut from
+  what players actually type rather than argued about.
+
+### 6d. `daily_hint_revealed`
+Fired whenever a hint lands, however it was triggered.
+
+- **Properties**: word context, plus `source` (`auto` \| `manual`) and
+  `to_level`.
+- `to_level` is reported rather than inferred: the ladder skips rungs that would
+  tell the player nothing, so `hint_level + 1` is wrong exactly on the words
+  where the skip matters.
+- A level the *policy* hands over before the player has done anything is not an
+  event. It shows up as a non-zero `hint_level` on the word's first event.
+
+### 6e. `daily_word_parked` / `daily_word_returned`
+Fired when a word goes to the back of the queue and when it comes back.
+
+- **Properties**: word context, plus `words_remaining`.
 
 ### 7. `daily_game_completed`
-Fired when the last word leaves the board in the Daily Game — however it left.
+Fired when the last word leaves the board — however it left.
 
-- **Trigger**: Client-side in `DailyGameClient.tsx` when remaining words is 0.
-  Until 2026-09-06 this only fired when the final word was *solved*, so days
-  ending on a give-up or a third strike were never counted.
-- **Properties**:
-    - `final_score`: number
-    - `total_words`: number
-    - `ended_on`: 'solved' | 'gave_up' | 'struck_out' (how the chain ended)
-    - `user_type`: 'registered' | 'guest'
-    - `date`: string
+Until 2026-09-06 this only fired when the final word was *solved*, so days
+ending on a reveal or a third strike were never counted.
+
+- **Properties**: `final_score`, `ended_on` (`solved` \| `gave_up` \|
+  `struck_out`), `words_solved`, `outcome_tier` (`perfect` \| `strong` \|
+  `partial` \| `blank`), `hints_taken`, `words_revealed`, `parks_used`.
+- `outcome_tier` is read off the share grid, so the event, the end screen and
+  the squares a player pastes into a chat cannot disagree.
+
+### 7a. `daily_chain_revealed`
+Fired when the end screen shows the chain and the day's theme.
+
+Separate from completion because the point of the reveal is that *every* tier
+gets it, a blank board included — this event is how we check that a player who
+solved nothing still saw the payoff.
+
+- **Properties**: `outcome_tier`, `words_solved`.
 
 ## Implementation Details
-- **Client-Side**: Uses `usePostHog()` hook from `posthog-js/react`.
-- **Server-Side**: Uses `getPostHogServer()` singleton from `src/app/posthog-server.ts` and `posthog-node`. Events are flushed immediately using `await posthog.flush()`.
+- **Daily game**: never captures directly. Events are declared in
+  `src/lib/daily/dailyAnalytics.ts` and captured through `useDailyTracking`,
+  which stamps the shared context and swallows an SDK failure into the logger —
+  instrumentation must never take a player's game down with it.
+- **Client-Side, elsewhere**: `usePostHog()` from `posthog-js/react`.
+- **Server-Side**: `getPostHogServer()` singleton from `src/app/posthog-server.ts` and `posthog-node`. Events are flushed immediately using `await posthog.flush()`.
 
 
 ### 8. `legend_intro_shown`

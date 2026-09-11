@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { GameState, Message, Player } from '@/hooks/useGameLogic';
 import { MAX_HINT_LEVEL } from '@/lib/daily/dailyScoring';
-import { GiveUpButton } from './input/GiveUpButton';
+import { RevealButton } from './input/RevealButton';
 import { HintButton } from './input/HintButton';
 import { LegendButton } from './input/LegendButton';
 import { MessageInput } from './input/MessageInput';
@@ -28,7 +28,7 @@ type GameInputProps = {
     isEmpty?: boolean;
     onTyping?: () => void;
     isSinglePlayer?: boolean;
-    onGiveUp?: () => void;
+    onReveal?: () => void;
     autoHintProgress?: number;
     autoHintSecondsLeft?: number;
     isAutoHintActive?: boolean;
@@ -57,7 +57,7 @@ export function GameInput({
     isEmpty = false,
     onTyping,
     isSinglePlayer = false,
-    onGiveUp,
+    onReveal,
     autoHintProgress = 0,
     autoHintSecondsLeft = 0,
     isAutoHintActive = false,
@@ -98,7 +98,7 @@ export function GameInput({
     const showHintControls = isSolving && Boolean(targetMessage);
 
     // Guests cannot buy the AI hint, so they get an escape hatch beside it.
-    const showGuestGiveUp = showHintControls
+    const showGuestReveal = showHintControls
         && !isMaxHints
         && (targetMessage?.hint_level || 0) === 2
         && Boolean(user?.is_anonymous);
@@ -115,7 +115,7 @@ export function GameInput({
             isHintPaused={isHintPaused}
             onGetHint={onGetHint}
             onToggleHintPause={onToggleHintPause}
-            onGiveUp={onGiveUp}
+            onReveal={onReveal}
             onOpenSettings={onOpenSettings}
             onInteract={tooltip.markInteracted}
         />
@@ -146,10 +146,10 @@ export function GameInput({
 
                     {showHintControls && (
                         isMaxHints ? (
-                            <GiveUpButton
+                            <RevealButton
                                 id="hint-button-trigger"
                                 disabled={controlsDisabled}
-                                onGiveUp={onGiveUp}
+                                onReveal={onReveal}
                             />
                         ) : tooltip.hasSeen ? (
                             hintButton
@@ -171,8 +171,8 @@ export function GameInput({
                         )
                     )}
 
-                    {showGuestGiveUp && (
-                        <GiveUpButton disabled={controlsDisabled} onGiveUp={onGiveUp} />
+                    {showGuestReveal && (
+                        <RevealButton disabled={controlsDisabled} onReveal={onReveal} />
                     )}
 
                     {showHintControls && <LegendButton hintLevel={effectiveLevel} />}

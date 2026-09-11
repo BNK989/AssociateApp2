@@ -33,7 +33,7 @@
             "hint_ai": "تلميح AI",
             "cost_pts": "{cost} نقطة",
             "cost_deducted": "مخصومة من قيمة الكلمة",
-            "give_up": "استسلم",
+            "reveal_word": "اكشف",
             "counter_remain": "تبقى {count} تخمينات",
             "counter_last": "التخمين الأخير",
             "free_for_all": "متاح للجميع",

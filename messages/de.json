@@ -33,7 +33,7 @@
             "hint_ai": "KI-Hinweis",
             "cost_pts": "{cost} Pkt",
             "cost_deducted": "Vom Wortwert abgezogen",
-            "give_up": "Aufgeben",
+            "reveal_word": "Aufdecken",
             "counter_remain": "{count} Versuche übrig",
             "counter_last": "Letzter Versuch",
             "free_for_all": "JEDER GEGEN JEDEN",

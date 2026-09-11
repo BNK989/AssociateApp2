@@ -21,8 +21,15 @@ import { dailyPuzzleNumber } from './dailyShare';
 
 export type UserType = 'registered' | 'guest';
 
-/** How a hint reached the player. */
-export type HintSource = 'auto' | 'manual' | 'start_level';
+/**
+ * How a hint reached the player.
+ *
+ * A level the policy hands over before the player has done anything is not in
+ * here, because it is not an event: it shows up as a non-zero `hint_level` on
+ * the word's first event, which is the same fact without a reveal that never
+ * happened.
+ */
+export type HintSource = 'auto' | 'manual';
 
 /**
  * Context stamped onto every daily event.

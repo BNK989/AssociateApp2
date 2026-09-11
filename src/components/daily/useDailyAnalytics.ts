@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { usePostHog } from 'posthog-js/react';
 import { createLogger } from '@/lib/logger';
 import {
@@ -31,7 +31,9 @@ export function useDailyAnalytics(context: UseDailyAnalyticsArgs) {
     const posthog = usePostHog();
 
     const contextRef = useRef(context);
-    contextRef.current = context;
+    useEffect(() => {
+        contextRef.current = context;
+    }, [context]);
 
     const track = useCallback(<N extends DailyEventName>(
         name: N,

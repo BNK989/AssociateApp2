@@ -39,7 +39,7 @@
             "hint_ai": "רמז AI",
             "cost_pts": "{cost} נק'",
             "cost_deducted": "יורד מערך המילה",
-            "give_up": "וותר",
+            "reveal_word": "גלה",
             "counter_remain": "נותרו {count} ניחושים",
             "counter_last": "ניחוש אחרון",
             "free_for_all": "חופשי לכולם",

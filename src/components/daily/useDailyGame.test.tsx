@@ -62,11 +62,11 @@ describe('useDailyGame end of chain', () => {
         expect(result.current.gameOver).toBe(true);
     });
 
-    it('ends the game when the last word is given up on', () => {
+    it('ends the game when the last word is revealed', () => {
         const { result } = setup();
         solveDownTo(result, 1);
 
-        act(() => { result.current.giveUp(); });
+        act(() => { result.current.revealWord(); });
         settle();
 
         expect(result.current.gameOver).toBe(true);
@@ -113,7 +113,7 @@ describe('useDailyGame end of chain', () => {
         solveDownTo(result, 1);
         expect(onCompleted).not.toHaveBeenCalled();
 
-        act(() => { result.current.giveUp(); });
+        act(() => { result.current.revealWord(); });
         settle();
 
         expect(onCompleted).toHaveBeenCalledWith(expect.any(Number), 'gave_up');
@@ -152,8 +152,42 @@ describe('useDailyGame word reports', () => {
         expect(onWordFinished).toHaveBeenLastCalledWith(expect.objectContaining({
             outcome: 'struck_out',
             remaining: 0,
-            consecutive: 0,
+            // Two words solved on the way down, one step back for the word
+            // that got away -- the streak decays, it does not collapse.
+            consecutive: 1,
             completed: true,
         }));
+    });
+});
+
+describe('useDailyGame streak', () => {
+    beforeEach(() => {
+        localStorage.clear();
+        vi.useFakeTimers();
+    });
+
+    it('does not punish the streak for a wrong guess on a word still in play', () => {
+        const { result } = setup();
+
+        solveDownTo(result, 2);
+        expect(result.current.consecutive).toBe(1);
+
+        missOnce(result);
+
+        // The word keeps its own strike; the run the player is building does
+        // not pay for the same mistake a second time.
+        expect(result.current.consecutive).toBe(1);
+    });
+
+    it('costs one step, not the whole run, when a word is revealed', () => {
+        const { result } = setup();
+
+        solveDownTo(result, 1);
+        expect(result.current.consecutive).toBe(2);
+
+        act(() => { result.current.revealWord(); });
+        settle();
+
+        expect(result.current.consecutive).toBe(1);
     });
 });

@@ -21,7 +21,7 @@ vi.mock('lucide-react', () => ({
     Play: () => <div data-testid="play-icon" />,
     Settings: () => <div data-testid="settings-icon" />,
     Lightbulb: () => <div data-testid="lightbulb-icon" />,
-    Flag: () => <div data-testid="flag-icon" />,
+    Eye: () => <div data-testid="eye-icon" />,
     Clock: () => <div data-testid="clock-icon" />,
     Palette: () => <div data-testid="palette-icon" />,
 }));
@@ -140,7 +140,7 @@ describe('GameInput desktop autofocus', () => {
         } as unknown as Message,
         onSendMessage: vi.fn(),
         onGetHint: vi.fn(),
-        onGiveUp: vi.fn(),
+        onReveal: vi.fn(),
         isSinglePlayer: false,
     };
 
@@ -191,7 +191,7 @@ describe('GameInput Character Counter', () => {
     const mockSetInput = vi.fn();
     const mockOnSendMessage = vi.fn();
     const mockOnGetHint = vi.fn();
-    const mockOnGiveUp = vi.fn();
+    const mockOnReveal = vi.fn();
 
     const defaultProps = {
         game: {
@@ -214,7 +214,7 @@ describe('GameInput Character Counter', () => {
         } as unknown as Message,
         onSendMessage: mockOnSendMessage,
         onGetHint: mockOnGetHint,
-        onGiveUp: mockOnGiveUp,
+        onReveal: mockOnReveal,
         isSinglePlayer: false,
     };
 

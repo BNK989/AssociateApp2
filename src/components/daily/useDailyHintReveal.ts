@@ -4,6 +4,7 @@ import { createLogger } from '@/lib/logger';
 import { getNextHintLevel, MAX_HINT_LEVEL } from '@/lib/daily/dailyScoring';
 import { hintLevelUpdates } from '@/lib/daily/hintVisuals';
 import type { DailyHintPolicy } from '@/lib/daily/hintPolicy';
+import type { HintSource } from '@/lib/daily/dailyAnalytics';
 
 const log = createLogger('daily/hint');
 
@@ -17,6 +18,14 @@ type UseDailyHintRevealArgs = {
     /** Clue used when no authored hint exists for the word. */
     fallbackHint: (word: string) => string;
     patchTarget: (id: string, updates: Partial<Message>) => void;
+    /**
+     * Announces a landed hint, with the rung it actually reached.
+     *
+     * `toLevel` is not `currentLevel + 1`: the ladder skips rungs that would
+     * tell the player nothing, so a reported level the caller inferred would be
+     * wrong exactly on the words where the skip matters.
+     */
+    onRevealed?: (args: { message: Message; toLevel: number; source: HintSource }) => void;
 };
 
 /**
@@ -39,8 +48,12 @@ export function useDailyHintReveal({
     date,
     fallbackHint,
     patchTarget,
+    onRevealed,
 }: UseDailyHintRevealArgs) {
-    return useCallback(async (fetchHint?: (index: number) => Promise<string | null>) => {
+    return useCallback(async (
+        fetchHint?: (index: number) => Promise<string | null>,
+        source: HintSource = 'manual',
+    ) => {
         if (!targetMessage || gameOver) return;
 
         const currentLevel = targetMessage.hint_level || 0;
@@ -77,5 +90,6 @@ export function useDailyHintReveal({
         });
 
         patchTarget(targetMessage.id, updates);
-    }, [targetMessage, gameOver, words, hints, fallbackHint, patchTarget, date, policy]);
+        onRevealed?.({ message: targetMessage, toLevel: nextLevel, source });
+    }, [targetMessage, gameOver, words, hints, fallbackHint, patchTarget, date, policy, onRevealed]);
 }

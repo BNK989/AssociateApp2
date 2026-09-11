@@ -39,7 +39,7 @@
             "hint_ai": "AI Hint",
             "cost_pts": "{cost} pts",
             "cost_deducted": "Deducted from word value",
-            "give_up": "Give Up",
+            "reveal_word": "Reveal",
             "counter_remain": "{count} guesses remain",
             "counter_last": "last guess",
             "free_for_all": "FREE FOR ALL",

@@ -33,7 +33,7 @@
             "hint_ai": "Pista IA",
             "cost_pts": "{cost} pts",
             "cost_deducted": "Deducido del valor de la palabra",
-            "give_up": "Rendirse",
+            "reveal_word": "Revelar",
             "counter_remain": "Quedan {count} intentos",
             "counter_last": "último intento",
             "free_for_all": "TODOS CONTRA TODOS",

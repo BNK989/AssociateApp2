@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { usePostHog } from 'posthog-js/react';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthProvider';
 import { ChatArea } from '@/components/game/ChatArea';
@@ -21,6 +20,7 @@ import { useDailyOutcome } from '@/components/daily/useDailyOutcome';
 import { useDailyResults, type RecordWordArgs } from '@/components/daily/useDailyResults';
 import { useDailyShareText } from '@/components/daily/useDailyShareText';
 import { useDailySettings } from '@/components/daily/useDailySettings';
+import { useDailyTracking, type DailyTracking } from '@/components/daily/useDailyTracking';
 import { useDailyTutorial } from '@/components/daily/useDailyTutorial';
 import { useExperimentStartLevel } from '@/components/daily/useExperimentStartLevel';
 import { useProgressCue } from '@/components/daily/useProgressCue';
@@ -59,7 +59,6 @@ function DailyGameBoard({
 }: DailyGameClientProps) {
     const router = useRouter();
     const { user: authUser, session, loading: authLoading } = useAuth();
-    const posthog = usePostHog();
     const t = useTranslations('GameRoom.Chat');
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -77,7 +76,17 @@ function DailyGameBoard({
      * the game hook has run, so the callback reaches it through a ref rather
      * than the two hooks depending on each other.
      */
-    const recordWordRef = useRef<((args: RecordWordArgs) => void) | null>(null);
+    const recordWordRef = useRef<((args: RecordWordArgs) => number) | null>(null);
+
+    /**
+     * Tracking and the grid are both built from `game`, which does not exist
+     * until `useDailyGame` has run — and `useDailyGame` needs the callbacks
+     * that use them. Refs break the cycle without either hook having to know
+     * about the other.
+     */
+    const trackingRef = useRef<DailyTracking | null>(null);
+    const elapsedRef = useRef<(() => number) | null>(null);
+    const outcomeTierRef = useRef<string>('blank');
 
     const showProgressCue = useProgressCue();
 
@@ -95,32 +104,35 @@ function DailyGameBoard({
         connectionScores: initialConnectionScores,
         playSolveSound: playSolve,
         playMissSound: playMiss,
-        onSolved: ({ word, points, totalScore, consecutive }) => {
-            posthog.capture('daily_word_solved', {
-                word,
-                score_gained: points,
-                total_score: totalScore,
-                consecutive,
-                user_type: userType,
-                date,
-                settings_revision: hintSettings.revision,
-            });
+        onHintRevealed: ({ message, toLevel, source }) => {
+            trackingRef.current?.trackHint(
+                message,
+                game.messages.findIndex((m) => m.id === message.id),
+                elapsedRef.current?.() ?? 0,
+                source,
+                toLevel,
+            );
         },
         onCompleted: (finalScore, endedOn) => {
-            posthog.capture('daily_game_completed', {
-                final_score: finalScore,
-                total_words: dailyWords.length,
-                // How the chain actually ended. Completions used to be reported
-                // only for a final word that was solved, so every day that
-                // ended on a give-up or a third strike went uncounted.
-                ended_on: endedOn,
-                user_type: userType,
-                date,
-                settings_revision: hintSettings.revision,
-            });
+            // The tier is read off the grid rather than recomputed, so the
+            // event, the end screen and the squares a player pastes into a chat
+            // can never disagree about how the day went.
+            trackingRef.current?.trackCompleted(finalScore, endedOn, outcomeTierRef.current);
         },
         onWordFinished: (args) => {
-            recordWordRef.current?.(args);
+            // Logged first: `recordWord` hands back the active time it just
+            // banked, and every event about this word is stamped with that same
+            // number rather than a second reading of a clock it has reset.
+            const ms = recordWordRef.current?.(args) ?? 0;
+            const finished = { ...args, parkCount: 0, ms };
+
+            trackingRef.current?.trackWordFinished(finished);
+            if (args.outcome === 'solved') {
+                trackingRef.current?.trackWordSolved({
+                    ...finished, solvedAfterPark: false,
+                });
+            }
+
             showProgressCue({
                 outcome: args.outcome,
                 remaining: args.remaining,
@@ -141,7 +153,20 @@ function DailyGameBoard({
 
     useEffect(() => {
         recordWordRef.current = results.recordWord;
-    }, [results.recordWord]);
+        elapsedRef.current = results.readElapsed;
+    }, [results.recordWord, results.readElapsed]);
+
+    const tracking = useDailyTracking({
+        playDate: date,
+        userType,
+        settingsRevision: hintSettings.revision,
+        wordsTotal: dailyWords.length,
+        authLoading,
+    });
+
+    useEffect(() => {
+        trackingRef.current = tracking;
+    }, [tracking]);
 
     const shareText = useDailyShareText({
         date,
@@ -151,6 +176,10 @@ function DailyGameBoard({
     });
 
     const { squares, outcome } = useDailyOutcome(game.messages);
+
+    useEffect(() => {
+        outcomeTierRef.current = outcome.tier;
+    }, [outcome.tier]);
     const { showSummary } = useDailyCompletion(game.gameOver, game.restoredComplete, outcome.celebrate);
     const tutorial = useDailyTutorial({ authUser, authLoading, words: dailyWords, date });
 
@@ -183,13 +212,14 @@ function DailyGameBoard({
     }, [date, accessToken, t]);
 
     const applyHint = game.revealHint;
-    const revealHint = useCallback(() => applyHint(fetchHint), [applyHint, fetchHint]);
+    const askForHint = useCallback(() => applyHint(fetchHint, 'manual'), [applyHint, fetchHint]);
+    const autoRevealHint = useCallback(() => applyHint(fetchHint, 'auto'), [applyHint, fetchHint]);
 
     const autoHint = useAutoHint({
         targetMessage: game.targetMessage,
         gameOver: game.gameOver,
         policy: settings.policy,
-        onReveal: revealHint,
+        onReveal: autoRevealHint,
     });
 
     const animateStartWord = useStartWordAnimation({
@@ -198,18 +228,6 @@ function DailyGameBoard({
         setInput: game.setInput,
         onSolved: game.solveStartWord,
     });
-
-    // Entrance is tracked once, after auth resolves so user_type is accurate.
-    const hasTrackedEntrance = useRef(false);
-    useEffect(() => {
-        if (authLoading || hasTrackedEntrance.current) return;
-        hasTrackedEntrance.current = true;
-        posthog.capture('daily_game_entered', {
-            user_type: userType,
-            date,
-            settings_revision: hintSettings.revision,
-        });
-    }, [authLoading, userType, date, posthog, hintSettings.revision]);
 
     // Keep the word being guessed centred as the chain advances.
     useEffect(() => {
@@ -295,10 +313,10 @@ function DailyGameBoard({
                     if (!game.input.trim() || game.sending) return;
                     game.solve(game.input.trim());
                 }}
-                onGetHint={revealHint}
+                onGetHint={askForHint}
                 isEmpty={false}
                 isSinglePlayer
-                onGiveUp={game.giveUp}
+                onReveal={game.revealWord}
                 autoHintProgress={autoHint.progress}
                 autoHintSecondsLeft={autoHint.secondsLeft}
                 isAutoHintActive={autoHint.isActive}

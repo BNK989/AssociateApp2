@@ -137,7 +137,7 @@ export default function GameRoom() {
                 onGetHint={handleGetHint}
                 isEmpty={messages.filter(m => m.type !== 'system').length === 0}
                 onTyping={broadcastTyping}
-                onGiveUp={handleGiveUp}
+                onReveal={handleGiveUp}
             />
 
             <EndGamePopover
