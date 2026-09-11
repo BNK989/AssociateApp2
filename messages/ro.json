@@ -221,7 +221,8 @@
             "grid_key_clean": "Rezolvat",
             "grid_key_hard_won": "Câștigat greu",
             "grid_key_hinted": "Cu indiciul",
-            "grid_key_missed": "Nerezolvat"
+            "grid_key_missed": "Nerezolvat",
+            "chain_label": "Lanțul de azi"
         },
         "Progress": {
             "cue_final_word": "Ultimul cuvânt. Termină lanțul.",

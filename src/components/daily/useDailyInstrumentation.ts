@@ -142,10 +142,25 @@ export function useDailyInstrumentation({
         elapsedRef.current = readElapsed;
     }, []);
 
+    /**
+     * Counts the end screen actually showing the chain.
+     *
+     * Separate from completion on purpose: the point of the reveal is that
+     * every tier gets it, a blank board included, and only an event fired from
+     * the screen itself can show that a player who solved nothing saw the
+     * payoff. Idempotent, because the dialog can re-render.
+     */
+    const chainRevealedRef = useRef(false);
+    const trackChainRevealed = useCallback(() => {
+        if (chainRevealedRef.current) return;
+        chainRevealedRef.current = true;
+        trackingRef.current.trackChainRevealed(outcomeTierRef.current);
+    }, []);
+
     /** Keeps the completion event's tier in step with the grid. */
     const setOutcomeTier = useCallback((tier: string) => {
         outcomeTierRef.current = tier;
     }, []);
 
-    return { callbacks, attachResults, setOutcomeTier };
+    return { callbacks, attachResults, setOutcomeTier, trackChainRevealed };
 }

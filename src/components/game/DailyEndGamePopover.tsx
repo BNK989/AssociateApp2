@@ -18,6 +18,7 @@ import { createLogger, getErrorMessage } from '@/lib/logger';
 import { MIN_SHAREABLE_STREAK, type ShareSquare } from '@/lib/daily/dailyShare';
 import type { ChainOutcome } from '@/lib/daily/endOutcome';
 import { ChainGrid } from './endgame/ChainGrid';
+import { ChainReveal } from './endgame/ChainReveal';
 import { useEndGameConfetti } from './endgame/useEndGameConfetti';
 
 const log = createLogger('daily/endgame');
@@ -36,6 +37,12 @@ type DailyEndGamePopoverProps = {
     shareText: string;
     /** Consecutive days finished, or null while that is unknown. */
     streak?: number | null;
+    /** The day's words, in chain order, revealed to every tier. */
+    words: string[];
+    /** The day's theme, shown again beside the chain it explains. */
+    theme?: string;
+    /** Fires once when the chain is actually on screen. */
+    onChainRevealed?: () => void;
     onClose: () => void;
 };
 
@@ -56,6 +63,9 @@ export function DailyEndGamePopover({
     squares,
     shareText,
     streak,
+    words,
+    theme,
+    onChainRevealed,
     onClose,
 }: DailyEndGamePopoverProps) {
     const router = useRouter();
@@ -67,6 +77,13 @@ export function DailyEndGamePopover({
     }, [open]);
 
     useEndGameConfetti(internalOpen && open && outcome.celebrate);
+
+    // Counted when the chain is on screen rather than when the day ends, since
+    // the point of the reveal is that every tier actually receives it.
+    const revealed = internalOpen && open;
+    useEffect(() => {
+        if (revealed) onChainRevealed?.();
+    }, [revealed, onChainRevealed]);
 
     const handleShare = async () => {
         try {
@@ -136,6 +153,8 @@ export function DailyEndGamePopover({
                     </div>
 
                     <ChainGrid squares={squares} />
+
+                    <ChainReveal words={words} squares={squares} theme={theme} />
 
                     {!outcome.celebrate && (
                         <p className="text-center text-sm text-muted-foreground">{t('come_back')}</p>

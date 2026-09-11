@@ -221,7 +221,8 @@
             "grid_key_clean": "تم الحل",
             "grid_key_hard_won": "انتصار صعب",
             "grid_key_hinted": "بمساعدة التلميح",
-            "grid_key_missed": "لم يُحل"
+            "grid_key_missed": "لم يُحل",
+            "chain_label": "سلسلة اليوم"
         },
         "Progress": {
             "cue_final_word": "الكلمة الأخيرة. أكمل السلسلة.",

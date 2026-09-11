@@ -227,7 +227,8 @@
             "grid_key_clean": "Solved",
             "grid_key_hard_won": "Hard won",
             "grid_key_hinted": "Used the clue",
-            "grid_key_missed": "Not solved"
+            "grid_key_missed": "Not solved",
+            "chain_label": "Today's chain"
         },
         "Progress": {
             "cue_final_word": "Last word. Finish the chain.",

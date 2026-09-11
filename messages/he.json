@@ -227,7 +227,8 @@
             "grid_key_clean": "נפתר",
             "grid_key_hard_won": "נלחמת על זה",
             "grid_key_hinted": "בעזרת הרמז",
-            "grid_key_missed": "לא נפתר"
+            "grid_key_missed": "לא נפתר",
+            "chain_label": "השרשרת של היום"
         },
         "Progress": {
             "cue_final_word": "המילה האחרונה. סיימו את השרשרת.",

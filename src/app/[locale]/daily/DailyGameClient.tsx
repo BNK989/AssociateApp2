@@ -89,7 +89,9 @@ function DailyGameBoard({
         authLoading,
     });
 
-    const { callbacks, attachResults, setOutcomeTier } = useDailyInstrumentation({
+    const {
+        callbacks, attachResults, setOutcomeTier, trackChainRevealed,
+    } = useDailyInstrumentation({
         tracking,
         guessableWords,
         showProgressCue,
@@ -282,6 +284,9 @@ function DailyGameBoard({
                 score={game.score}
                 outcome={outcome}
                 squares={squares}
+                words={dailyWords}
+                theme={theme}
+                onChainRevealed={trackChainRevealed}
                 shareText={shareText}
                 streak={results.streak}
                 onClose={() => router.push('/')}

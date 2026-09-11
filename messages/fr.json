@@ -221,7 +221,8 @@
             "grid_key_clean": "Trouvé",
             "grid_key_hard_won": "Durement gagné",
             "grid_key_hinted": "Avec l’indice",
-            "grid_key_missed": "Non trouvé"
+            "grid_key_missed": "Non trouvé",
+            "chain_label": "La chaîne du jour"
         },
         "Progress": {
             "cue_final_word": "Dernier mot. Termine la chaîne.",

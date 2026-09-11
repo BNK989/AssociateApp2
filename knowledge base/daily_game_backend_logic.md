@@ -366,6 +366,30 @@ Two details that look like bugs and are not:
   board by any route. Points are the discriminator: a real solve always scores
   something, even after every hint, while a surrender scores zero.
 
+### Every tier gets the chain
+
+Beneath the grid the end screen spells the day's chain out in full — every
+word, in order, tinted by how it went, with the theme above it. It is shown on
+**every** tier, a blank board included.
+
+The chain is the game's actual payoff: seeing how six words hang together is
+the part of a daily puzzle that reads as content rather than as a score. A
+player who cleared the board assembled it themselves on the way up; a player
+who did not never saw it at all — the words they missed scrolled past one at a
+time, unconnected, and the screen handed them a grade and a "come back
+tomorrow". That is the wrong thing to withhold from the one player who needs a
+reason to return. Skill decides the *grade*, never whether the story arrives.
+
+`daily_chain_revealed` fires from the screen itself rather than on completion,
+so the claim above is measurable: a tier that is not showing up in that event
+is a tier not getting the payoff.
+
+**Known gap.** The reveal needs a *finished* chain. A player who abandons
+mid-chain and never returns that day sees nothing, and the next day brings a
+new chain — so the run they walked away from is never closed off. Abandonment
+is the number `useDailyResults` exists to measure, so this is the next thing
+worth fixing here.
+
 ### The summary reads the day it actually was
 
 The end screen opens on **every** finished chain, whatever ended it — the grid

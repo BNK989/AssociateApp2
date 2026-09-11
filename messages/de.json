@@ -221,7 +221,8 @@
             "grid_key_clean": "Gelöst",
             "grid_key_hard_won": "Hart erkämpft",
             "grid_key_hinted": "Hinweis genutzt",
-            "grid_key_missed": "Nicht gelöst"
+            "grid_key_missed": "Nicht gelöst",
+            "chain_label": "Die heutige Kette"
         },
         "Progress": {
             "cue_final_word": "Letztes Wort. Bring die Kette zu Ende.",

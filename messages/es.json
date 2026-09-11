@@ -221,7 +221,8 @@
             "grid_key_clean": "Resuelta",
             "grid_key_hard_won": "Ganada a pulso",
             "grid_key_hinted": "Con la pista",
-            "grid_key_missed": "Sin resolver"
+            "grid_key_missed": "Sin resolver",
+            "chain_label": "La cadena de hoy"
         },
         "Progress": {
             "cue_final_word": "Última palabra. Termina la cadena.",
