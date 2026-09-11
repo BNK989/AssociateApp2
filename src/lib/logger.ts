@@ -151,6 +151,31 @@ export function getErrorMessage(error: unknown, fallback = 'Unknown error'): str
     return normalizeError(error)?.message ?? fallback;
 }
 
+/**
+ * Was this a cancellation rather than a failure?
+ *
+ * An aborted request is something the app or the browser *decided* — a page
+ * navigating away, a tab being frozen and resumed, a superseded fetch — and
+ * showing it to a player as an error is telling them something broke when
+ * nothing did. "AbortError: signal is aborted without reason" is also about as
+ * un-actionable as a message gets, which CLAUDE.md 8 asks us not to put in
+ * front of anyone.
+ *
+ * The shape varies by source, so all of them are checked: a DOMException
+ * carries `AbortError` in `name`; Supabase surfaces the fetch rejection as a
+ * plain object whose `message` carries the text and whose `name` may be absent;
+ * and some browsers reject with a bare string.
+ */
+export function isAbortError(error: unknown): boolean {
+    if (typeof error === 'string') return /abort/i.test(error);
+    if (typeof error !== 'object' || error === null) return false;
+
+    const { name, message } = error as { name?: unknown; message?: unknown };
+
+    if (name === 'AbortError') return true;
+    return typeof message === 'string' && /\baborted?\b/i.test(message);
+}
+
 function safeStringify(value: unknown): string {
     try {
         return JSON.stringify(value) ?? String(value);

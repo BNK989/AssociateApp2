@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
+    isAbortError,
     createLogger,
     formatEntry,
     normalizeError,
@@ -68,6 +69,38 @@ describe('normalizeError', () => {
         const circular: Record<string, unknown> = {};
         circular.self = circular;
         expect(() => normalizeError(circular)).not.toThrow();
+    });
+});
+
+describe('isAbortError', () => {
+    // The shape varies by source, and the lobby only ever sees the Supabase
+    // one: a plain object carrying the text in `message` with no `name`.
+    it('recognises a DOMException from the browser', () => {
+        const error = new Error('signal is aborted without reason');
+        error.name = 'AbortError';
+        expect(isAbortError(error)).toBe(true);
+    });
+
+    it('recognises the plain object Supabase surfaces a cancelled fetch as', () => {
+        expect(isAbortError({ message: 'signal is aborted without reason' })).toBe(true);
+        expect(isAbortError({ message: 'The user aborted a request.' })).toBe(true);
+    });
+
+    it('recognises a bare string, as some browsers reject with', () => {
+        expect(isAbortError('AbortError')).toBe(true);
+    });
+
+    // The point of the guard is that real failures still reach the player.
+    it('leaves a genuine failure alone', () => {
+        expect(isAbortError(new Error('Failed to fetch'))).toBe(false);
+        expect(isAbortError({ message: 'permission denied for table games' })).toBe(false);
+        expect(isAbortError(null)).toBe(false);
+        expect(isAbortError(undefined)).toBe(false);
+    });
+
+    // "aborted" must not match inside an unrelated word.
+    it('does not fire on a word that merely contains it', () => {
+        expect(isAbortError({ message: 'collaborated with the server' })).toBe(false);
     });
 });
 
