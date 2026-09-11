@@ -26,9 +26,24 @@ describe('readMaskTile — hiding unplaced letters', () => {
     });
 
     it('replaces an anagram letter with filler, so no real glyph leaks as filler', () => {
-        const tile = readMaskTile('y', 'H', 0, state('Harmony', []), 2, true);
+        // Index 3, not 0: the first letter is bought at hint 1 and stays shown.
+        const tile = readMaskTile('y', 'm', 3, state('Harmony', []), 2, true);
         expect(tile.state).toBe('unknown');
         expect(tile.char).not.toBe('y');
+    });
+
+    // Regression: the first-letter guarantee lived only in `buildScrambleItems`,
+    // which stopped running when unplaced letters moved to the pool. From hint 2
+    // the letter the player had paid for silently disappeared from the word.
+    it('keeps the first letter from hint 1, at every level above it', () => {
+        for (const level of [1, 2, 3]) {
+            expect(readMaskTile('y', 'H', 0, state('Harmony', []), level, true))
+                .toMatchObject({ char: 'H', state: 'placed' });
+        }
+    });
+
+    it('does not give the first letter away below hint 1', () => {
+        expect(readMaskTile(FILLER, 'H', 0, state('Harmony', []), 0, true).state).toBe('unknown');
     });
 
     it('picks that filler from the index, so a hidden position never shimmers', () => {

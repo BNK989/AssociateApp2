@@ -55,6 +55,18 @@ export interface SlotGroup {
  */
 export type CaretMode = 'skip' | 'full';
 
+/**
+ * A raw field value reduced to what the strip can actually hold.
+ *
+ * Spaces and punctuation are dropped because the strip supplies them, and the
+ * rest is capped at the number of open slots. Exported because the field needs
+ * the same answer as the model does: anything the field accepts but the model
+ * discards stays in the DOM, invisible, and eats the next Backspace.
+ */
+export function normaliseTyped(value: string, capacity: number): string {
+    return [...value].filter((char) => !isGapChar(char)).slice(0, capacity).join('');
+}
+
 /** Indices the player types into, in order, under the given caret mode. */
 export function typeableIndices(text: string, placed: Set<number>, mode: CaretMode): number[] {
     return [...text].flatMap((char, index) => {

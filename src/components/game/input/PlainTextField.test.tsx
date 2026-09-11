@@ -117,3 +117,67 @@ describe('PlainTextField', () => {
         expect(onKeyDown).toHaveBeenCalled();
     });
 });
+
+describe('PlainTextField — rolling back what the owner will not accept', () => {
+    // The regression: when the owner clamps an edit back to the value it already
+    // held, React re-renders nothing and the sync effect never runs, so the
+    // rejected character stays in the DOM. With the slot strip's text drawn
+    // transparent, it is invisible — and eats the next Backspace.
+    it('removes a character the normalizer discarded', () => {
+        const onChange = vi.fn();
+        render(
+            <PlainTextField
+                value="abc"
+                placeholder="type"
+                normalize={(raw) => raw.slice(0, 3)}
+                onChange={onChange}
+            />,
+        );
+
+        const field = screen.getByRole('textbox');
+        field.textContent = 'abcd';
+        fireEvent.input(field);
+
+        expect(field.textContent).toBe('abc');
+        expect(onChange).toHaveBeenLastCalledWith('abc');
+    });
+
+    it('reports the rejection so the caller can say so', () => {
+        const onRejected = vi.fn();
+        render(
+            <PlainTextField
+                value="abc"
+                placeholder="type"
+                normalize={(raw) => raw.slice(0, 3)}
+                onChange={() => { }}
+                onRejected={onRejected}
+            />,
+        );
+
+        const field = screen.getByRole('textbox');
+        field.textContent = 'abcd';
+        fireEvent.input(field);
+
+        expect(onRejected).toHaveBeenCalled();
+    });
+
+    it('leaves an accepted edit alone', () => {
+        const onRejected = vi.fn();
+        render(
+            <PlainTextField
+                value="ab"
+                placeholder="type"
+                normalize={(raw) => raw.slice(0, 3)}
+                onChange={() => { }}
+                onRejected={onRejected}
+            />,
+        );
+
+        const field = screen.getByRole('textbox');
+        field.textContent = 'abc';
+        fireEvent.input(field);
+
+        expect(field.textContent).toBe('abc');
+        expect(onRejected).not.toHaveBeenCalled();
+    });
+});

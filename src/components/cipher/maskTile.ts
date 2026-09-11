@@ -61,6 +61,18 @@ export function readMaskTile(
         // The line now carries position and nothing else. A letter with no
         // confirmed place is not drawn here at all — it is in the pool above
         // the composer, where its slot cannot be misread as its position.
+        // Hint level 1 buys the first letter, and it stays bought. Checked
+        // before the mask is consulted, and answered from the answer itself, so
+        // the guarantee holds whatever the mask happens to carry at index 0.
+        //
+        // It used to live only in `buildScrambleItems` — the shuffled view,
+        // switched off once unplaced letters moved to the pool. Nothing else
+        // carried it, so from hint 2 the letter the player had paid for
+        // silently vanished from the word.
+        if (realChar && hintLevel >= 1 && index === 0) {
+            return { char: realChar, state: 'placed', displaced: false };
+        }
+
         const isMaskLetter = maskChar !== ' ' && maskChar !== undefined && !isFillerChar(maskChar);
 
         // Below hint 2 the mask is built position by position, so a letter it

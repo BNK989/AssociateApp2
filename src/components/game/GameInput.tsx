@@ -115,7 +115,7 @@ export function GameInput({
     const showTargetLength = isSinglePlayer || (targetMessage?.hint_level || 0) >= 1;
     const stripActive = LETTER_POOL.ENABLED && isSolving && Boolean(targetMessage) && showTargetLength;
 
-    const { typed, onTypedChange, model } = useSlotTyping({
+    const { typed, onTypedChange, normalise, model } = useSlotTyping({
         text: stripActive && targetMessage ? targetMessage.content : null,
         guesses: targetMessage?.guesses || [],
         mode: caretSkipsGreens ? 'skip' : 'full',
@@ -245,6 +245,7 @@ export function GameInput({
                         } : null}
                         typedValue={typed}
                         onTypedChange={model ? onTypedChange : undefined}
+                        normalizeTyped={normalise}
                         onSend={onSendMessage}
                         onTyping={onTyping}
                         onInteract={tooltip.markInteracted}

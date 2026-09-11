@@ -29,7 +29,7 @@ export function SlotCell({ slot, isCaret, reduced }: SlotCellProps) {
         return (
             <span
                 aria-hidden="true"
-                className="flex-none select-none self-center font-mono text-muted-foreground"
+                className="flex-none select-none self-center text-muted-foreground"
                 style={{ width: 'calc(var(--slot-w) * 0.5)', fontSize: 'var(--slot-font)' }}
             >
                 {slot.char}
@@ -62,7 +62,7 @@ export function SlotCell({ slot, isCaret, reduced }: SlotCellProps) {
             className={`relative grid flex-none place-items-center rounded-md ${
                 isGreen && !slot.conflict ? 'bg-[var(--tile-placed)]/12' : ''
             }`}
-            style={{ width: 'var(--slot-w)', height: 'calc(var(--slot-w) * 1.15)' }}
+            style={{ width: 'var(--slot-w)', height: 'calc(var(--slot-w) * 1.2)' }}
         >
             {slot.char && (
                 <motion.span
@@ -72,7 +72,7 @@ export function SlotCell({ slot, isCaret, reduced }: SlotCellProps) {
                     initial={reduced || slot.poolId ? false : { scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={reduced ? { duration: 0 } : (slot.poolId ? POOL_HANDOFF : SETTLE_SPRING)}
-                    className={`font-mono font-bold uppercase leading-none ${tone}`}
+                    className={`font-bold uppercase leading-[1.2] ${tone}`}
                     style={{ fontSize: 'var(--slot-font)' }}
                 >
                     {slot.char}

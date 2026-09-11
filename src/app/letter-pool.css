@@ -18,7 +18,7 @@
     transform: translateY(0) rotate(var(--pool-tilt, 0deg));
   }
   33% {
-    transform: translateY(-4px) rotate(calc(var(--pool-tilt, 0deg) * -0.55));
+    transform: translateY(-3px) rotate(calc(var(--pool-tilt, 0deg) * -0.55));
   }
   66% {
     transform: translateY(2px) rotate(var(--pool-tilt, 0deg));
@@ -34,16 +34,21 @@
   animation-delay: var(--pool-phase, 0s);
 }
 
-/* Edge fades, so a pool that scrolls says so rather than clipping a tile. */
+/*
+ * The track scrolls sideways when the pool outgrows one row.
+ *
+ * `padding-block` is load-bearing, not spacing: `overflow-x: auto` makes the
+ * computed `overflow-y` **auto** as well (one axis non-visible forces the
+ * other), so without room inside the scroll box the tiles' drift and their glow
+ * are cropped at the top — which is exactly how this shipped.
+ *
+ * There is no edge fade. It was applied unconditionally, so it dimmed the first
+ * tile whenever the pool fitted, which is almost always — a permanent artefact
+ * paid for a hint that is only occasionally needed.
+ */
 .pool-track {
   scroll-snap-type: x proximity;
-  mask-image: linear-gradient(
-    to right,
-    transparent 0,
-    #000 10px,
-    #000 calc(100% - 10px),
-    transparent 100%
-  );
+  padding-block: 5px;
 }
 
 .pool-track > * {
@@ -66,13 +71,13 @@
 }
 
 .slot-strip {
-  --slot-gap: 1px;
+  --slot-gap: 2px;
   --slot-w: clamp(
     18px,
     calc((100cqi - 24px - (var(--slot-count, 1) - 1) * var(--slot-gap)) / var(--slot-count, 1)),
-    32px
+    26px
   );
-  --slot-font: clamp(11px, calc(var(--slot-w) * 0.52), 17px);
+  --slot-font: clamp(11px, calc(var(--slot-w) * 0.62), 17px);
 }
 
 @keyframes slot-caret {
@@ -92,6 +97,29 @@
 @media (prefers-reduced-motion: reduce) {
   .pool-socket,
   .slot-caret {
+    animation: none;
+  }
+}
+
+/*
+ * A keystroke the strip has no room for.
+ *
+ * The field rolls the character back, which is correct but silent — and silence
+ * here reads as a broken keyboard, because the typed text is transparent and
+ * the player has nothing else to go on.
+ */
+@keyframes strip-reject {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+
+.strip-reject {
+  animation: strip-reject 0.2s ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .strip-reject {
     animation: none;
   }
 }

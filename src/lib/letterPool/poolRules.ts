@@ -128,9 +128,18 @@ export function placedIndices(text: string, guesses: string[], mask?: MaskState)
     const { greenIndices } = computeGuessState(text, guesses);
     const placed = new Set(greenIndices);
 
-    if (mask && mask.hintLevel < 2) {
+    if (!mask) return placed;
+
+    // Hint level 1 buys the first letter at every level above it too, so the
+    // strip fills it in rather than asking for a letter the player has paid for.
+    const chars = [...text];
+    if (mask.hintLevel >= 1 && chars.length > 0 && !isGapChar(chars[0])) {
+        placed.add(0);
+    }
+
+    if (mask.hintLevel < 2) {
         const cipherChars = [...mask.cipher];
-        [...text].forEach((char, index) => {
+        chars.forEach((char, index) => {
             if (isGapChar(char)) return;
             const maskChar = cipherChars[index];
             if (maskChar === undefined || maskChar === ' ' || isFillerChar(maskChar)) return;

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
     buildLetterPool,
-    isGapChar,
     placedIndices,
     type MaskState,
 } from '@/lib/letterPool/poolRules';
@@ -10,6 +9,7 @@ import {
     buildSlots,
     groupSlots,
     longestGroupLength,
+    normaliseTyped,
     resolvePlacements,
     typeableIndices,
     type CaretMode,
@@ -107,12 +107,14 @@ export function useSlotTyping({ text, guesses, mode, mask, targetId, setInput }:
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [attempt, active]);
 
+    /** What the strip would keep of a raw field value. */
+    const normalise = (value: string) => normaliseTyped(value, model?.capacity ?? 0);
+
     /** Accepts a raw field value, keeping only what the strip can hold. */
     const onTypedChange = (value: string) => {
         if (!model) return;
-        const kept = [...value].filter((char) => !isGapChar(char)).slice(0, model.capacity);
-        setTyped(kept.join(''));
+        setTyped(normalise(value));
     };
 
-    return { typed, onTypedChange, model };
+    return { typed, onTypedChange, normalise, model };
 }

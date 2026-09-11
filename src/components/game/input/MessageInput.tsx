@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Loader2, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
@@ -28,6 +28,8 @@ type MessageInputProps = {
     strip?: { groups: SlotGroup[]; longest: number; caretIndex: number | null; dir: 'ltr' | 'rtl' } | null;
     typedValue?: string;
     onTypedChange?: (value: string) => void;
+    /** What the strip would keep of a raw edit, so the field can roll back the rest. */
+    normalizeTyped?: (raw: string) => string;
     onSend: (e: React.FormEvent) => void;
     onTyping?: () => void;
     onInteract: () => void;
@@ -52,6 +54,7 @@ export function MessageInput({
     strip = null,
     typedValue = '',
     onTypedChange,
+    normalizeTyped,
     onSend,
     onTyping,
     onInteract,
@@ -79,6 +82,11 @@ export function MessageInput({
     const onStrip = Boolean(strip) && Boolean(onTypedChange);
     const fieldValue = onStrip ? typedValue : input;
 
+    // A keystroke the strip has no room for is rolled back by the field, which
+    // is correct but silent — and with the typed text transparent, silence
+    // reads as a broken keyboard. One short shake is the whole feedback.
+    const [rejected, setRejected] = useState(false);
+
     const typedCount = countMeaningfulChars(input);
     const targetCount = targetMessage ? countMeaningfulChars(targetMessage.content) : 0;
     const isOverLength = isSolving && Boolean(targetMessage) && typedCount > targetCount;
@@ -104,6 +112,11 @@ export function MessageInput({
                     value={fieldValue}
                     placeholder={placeholder}
                     maxLength={GAME_CONFIG.MESSAGE_MAX_LENGTH}
+                    normalize={onStrip ? normalizeTyped : undefined}
+                    onRejected={() => {
+                        setRejected(true);
+                        window.setTimeout(() => setRejected(false), 220);
+                    }}
                     onOverflow={() =>
                         toast.error(t('toast_max_length', { max: GAME_CONFIG.MESSAGE_MAX_LENGTH }))
                     }
@@ -127,6 +140,7 @@ export function MessageInput({
 
                 {strip && (
                     <SlotStrip
+                        rejected={rejected}
                         groups={strip.groups}
                         longest={strip.longest}
                         caretIndex={strip.caretIndex}

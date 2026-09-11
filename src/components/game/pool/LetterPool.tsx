@@ -48,7 +48,7 @@ export function LetterPool({ letters, placed, dir }: LetterPoolProps) {
                 >
                     <div
                         dir={dir}
-                        className="flex items-center gap-2 pb-2 max-[660px]:pb-1.5"
+                        className="flex items-center gap-2 pb-1 max-[660px]:pb-0.5"
                     >
                         <span className="flex-none select-none text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                             {t('label')}

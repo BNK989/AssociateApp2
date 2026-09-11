@@ -9,6 +9,8 @@ type SlotStripProps = {
     /** Index of the cell the next keystroke fills, or null when the strip is full. */
     caretIndex: number | null;
     dir: 'ltr' | 'rtl';
+    /** A keystroke was just rolled back; shake once to say so. */
+    rejected?: boolean;
 };
 
 /**
@@ -30,7 +32,7 @@ type SlotStripProps = {
  * player how long the answer was. The strip says that natively, so the
  * composer's height is unchanged.
  */
-export function SlotStrip({ groups, longest, caretIndex, dir }: SlotStripProps) {
+export function SlotStrip({ groups, longest, caretIndex, dir, rejected = false }: SlotStripProps) {
     const reduced = Boolean(useReducedMotion());
 
     return (
@@ -39,15 +41,18 @@ export function SlotStrip({ groups, longest, caretIndex, dir }: SlotStripProps) 
             // In flow, not overlaid: the strip is what gives the field its
             // height, so a phrase that wraps to two rows grows the field
             // instead of spilling out of a fixed 40px box.
-            className="slot-strip pointer-events-none relative flex min-h-10 flex-wrap items-center justify-center gap-x-2 gap-y-1 px-2 py-1.5"
+            className={`slot-strip pointer-events-none relative flex min-h-10 flex-wrap items-center justify-center gap-x-2 gap-y-1 px-2 py-1 ${rejected ? 'strip-reject' : ''}`}
             style={{ '--slot-count': longest } as React.CSSProperties}
             aria-hidden="true"
         >
             {groups.map((group, groupIndex) => (
                 <span
                     key={group.slots[0]?.index ?? `gap-${groupIndex}`}
-                    // A word never breaks across lines; the strip wraps around it.
-                    className="flex flex-none items-center gap-px"
+                    // A word does not break across lines while it fits. Once
+                    // `--slot-w` is at its floor and even that overflows, wrapping
+                    // inside the word is the graceful failure; running off the
+                    // edge of the field is not.
+                    className="flex flex-wrap items-center justify-center gap-px"
                 >
                     {group.slots.map((slot) => (
                         <SlotCell

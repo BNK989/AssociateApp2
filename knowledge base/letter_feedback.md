@@ -309,6 +309,38 @@ draws, which `messageFlags`, `CipherText` and `readMaskTile` all read directly,
 and a switch that reached the composer but not the bubble would be worse than
 no switch.
 
+### Fixes from the first production pass (2026-09-11)
+
+Five defects, found by playing a Hebrew daily word on a phone:
+
+- **The first letter bought at hint 1 vanished from hint 2 up.** The guarantee
+  lived only in `buildScrambleItems` — the shuffled view, which this change
+  switched off — and nothing else carried it. It is now the first thing
+  `readMaskTile` answers under `hideUnplaced`, read from the answer rather than
+  the mask so it holds whatever the mask carries, and `placedIndices` agrees so
+  the strip does not ask for a letter the player has paid for.
+- **A keystroke past the last slot stayed in the DOM.** The model clamped it,
+  which produced the string it already held, so React re-rendered nothing, the
+  field's sync effect never ran, and the rejected character sat there invisible
+  — eating the next Backspace. A controlled field cannot fix this itself, so
+  `PlainTextField` takes a `normalize` prop: whatever it strips is rolled back
+  out of the DOM, and `onRejected` shakes the strip once, because with the text
+  drawn transparent silence reads as a broken keyboard.
+- **The pool cropped its own tiles.** `overflow-x: auto` computes `overflow-y`
+  to **auto** as well — one axis non-visible forces the other — so the drift and
+  the glow were cut off at the top. The track now carries `padding-block` for
+  them. The edge fade went with it: it was unconditional, so it dimmed the first
+  tile in the common case where nothing scrolled.
+- **`font-mono` has no Hebrew.** Pool tiles and slot cells fell back to a system
+  font with different metrics, which both clipped tall glyphs under
+  `leading-none` and stopped them matching the board. Both now use the app's own
+  face at `leading-[1.2]`.
+- **A long word ran off the edge instead of wrapping.** Once `--slot-w` is at
+  its 18px floor and even that overflows, the word group now wraps. Breaking a
+  word across lines is bad; running past the field is worse. The cell ceiling
+  also came down from 32px to 26px, which is what a three-letter word needed to
+  stop looking like scattered dashes.
+
 ### Still to land
 
 `pickLegendSamples` reads the word line for its orange samples and now finds

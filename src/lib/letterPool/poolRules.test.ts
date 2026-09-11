@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { CIPHER_SIGNS } from '@/lib/gameConfig';
 import {
     buildLetterPool,
     isGapChar,
@@ -273,8 +274,23 @@ describe('placedIndices', () => {
         expect(placed.has(0)).toBe(true);
     });
 
-    it('ignores the mask from hint 2, where it is an anagram', () => {
-        expect(placedIndices('Harmony', [], { cipher: 'yHramno', hintLevel: 2 }).size).toBe(0);
+    it('ignores an anagram mask from hint 2, apart from the first letter', () => {
+        const placed = placedIndices('Harmony', [], { cipher: 'yHramno', hintLevel: 2 });
+        expect([...placed]).toEqual([0]);
+    });
+
+    // The strip must not ask the player to type a letter they already bought.
+    it('counts the first letter from hint 1 upward', () => {
+        for (const hintLevel of [1, 2, 3]) {
+            expect(placedIndices('Harmony', [], { cipher: '#######', hintLevel }).has(0)).toBe(true);
+        }
+    });
+
+    it('does not count it below hint 1', () => {
+        // A mask of real filler: '#' is not in CIPHER_SIGNS, so the positional
+        // pass would read it as a letter the mask had revealed.
+        const masked = CIPHER_SIGNS[0].repeat(7);
+        expect(placedIndices('Harmony', [], { cipher: masked, hintLevel: 0 }).has(0)).toBe(false);
     });
 });
 
@@ -290,6 +306,11 @@ describe('buildLetterPool — letters bought with a hint', () => {
         // The mask exposes one 'a'; BANANA has three, and none was guessed.
         const pool = buildLetterPool('banana', [], [], { cipher: 'a#####', hintLevel: 2 });
         expect(pool.filter((letter) => letter.char.toLowerCase() === 'a')).toHaveLength(1);
+    });
+
+    it('does not pool the first letter once a hint has bought it', () => {
+        const pool = buildLetterPool('Harmony', ['harpoon'], [], { cipher: '#######', hintLevel: 2 });
+        expect(pool.some((letter) => letter.id === 'pool-0')).toBe(false);
     });
 
     it('does not pool a letter already confirmed by the mask below hint 2', () => {

@@ -44,7 +44,7 @@ export function PoolTile({ letter, isHome, drifting, reduced }: PoolTileProps) {
                     transition={reduced ? { duration: 0 } : SPAWN_SPRING}
                     // Only handed to the compositor while it is actually moving.
                     style={{ willChange: 'transform' }}
-                    className="font-mono font-bold leading-none text-[var(--tile-present)] drop-shadow-[0_0_2px_var(--tile-glow)]"
+                    className="font-bold leading-[1.2] text-[var(--tile-present)] drop-shadow-[0_0_2px_var(--tile-glow)]"
                 >
                     {letter.char}
                 </motion.span>
