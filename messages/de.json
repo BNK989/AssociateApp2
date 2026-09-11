@@ -217,7 +217,11 @@
             "share_text": "Associ8 Tägliche Herausforderung 📅 {date}\n🏆 Punkte: {score} Pkt\n🧩 Wörter: {solved}/{total}\n\nKannst du meinen Punktestand schlagen? Spiele auf: {url}",
             "toast_copied": "Ergebnisse in die Zwischenablage kopiert!",
             "toast_share_fail": "Ergebnisse konnten nicht geteilt werden",
-            "streak_badge": "{streak} Tage in Folge"
+            "streak_badge": "{streak} Tage in Folge",
+            "grid_key_clean": "Gelöst",
+            "grid_key_hard_won": "Hart erkämpft",
+            "grid_key_hinted": "Hinweis genutzt",
+            "grid_key_missed": "Nicht gelöst"
         },
         "Progress": {
             "cue_final_word": "Letztes Wort. Bring die Kette zu Ende.",

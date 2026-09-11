@@ -223,7 +223,11 @@
             "share_text": "Associ8 Daily Challenge 📅 {date}\n🏆 Score: {score} pts\n🧩 Words: {solved}/{total}\n\nCan you beat my score? Play at: {url}",
             "toast_copied": "Results copied to clipboard!",
             "toast_share_fail": "Failed to share results",
-            "streak_badge": "{streak} day streak"
+            "streak_badge": "{streak} day streak",
+            "grid_key_clean": "Solved",
+            "grid_key_hard_won": "Hard won",
+            "grid_key_hinted": "Used the clue",
+            "grid_key_missed": "Not solved"
         },
         "Progress": {
             "cue_final_word": "Last word. Finish the chain.",

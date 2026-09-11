@@ -217,7 +217,11 @@
             "share_text": "تحدي Associ8 اليومي 📅 {date}\n🏆 النتيجة: {score} نقطة\n🧩 الكلمات: {solved}/{total}\n\nهل يمكنك التغلب على نتيجتي؟ العب في: {url}",
             "toast_copied": "تم نسخ النتائج للحافظة!",
             "toast_share_fail": "فشل مشاركة النتائج",
-            "streak_badge": "{streak} أيام متتالية"
+            "streak_badge": "{streak} أيام متتالية",
+            "grid_key_clean": "تم الحل",
+            "grid_key_hard_won": "انتصار صعب",
+            "grid_key_hinted": "بمساعدة التلميح",
+            "grid_key_missed": "لم يُحل"
         },
         "Progress": {
             "cue_final_word": "الكلمة الأخيرة. أكمل السلسلة.",

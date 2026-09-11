@@ -223,7 +223,11 @@
             "share_text": "אתגר יומי Associ8 📅 {date}\n🏆 ניקוד: {score} נק'\n🧩 מילים: {solved}/{total}\n\nנראה אתכם מנצחים אותי? שחקו ב: {url}",
             "toast_copied": "התוצאות הועתקו ללוח!",
             "toast_share_fail": "שיתוף התוצאות נכשל",
-            "streak_badge": "{streak} ימים ברצף"
+            "streak_badge": "{streak} ימים ברצף",
+            "grid_key_clean": "נפתר",
+            "grid_key_hard_won": "נלחמת על זה",
+            "grid_key_hinted": "בעזרת הרמז",
+            "grid_key_missed": "לא נפתר"
         },
         "Progress": {
             "cue_final_word": "המילה האחרונה. סיימו את השרשרת.",

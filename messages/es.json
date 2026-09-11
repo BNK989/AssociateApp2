@@ -217,7 +217,11 @@
             "share_text": "Desafío Diario Associ8 📅 {date}\n🏆 Puntuación: {score} pts\n🧩 Palabras: {solved}/{total}\n\n¿Puedes superar mi puntuación? Juega en: {url}",
             "toast_copied": "¡Resultados copiados al portapapeles!",
             "toast_share_fail": "Error al compartir resultados",
-            "streak_badge": "{streak} días seguidos"
+            "streak_badge": "{streak} días seguidos",
+            "grid_key_clean": "Resuelta",
+            "grid_key_hard_won": "Ganada a pulso",
+            "grid_key_hinted": "Con la pista",
+            "grid_key_missed": "Sin resolver"
         },
         "Progress": {
             "cue_final_word": "Última palabra. Termina la cadena.",

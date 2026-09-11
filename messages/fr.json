@@ -217,7 +217,11 @@
             "share_text": "Défi Quotidien Associ8 📅 {date}\n🏆 Score : {score} pts\n🧩 Mots : {solved}/{total}\n\nPouvez-vous battre mon score ? Jouez sur : {url}",
             "toast_copied": "Résultats copiés dans le presse-papiers !",
             "toast_share_fail": "Échec du partage des résultats",
-            "streak_badge": "{streak} jours d’affilée"
+            "streak_badge": "{streak} jours d’affilée",
+            "grid_key_clean": "Trouvé",
+            "grid_key_hard_won": "Durement gagné",
+            "grid_key_hinted": "Avec l’indice",
+            "grid_key_missed": "Non trouvé"
         },
         "Progress": {
             "cue_final_word": "Dernier mot. Termine la chaîne.",

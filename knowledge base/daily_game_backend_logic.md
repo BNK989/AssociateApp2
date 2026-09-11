@@ -324,16 +324,34 @@ A finished day shares as a spoiler-free result:
 
 ```
 Associ8 #238 — 4/4 · 50 pts
-🟨🟩🟩🟨
+🟨🟩🟦🟩
 
 https://associ8game.com/daily
 ```
 
 | Glyph | Meaning |
 | :--- | :--- |
-| 🟩 | solved with no hints |
-| 🟨 | solved, but took a hint |
-| ⬜ | never solved — given up or struck out |
+| 🟩 | solved outright |
+| 🟦 | solved after a fight — at least one wrong guess, no AI clue |
+| 🟨 | solved with the AI clue in hand |
+| ⬜ | never solved — revealed or struck out |
+
+**Only the AI clue discolours a square**, and that is deliberate. The grid is
+the strongest force in the game pushing players away from hints: a yellow
+square is the permanent, public record of having needed help, and it used to be
+charged for the first-letter nudge — the smallest help the game offers —
+exactly as it was for the clue that all but names the word. Making the cheap
+rungs socially free is the only way a three-rung ladder means anything.
+
+**A fight gets its own colour** for the opposite reason. A word solved after
+two wrong guesses is a better story than one guessed first time, and reporting
+both as the same green threw that away. Hints outrank strikes: a word whose
+clue you were handed is not one you won the hard way, however many attempts it
+took to type it.
+
+The end screen shows a key beneath the grid, listing only the colours actually
+on the board — a legend is a spoiler surface, and naming a colour the player
+did not earn tells them a way the day could have gone.
 
 The property worth protecting is the one that made Wordle's grid travel: it is
 **meaningless until you have played**. It reports how the day went without

@@ -217,7 +217,11 @@
             "share_text": "Provocare Zilnică Associ8 📅 {date}\n🏆 Scor: {score} pct\n🧩 Cuvinte: {solved}/{total}\n\nPoți să-mi bați scorul? Joacă la: {url}",
             "toast_copied": "Rezultate copiate în clipboard!",
             "toast_share_fail": "Partajare rezultate eșuată",
-            "streak_badge": "{streak} zile la rând"
+            "streak_badge": "{streak} zile la rând",
+            "grid_key_clean": "Rezolvat",
+            "grid_key_hard_won": "Câștigat greu",
+            "grid_key_hinted": "Cu indiciul",
+            "grid_key_missed": "Nerezolvat"
         },
         "Progress": {
             "cue_final_word": "Ultimul cuvânt. Termină lanțul.",

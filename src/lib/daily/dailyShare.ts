@@ -1,4 +1,4 @@
-import { MAX_STRIKES } from './dailyScoring';
+import { MAX_HINT_LEVEL, MAX_STRIKES } from './dailyScoring';
 
 /**
  * Turns a finished chain into something worth posting.
@@ -16,7 +16,7 @@ export const DAILY_EPOCH = '2025-12-28';
 
 const MS_PER_DAY = 86_400_000;
 
-export type ShareSquare = 'clean' | 'hinted' | 'missed';
+export type ShareSquare = 'clean' | 'hard_won' | 'hinted' | 'missed';
 
 /**
  * The grid alphabet.
@@ -27,9 +27,10 @@ export type ShareSquare = 'clean' | 'hinted' | 'missed';
  * app, which is exactly what an emoji does and an SVG icon cannot.
  */
 const SQUARE_GLYPHS: Record<ShareSquare, string> = {
-    clean: '\u{1F7E9}',   // green: solved with no hints
-    hinted: '\u{1F7E8}',  // yellow: solved, but took a hint
-    missed: '⬜',     // white: never solved
+    clean: '\u{1F7E9}',    // green: solved outright
+    hard_won: '\u{1F7E6}', // blue: solved after a fight
+    hinted: '\u{1F7E8}',   // yellow: solved with the answer's clue in hand
+    missed: '⬜',      // white: never solved
 };
 
 /** The parts of a board message this module needs; deliberately not the whole Message. */
@@ -54,16 +55,33 @@ export function dailyPuzzleNumber(playDate: string): number {
  * How one word ended up.
  *
  * `is_solved` is not the discriminator it sounds like -- it is set when a word
- * leaves the board, whether it was guessed, given up on, or struck out. Points
- * are what separate a real solve from a surrender, since a genuine solve always
- * scores something even after every hint.
+ * leaves the board, whether it was guessed, revealed, or struck out. Points are
+ * what separate a real solve from a reveal, since a genuine solve always scores
+ * something even after every hint.
+ *
+ * Two things changed once it became clear the grid was the strongest force in
+ * the game pushing players away from hints.
+ *
+ * **Only the AI clue discolours a square.** A yellow square is the permanent,
+ * public record of having needed help, and it used to be charged for the first
+ * letter -- the smallest nudge in the game -- exactly as it was for the clue
+ * that all but names the word. The ladder's cheap rungs are socially free now,
+ * which is the only way the ladder means anything.
+ *
+ * **A fight gets its own colour.** A word solved after two wrong guesses is a
+ * better story than one guessed first time, and reporting them as the same
+ * green threw that away. Hints outrank strikes: a word whose clue you were
+ * given is not one you won the hard way, however many attempts it took.
  */
 export function squareFor(entry: ChainEntry): ShareSquare {
-    // Struck out, gave up, or never reached -- all the same to a reader.
+    // Struck out, revealed, or never reached -- all the same to a reader.
     if ((entry.strikes ?? 0) >= MAX_STRIKES) return 'missed';
     if ((entry.winner_points ?? 0) <= 0) return 'missed';
 
-    return (entry.hint_level ?? 0) === 0 ? 'clean' : 'hinted';
+    if ((entry.hint_level ?? 0) >= MAX_HINT_LEVEL) return 'hinted';
+    if ((entry.strikes ?? 0) > 0) return 'hard_won';
+
+    return 'clean';
 }
 
 /**

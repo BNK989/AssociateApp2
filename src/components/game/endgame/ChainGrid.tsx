@@ -9,9 +9,20 @@ import type { ShareSquare } from '@/lib/daily/dailyShare';
  */
 const SQUARE_STYLES: Record<ShareSquare, string> = {
     clean: 'bg-emerald-500 dark:bg-emerald-500',
+    hard_won: 'bg-sky-500 dark:bg-sky-500',
     hinted: 'bg-amber-400 dark:bg-amber-400',
     missed: 'bg-muted-foreground/25 dark:bg-muted-foreground/25',
 };
+
+/**
+ * Only the squares actually on the board get a key.
+ *
+ * A legend is a spoiler surface: listing a colour the player did not earn tells
+ * them a way the day could have gone, and on a blank board it would list every
+ * way at once. It also keeps the key to two or three entries on a normal day,
+ * which is the difference between something read and something skipped.
+ */
+const KEY_ORDER: ShareSquare[] = ['clean', 'hard_won', 'hinted', 'missed'];
 
 type ChainGridProps = {
     squares: ShareSquare[];
@@ -46,6 +57,15 @@ export function ChainGrid({ squares }: ChainGridProps) {
                         key={index}
                         className={`h-5 w-5 rounded-[4px] ${SQUARE_STYLES[square]}`}
                     />
+                ))}
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-x-3 gap-y-1">
+                {KEY_ORDER.filter((square) => squares.includes(square)).map((square) => (
+                    <span key={square} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <span className={`h-2.5 w-2.5 rounded-[3px] ${SQUARE_STYLES[square]}`} />
+                        {t(`grid_key_${square}`)}
+                    </span>
                 ))}
             </div>
 

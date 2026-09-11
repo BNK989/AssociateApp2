@@ -12,11 +12,12 @@ import {
 import { MAX_STRIKES } from './dailyScoring';
 
 const GREEN = '\u{1F7E9}';
+const BLUE = '\u{1F7E6}';
 const YELLOW = '\u{1F7E8}';
 const WHITE = '⬜';
 
-function solved(hintLevel = 0): ChainEntry {
-    return { is_solved: true, hint_level: hintLevel, strikes: 0, winner_points: 42 };
+function solved(hintLevel = 0, strikes = 0): ChainEntry {
+    return { is_solved: true, hint_level: hintLevel, strikes, winner_points: 42 };
 }
 
 const gaveUp: ChainEntry = { is_solved: true, hint_level: 1, strikes: 0, winner_points: 0 };
@@ -40,12 +41,31 @@ describe('squareFor', () => {
         expect(squareFor(solved(0))).toBe('clean');
     });
 
-    it('yellows a word solved after a hint', () => {
-        expect(squareFor(solved(1))).toBe('hinted');
+    // Only the AI clue discolours a square. The grid is the strongest force in
+    // the game pushing players off hints, and charging the first letter the
+    // same social price as the clue that all but names the word is what made
+    // the cheap rungs of the ladder pointless to offer.
+    it('leaves a word green through the cheap rungs of the ladder', () => {
+        expect(squareFor(solved(1))).toBe('clean');
+        expect(squareFor(solved(2))).toBe('clean');
+    });
+
+    it('yellows a word solved with the AI clue in hand', () => {
         expect(squareFor(solved(3))).toBe('hinted');
     });
 
-    it('whites a word given up on', () => {
+    it('blues a word won after a fight', () => {
+        expect(squareFor(solved(0, 1))).toBe('hard_won');
+        expect(squareFor(solved(2, 2))).toBe('hard_won');
+    });
+
+    // A word whose clue you were handed is not one you won the hard way,
+    // however many attempts it took to type it.
+    it('ranks the clue above the fight when a word had both', () => {
+        expect(squareFor(solved(3, 2))).toBe('hinted');
+    });
+
+    it('whites a word revealed rather than solved', () => {
         // is_solved is true here -- it means "left the board", not "guessed".
         expect(squareFor(gaveUp)).toBe('missed');
     });
@@ -61,7 +81,7 @@ describe('squareFor', () => {
 
 describe('summarizeChain', () => {
     it('drops the final word, which is revealed for free', () => {
-        const squares = summarizeChain([solved(0), solved(1), gaveUp, startWord]);
+        const squares = summarizeChain([solved(0), solved(3), gaveUp, startWord]);
 
         expect(squares).toHaveLength(3);
         expect(squares).toEqual(['clean', 'hinted', 'missed']);
@@ -75,7 +95,8 @@ describe('summarizeChain', () => {
 
 describe('gridFor', () => {
     it('renders one glyph per square, in chain order', () => {
-        expect(gridFor(['clean', 'hinted', 'missed'])).toBe(`${GREEN}${YELLOW}${WHITE}`);
+        expect(gridFor(['clean', 'hard_won', 'hinted', 'missed']))
+            .toBe(`${GREEN}${BLUE}${YELLOW}${WHITE}`);
     });
 
     it('renders nothing for no squares', () => {
