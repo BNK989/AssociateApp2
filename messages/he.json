@@ -45,9 +45,11 @@
             "counter_last": "ניחוש אחרון",
             "free_for_all": "חופשי לכולם",
             "toast_max_length": "ההודעה לא יכולה לעלות על {max} תווים",
-            "resume_auto_hint": "המשך רמז אוטומטי",
-            "pause_auto_hint": "השהה רמז אוטומטי",
-            "settings": "הגדרות"
+            "resume_auto_hint": "תן לה להיפתח שוב",
+            "pause_auto_hint": "קח עוד זמן",
+            "settings": "הגדרות",
+            "auto_hint_opening": "המילה נפתחת בעוד {seconds} שניות",
+            "auto_hint_paused": "מושהה — נפתחת כשתחליט"
         },
         "Chat": {
             "start_random": "התחל עם מילה אקראית",
@@ -238,6 +240,17 @@
             "cue_halfway": "חצי הדרך — נשארו {remaining}.",
             "miss_near_forgiven": "כמעט — זו שגיאת כתיב, בלי עונש.",
             "miss_near": "עדיין קרוב. בדוק את האיות."
+        },
+        "Stuck": {
+            "stake_bonus": "עוד {solves} פתרונות ל-×{multiplier} נקודות.",
+            "stake_words": "נשארו {count} מילים בשרשרת.",
+            "other_end_title": "נתקעת כאן?",
+            "other_end_action": "הקצה השני",
+            "letter_title": "רוצה אות?",
+            "letter_action": "הראה אחת",
+            "reveal_title": "להמשיך הלאה?",
+            "reveal_action": "גלה",
+            "dismiss": "סגור"
         },
         "Legend": {
             "title": "מה המשמעות של הצבעים",

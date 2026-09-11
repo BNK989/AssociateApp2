@@ -39,9 +39,11 @@
             "counter_last": "Letzter Versuch",
             "free_for_all": "JEDER GEGEN JEDEN",
             "toast_max_length": "Nachricht darf nicht länger als {max} Zeichen sein",
-            "resume_auto_hint": "Auto-Hinweis fortsetzen",
-            "pause_auto_hint": "Auto-Hinweis pausieren",
-            "settings": "Einstellungen"
+            "resume_auto_hint": "Wieder öffnen lassen",
+            "pause_auto_hint": "Mehr Zeit nehmen",
+            "settings": "Einstellungen",
+            "auto_hint_opening": "Dieses Wort öffnet sich in {seconds}s",
+            "auto_hint_paused": "Pausiert — öffnet sich auf dein Zeichen"
         },
         "Chat": {
             "start_random": "Mit zufälligem Wort starten",
@@ -232,6 +234,17 @@
             "cue_halfway": "Halbzeit – noch {remaining} übrig.",
             "miss_near_forgiven": "Ganz knapp — nur ein Tippfehler, kein Strike.",
             "miss_near": "Immer noch knapp. Prüfe die Schreibweise."
+        },
+        "Stuck": {
+            "stake_bonus": "Noch {solves} Lösung für ×{multiplier} Punkte.",
+            "stake_words": "Noch {count} Wörter in der Kette.",
+            "other_end_title": "Hier festgefahren?",
+            "other_end_action": "Anderes Ende",
+            "letter_title": "Einen Buchstaben?",
+            "letter_action": "Zeig einen",
+            "reveal_title": "Weitergehen?",
+            "reveal_action": "Aufdecken",
+            "dismiss": "Ausblenden"
         },
         "Legend": {
             "title": "Was die Farben bedeuten",

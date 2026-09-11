@@ -59,7 +59,14 @@ the input.
 
 ## When a word does not come
 
-Three things exist so that a word you cannot get is a pause rather than an exit.
+Four things exist so that a word you cannot get is a pause rather than an exit.
+
+*   **The game speaks first.** Go quiet on a word and it offers something
+    unprompted — first just a reason to keep going (how close the streak bonus
+    is, how many words are left), then a route: the chain's other end, a letter,
+    or the word itself. You never have to be the one who asks, which is the
+    entire point; accepting an offer feels nothing like requesting help. Wave it
+    away and it stays quiet for that word.
 
 *   **Near misses are forgiven once per word.** A guess close enough in
     *spelling* — not meaning; the measure is Levenshtein and knows nothing about

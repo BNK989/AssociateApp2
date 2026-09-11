@@ -21,7 +21,9 @@ import { useDailyResults } from '@/components/daily/useDailyResults';
 import { useDailyShareText } from '@/components/daily/useDailyShareText';
 import { useDailySettings } from '@/components/daily/useDailySettings';
 import { useDailyInstrumentation } from '@/components/daily/useDailyInstrumentation';
+import { useDailyStuckOffer } from '@/components/daily/useDailyStuckOffer';
 import { useDailyTracking } from '@/components/daily/useDailyTracking';
+import { StuckOffer } from '@/components/daily/StuckOffer';
 import { useDailyTutorial } from '@/components/daily/useDailyTutorial';
 import { useExperimentStartLevel } from '@/components/daily/useExperimentStartLevel';
 import { useMissCue } from '@/components/daily/useMissCue';
@@ -97,7 +99,7 @@ function DailyGameBoard({
     });
 
     const {
-        callbacks, attachResults, setOutcomeTier, setOtherEndOpen, trackChainRevealed,
+        callbacks, attachResults, setOutcomeTier, setOtherEndOpen, trackChainRevealed, trackOffer,
     } = useDailyInstrumentation({
         tracking,
         guessableWords,
@@ -179,6 +181,29 @@ function DailyGameBoard({
     const applyHint = game.revealHint;
     const askForHint = useCallback(() => applyHint(fetchHint, 'manual'), [applyHint, fetchHint]);
     const autoRevealHint = useCallback(() => applyHint(fetchHint, 'auto'), [applyHint, fetchHint]);
+
+    /**
+     * The game speaks first when a player goes quiet on a word.
+     *
+     * Everything else built for stuck players is passive — it makes the escape
+     * routes less punishing and the aftermath kinder. This is the only thing
+     * that reaches someone mid-word, which is where they actually decide
+     * whether to carry on.
+     */
+    const stuck = useDailyStuckOffer({
+        messages: game.messages,
+        targetMessage: game.targetMessage,
+        targetIndex: game.targetMessage
+            ? game.messages.findIndex((m) => m.id === game.targetMessage!.id)
+            : -1,
+        canOpenOtherEnd: game.canOpenOtherEnd,
+        consecutive: game.consecutive,
+        gameOver: game.gameOver,
+        openOtherEnd: game.openOtherEnd,
+        revealHint: askForHint,
+        revealWord: game.revealWord,
+        trackOffer,
+    });
 
     const autoHint = useAutoHint({
         targetMessage: game.targetMessage,
@@ -263,6 +288,8 @@ function DailyGameBoard({
                 onTestEndSequence={game.forceGameOver}
                 onResetGame={game.reset}
             />
+
+            <StuckOffer offer={stuck.offer} onAct={stuck.onAct} onDismiss={stuck.onDismiss} />
 
             <GameInput
                 game={gameState}

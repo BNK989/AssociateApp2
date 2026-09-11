@@ -39,9 +39,11 @@
             "counter_last": "último intento",
             "free_for_all": "TODOS CONTRA TODOS",
             "toast_max_length": "El mensaje no puede exceder {max} caracteres",
-            "resume_auto_hint": "Reanudar pista automática",
-            "pause_auto_hint": "Pausar pista automática",
-            "settings": "Ajustes"
+            "resume_auto_hint": "Que vuelva a abrirse",
+            "pause_auto_hint": "Tomarme más tiempo",
+            "settings": "Ajustes",
+            "auto_hint_opening": "Esta palabra se abre en {seconds}s",
+            "auto_hint_paused": "En pausa — se abre cuando tú digas"
         },
         "Chat": {
             "start_random": "Empezar con Palabra Aleatoria",
@@ -232,6 +234,17 @@
             "cue_halfway": "Vas por la mitad: quedan {remaining}.",
             "miss_near_forgiven": "Casi — es un error de escritura, sin penalización.",
             "miss_near": "Sigues cerca. Revisa la ortografía."
+        },
+        "Stuck": {
+            "stake_bonus": "{solves} acierto más para ×{multiplier} puntos.",
+            "stake_words": "Quedan {count} palabras en la cadena.",
+            "other_end_title": "¿Atascado con esta?",
+            "other_end_action": "Otro extremo",
+            "letter_title": "¿Quieres una letra?",
+            "letter_action": "Muéstrame una",
+            "reveal_title": "¿Seguimos adelante?",
+            "reveal_action": "Revelar",
+            "dismiss": "Descartar"
         },
         "Legend": {
             "title": "Qué significan los colores",

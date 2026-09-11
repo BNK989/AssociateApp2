@@ -182,6 +182,45 @@ export function useDailyTracking({
         });
     }, [track, contextFor]);
 
+    /**
+     * One shown event per offer per word.
+     *
+     * The offer is re-decided on a timer, so the component would otherwise
+     * report it on every tick and drown the taken/dismissed ratios that are the
+     * only reason to collect it.
+     */
+    const shownRef = useRef(new Set<string>());
+    const trackOfferShown = useCallback((
+        word: WordSnapshot,
+        index: number,
+        ms: number,
+        offer: string,
+    ) => {
+        const seen = `${index}:${offer}`;
+        if (shownRef.current.has(seen)) return;
+        shownRef.current.add(seen);
+
+        track('daily_stuck_offer_shown', { ...contextFor(word, index, ms), offer });
+    }, [track, contextFor]);
+
+    const trackOfferTaken = useCallback((
+        word: WordSnapshot,
+        index: number,
+        ms: number,
+        offer: string,
+    ) => {
+        track('daily_stuck_offer_taken', { ...contextFor(word, index, ms), offer });
+    }, [track, contextFor]);
+
+    const trackOfferDismissed = useCallback((
+        word: WordSnapshot,
+        index: number,
+        ms: number,
+        offer: string,
+    ) => {
+        track('daily_stuck_offer_dismissed', { ...contextFor(word, index, ms), offer });
+    }, [track, contextFor]);
+
     const trackCompleted = useCallback((
         finalScore: number,
         endedOn: WordOutcome,
@@ -211,6 +250,9 @@ export function useDailyTracking({
         trackHint,
         trackMiss,
         trackOtherEndOpened,
+        trackOfferShown,
+        trackOfferTaken,
+        trackOfferDismissed,
         setOtherEndOpen,
         trackCompleted,
         trackChainRevealed,

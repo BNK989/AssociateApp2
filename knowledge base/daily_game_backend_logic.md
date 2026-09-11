@@ -366,6 +366,51 @@ Two details that look like bugs and are not:
   board by any route. Points are the discriminator: a real solve always scores
   something, even after every hint, while a surrender scores zero.
 
+### Speaking to a stuck player
+
+Everything else built for stuck players is **passive**: it makes the escape
+routes less punishing (Reveal, the streak decay), the aftermath kinder (the
+chain reveal), and the grid fairer. None of it reaches a player who is sitting
+on a word, not typing, deciding whether to close the tab — and that is the
+moment all of it was aimed at.
+
+`useHintNudge` was supposed to cover this and cannot. It only animates the hint
+button, and it switches itself off while the auto-hint clock is running, which
+in the daily game is always. In practice nothing had ever spoken to a stuck
+daily player.
+
+The rule the offer is built on is one line: **the game offers, the player never
+asks.** A hint you request is an admission you could not do it; the same hint
+arriving as an offer you accept is the game being generous. Identical
+mechanics, opposite feeling. That is why the actions in the offer duplicate
+ones already in the hint menu rather than replacing them — the menu is where
+you go to ask, and the point is not having to.
+
+`src/lib/daily/stuckSignals.ts` decides what is said, from dwell time on the
+word plus credit for wrong guesses (a player who has guessed and missed is
+further into being stuck than one who has merely been quiet):
+
+| Pressure | Offer | Action |
+| :--- | :--- | :--- |
+| under 14s | — | silence |
+| 14–30s | `stake` | none — how close the streak bonus is, or how many words are left |
+| 30s+ | `other_end` | open the chain from its start |
+| 30s+, other end spent | `letter` | next rung of the ladder |
+| 30s+, nothing else left | `reveal` | show the word |
+
+Silence is the common case and deliberately so — an offer that appears on every
+word stops being read by the third one, which is exactly when it matters most.
+Interrupting someone mid-deduction to ask if they are stuck is its own kind of
+insult, which is what the 14-second floor is protecting.
+
+Dismissal is **per word**: waving an offer away silences it for that word alone.
+A dismissal that lasted the whole day would turn one irritated tap into opting
+out of every future nudge.
+
+This is also how the other-end mechanic gets discovered. It lives in the hint
+dropdown, where nobody will find it; the offer puts it in front of exactly the
+player it was built for, without adding a fifth control to the input row.
+
 ### Two fronts: opening the chain's other end
 
 The daily chain is **strictly pairwise**. The generator is told "each word

@@ -152,6 +152,28 @@ export function useDailyInstrumentation({
     }, []);
 
     /**
+     * The three halves of an offer's life, reported against the word it
+     * appeared on.
+     *
+     * Takes the word and index from the caller rather than holding the board,
+     * for the same reason every other callback here does: this hook is glue and
+     * must not become a second source of truth about which word is in play.
+     */
+    const trackOffer = useCallback((
+        event: 'shown' | 'taken' | 'dismissed',
+        word: { hint_level?: number | null; strikes?: number | null },
+        index: number,
+        offer: string,
+    ) => {
+        const ms = elapsedRef.current?.() ?? 0;
+        const tracking = trackingRef.current;
+
+        if (event === 'shown') tracking.trackOfferShown(word, index, ms, offer);
+        else if (event === 'taken') tracking.trackOfferTaken(word, index, ms, offer);
+        else tracking.trackOfferDismissed(word, index, ms, offer);
+    }, []);
+
+    /**
      * Counts the end screen actually showing the chain.
      *
      * Separate from completion on purpose: the point of the reveal is that
@@ -173,5 +195,12 @@ export function useDailyInstrumentation({
 
     const { setOtherEndOpen } = tracking;
 
-    return { callbacks, attachResults, setOutcomeTier, setOtherEndOpen, trackChainRevealed };
+    return {
+        callbacks,
+        attachResults,
+        setOutcomeTier,
+        setOtherEndOpen,
+        trackChainRevealed,
+        trackOffer,
+    };
 }

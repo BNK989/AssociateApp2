@@ -39,9 +39,11 @@
             "counter_last": "ultima încercare",
             "free_for_all": "TOȚI PENTRU TOȚI",
             "toast_max_length": "Mesajul nu poate depăși {max} caractere",
-            "resume_auto_hint": "Reia indiciul automat",
-            "pause_auto_hint": "Pune pauză indiciului automat",
-            "settings": "Setări"
+            "resume_auto_hint": "Lasă-l să se deschidă",
+            "pause_auto_hint": "Mai mult timp",
+            "settings": "Setări",
+            "auto_hint_opening": "Cuvântul se deschide în {seconds}s",
+            "auto_hint_paused": "În pauză — se deschide când spui tu"
         },
         "Chat": {
             "start_random": "Începe cu Cuvânt Aleatoriu",
@@ -232,6 +234,17 @@
             "cue_halfway": "Ești la jumătate — au mai rămas {remaining}.",
             "miss_near_forgiven": "Aproape — e o greșeală de scriere, fără penalizare.",
             "miss_near": "Tot aproape. Verifică ortografia."
+        },
+        "Stuck": {
+            "stake_bonus": "Încă {solves} rezolvare pentru ×{multiplier} puncte.",
+            "stake_words": "Au mai rămas {count} cuvinte în lanț.",
+            "other_end_title": "Te-ai blocat aici?",
+            "other_end_action": "Celălalt capăt",
+            "letter_title": "Vrei o literă?",
+            "letter_action": "Arată una",
+            "reveal_title": "Mergem mai departe?",
+            "reveal_action": "Dezvăluie",
+            "dismiss": "Închide"
         },
         "Legend": {
             "title": "Ce înseamnă culorile",

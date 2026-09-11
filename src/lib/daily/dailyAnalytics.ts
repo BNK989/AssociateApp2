@@ -138,6 +138,18 @@ export type DailyEventProps = {
     };
 
     /**
+     * The game spoke first to a player who had gone quiet on a word.
+     *
+     * Shown, taken and dismissed are three events rather than one with an
+     * outcome, because the interesting ratios are between them: an offer that
+     * is shown and never taken is the wrong offer, and one that is dismissed
+     * is an unwanted interruption. Those need to be told apart.
+     */
+    daily_stuck_offer_shown: WordContext & { offer: string };
+    daily_stuck_offer_taken: WordContext & { offer: string };
+    daily_stuck_offer_dismissed: WordContext & { offer: string };
+
+    /**
      * The end screen showed the chain and the day's theme.
      *
      * Separate from completion because the point of the reveal is that *every*

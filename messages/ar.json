@@ -39,9 +39,11 @@
             "counter_last": "التخمين الأخير",
             "free_for_all": "متاح للجميع",
             "toast_max_length": "لا يمكن أن تتجاوز الرسالة {max} حرفًا",
-            "resume_auto_hint": "استئناف التلميح التلقائي",
-            "pause_auto_hint": "إيقاف التلميح التلقائي مؤقتًا",
-            "settings": "الإعدادات"
+            "resume_auto_hint": "دعها تنفتح مجددًا",
+            "pause_auto_hint": "خذ وقتًا أطول",
+            "settings": "الإعدادات",
+            "auto_hint_opening": "تنفتح هذه الكلمة خلال {seconds} ثانية",
+            "auto_hint_paused": "متوقف — تنفتح حين تشاء"
         },
         "Chat": {
             "start_random": "ابدأ بكلمة عشوائية",
@@ -232,6 +234,17 @@
             "cue_halfway": "قطعت نصف الطريق — بقيت {remaining}.",
             "miss_near_forgiven": "اقتربت كثيرًا — مجرد خطأ إملائي، بلا عقوبة.",
             "miss_near": "ما زلت قريبًا. تحقّق من الإملاء."
+        },
+        "Stuck": {
+            "stake_bonus": "حلٌّ واحد آخر ({solves}) مقابل ×{multiplier} نقطة.",
+            "stake_words": "بقيت {count} كلمات في السلسلة.",
+            "other_end_title": "تعثرت في هذه؟",
+            "other_end_action": "الطرف الآخر",
+            "letter_title": "أتريد حرفًا؟",
+            "letter_action": "أظهر حرفًا",
+            "reveal_title": "ننتقل للتالية؟",
+            "reveal_action": "اكشف",
+            "dismiss": "إخفاء"
         },
         "Legend": {
             "title": "معنى الألوان",

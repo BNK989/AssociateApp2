@@ -141,6 +141,19 @@ one number that says whether the mechanic works.
 
 - **Properties**: word context, plus `words_remaining`.
 
+### 6f. `daily_stuck_offer_shown` / `_taken` / `_dismissed`
+Fired when the game speaks first to a player who has gone quiet on a word, and
+when they take it up or wave it away.
+
+Three events rather than one with an outcome, because the interesting numbers
+are the ratios between them: an offer shown and never taken is the wrong offer,
+and one dismissed is an unwanted interruption. `shown` fires once per offer per
+word — the offer is re-decided on a timer and would otherwise drown the other
+two.
+
+- **Properties**: word context, plus `offer` (`stake` | `other_end` | `letter`
+  | `reveal`).
+
 ### 7. `daily_game_completed`
 Fired when the last word leaves the board — however it left.
 

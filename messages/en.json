@@ -45,9 +45,11 @@
             "counter_last": "last guess",
             "free_for_all": "FREE FOR ALL",
             "toast_max_length": "Message cannot exceed {max} characters",
-            "resume_auto_hint": "Resume Auto Hint",
-            "pause_auto_hint": "Pause Auto Hint",
-            "settings": "Settings"
+            "resume_auto_hint": "Let it open up again",
+            "pause_auto_hint": "Take more time",
+            "settings": "Settings",
+            "auto_hint_opening": "This word opens up in {seconds}s",
+            "auto_hint_paused": "Paused — opens up when you say so"
         },
         "Chat": {
             "start_random": "Start with Random Word",
@@ -238,6 +240,17 @@
             "cue_halfway": "Halfway there — {remaining} to go.",
             "miss_near_forgiven": "So close — a spelling slip, so no strike.",
             "miss_near": "Still close. Check the spelling."
+        },
+        "Stuck": {
+            "stake_bonus": "{solves} more solve for ×{multiplier} points.",
+            "stake_words": "{count} words left in the chain.",
+            "other_end_title": "Stuck on this one?",
+            "other_end_action": "Other end",
+            "letter_title": "Want a letter?",
+            "letter_action": "Show one",
+            "reveal_title": "Ready to move on?",
+            "reveal_action": "Reveal it",
+            "dismiss": "Dismiss"
         },
         "Legend": {
             "title": "What the colors mean",
