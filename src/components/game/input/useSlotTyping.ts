@@ -1,17 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
     buildLetterPool,
-    placedIndices,
     type MaskState,
 } from '@/lib/letterPool/poolRules';
 import {
-    assembleAttempt,
     buildSlots,
     groupSlots,
     longestGroupLength,
     normaliseTyped,
     resolvePlacements,
-    typeableIndices,
+    resolveTyping,
+    typeableCapacity,
     type CaretMode,
 } from '@/lib/letterPool/slotRules';
 
@@ -70,22 +69,37 @@ export function useSlotTyping({ text, guesses, mode, mask, targetId, setInput }:
         if (!text) return null;
 
         const pool = buildLetterPool(text, guesses, [], mask, `pool-${targetId ?? 'word'}`);
-        const bare = buildSlots({ text, guesses, typed, mode, mask });
-        const placements = resolvePlacements(pool, bare);
-        const slots = buildSlots({ text, guesses, typed, mode, placements, mask });
+
+        // Which habit the player is typing in, decided from the keystrokes
+        // rather than from a mode they were never told they were in.
+        const typing = resolveTyping({ text, guesses, typed, mode, mask });
+        const placements = resolvePlacements(pool, typing.slots);
+
+        // Re-read under the settled reading so the cells know which letters came
+        // out of the pool, and therefore which ones fly.
+        const slots = buildSlots({
+            text,
+            guesses,
+            typed,
+            mode: typing.reading === 'whole' ? 'full' : 'skip',
+            placements,
+            mask,
+        });
         const groups = groupSlots(slots);
-        const order = typeableIndices(text, placedIndices(text, guesses, mask), mode);
 
         return {
             pool,
             slots,
             groups,
             placements,
+            reading: typing.reading,
             longest: longestGroupLength(groups),
             placed: new Set<string>(placements.keys()),
-            caretIndex: order[[...typed].length] ?? null,
-            attempt: assembleAttempt(slots),
-            capacity: order.length,
+            caretIndex: typing.caretIndex,
+            attempt: typing.attempt,
+            // The field accepts as much as the longer reading can hold, or the
+            // whole-word reading could never be reached to be evaluated.
+            capacity: typeableCapacity(text),
         };
         // guessKey stands in for the array, whose identity changes every render.
         // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -361,6 +361,50 @@ Five defects, found by playing a Hebrew daily word on a phone:
   Arabic and the left in everything else — which centring could not express
   either way.
 
+### Reading the keystrokes instead of imposing a shape (2026-09-11)
+
+Skipping confirmed letters was silently modal. A player who typed the answer out
+in full — much the commoner instinct — got it shifted by a letter, and on a word
+like OOZE the strip filled with `Oooz` and then shook at them. The fix is not to
+pick a side but to stop needing one: `resolveTyping` in
+[`slotRules.ts`](../src/lib/letterPool/slotRules.ts) reads the keystrokes two
+ways at once and lets them rule each other out.
+
+- **gaps** — each character goes to the next *open* slot. Dies by overflowing.
+- **whole** — each character goes to the next slot of any kind, so one landing on
+  a confirmed letter has to match it. Dies on a disagreement.
+
+The composer never consults the answer to decide — that would be reading the
+thing it exists to hide. It looks only at what the player can already see: the
+letters it has given them, and how many slots there are. That is enough, because
+the two readings fail in different ways.
+
+| Answer | Confirmed | Typed | gaps | whole | Read as |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| SAMPLE | `S_m___` | `sample` | overflows | complete | **whole** |
+| SAMPLE | `S_m___` | `aple` | complete | dies on `a`≠`S` | **gaps** |
+| HARMONY | `HAR_O__` | `harmony` | overflows | complete | **whole** |
+| OOZE | `O___` | `ooze` | overflows | complete | **whole** |
+| OOZE | `O___` | `oze` | complete | unfinished | **gaps** |
+
+Where both survive, the one that fills every slot wins. Where neither is
+finished, *whole* is preferred: the player has matched a letter they were given,
+and typing the answer as they would say it is the commoner habit.
+
+**The one rough edge, stated plainly.** A word whose first letter repeats —
+OOZE, LLAMA, AARDVARK — is the only shape where neither reading can be ruled out
+early, because the first keystroke is consistent with both. Someone who *skips*
+on such a word sees *whole*'s arrangement while typing, and the strip settles to
+*gaps* on their last keystroke. Preferring *gaps* instead would move that jump
+onto every player who types a word out in full, which is far the worse trade.
+
+If neither reading survives — a typo over a confirmed letter — *whole* is shown
+with the disagreement marked, because someone who has mistyped is better served
+seeing where than seeing nothing.
+
+A confirmed letter that the player merely retypes keeps **the game's** casing
+rather than theirs. Otherwise typing LLAMA out in full assembled as `llama`.
+
 ### Still to land
 
 `pickLegendSamples` reads the word line for its orange samples and now finds

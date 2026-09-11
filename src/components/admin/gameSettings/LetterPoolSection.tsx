@@ -44,13 +44,13 @@ export function LetterPoolSection({ policy, revision }: LetterPoolSectionProps) 
             <div className="flex flex-col gap-2 border-b border-border py-4 last:border-b-0 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0 sm:me-6">
                     <div className="text-sm font-medium text-foreground">
-                        Skip over confirmed letters
+                        Work out what the player meant
                     </div>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                        On, the cursor jumps past letters the player has already confirmed, so
-                        they type only the gaps and never retype something they earned. Off, they
-                        type the whole answer and confirmed letters act as checkpoints that mark a
-                        disagreement without blocking the keystroke.
+                        On, the cursor rests on the first gap — but typing the answer out in full
+                        works just as well, and the box works out which the player did from what
+                        they typed. Off, they must type the whole answer, and a keystroke that
+                        disagrees with a confirmed letter is marked rather than accommodated.
                     </p>
                 </div>
                 <div className="shrink-0">
@@ -68,13 +68,14 @@ export function LetterPoolSection({ policy, revision }: LetterPoolSectionProps) 
                 </div>
                 <p className="text-xs text-muted-foreground">
                     {skips
-                        ? 'With H, A, R and O confirmed in HARMONY, the player types "mny" — three keystrokes for the three gaps, and the cursor never lands on a confirmed letter.'
-                        : 'With H, A, R and O confirmed in HARMONY, the player types the whole word. A keystroke that disagrees with a confirmed letter is marked rather than refused.'}
+                        ? 'With S and M confirmed in SAMPLE, "aple" and "sample" both land as SAMPLE. Neither habit has to be learned: typing only the gaps is too short to be the whole word, and typing the whole word is too long to be the gaps, so each rules the other out.'
+                        : 'With S and M confirmed in SAMPLE, the player types the whole word. "aple" is read as a six-letter answer beginning with A, and the disagreement with the confirmed S is marked rather than refused.'}
                 </p>
                 <p className="mt-2 text-xs text-muted-foreground">
                     Either way an answer submitted through the box is checked exactly, not
                     fuzzily — the box fixes the length and fills letters in, so a wrong letter is
-                    simply a wrong answer.
+                    simply a wrong answer. A word whose first letter repeats, like OOZE or LLAMA,
+                    is the one case neither reading settles until the last keystroke.
                 </p>
             </div>
 

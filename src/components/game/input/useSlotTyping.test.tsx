@@ -47,10 +47,29 @@ describe('useSlotTyping — ownership of the submitted value', () => {
 });
 
 describe('useSlotTyping — typing', () => {
-    it('drops characters the strip has no room for', () => {
+    it('accepts up to the whole word, so the whole-word reading can be reached', () => {
         const { result } = setup();
-        act(() => result.current.onTypedChange('mnyXXXX'));
-        expect(result.current.typed).toBe('mny');
+        act(() => result.current.onTypedChange('harmony'));
+        expect(result.current.typed).toBe('harmony');
+        expect(result.current.model?.attempt).toBe('Harmony');
+    });
+
+    it('drops characters past the whole word', () => {
+        const { result } = setup();
+        act(() => result.current.onTypedChange('harmonyXXX'));
+        expect(result.current.typed).toBe('harmony');
+    });
+
+    // The point of the whole exercise: neither habit has to be learned.
+    it('reads the gaps and the whole word as the same answer', () => {
+        const gaps = setup();
+        act(() => gaps.result.current.onTypedChange('mny'));
+
+        const whole = setup();
+        act(() => whole.result.current.onTypedChange('harmony'));
+
+        expect(gaps.result.current.model?.attempt).toBe('Harmony');
+        expect(whole.result.current.model?.attempt).toBe('Harmony');
     });
 
     it('ignores a typed space, which the strip supplies itself', () => {

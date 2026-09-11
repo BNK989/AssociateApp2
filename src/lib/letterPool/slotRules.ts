@@ -55,6 +55,11 @@ export interface SlotGroup {
  */
 export type CaretMode = 'skip' | 'full';
 
+/** Slots the player could ever type into: everything that is not scenery. */
+export function typeableCapacity(text: string): number {
+    return [...text].filter((char) => !isGapChar(char)).length;
+}
+
 /**
  * A raw field value reduced to what the strip can actually hold.
  *
@@ -126,9 +131,14 @@ export function buildSlots({ text, guesses, typed, mode, placements, mask }: Bui
         if (isGreen) {
             // `full` mode: the green is shown until the player types over it,
             // and a disagreement is marked rather than rejected.
+            //
+            // A keystroke that agrees keeps the *given* letter rather than the
+            // typed one. It is the game's letter and the player is only
+            // confirming it, so its case is the game's to decide — otherwise
+            // typing LLAMA out in full assembled as "llama".
             if (typedChar === undefined) return { kind: 'green' as const, index, char };
             const conflict = typedChar.toLowerCase() !== char.toLowerCase();
-            return { kind: 'green' as const, index, char: typedChar, conflict };
+            return { kind: 'green' as const, index, char: conflict ? typedChar : char, conflict };
         }
 
         const poolId = poolAt.get(index);
@@ -220,3 +230,105 @@ export function resolvePlacements(
     return placements;
 }
 
+
+/* ------------------------------------------------------------------ *
+ * Reading the keystrokes
+ * ------------------------------------------------------------------ */
+
+/** Which reading of the typed string the strip settled on. */
+export type Reading = 'gaps' | 'whole';
+
+export interface Typing {
+    slots: Slot[];
+    reading: Reading;
+    /** The answer as the strip reads, or null while a slot is empty. */
+    attempt: string | null;
+    /** The next cell a keystroke fills, or null when the strip is full. */
+    caretIndex: number | null;
+}
+
+function firstEmpty(slots: Slot[]): number | null {
+    const empty = slots.find((slot) => slot.kind !== 'gap' && !slot.char);
+    return empty ? empty.index : null;
+}
+
+/**
+ * Decides what the player meant by what they typed.
+ *
+ * Two habits have to work without the player knowing which one they are in.
+ * Given `S_m___` for SAMPLE, one person types `sample` and another types
+ * `aple`, and both are right. The composer cannot ask the answer which it is
+ * looking at — that would be reading the very thing it is hiding — so it reads
+ * only what the player can already see: the letters it has given them, and how
+ * many slots there are.
+ *
+ * That turns out to be enough, because the two readings fail in different ways.
+ *
+ * - **gaps**: every character goes to the next *open* slot. Dies by overflowing.
+ * - **whole**: every character goes to the next slot of any kind, so a character
+ *   landing on a given letter has to match it. Dies on a disagreement.
+ *
+ * Typing `sample` overflows the four open slots, so only *whole* survives.
+ * Typing `aple` disagrees with the given `S`, so only *gaps* does. Where both
+ * survive, the one that fills every slot wins — which is what separates `oze`
+ * from `ooze` for OOZE, and `lama` from `llama` for LLAMA, the words where the
+ * first letter repeats and neither reading can be ruled out any earlier.
+ *
+ * While both are still alive and neither is finished, it prefers *whole*: the
+ * player has typed a character matching a letter they were given, and typing
+ * the answer out in full is much the commoner habit. The cost is paid by
+ * someone skipping a doubled first letter — they see *whole*'s arrangement
+ * until their last keystroke settles it — and that is a narrow case to trade
+ * against every player who types the word as they would say it.
+ *
+ * If neither survives, *whole* is shown with its disagreement marked, because a
+ * player who has mistyped is better served seeing where than seeing nothing.
+ */
+export function resolveTyping(
+    { text, guesses, typed, mode, mask }: Omit<BuildSlotsArgs, 'placements'>,
+): Typing {
+    const build = (as: CaretMode) => buildSlots({ text, guesses, typed, mode: as, mask });
+
+    const whole = build('full');
+
+    // The setting can pin the composer to one reading; then there is nothing
+    // to decide and a disagreement is simply marked.
+    if (mode === 'full') {
+        return {
+            slots: whole,
+            reading: 'whole',
+            attempt: assembleAttempt(whole),
+            caretIndex: firstEmpty(whole),
+        };
+    }
+
+    const gaps = build('skip');
+    const typedLength = [...typed].length;
+
+    const gapsViable = typedLength <= typeableIndices(text, placedIndices(text, guesses, mask), 'skip').length;
+    const wholeViable = typedLength <= typeableCapacity(text)
+        && !whole.some((slot) => slot.conflict);
+
+    const gapsAttempt = assembleAttempt(gaps);
+    const wholeAttempt = assembleAttempt(whole);
+
+    const chosen: Reading = (() => {
+        if (gapsViable && wholeViable) {
+            if (wholeAttempt && !gapsAttempt) return 'whole';
+            if (gapsAttempt && !wholeAttempt) return 'gaps';
+            return 'whole';
+        }
+        if (wholeViable) return 'whole';
+        if (gapsViable) return 'gaps';
+        return 'whole';
+    })();
+
+    const slots = chosen === 'whole' ? whole : gaps;
+
+    return {
+        slots,
+        reading: chosen,
+        attempt: chosen === 'whole' ? wholeAttempt : gapsAttempt,
+        caretIndex: firstEmpty(slots),
+    };
+}

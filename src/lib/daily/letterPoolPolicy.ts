@@ -15,10 +15,14 @@ import { LETTER_POOL } from '@/lib/gameConfig';
  */
 export type LetterPoolPolicy = {
     /**
-     * The caret jumps over confirmed letters, so the player types only the
-     * gaps. Off gives the familiar word-game shape: type the whole answer,
-     * with confirmed letters acting as checkpoints that mark a disagreement
-     * rather than blocking the keystroke.
+     * On, the composer reads the keystrokes rather than imposing a shape: the
+     * caret rests on the first gap, but typing the answer out in full works
+     * too, and `resolveTyping` decides which the player meant from what they
+     * typed. Off pins it to the whole word, where a keystroke that disagrees
+     * with a confirmed letter is marked rather than accommodated.
+     *
+     * The name is now narrower than the behaviour — it survives because it is
+     * the stored key and renaming it would orphan the row.
      */
     caretSkipsGreens: boolean;
 };

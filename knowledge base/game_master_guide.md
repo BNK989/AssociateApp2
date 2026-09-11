@@ -51,14 +51,20 @@ mute always wins, and there is no `force` scope):
 **[reward_feedback.md](reward_feedback.md)**.
 
 *How the answer box takes typing* is the **letter pool policy** (key
-`letter_pool`), and it is one switch: **skip over confirmed letters**.
+`letter_pool`), and it is one switch: **work out what the player meant**.
 
 | Setting | On (default) | Off |
 | :--- | :--- | :--- |
-| `caretSkipsGreens` | The cursor jumps past confirmed letters. With H, A, R, O confirmed in HARMONY the player types `mny` — three keystrokes, and they never retype a letter they earned. | The player types the whole answer. A keystroke that disagrees with a confirmed letter is marked, never refused. |
+| `caretSkipsGreens` | The cursor rests on the first gap, but typing the answer out in full works too. With S and M confirmed in SAMPLE, `aple` and `sample` both land as SAMPLE. | The player must type the whole answer. A keystroke that disagrees with a confirmed letter is marked, never refused. |
 
-Both are defensible and neither is obviously right, which is precisely why it is
-a setting: which one feels better is a question about players, not about code.
+On is the default and should stay it unless something surprising turns up: it
+accommodates both habits rather than asking a player to learn one. How it tells
+them apart — and the one word shape it cannot settle until the last keystroke —
+is in **[letter_feedback.md](letter_feedback.md)**.
+
+> The key's name is narrower than what it now does. It was a literal
+> skip-the-greens switch when it was added; it survives under that name because
+> renaming it would orphan the stored row.
 
 Two things about this key are worth knowing before you touch it:
 
