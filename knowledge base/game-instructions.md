@@ -57,6 +57,29 @@ the input.
 
 ---
 
+## When a word does not come
+
+Three things exist so that a word you cannot get is a pause rather than an exit.
+
+*   **Near misses are forgiven once per word.** A guess close enough in
+    *spelling* — not meaning; the measure is Levenshtein and knows nothing about
+    associations — costs no strike the first time. The acceptance threshold is a
+    ratio, so one wrong letter is waved through on a nine-letter word and fatal
+    on a three-letter one; this evens that out. The second near miss on the same
+    word is charged, so it cannot be walked one letter at a time toward the
+    answer.
+*   **Reveal** shows you the word and moves the chain on. It was "Give Up",
+    styled in red behind a flag, which is a strange way to dress the only route
+    past a word you do not know. Nothing about the move changed — it still
+    scores nothing — but it is no longer presented as a defeat.
+*   **The streak decays; it does not collapse.** A wrong guess costs it nothing
+    at all (the word carries its own strikes). A word that leaves unsolved —
+    revealed or struck out, treated identically — costs one step. Five solves
+    deep and you reveal one, you are on four: still within reach of the bonus,
+    which is the point.
+
+---
+
 ## 🏆 Scoring
 
 *   **Correct Guess**: Points based on word difficulty and length.

@@ -8,6 +8,7 @@ import { calculateSolvePoints, MATCH_THRESHOLD, MAX_STRIKES } from '@/lib/daily/
 import { startLevelFor, type DailyHintPolicy } from '@/lib/daily/hintPolicy';
 import { solveFeedback } from '@/lib/daily/feedbackTiers';
 import { streakAfterSolve, streakAfterUnsolved } from '@/lib/daily/streakRules';
+import { consumesStrike, missBandFor, type MissBand } from '@/lib/daily/guessFeedback';
 import type { WordOutcome } from '@/lib/daily/dailyResults';
 
 /**
@@ -59,6 +60,14 @@ type UseDailyMovesArgs = {
     onCompleted?: (finalScore: number, endedOn: WordOutcome) => void;
     playSolveSound?: (feedback: ReturnType<typeof solveFeedback>) => void;
     playMissSound?: () => void;
+    /** Announces a wrong guess, with how close it was and what it cost. */
+    onMissed?: (args: {
+        message: Message;
+        index: number;
+        band: MissBand;
+        similarity: number;
+        strikeForgiven: boolean;
+    }) => void;
 };
 
 export function useDailyMoves({
@@ -80,6 +89,7 @@ export function useDailyMoves({
     onCompleted,
     playSolveSound,
     playMissSound,
+    onMissed,
 }: UseDailyMovesArgs) {
     const t = useTranslations('GameRoom.Chat');
     const [sending, setSending] = useState(false);
@@ -96,16 +106,33 @@ export function useDailyMoves({
             setInput('');
 
             if (!isMatch) {
-                const strikes = (targetMessage.strikes || 0) + 1;
+                // A near miss is a spelling slip on a word the player has
+                // already worked out. MATCH_THRESHOLD is a ratio, so one wrong
+                // letter is waved through on a nine-letter word and fatal on a
+                // three-letter one; forgiving the first near miss per word
+                // evens that out without handing anyone a free extra guess.
+                const band = missBandFor(similarity);
+                const forgivenSoFar = targetMessage.near_misses || 0;
+                const charged = consumesStrike(band, forgivenSoFar);
+
+                const strikes = (targetMessage.strikes || 0) + (charged ? 1 : 0);
                 const struckOut = strikes >= MAX_STRIKES;
                 const updates: Partial<Message> = {
                     strikes,
                     is_solved: struckOut,
                     guesses: [...(targetMessage.guesses || []), guess],
+                    near_misses: forgivenSoFar + (charged ? 0 : 1),
                 };
 
                 shakeWord(targetMessage.id);
                 playMissSound?.();
+                onMissed?.({
+                    message: targetMessage,
+                    index: indexOfMessage(targetMessage.id),
+                    band,
+                    similarity,
+                    strikeForgiven: !charged,
+                });
 
                 if (!struckOut) {
                     patchTarget(targetMessage.id, updates);
@@ -168,7 +195,7 @@ export function useDailyMoves({
     }, [
         targetMessage, gameOver, consecutive, score, patchTarget, flashSolved,
         shakeWord, finishWord, reportWord, onCompleted, setScore, setConsecutive,
-        setInput, indexOfMessage, playSolveSound, playMissSound, t, policy, words.length,
+        setInput, indexOfMessage, playSolveSound, playMissSound, onMissed, t, policy, words.length,
     ]);
 
     /**

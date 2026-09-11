@@ -223,7 +223,9 @@
             "cue_final_word": "الكلمة الأخيرة. أكمل السلسلة.",
             "cue_recover": "أفلتت هذه — بقيت {remaining}.",
             "cue_streak": "{consecutive} على التوالي! الحل التالي يساوي ×{multiplier}.",
-            "cue_halfway": "قطعت نصف الطريق — بقيت {remaining}."
+            "cue_halfway": "قطعت نصف الطريق — بقيت {remaining}.",
+            "miss_near_forgiven": "اقتربت كثيرًا — مجرد خطأ إملائي، بلا عقوبة.",
+            "miss_near": "ما زلت قريبًا. تحقّق من الإملاء."
         },
         "Legend": {
             "title": "معنى الألوان",

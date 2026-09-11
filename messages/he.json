@@ -229,7 +229,9 @@
             "cue_final_word": "המילה האחרונה. סיימו את השרשרת.",
             "cue_recover": "זו ברחה — נשארו עוד {remaining}.",
             "cue_streak": "{consecutive} ברצף! הפתרון הבא שווה ×{multiplier}.",
-            "cue_halfway": "חצי הדרך — נשארו {remaining}."
+            "cue_halfway": "חצי הדרך — נשארו {remaining}.",
+            "miss_near_forgiven": "כמעט — זו שגיאת כתיב, בלי עונש.",
+            "miss_near": "עדיין קרוב. בדוק את האיות."
         },
         "Legend": {
             "title": "מה המשמעות של הצבעים",

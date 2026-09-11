@@ -223,7 +223,9 @@
             "cue_final_word": "Letztes Wort. Bring die Kette zu Ende.",
             "cue_recover": "Das war knapp – noch {remaining} zu spielen.",
             "cue_streak": "{consecutive} in Folge! Die nächste Lösung zählt ×{multiplier}.",
-            "cue_halfway": "Halbzeit – noch {remaining} übrig."
+            "cue_halfway": "Halbzeit – noch {remaining} übrig.",
+            "miss_near_forgiven": "Ganz knapp — nur ein Tippfehler, kein Strike.",
+            "miss_near": "Immer noch knapp. Prüfe die Schreibweise."
         },
         "Legend": {
             "title": "Was die Farben bedeuten",

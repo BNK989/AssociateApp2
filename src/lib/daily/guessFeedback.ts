@@ -33,11 +33,26 @@ export const NEAR_MISS_THRESHOLD = 0.6;
 /** Near misses forgiven per word before they start costing strikes again. */
 export const MAX_FORGIVEN_NEAR_MISSES = 1;
 
+/** A band a *wrong* guess can be in. `match` is not a miss. */
+export type MissBand = Exclude<GuessBand, 'match'>;
+
 /** Which band a guess falls in, given its similarity to the target. */
 export function bandFor(similarity: number): GuessBand {
     if (similarity >= MATCH_THRESHOLD) return 'match';
     if (similarity >= NEAR_MISS_THRESHOLD) return 'near';
     return 'off';
+}
+
+/**
+ * The band of a guess already known to be wrong.
+ *
+ * Exists so the miss path does not have to narrow `bandFor`'s return by hand.
+ * A guess below `MATCH_THRESHOLD` cannot be a match, but only this function
+ * says so in a way the type checker will accept — and a caller inventing its
+ * own narrowing is a caller that can get it wrong later.
+ */
+export function missBandFor(similarity: number): MissBand {
+    return similarity >= NEAR_MISS_THRESHOLD ? 'near' : 'off';
 }
 
 /**
@@ -49,13 +64,13 @@ export function bandFor(similarity: number): GuessBand {
  * band cannot be farmed by walking a guess one letter at a time toward the
  * answer.
  */
-export function consumesStrike(band: GuessBand, nearMissesAlreadyForgiven: number): boolean {
+export function consumesStrike(band: MissBand, nearMissesAlreadyForgiven: number): boolean {
     if (band !== 'near') return true;
     return nearMissesAlreadyForgiven >= MAX_FORGIVEN_NEAR_MISSES;
 }
 
 /** The i18n key for the toast a miss earns, or null when it earns none. */
-export function missMessageKey(band: GuessBand, forgiven: boolean): string | null {
+export function missMessageKey(band: MissBand, forgiven: boolean): string | null {
     if (band !== 'near') return null;
     return forgiven ? 'miss_near_forgiven' : 'miss_near';
 }

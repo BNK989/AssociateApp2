@@ -1,4 +1,4 @@
-import type { GuessBand } from './guessFeedback';
+import type { MissBand } from './guessFeedback';
 import type { WordOutcome } from './dailyResults';
 import { dailyPuzzleNumber } from './dailyShare';
 
@@ -101,7 +101,7 @@ export type DailyEventProps = {
      * re-cut from real data rather than argued about — see NEAR_MISS_THRESHOLD.
      */
     daily_guess_missed: WordContext & {
-        band: Exclude<GuessBand, 'match'>;
+        band: MissBand;
         similarity: number;
         /** Whether the near-miss rule spared the player a strike. */
         strike_forgiven: boolean;

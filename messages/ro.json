@@ -223,7 +223,9 @@
             "cue_final_word": "Ultimul cuvânt. Termină lanțul.",
             "cue_recover": "Ăsta ți-a scăpat — mai sunt {remaining}.",
             "cue_streak": "{consecutive} la rând! Următorul valorează ×{multiplier}.",
-            "cue_halfway": "Ești la jumătate — au mai rămas {remaining}."
+            "cue_halfway": "Ești la jumătate — au mai rămas {remaining}.",
+            "miss_near_forgiven": "Aproape — e o greșeală de scriere, fără penalizare.",
+            "miss_near": "Tot aproape. Verifică ortografia."
         },
         "Legend": {
             "title": "Ce înseamnă culorile",

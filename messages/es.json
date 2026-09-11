@@ -223,7 +223,9 @@
             "cue_final_word": "Última palabra. Termina la cadena.",
             "cue_recover": "Esa se escapó: quedan {remaining} por jugar.",
             "cue_streak": "¡{consecutive} seguidas! La próxima vale ×{multiplier}.",
-            "cue_halfway": "Vas por la mitad: quedan {remaining}."
+            "cue_halfway": "Vas por la mitad: quedan {remaining}.",
+            "miss_near_forgiven": "Casi — es un error de escritura, sin penalización.",
+            "miss_near": "Sigues cerca. Revisa la ortografía."
         },
         "Legend": {
             "title": "Qué significan los colores",

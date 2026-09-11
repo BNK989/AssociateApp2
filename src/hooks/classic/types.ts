@@ -33,6 +33,13 @@ export type Message = {
         avatar_url: string;
     };
     guesses?: string[];
+    /**
+     * Near misses already forgiven on this word (daily game only).
+     *
+     * Tracked per word so the forgiveness cannot be farmed by walking a guess
+     * one letter at a time toward the answer.
+     */
+    near_misses?: number;
 };
 
 export type GameState = {

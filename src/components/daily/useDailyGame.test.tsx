@@ -160,6 +160,80 @@ describe('useDailyGame word reports', () => {
     });
 });
 
+describe('useDailyGame near misses', () => {
+    beforeEach(() => {
+        localStorage.clear();
+        vi.useFakeTimers();
+    });
+
+    /** 'beta' with one letter wrong: close enough to remark on, not to accept. */
+    const nearMiss = (result: { current: Game }) => {
+        act(() => { result.current.solve('beto'); });
+        settle();
+    };
+
+    /**
+     * Puts 'beta' in play. The chain is solved backwards and its last word is
+     * typed out on entry, so the first target is 'gamma' -- five letters, where
+     * a one-letter slip clears MATCH_THRESHOLD and is simply accepted. The band
+     * only bites on shorter words, which is the whole point of it.
+     */
+    const openBeta = (result: { current: Game }) => {
+        solveDownTo(result, 2);
+        expect(result.current.targetMessage!.content).toBe('beta');
+    };
+
+    it('does not charge a strike for the first near miss on a word', () => {
+        const { result } = setup();
+        openBeta(result);
+
+        nearMiss(result);
+
+        expect(result.current.targetMessage!.strikes).toBe(0);
+        expect(result.current.targetMessage!.near_misses).toBe(1);
+    });
+
+    it('charges the second one, so the forgiveness cannot be farmed', () => {
+        const { result } = setup();
+        openBeta(result);
+
+        nearMiss(result);
+        nearMiss(result);
+
+        expect(result.current.targetMessage!.strikes).toBe(1);
+        expect(result.current.targetMessage!.near_misses).toBe(1);
+    });
+
+    it('still charges a guess that was nowhere near', () => {
+        const { result } = setup();
+        openBeta(result);
+
+        missOnce(result);
+
+        expect(result.current.targetMessage!.strikes).toBe(1);
+        expect(result.current.targetMessage!.near_misses).toBe(0);
+    });
+
+    it('reports the miss with how close it was and what it cost', () => {
+        const onMissed = vi.fn();
+        const { result } = setup({ onMissed });
+        openBeta(result);
+
+        nearMiss(result);
+        expect(onMissed).toHaveBeenLastCalledWith(expect.objectContaining({
+            index: 1,
+            band: 'near',
+            strikeForgiven: true,
+        }));
+
+        missOnce(result);
+        expect(onMissed).toHaveBeenLastCalledWith(expect.objectContaining({
+            band: 'off',
+            strikeForgiven: false,
+        }));
+    });
+});
+
 describe('useDailyGame streak', () => {
     beforeEach(() => {
         localStorage.clear();

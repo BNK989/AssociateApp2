@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type { WordOutcome } from '@/lib/daily/dailyResults';
-import type { GuessBand } from '@/lib/daily/guessFeedback';
+import type { MissBand } from '@/lib/daily/guessFeedback';
 import {
     wordContext,
     type HintSource,
@@ -143,7 +143,7 @@ export function useDailyTracking({
         word: WordSnapshot,
         index: number,
         ms: number,
-        band: Exclude<GuessBand, 'match'>,
+        band: MissBand,
         similarity: number,
         strikeForgiven: boolean,
     ) => {

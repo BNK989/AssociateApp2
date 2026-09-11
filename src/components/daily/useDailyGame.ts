@@ -21,6 +21,7 @@ import { useDailyMoves, RESOLVE_DELAY_MS } from './useDailyMoves';
 import { useMoveFeedback } from './useMoveFeedback';
 import type { WordOutcome } from '@/lib/daily/dailyResults';
 import type { HintSource } from '@/lib/daily/dailyAnalytics';
+import type { MissBand } from '@/lib/daily/guessFeedback';
 
 type UseDailyGameArgs = {
     words: string[];
@@ -56,7 +57,20 @@ type UseDailyGameArgs = {
     /** The wrong-guess tone. Fires on every miss, struck out or not. */
     playMissSound?: () => void;
     /** Fires whenever a hint lands, however it was triggered. */
-    onHintRevealed?: (args: { message: Message; toLevel: number; source: HintSource }) => void;
+    onHintRevealed?: (args: {
+        message: Message;
+        index: number;
+        toLevel: number;
+        source: HintSource;
+    }) => void;
+    /** Fires on every wrong guess, with how close it was and what it cost. */
+    onMissed?: (args: {
+        message: Message;
+        index: number;
+        band: MissBand;
+        similarity: number;
+        strikeForgiven: boolean;
+    }) => void;
 };
 
 /**
@@ -78,6 +92,7 @@ export function useDailyGame({
     playSolveSound,
     playMissSound,
     onHintRevealed,
+    onMissed,
 }: UseDailyGameArgs) {
     const t = useTranslations('GameRoom.Chat');
 
@@ -203,6 +218,7 @@ export function useDailyGame({
         onCompleted,
         playSolveSound,
         playMissSound,
+        onMissed,
     });
 
     const revealHint = useDailyHintReveal({
@@ -214,6 +230,7 @@ export function useDailyGame({
         date,
         fallbackHint,
         patchTarget,
+        indexOfMessage,
         onRevealed: onHintRevealed,
     });
 

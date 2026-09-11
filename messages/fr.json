@@ -223,7 +223,9 @@
             "cue_final_word": "Dernier mot. Termine la chaîne.",
             "cue_recover": "Celui-ci t'échappe — il en reste {remaining}.",
             "cue_streak": "{consecutive} d'affilée ! La prochaine vaut ×{multiplier}.",
-            "cue_halfway": "À mi-parcours — encore {remaining}."
+            "cue_halfway": "À mi-parcours — encore {remaining}.",
+            "miss_near_forgiven": "Tout près — une faute de frappe, pas de pénalité.",
+            "miss_near": "Toujours proche. Vérifie l'orthographe."
         },
         "Legend": {
             "title": "Ce que signifient les couleurs",

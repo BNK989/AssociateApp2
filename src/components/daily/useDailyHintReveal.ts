@@ -18,6 +18,8 @@ type UseDailyHintRevealArgs = {
     /** Clue used when no authored hint exists for the word. */
     fallbackHint: (word: string) => string;
     patchTarget: (id: string, updates: Partial<Message>) => void;
+    /** Position of a word in the chain, which is how every event indexes it. */
+    indexOfMessage: (id: string) => number;
     /**
      * Announces a landed hint, with the rung it actually reached.
      *
@@ -25,7 +27,7 @@ type UseDailyHintRevealArgs = {
      * tell the player nothing, so a reported level the caller inferred would be
      * wrong exactly on the words where the skip matters.
      */
-    onRevealed?: (args: { message: Message; toLevel: number; source: HintSource }) => void;
+    onRevealed?: (args: { message: Message; index: number; toLevel: number; source: HintSource }) => void;
 };
 
 /**
@@ -48,6 +50,7 @@ export function useDailyHintReveal({
     date,
     fallbackHint,
     patchTarget,
+    indexOfMessage,
     onRevealed,
 }: UseDailyHintRevealArgs) {
     return useCallback(async (
@@ -90,6 +93,14 @@ export function useDailyHintReveal({
         });
 
         patchTarget(targetMessage.id, updates);
-        onRevealed?.({ message: targetMessage, toLevel: nextLevel, source });
-    }, [targetMessage, gameOver, words, hints, fallbackHint, patchTarget, date, policy, onRevealed]);
+        onRevealed?.({
+            message: targetMessage,
+            index: indexOfMessage(targetMessage.id),
+            toLevel: nextLevel,
+            source,
+        });
+    }, [
+        targetMessage, gameOver, words, hints, fallbackHint,
+        patchTarget, indexOfMessage, date, policy, onRevealed,
+    ]);
 }

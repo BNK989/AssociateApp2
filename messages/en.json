@@ -229,7 +229,9 @@
             "cue_final_word": "Last word. Finish the chain.",
             "cue_recover": "That one got away — {remaining} still to play.",
             "cue_streak": "{consecutive} in a row! Next solve scores ×{multiplier}.",
-            "cue_halfway": "Halfway there — {remaining} to go."
+            "cue_halfway": "Halfway there — {remaining} to go.",
+            "miss_near_forgiven": "So close — a spelling slip, so no strike.",
+            "miss_near": "Still close. Check the spelling."
         },
         "Legend": {
             "title": "What the colors mean",
