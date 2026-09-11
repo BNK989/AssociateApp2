@@ -207,7 +207,7 @@
             "title_blank": "O zi grea",
             "subtitle_perfect": "Ai rezolvat toate cele {totalWords} cuvinte.",
             "subtitle_progress": "Ai rezolvat {solved} din {totalWords} cuvinte.",
-            "grid_label": "Lanțul de azi",
+            "grid_label": "Rezultatul tău",
             "grid_alt": "Rezultatul tău pentru cele {total} cuvinte de azi",
             "grid_spoiler_free": "Fără răspunsuri și fără temă — poți da mai departe.",
             "come_back": "Mâine apare un lanț nou.",

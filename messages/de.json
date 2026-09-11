@@ -207,7 +207,7 @@
             "title_blank": "Heute war's hart",
             "subtitle_perfect": "Du hast alle {totalWords} Wörter gelöst.",
             "subtitle_progress": "Du hast {solved} von {totalWords} Wörtern gelöst.",
-            "grid_label": "Die heutige Kette",
+            "grid_label": "Dein Ergebnis",
             "grid_alt": "Dein Ergebnis für die {total} Wörter von heute",
             "grid_spoiler_free": "Keine Lösungen, kein Thema – gefahrlos teilbar.",
             "come_back": "Morgen kommt eine neue Kette.",

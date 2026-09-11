@@ -207,7 +207,7 @@
             "title_blank": "يوم صعب",
             "subtitle_perfect": "حللت كل الكلمات الـ{totalWords}.",
             "subtitle_progress": "حللت {solved} من {totalWords} كلمة.",
-            "grid_label": "سلسلة اليوم",
+            "grid_label": "نتيجتك",
             "grid_alt": "نتيجتك في كلمات اليوم الـ{total}",
             "grid_spoiler_free": "بلا إجابات ولا موضوع — يمكنك المشاركة.",
             "come_back": "سلسلة جديدة غدًا.",

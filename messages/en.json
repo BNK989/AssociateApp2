@@ -213,7 +213,7 @@
             "title_blank": "Tough One Today",
             "subtitle_perfect": "You solved all {totalWords} words.",
             "subtitle_progress": "You solved {solved} of {totalWords} words.",
-            "grid_label": "Today's chain",
+            "grid_label": "Your result",
             "grid_alt": "Your result for today's {total} words",
             "grid_spoiler_free": "No answers, no theme — safe to share.",
             "come_back": "A new chain lands tomorrow.",

@@ -47,6 +47,53 @@ describe('supported locales', () => {
     });
 });
 
+/** Every leaf key in a messages tree, as dotted paths. */
+function keyPaths(node: unknown, prefix = ''): string[] {
+    if (typeof node !== 'object' || node === null) return [prefix];
+
+    return Object.entries(node as Record<string, unknown>)
+        .flatMap(([key, value]) => keyPaths(value, prefix ? `${prefix}.${key}` : key));
+}
+
+function load(locale: string): Record<string, unknown> {
+    return JSON.parse(fs.readFileSync(path.join(messagesDir, `${locale}.json`), 'utf8'));
+}
+
+describe('message parity', () => {
+    // CLAUDE.md 6: an English key has to land in all seven files. Catching a
+    // missing one here is the difference between a test failure and a player
+    // seeing a raw key like `GameRoom.Stuck.letter_title` on screen.
+    const english = keyPaths(load('en')).sort();
+
+    for (const locale of locales.filter((l) => l !== 'en')) {
+        it(`${locale} carries exactly the keys en does`, () => {
+            const theirs = keyPaths(load(locale)).sort();
+
+            expect(english.filter((k) => !theirs.includes(k)), `missing from ${locale}`).toEqual([]);
+            expect(theirs.filter((k) => !english.includes(k)), `only in ${locale}`).toEqual([]);
+        });
+    }
+});
+
+describe('end screen labels', () => {
+    // These two head adjacent sections of the daily summary -- the result
+    // squares and the words themselves. They shipped identical, so the screen
+    // showed the same heading twice with different content under each, which
+    // reads as a rendering bug rather than as two sections.
+    for (const locale of locales) {
+        it(`${locale} distinguishes the grid from the chain`, () => {
+            const messages = load(locale) as {
+                GameRoom: { DailyEndGame: Record<string, string> };
+            };
+            const { grid_label: grid, chain_label: chain } = messages.GameRoom.DailyEndGame;
+
+            expect(grid).toBeTruthy();
+            expect(chain).toBeTruthy();
+            expect(grid).not.toBe(chain);
+        });
+    }
+});
+
 describe('isSupportedLocale', () => {
     it('accepts shipped locales', () => {
         expect(isSupportedLocale('he')).toBe(true);

@@ -207,7 +207,7 @@
             "title_blank": "Hoy tocó difícil",
             "subtitle_perfect": "Resolviste las {totalWords} palabras.",
             "subtitle_progress": "Resolviste {solved} de {totalWords} palabras.",
-            "grid_label": "La cadena de hoy",
+            "grid_label": "Tu resultado",
             "grid_alt": "Tu resultado de las {total} palabras de hoy",
             "grid_spoiler_free": "Sin respuestas ni tema: se puede compartir.",
             "come_back": "Mañana llega una cadena nueva.",

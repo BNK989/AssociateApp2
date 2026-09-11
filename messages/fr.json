@@ -207,7 +207,7 @@
             "title_blank": "Journée difficile",
             "subtitle_perfect": "Tu as trouvé les {totalWords} mots.",
             "subtitle_progress": "Tu as trouvé {solved} mots sur {totalWords}.",
-            "grid_label": "La chaîne du jour",
+            "grid_label": "Ton résultat",
             "grid_alt": "Ton résultat sur les {total} mots du jour",
             "grid_spoiler_free": "Ni réponses ni thème : partage sans risque.",
             "come_back": "Une nouvelle chaîne arrive demain.",

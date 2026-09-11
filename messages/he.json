@@ -213,7 +213,7 @@
             "title_blank": "יום קשה",
             "subtitle_perfect": "פתרתם את כל {totalWords} המילים.",
             "subtitle_progress": "פתרתם {solved} מתוך {totalWords} מילים.",
-            "grid_label": "השרשרת של היום",
+            "grid_label": "התוצאה שלך",
             "grid_alt": "התוצאה שלכם ל־{total} המילים של היום",
             "grid_spoiler_free": "בלי תשובות ובלי נושא — אפשר לשתף.",
             "come_back": "מחר מגיעה שרשרת חדשה.",

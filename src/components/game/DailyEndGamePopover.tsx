@@ -37,6 +37,8 @@ type DailyEndGamePopoverProps = {
     shareText: string;
     /** Consecutive days finished, or null while that is unknown. */
     streak?: number | null;
+    /** Whether to invite the player to make an account. Signed-in ones have one. */
+    isGuest: boolean;
     /** The day's words, in chain order, revealed to every tier. */
     words: string[];
     /** The day's theme, shown again beside the chain it explains. */
@@ -63,6 +65,7 @@ export function DailyEndGamePopover({
     squares,
     shareText,
     streak,
+    isGuest,
     words,
     theme,
     onChainRevealed,
@@ -122,7 +125,26 @@ export function DailyEndGamePopover({
 
     return (
         <Dialog open={internalOpen} onOpenChange={setInternalOpen}>
-            <DialogContent className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white sm:max-w-md">
+            {/*
+              * Height is capped and the middle scrolls, so the footer and the
+              * close button stay reachable however tall the summary grows.
+              *
+              * The dialog primitive centres itself with `top-50%` and a
+              * translate, and sets no maximum height — so content taller than
+              * the viewport overflows off *both* ends at once, taking the
+              * Share and Home buttons with it. On a phone showing the chain
+              * reveal that is not a corner case, it is the normal result, and
+              * the player is left on a screen with no way out.
+              *
+              * Fixed here rather than in `ui/dialog.tsx`: that is a vendored
+              * shadcn primitive (CLAUDE.md 4) and every other dialog in the app
+              * is short enough not to care.
+              *
+              * `dvh` rather than `vh` because mobile browser chrome comes and
+              * goes, and `vh` measures the tallest state — which is the one
+              * where the buttons are off-screen.
+              */}
+            <DialogContent className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white sm:max-w-md max-h-[90dvh] grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden">
                 <DialogHeader>
                     <DialogTitle className="text-center text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
                         {t(`title_${outcome.tier}`)}
@@ -134,7 +156,7 @@ export function DailyEndGamePopover({
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="py-4 space-y-5">
+                <div className="py-4 space-y-5 overflow-y-auto overscroll-contain">
                     <div className={`flex flex-col items-center justify-center p-6 bg-gradient-to-br rounded-2xl border shadow-inner ${scoreCardClass}`}>
                         <ScoreIcon
                             className={`w-12 h-12 mb-2 drop-shadow-md ${outcome.celebrate ? 'text-yellow-500' : 'text-muted-foreground'}`}
@@ -160,7 +182,8 @@ export function DailyEndGamePopover({
                         <p className="text-center text-sm text-muted-foreground">{t('come_back')}</p>
                     )}
 
-                    {/* Upsell Card */}
+                    {/* Upsell Card — guests only; a signed-in player has an account. */}
+                    {isGuest && (
                     <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-4 border border-indigo-100 dark:border-indigo-800/30 relative overflow-hidden group">
                         {/* eslint-disable-next-line no-restricted-syntax -- TODO(rtl): decorative watermark icon, offset by a physical translate-x-4. Needs a design call on whether the ornament should mirror. */}
                         <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -183,6 +206,7 @@ export function DailyEndGamePopover({
                             </Button>
                         </div>
                     </div>
+                    )}
                 </div>
 
                 <DialogFooter className="sm:justify-center flex-col sm:flex-row gap-3">

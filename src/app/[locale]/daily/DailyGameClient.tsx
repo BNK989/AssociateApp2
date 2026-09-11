@@ -330,6 +330,7 @@ function DailyGameBoard({
                 onChainRevealed={trackChainRevealed}
                 shareText={shareText}
                 streak={results.streak}
+                isGuest={!authUser}
                 onClose={() => router.push('/')}
             />
         </GameShell>
