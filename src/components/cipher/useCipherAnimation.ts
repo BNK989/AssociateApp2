@@ -22,6 +22,12 @@ type UseCipherAnimationArgs = {
     hintLevel: number;
     forceScramble?: number;
     guesses: string[];
+    /**
+     * Whether the shuffled view is available at all. Off once unplaced letters
+     * live in the pool: the line then holds only confirmed letters and filler,
+     * so there is nothing left to shuffle and a scramble would only move noise.
+     */
+    scrambling?: boolean;
 };
 
 /**
@@ -43,6 +49,7 @@ export function useCipherAnimation({
     hintLevel,
     forceScramble,
     guesses,
+    scrambling = true,
 }: UseCipherAnimationArgs) {
     const [display, setDisplay] = useState(visible ? text : activeCipher);
 
@@ -60,7 +67,7 @@ export function useCipherAnimation({
      * anagram, so its own order is the resting arrangement.
      */
     const [scrambleItems, setScrambleItems] = useState<ScrambleItem[] | null>(() => (
-        !visible && hintLevel >= 2
+        !visible && hintLevel >= 2 && scrambling
             ? buildScrambleItems({
                 textChars: [...text],
                 cipherChars: [...activeCipher],
@@ -112,7 +119,7 @@ export function useCipherAnimation({
 
             if (display === target && !scrambleItems && !isForced) return;
 
-            if (!visible && (hintLevel >= 2 || isForced)) {
+            if (scrambling && !visible && (hintLevel >= 2 || isForced)) {
                 await runScramble({ textChars, target });
                 return;
             }
@@ -179,7 +186,7 @@ export function useCipherAnimation({
         // `display` and `scrambleItems` are read as the animation's starting point,
         // not tracked — including them would restart the animation on every frame.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [visible, text, cipherText, hintLevel, forceScramble, guessesKey]);
+    }, [visible, text, cipherText, hintLevel, forceScramble, guessesKey, scrambling]);
 
     return { display, scrambleItems };
 }

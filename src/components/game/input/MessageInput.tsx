@@ -7,7 +7,7 @@ import type { GameState, Message } from '@/hooks/useGameLogic';
 import { countMeaningfulChars } from './inputRules';
 import { PlainTextField } from './PlainTextField';
 import { SlotStrip } from './SlotStrip';
-import type { SlotGroup } from '@/lib/letterPool/poolRules';
+import type { SlotGroup } from '@/lib/letterPool/slotRules';
 
 type MessageInputProps = {
     game: GameState;

@@ -2,13 +2,13 @@ import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 import type { User } from '@supabase/supabase-js';
 import { calculatePointDistribution, calculateSimilarity } from '@/lib/gameLogic';
+import { checkAnswer } from '@/lib/letterPool/answerCheck';
 import { createLogger } from '@/lib/logger';
 import {
     canActOnTarget,
     findTargetMessage,
     getSolveValue,
     getStreakMultiplier,
-    MATCH_THRESHOLD,
     MAX_STRIKES,
 } from '@/lib/classicGame/classicRules';
 import type { FloatingAnimationData, GameState, Message, Player } from './types';
@@ -97,9 +97,18 @@ export function useSolveActions({
 
         markAction();
 
+        // Exact once the strip is supplying the shape — from hint level 1 in a
+        // room, since `isSinglePlayer` is only ever set by the daily game.
+        // `similarity` still scales the award below; only the pass/fail
+        // decision moves, so a near-miss cannot be paid as a solve.
         const similarity = calculateSimilarity(input, target.content);
+        // `isSinglePlayer` is only ever set by the daily game, so in a room
+        // the strip arrives with the first hint.
+        const isMatch = checkAnswer(input, target.content, {
+            hintLevel: target.hint_level || 0, isSinglePlayer: false,
+        });
 
-        if (similarity < MATCH_THRESHOLD) {
+        if (!isMatch) {
             const strikes = (target.strikes || 0) + 1;
 
             setMessages((prev) => prev.map((m) => (m.id === target.id

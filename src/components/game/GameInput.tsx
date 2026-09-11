@@ -119,6 +119,12 @@ export function GameInput({
         text: stripActive && targetMessage ? targetMessage.content : null,
         guesses: targetMessage?.guesses || [],
         mode: caretSkipsGreens ? 'skip' : 'full',
+        // The same mask the bubble draws. Below hint 2 it confirms positions;
+        // from hint 2 its anagram is where a purchased hint's letters come
+        // from, and without it buying one would reveal nothing at all.
+        mask: targetMessage?.cipher_text
+            ? { cipher: targetMessage.cipher_text, hintLevel: targetMessage.hint_level || 0 }
+            : undefined,
         targetId: targetMessage?.id,
         setInput,
     });

@@ -1,6 +1,6 @@
 import { useReducedMotion } from 'framer-motion';
 import { SlotCell } from './SlotCell';
-import type { SlotGroup } from '@/lib/letterPool/poolRules';
+import type { SlotGroup } from '@/lib/letterPool/slotRules';
 
 type SlotStripProps = {
     groups: SlotGroup[];

@@ -1,4 +1,4 @@
-import { CIPHER_SIGNS, GAME_CONFIG, HINT_COSTS, MAX_STRIKES } from './gameConfig';
+import { CIPHER_SIGNS, GAME_CONFIG, HINT_COSTS, MATCH_THRESHOLD as GAME_CONFIG_MATCH_THRESHOLD, MAX_STRIKES } from './gameConfig';
 
 // Re-exported so the ~20 existing import sites keep working; the definitions
 // now live in gameConfig.ts alongside the rest of the game's balance.
@@ -29,6 +29,44 @@ export const calculateSimilarity = (guess: string, target: string): number => {
 
     return 1.0 - (distance / maxLength);
 };
+
+/**
+ * Case, whitespace and diacritics folded away, so a comparison tests the word
+ * rather than the keyboard.
+ *
+ * Diacritics matter here because the daily game's words are translated at
+ * runtime into seven languages. A French or Romanian answer carries accents
+ * that the slot strip shows in its confirmed letters but that a player on a
+ * phone keyboard will very often type without, and failing them for that would
+ * be punishing something the game never asked them to know.
+ */
+export const normaliseAnswer = (value: string): string =>
+    value
+        .normalize('NFD')
+        .replace(/\p{Diacritic}/gu, '')
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .trim();
+
+/**
+ * Whether a submitted answer counts as correct.
+ *
+ * `exact` is for answers submitted through the slot strip, and it is not a
+ * strictness preference — it is a correctness fix. The fuzzy threshold exists
+ * to forgive typos in free text, but the strip fills confirmed letters in for
+ * the player, so those letters inflate the similarity of an answer they did not
+ * write: a seven-letter word with six confirmed letters scores 0.857 with the
+ * final letter wrong, and sails past a 0.8 threshold. The strip also fixes the
+ * length and the shape, so there is no typo left for fuzziness to forgive —
+ * a wrong letter is simply a wrong answer.
+ */
+export const isCorrectAnswer = (
+    guess: string,
+    target: string,
+    { exact }: { exact: boolean },
+): boolean => (exact
+    ? normaliseAnswer(guess) === normaliseAnswer(target)
+    : calculateSimilarity(guess, target) >= GAME_CONFIG_MATCH_THRESHOLD);
 
 const levenshteinDistance = (a: string, b: string): number => {
     const matrix = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(null));

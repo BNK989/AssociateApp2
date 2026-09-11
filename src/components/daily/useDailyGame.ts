@@ -2,14 +2,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 import type { Message } from '@/hooks/useGameLogic';
-import { calculateSimilarity } from '@/lib/gameLogic';
+import { checkAnswer } from '@/lib/letterPool/answerCheck';
 import {
     countRemainingAfterSolve,
     findTargetMessage,
     LOCAL_USER_ID,
 } from '@/lib/daily/dailyMessages';
 import { applyArrivalHint } from '@/lib/daily/arrivalHints';
-import { calculateSolvePoints, MATCH_THRESHOLD, MAX_STRIKES } from '@/lib/daily/dailyScoring';
+import { calculateSolvePoints, MAX_STRIKES } from '@/lib/daily/dailyScoring';
 import { clearDailyGame } from '@/lib/daily/dailyStorage';
 import { startLevelFor, type DailyHintPolicy } from '@/lib/daily/hintPolicy';
 import { solveFeedback } from '@/lib/daily/feedbackTiers';
@@ -188,7 +188,9 @@ export function useDailyGame({
     const solve = useCallback((guess: string) => {
         if (!targetMessage || gameOver) return;
 
-        const isMatch = calculateSimilarity(guess, targetMessage.content) >= MATCH_THRESHOLD;
+        const isMatch = checkAnswer(guess, targetMessage.content, {
+            hintLevel: targetMessage.hint_level || 0, isSinglePlayer: true,
+        });
         setSending(true);
 
         setTimeout(() => {

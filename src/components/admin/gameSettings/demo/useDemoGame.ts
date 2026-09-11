@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import type { Message } from '@/hooks/useGameLogic';
-import { calculateSimilarity } from '@/lib/gameLogic';
+import { checkAnswer } from '@/lib/letterPool/answerCheck';
 import { applyArrivalHint } from '@/lib/daily/arrivalHints';
 import {
     buildInitialMessages,
@@ -13,7 +13,6 @@ import {
 import {
     calculateSolvePoints,
     getNextHintLevel,
-    MATCH_THRESHOLD,
     MAX_HINT_LEVEL,
     MAX_STRIKES,
 } from '@/lib/daily/dailyScoring';
@@ -79,7 +78,12 @@ export function useDemoGame(policy: DailyHintPolicy) {
 
         setGuess('');
 
-        if (calculateSimilarity(word, targetMessage.content) < MATCH_THRESHOLD) {
+        // The demo plays by the daily game's rules, including its matching.
+        const isMatch = checkAnswer(word, targetMessage.content, {
+            hintLevel: targetMessage.hint_level || 0, isSinglePlayer: true,
+        });
+
+        if (!isMatch) {
             const strikes = (targetMessage.strikes || 0) + 1;
             const struckOut = strikes >= MAX_STRIKES;
 

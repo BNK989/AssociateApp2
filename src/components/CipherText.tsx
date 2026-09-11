@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { CipherChars } from './cipher/CipherChars';
 import { ScrambleView } from './cipher/ScrambleView';
 import { buildRandomCipher, computeGuessState } from './cipher/cipherRules';
+import { LETTER_POOL } from '@/lib/gameConfig';
 import { useCipherAnimation } from './cipher/useCipherAnimation';
 import { useRevealFlash } from './cipher/useRevealFlash';
 
@@ -22,6 +23,12 @@ interface CipherTextProps {
     /** Bumping this counter re-shuffles the tiles on demand. */
     forceScramble?: number;
     guesses?: string[];
+    /**
+     * Draw only what the line can say honestly. Defaults to the pool being on,
+     * where letters with no confirmed place are shown in the composer's pool
+     * rather than inside the word — see `knowledge base/letter_feedback.md`.
+     */
+    hideUnplaced?: boolean;
 }
 
 /**
@@ -40,6 +47,7 @@ export function CipherText({
     hintLevel = 0,
     forceScramble,
     guesses = [],
+    hideUnplaced = LETTER_POOL.ENABLED,
 }: CipherTextProps) {
     const dir = RTL_RANGE.test(text) ? 'rtl' : 'ltr';
 
@@ -65,6 +73,8 @@ export function CipherText({
         hintLevel,
         forceScramble,
         guesses,
+        // Nothing in the line is loose any more, so there is nothing to shuffle.
+        scrambling: !hideUnplaced,
     });
 
     const flashingIndices = useRevealFlash(cipherText, text, visible);
@@ -72,7 +82,7 @@ export function CipherText({
     // Colons bracket a locally masked word, marking it as not yet server-backed.
     const showColons = !visible && !cipherText;
 
-    if (scrambleItems && !visible) {
+    if (scrambleItems && !visible && !hideUnplaced) {
         return (
             <ScrambleView
                 items={scrambleItems}
@@ -93,6 +103,7 @@ export function CipherText({
             hintLevel={hintLevel}
             isSolving={isSolving}
             flashingIndices={flashingIndices}
+            hideUnplaced={hideUnplaced}
             className={className}
             dir={dir}
             showColons={showColons}

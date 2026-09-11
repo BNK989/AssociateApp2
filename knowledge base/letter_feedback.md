@@ -10,11 +10,16 @@ component.
 
 Three states, and each says exactly one thing:
 
-| Tile | Means | Underline | Behaviour |
+| Tile | Means | Underline | Where it appears |
 | :--- | :--- | :--- | :--- |
-| **Green** (`--tile-placed`) | Confirmed in place. The letter belongs exactly here. | Solid | Still |
-| **Orange** (`--tile-present`) | The letter is in the word. | Dotted | Still, or drifting when the word is shuffled |
-| **Grey** (`--tile-unknown`) | Still hidden. A filler glyph, not a letter. | None | Still |
+| **Green** (`--tile-placed`) | Confirmed in place. The letter belongs exactly here. | Solid | The word line, and the composer's strip |
+| **Orange** (`--tile-present`) | Found, but with no confirmed place. | Dotted | **The pool only** — never inside the word line |
+| **Grey** (`--tile-unknown`) | Still hidden. A filler glyph, not a letter. | None | The word line |
+
+> **Orange left the word line on 2026-09-11.** The invariant below was true and
+> unlearnable, because a line of glyphs asserts sequence louder than any styling
+> can deny it. Rather than add a sixth channel to the argument, the unordered
+> half moved out of the line entirely — see *The letter pool* below.
 
 The underline is a **second channel**, carrying the same three states with no
 reference to hue. Green and orange converge under deuteranopia and hue used to
@@ -253,19 +258,48 @@ rules are constraints, not preferences. They live in `poolMotion.ts`:
 5. **Reduced motion** drops drift and handoff and keeps the static tilt, the
    same split `motionState()` already makes.
 
-### Still to land
+### The word line (landed the same day)
 
-The **word line still draws found letters inside it**. Until `readMaskTile` and
-`buildScrambleItems` stop emitting them, a found letter appears both in the line
-and in the pool — redundant, and the original mis-read survives in the bubble.
-That change is deliberately separate: it is the shared renderer for both modes,
-and it also decides what `LetterLegend`, `pickLegendSamples` and the
-`present_*` / `shuffled_note` copy in seven locales should say once orange is no
-longer a thing that appears in a word.
+`readMaskTile` takes a `hideUnplaced` flag, defaulted from `LETTER_POOL.ENABLED`,
+and under it the line draws **only what it can say honestly**: confirmed letters,
+spaces, and filler. A letter with no confirmed place is replaced by a filler
+glyph chosen from its index — from the index, not at random, because this one is
+picked on the render path and a fresh glyph per frame would make hidden
+positions shimmer.
+
+Two consequences follow:
+
+- **The shuffled view is gone.** It existed to say "these slots mean nothing";
+  with nothing loose left in the line, every slot means something. `CipherText`
+  passes `scrambling: false`, `messageFlags.canShuffle` is off, and the shuffle
+  button went with the thing it shuffled.
+- **A hint's letters had to find a new home.** From hint 2 the mask is an
+  anagram, and hiding it from the line would have made a purchased hint reveal
+  *nothing*. `buildLetterPool` therefore drains the mask into the pool, spending
+  a per-letter budget so it shows no more of a letter than the mask exposes.
+  Below hint 2 the mask is positional, so `placedIndices` counts its reveals as
+  confirmed and the strip fills them in rather than asking the player to retype
+  a letter the board already shows as settled.
+
+Matching changed with it. `checkAnswer` (`lib/letterPool/answerCheck.ts`) is the
+one place all three solve paths ask, and once the strip supplies the shape the
+comparison is **exact**. That is a correctness fix, not a strictness preference:
+the strip fills confirmed letters in, so a fuzzy threshold scores letters the
+player never wrote — a seven-letter word with six confirmed reaches 0.857 with
+its last letter wrong, and sails past the 0.8 threshold. `normaliseAnswer` folds
+case, whitespace and **diacritics**, since the daily game's words are translated
+into seven languages and a phone keyboard will often not produce the accents.
+
+### Still to land
 
 `LETTER_POOL.CARET_SKIPS_GREENS` is the compiled floor only. The game-master
 control over it (`game_settings.letter_pool`, its parser, its admin section and
 its migration) is not wired yet, so the setting is currently the default.
+
+`pickLegendSamples` reads the word line for its orange samples and now finds
+none there, so the inline key falls back to the generic `B`. It should be
+reading the pool. Harmless — the fallback is a path it already had — but the key
+is less personal than it was.
 
 ---
 

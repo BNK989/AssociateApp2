@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { POOL_HANDOFF } from '@/components/game/pool/PoolTile';
 import { SETTLE_SPRING } from '@/components/game/pool/poolMotion';
-import type { Slot } from '@/lib/letterPool/poolRules';
+import type { Slot } from '@/lib/letterPool/slotRules';
 
 type SlotCellProps = {
     slot: Slot;

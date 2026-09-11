@@ -14,6 +14,8 @@ type CipherCharsProps = {
     className: string;
     dir: 'ltr' | 'rtl';
     showColons: boolean;
+    /** Draw only confirmed positions; unplaced letters live in the pool. */
+    hideUnplaced: boolean;
 };
 
 const COLON = '∷';
@@ -36,6 +38,7 @@ export function CipherChars({
     className,
     dir,
     showColons,
+    hideUnplaced,
 }: CipherCharsProps) {
     const textChars = [...text];
     const displayChars = [...display];
@@ -68,7 +71,7 @@ export function CipherChars({
                     );
                 }
 
-                const tile = readMaskTile(char, realChar, i, guessState, hintLevel);
+                const tile = readMaskTile(char, realChar, i, guessState, hintLevel, hideUnplaced);
                 const isFlashing = flashingIndices.has(i);
 
                 return (

@@ -1,36 +1,9 @@
-import { CIPHER_SIGNS } from '@/lib/gameConfig';
+import { isFillerChar, randomFiller } from './fillers';
 
-/**
- * The masking alphabet, as a set for membership tests.
- *
- * Derived from the very array the server masks with rather than restated, which
- * is the whole point of it. This used to be a hand-maintained ASCII list
- * documented as "must match gameLogic.ts" that in fact shared no character with
- * it. Every glyph the server actually emits therefore failed the "is this
- * filler?" test, and the renderer styled meaningless noise exactly like a
- * revealed letter. One source removes the chance of drifting again.
- */
-const FILLER_CHARS = new Set(CIPHER_SIGNS);
-
-/** True when a character is masking filler rather than a letter of the answer. */
-export function isFillerChar(char: string): boolean {
-    return FILLER_CHARS.has(char);
-}
-
-/** A filler glyph drawn from the same alphabet the server masks with. */
-function randomFiller(): string {
-    return CIPHER_SIGNS[Math.floor(Math.random() * CIPHER_SIGNS.length)];
-}
-
-/**
- * What a tile is telling the player.
- *
- * - `placed`: the letter is real *and* the slot it occupies is its real one.
- * - `present`: the letter is in the answer. Whether its slot means anything is a
- *   separate question, answered by `displaced` at the point of rendering.
- * - `unknown`: masking filler, carrying no information at all.
- */
-export type TileState = 'placed' | 'present' | 'unknown';
+// Re-exported so the existing call sites keep importing the cipher's rules from
+// one place; the definitions moved out only to keep this file under the cap.
+export { isFillerChar } from './fillers';
+export { readMaskTile, type MaskTile, type TileState } from './maskTile';
 
 export interface ScrambleItem {
     char: string;
@@ -101,59 +74,6 @@ export function computeGuessState(text: string, guesses: string[]): GuessState {
     }
 
     return { greenIndices, revealedChars };
-}
-
-/** What one position of a mask is showing, and whether its slot can be trusted. */
-export type MaskTile = {
-    char: string;
-    state: TileState;
-    /** True when the slot is not the letter's own, so its order means nothing. */
-    displaced: boolean;
-};
-
-/**
- * Reads a single position of a mask into the tile the renderer draws.
- *
- * The rule the whole colour scheme rests on: a tile is `placed` only when its
- * slot is genuinely the letter's own. Letters guessed in position qualify, and
- * so does any letter the mask exposes below hint level 2, because those masks
- * are built position by position and are positionally honest.
- *
- * From level 2 the mask is an *anagram* of the answer, so a letter in it
- * belongs to the word but its slot means nothing — `present` and displaced.
- * A letter that happens to land on its own index there is coincidence, not
- * information, so it is never promoted to `placed`.
- *
- * Letters known only to be present are drawn at their true index and reported
- * as *not* displaced. That is the honest reading: the renderer really does put
- * them where they belong, which is why describing them as "wrong spot" was
- * false rather than merely vague.
- */
-export function readMaskTile(
-    maskChar: string,
-    realChar: string | undefined,
-    index: number,
-    { greenIndices, revealedChars }: GuessState,
-    hintLevel: number,
-): MaskTile {
-    if (realChar && greenIndices.has(index)) {
-        return { char: realChar, state: 'placed', displaced: false };
-    }
-
-    if (realChar && revealedChars.has(realChar.toLowerCase())) {
-        return { char: realChar, state: 'present', displaced: false };
-    }
-
-    if (maskChar !== ' ' && maskChar !== undefined && !isFillerChar(maskChar)) {
-        const scrambled = hintLevel >= 2;
-        return {
-            char: maskChar,
-            state: scrambled ? 'present' : 'placed',
-            displaced: scrambled,
-        };
-    }
-
-    return { char: maskChar, state: 'unknown', displaced: false };
 }
 
 type BuildScrambleArgs = {

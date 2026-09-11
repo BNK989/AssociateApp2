@@ -1,17 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import {
-    assembleAttempt,
     buildLetterPool,
-    buildSlots,
-    groupSlots,
     isGapChar,
-    longestGroupLength,
     nextPoolMatch,
-    resolvePlacements,
-    typeableIndices,
+    placedIndices,
     type PoolLetter,
 } from './poolRules';
-import { computeGuessState } from '@/components/cipher/cipherRules';
+import {
+    assembleAttempt,
+    buildSlots,
+    groupSlots,
+    longestGroupLength,
+    resolvePlacements,
+    typeableIndices,
+} from './slotRules';
 
 const slots = (text: string, guesses: string[], typed = '', mode: 'skip' | 'full' = 'skip') =>
     buildSlots({ text, guesses, typed, mode });
@@ -80,13 +82,11 @@ describe('buildLetterPool', () => {
 
 describe('typeableIndices', () => {
     it('skips greens and gaps in skip mode', () => {
-        const state = computeGuessState('Harmony', ['harpoon']);
-        expect(typeableIndices('Harmony', state, 'skip')).toEqual([3, 5, 6]);
+        expect(typeableIndices('Harmony', placedIndices('Harmony', ['harpoon']), 'skip')).toEqual([3, 5, 6]);
     });
 
     it('keeps greens in full mode but still skips gaps', () => {
-        const state = computeGuessState('a b', []);
-        expect(typeableIndices('a b', state, 'full')).toEqual([0, 2]);
+        expect(typeableIndices('a b', placedIndices('a b', []), 'full')).toEqual([0, 2]);
     });
 });
 
@@ -258,5 +258,47 @@ describe('nextPoolMatch', () => {
 
     it('returns nothing when the letter is not in the pool', () => {
         expect(nextPoolMatch(pool, new Map(), 'z')).toBeUndefined();
+    });
+});
+
+describe('placedIndices', () => {
+    it('counts a green', () => {
+        expect([...placedIndices('Harmony', ['harpoon'])].sort((a, b) => a - b)).toEqual([0, 1, 2, 4]);
+    });
+
+    it('counts a positional reveal from the mask below hint 2', () => {
+        // The line draws this letter as confirmed, so the strip must give it
+        // to the player rather than ask them to type it.
+        const placed = placedIndices('Harmony', [], { cipher: 'H######', hintLevel: 1 });
+        expect(placed.has(0)).toBe(true);
+    });
+
+    it('ignores the mask from hint 2, where it is an anagram', () => {
+        expect(placedIndices('Harmony', [], { cipher: 'yHramno', hintLevel: 2 }).size).toBe(0);
+    });
+});
+
+describe('buildLetterPool — letters bought with a hint', () => {
+    // Without this the level-2 hint would reveal nothing: its letters no longer
+    // appear in the word line, so the pool is the only place left for them.
+    it('pools the letters an anagram mask exposes', () => {
+        const pool = buildLetterPool('Harmony', [], [], { cipher: 'yHramno', hintLevel: 2 });
+        expect(pool.length).toBeGreaterThan(0);
+    });
+
+    it('pools no more of a letter than the mask actually shows', () => {
+        // The mask exposes one 'a'; BANANA has three, and none was guessed.
+        const pool = buildLetterPool('banana', [], [], { cipher: 'a#####', hintLevel: 2 });
+        expect(pool.filter((letter) => letter.char.toLowerCase() === 'a')).toHaveLength(1);
+    });
+
+    it('does not pool a letter already confirmed by the mask below hint 2', () => {
+        const pool = buildLetterPool('Harmony', [], [], { cipher: 'H######', hintLevel: 1 });
+        expect(pool.some((letter) => letter.char === 'H')).toBe(false);
+    });
+
+    it('still pools every occurrence of a guessed letter', () => {
+        const pool = buildLetterPool('banana', ['axxxxx'], [], { cipher: '######', hintLevel: 2 });
+        expect(pool.filter((letter) => letter.char === 'a')).toHaveLength(3);
     });
 });

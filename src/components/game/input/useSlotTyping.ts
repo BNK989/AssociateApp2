@@ -1,22 +1,32 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-    assembleAttempt,
     buildLetterPool,
+    isGapChar,
+    placedIndices,
+    type MaskState,
+} from '@/lib/letterPool/poolRules';
+import {
+    assembleAttempt,
     buildSlots,
     groupSlots,
-    isGapChar,
     longestGroupLength,
     resolvePlacements,
     typeableIndices,
     type CaretMode,
-} from '@/lib/letterPool/poolRules';
-import { computeGuessState } from '@/components/cipher/cipherRules';
+} from '@/lib/letterPool/slotRules';
 
 type UseSlotTypingArgs = {
     /** The answer being solved. Absent when there is nothing to solve. */
     text: string | null;
     guesses: string[];
     mode: CaretMode;
+    /**
+     * The server's mask. It confirms positions of its own below hint 2, and
+     * from hint 2 its anagram is where a purchased hint's letters come from —
+     * without it, buying one would reveal nothing once those letters left the
+     * word line.
+     */
+    mask?: MaskState;
     /** Identifies the word, so the strip clears when a new one comes up. */
     targetId: string | undefined;
     /**
@@ -42,7 +52,7 @@ type UseSlotTypingArgs = {
  * imperative flight to keep in step with state, and nothing to get stuck
  * mid-air if a re-render interrupts it.
  */
-export function useSlotTyping({ text, guesses, mode, targetId, setInput }: UseSlotTypingArgs) {
+export function useSlotTyping({ text, guesses, mode, mask, targetId, setInput }: UseSlotTypingArgs) {
     const [typed, setTyped] = useState('');
 
     // Clearing on a new word and on a recorded guess covers every reset: the
@@ -59,12 +69,12 @@ export function useSlotTyping({ text, guesses, mode, targetId, setInput }: UseSl
     const model = useMemo(() => {
         if (!text) return null;
 
-        const pool = buildLetterPool(text, guesses);
-        const bare = buildSlots({ text, guesses, typed, mode });
+        const pool = buildLetterPool(text, guesses, [], mask);
+        const bare = buildSlots({ text, guesses, typed, mode, mask });
         const placements = resolvePlacements(pool, bare);
-        const slots = buildSlots({ text, guesses, typed, mode, placements });
+        const slots = buildSlots({ text, guesses, typed, mode, placements, mask });
         const groups = groupSlots(slots);
-        const order = typeableIndices(text, computeGuessState(text, guesses), mode);
+        const order = typeableIndices(text, placedIndices(text, guesses, mask), mode);
 
         return {
             pool,
@@ -72,14 +82,14 @@ export function useSlotTyping({ text, guesses, mode, targetId, setInput }: UseSl
             groups,
             placements,
             longest: longestGroupLength(groups),
-            placed: new Set(placements.keys()),
+            placed: new Set<string>(placements.keys()),
             caretIndex: order[[...typed].length] ?? null,
             attempt: assembleAttempt(slots),
             capacity: order.length,
         };
         // guessKey stands in for the array, whose identity changes every render.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [text, guessKey, typed, mode]);
+    }, [text, guessKey, typed, mode, mask?.cipher, mask?.hintLevel]);
 
     // The parent submits `input`, so it carries the assembled answer rather
     // than the keystrokes: in skip mode those are only the gaps between greens.

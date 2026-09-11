@@ -28,11 +28,28 @@ describe('CipherText view selection', () => {
         // something happened to shuffle it, then changed look for no visible
         // reason. Tiles are spaced with gap-1 in the scrambled view, which is
         // the cheapest observable difference between the two renderers.
+        //
+        // Only reachable with the letter pool off: with it on there are no
+        // loose tiles in the line to scramble.
+        const { container } = render(
+            <CipherText
+                text={WORD} cipherText={CIPHER_L2} visible={false}
+                hintLevel={2} guesses={[]} hideUnplaced={false}
+            />
+        );
+
+        expect(container.querySelector('.gap-1')).not.toBeNull();
+    });
+
+    it('stays positional at hint 2 once unplaced letters live in the pool', () => {
+        // The shuffled view exists to say "these slots mean nothing". With the
+        // pool on, the line holds only confirmed letters and filler, so every
+        // slot means something and the shuffled view has nothing left to do.
         const { container } = render(
             <CipherText text={WORD} cipherText={CIPHER_L2} visible={false} hintLevel={2} guesses={[]} />
         );
 
-        expect(container.querySelector('.gap-1')).not.toBeNull();
+        expect(container.querySelector('.gap-1')).toBeNull();
     });
 
     it('shows the positional view for a word below hint 2', async () => {

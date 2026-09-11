@@ -1,5 +1,6 @@
 import { Palette } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { LETTER_POOL } from '@/lib/gameConfig';
 import { usePostHog } from 'posthog-js/react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -42,7 +43,7 @@ export function LegendButton({ hintLevel }: LegendButtonProps) {
 
             <PopoverContent side="top" align="start" className="w-72">
                 <p className="mb-3 text-sm font-bold">{t('title')}</p>
-                <LetterLegend positionNote={hintLevel >= 2 ? 'shuffled' : 'ordered'} />
+                <LetterLegend positionNote={LETTER_POOL.ENABLED ? 'pool' : (hintLevel >= 2 ? 'shuffled' : 'ordered')} />
             </PopoverContent>
         </Popover>
     );
