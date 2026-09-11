@@ -289,6 +289,13 @@ function DailyGameBoard({
                 onResetGame={game.reset}
             />
 
+            {/*
+              * The offer anchors to this wrapper rather than sitting beside the
+              * composer in the column. As a flow sibling it appeared from
+              * nothing and pushed the whole board up mid-word, which reads as
+              * the page breaking rather than as the game offering something.
+              */}
+            <div className="relative shrink-0">
             <StuckOffer offer={stuck.offer} onAct={stuck.onAct} onDismiss={stuck.onDismiss} />
 
             <GameInput
@@ -319,6 +326,7 @@ function DailyGameBoard({
                 onToggleHintPause={autoHint.togglePause}
                 onOpenSettings={() => setIsInfoOpen(true)}
             />
+            </div>
 
             <DailyEndGamePopover
                 open={showSummary}

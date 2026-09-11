@@ -1,3 +1,4 @@
+import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowRight, Lightbulb, Split, Eye, X, type LucideIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { STREAK_MULTIPLIER } from '@/lib/gameConfig';
@@ -16,6 +17,13 @@ import type { StuckOffer as Offer, StuckOfferKind } from '@/lib/daily/stuckSigna
  * Deliberately quiet furniture: muted, one line, dismissible, and gone the
  * moment the word changes. Anything louder would read as the game pitying the
  * player, which is the failure mode this is supposed to avoid.
+ *
+ * It **floats** above the composer rather than sitting in the column with it.
+ * In the flow it was a block that appeared from nothing and shoved the whole
+ * board upward mid-word — the game lurching while the player was reading it,
+ * which reads as a fault rather than as an offer. Anchored to the top edge of
+ * the input row it costs no layout height at all, so nothing behind it moves,
+ * and it fades in the way the progress cues do.
  */
 
 /** Only offers with something to do carry a button. */
@@ -52,24 +60,33 @@ function stakeMessage(offer: Extract<Offer, { kind: 'stake' }>): Message {
 export function StuckOffer({ offer, onAct, onDismiss }: StuckOfferProps) {
     const t = useTranslations('GameRoom.Stuck');
 
-    if (!offer) return null;
+    const message: Message | null = !offer
+        ? null
+        : offer.kind === 'stake'
+            ? stakeMessage(offer)
+            : { key: `${offer.kind}_title`, values: {} };
 
-    const message: Message = offer.kind === 'stake'
-        ? stakeMessage(offer)
-        : { key: `${offer.kind}_title`, values: {} };
-
-    const ActionIcon = ACTION_ICONS[offer.kind];
+    const ActionIcon = offer ? ACTION_ICONS[offer.kind] : undefined;
 
     return (
-        <div
+        <AnimatePresence>
+            {offer && message && (
+        <motion.div
+            key={offer.kind}
             role="status"
-            className="mx-2 mb-1 flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-1.5 text-sm"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 6 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            // Anchored to the top edge of the input row, so it costs no layout
+            // height and the board behind it never moves.
+            className="absolute bottom-full inset-x-0 z-20 mx-2 mb-1 flex items-center gap-2 rounded-lg border border-border bg-background/95 px-3 py-1.5 text-sm shadow-md backdrop-blur-sm"
         >
             <span className="flex-1 text-muted-foreground">
                 {t(message.key, message.values)}
             </span>
 
-            {ActionIcon && (
+            {ActionIcon && offer && (
                 <button
                     type="button"
                     // Keeps the mobile keyboard open, as the other input-row
@@ -94,6 +111,8 @@ export function StuckOffer({ offer, onAct, onDismiss }: StuckOfferProps) {
             >
                 <X className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
-        </div>
+        </motion.div>
+            )}
+        </AnimatePresence>
     );
 }

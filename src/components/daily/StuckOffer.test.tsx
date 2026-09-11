@@ -62,6 +62,24 @@ describe('StuckOffer', () => {
         expect(onAct).toHaveBeenCalledWith('other_end');
     });
 
+    /**
+     * The offer must not take part in the column's layout.
+     *
+     * Mounted as a flow sibling of the composer it appeared from nothing and
+     * pushed the whole board upward mid-word, which reads as the page breaking
+     * rather than as the game offering something. Anchored to the top edge of
+     * the input row it costs no height at all.
+     */
+    it('floats above the composer instead of displacing the board', () => {
+        const { container } = render(
+            <StuckOffer offer={{ kind: 'other_end' }} onAct={noop} onDismiss={noop} />,
+        );
+
+        const card = container.querySelector('[role="status"]')!;
+        expect(card.className).toContain('absolute');
+        expect(card.className).toContain('bottom-full');
+    });
+
     it('can always be waved away', () => {
         const onDismiss = vi.fn();
         render(<StuckOffer offer={{ kind: 'letter' }} onAct={noop} onDismiss={onDismiss} />);
