@@ -304,6 +304,7 @@
         "login": "Log In",
         "logout": "Log out",
         "preferences": "Preferences",
+        "admin_panel": "Admin Panel",
         "guest_badge": "Guest",
         "guest_message": "Sign up to save progress",
         "theme_toggle": "Toggle theme"

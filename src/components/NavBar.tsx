@@ -1,8 +1,8 @@
 'use client';
 
 import { useTranslations, useLocale } from 'next-intl';
-import Link from 'next/link';
 import { useAuth } from '@/context/AuthProvider';
+import { useAdmin } from '@/hooks/useAdmin';
 import { NotificationCenter } from './NotificationCenter';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -19,7 +19,8 @@ import { supabase } from '@/lib/supabase';
 import { deleteGuestAccount } from '@/app/actions/auth';
 import { useTheme } from 'next-themes';
 
-import { usePathname } from '@/navigation';
+import { Link, usePathname } from '@/navigation';
+import { getUserMenuLinks } from './nav/userMenuLinks';
 import { isImmersiveGameRoute } from '@/lib/gameChrome';
 import { createLogger } from '@/lib/logger';
 import { getLocaleDirection } from '@/i18n/locales';
@@ -31,6 +32,7 @@ export function NavBar() {
     const locale = useLocale();
     const dir = getLocaleDirection(locale);
     const { user, profile, refreshProfile } = useAuth();
+    const { isAdmin } = useAdmin();
     const { setTheme, resolvedTheme } = useTheme();
     const pathname = usePathname();
 
@@ -88,6 +90,11 @@ export function NavBar() {
     const getInitials = (name: string) => {
         return name?.slice(0, 2).toUpperCase() || '??';
     };
+
+    // Admins reach `/admin` from here and nowhere else: the route hides itself
+    // behind `notFound()` for everyone else, so without this entry the only way
+    // in is typing the URL.
+    const menuLinks = getUserMenuLinks(isAdmin);
 
     return (
         <nav className="border-b border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm sticky top-0 z-50">
@@ -150,11 +157,18 @@ export function NavBar() {
                                     </div>
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-800" />
-                                <DropdownMenuItem asChild className="focus:bg-gray-100 dark:focus:bg-gray-800 cursor-pointer">
-                                    <Link href="/settings">
-                                        {t('preferences')}
-                                    </Link>
-                                </DropdownMenuItem>
+                                {menuLinks.map(({ href, labelKey, icon: Icon }) => (
+                                    <DropdownMenuItem
+                                        key={href}
+                                        asChild
+                                        className="focus:bg-gray-100 dark:focus:bg-gray-800 cursor-pointer"
+                                    >
+                                        <Link href={href}>
+                                            <Icon className="me-2 h-4 w-4" aria-hidden="true" />
+                                            <span>{t(labelKey)}</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                ))}
                                 <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-800" />
                                 <DropdownMenuItem
                                     className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-gray-100 dark:focus:bg-gray-800 cursor-pointer"

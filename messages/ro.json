@@ -298,6 +298,7 @@
         "login": "Autentificare",
         "logout": "Deconectare",
         "preferences": "Preferințe",
+        "admin_panel": "Panou de administrare",
         "guest_badge": "Oaspete",
         "guest_message": "Înregistrează-te pentru a salva progresul",
         "theme_toggle": "Schimbă tema"

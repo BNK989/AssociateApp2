@@ -298,6 +298,7 @@
         "login": "تسجيل الدخول",
         "logout": "تسجيل الخروج",
         "preferences": "التفضيلات",
+        "admin_panel": "لوحة الإدارة",
         "guest_badge": "ضيف",
         "guest_message": "سجل لحفظ التقدم",
         "theme_toggle": "تبديل السمة"

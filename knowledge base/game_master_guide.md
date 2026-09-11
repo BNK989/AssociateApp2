@@ -15,6 +15,16 @@ the map an agent needs. Section 8 is what will surprise you.
 Requires `profiles.is_admin = true`; everyone else gets a 404, which is
 deliberate (it hides that the admin area exists at all).
 
+Reach the dashboard from the **avatar menu in the site nav** (*Admin Panel*,
+above *Log out*). The entry renders only for an admin — the links are built by
+[`src/components/nav/userMenuLinks.ts`](../src/components/nav/userMenuLinks.ts)
+from the `is_admin` flag that [`useAdmin`](../src/hooks/useAdmin.ts) reads off
+the loaded profile. That is presentation only; the authorisation is still the
+server-side check in the admin layout and in
+[`requireAdmin()`](../src/lib/adminAuth.ts). The nav is hidden inside the game
+shell (`/daily`, `/game/*`), so leave the game first — from the lobby, the home
+page, or settings the avatar is in the top corner on every screen size.
+
 Changes take effect on the **next page load**. There is no deploy, no build, and
 no cron wait.
 

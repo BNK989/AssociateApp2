@@ -298,6 +298,7 @@
         "login": "Anmelden",
         "logout": "Abmelden",
         "preferences": "Einstellungen",
+        "admin_panel": "Admin-Bereich",
         "guest_badge": "Gast",
         "guest_message": "Anmelden, um Fortschritt zu speichern",
         "theme_toggle": "Design wechseln"

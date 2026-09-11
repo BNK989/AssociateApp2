@@ -298,6 +298,7 @@
         "login": "Connexion",
         "logout": "Déconnexion",
         "preferences": "Préférences",
+        "admin_panel": "Panneau d'administration",
         "guest_badge": "Invité",
         "guest_message": "Inscrivez-vous pour sauvegarder la progression",
         "theme_toggle": "Changer de thème"

@@ -298,6 +298,7 @@
         "login": "Iniciar Sesión",
         "logout": "Cerrar Sesión",
         "preferences": "Preferencias",
+        "admin_panel": "Panel de administración",
         "guest_badge": "Invitado",
         "guest_message": "Regístrate para guardar progreso",
         "theme_toggle": "Alternar tema"
