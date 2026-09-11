@@ -1,5 +1,4 @@
 import { motion } from 'framer-motion';
-import { POOL_HANDOFF } from '@/components/game/pool/PoolTile';
 import { SETTLE_SPRING } from '@/components/game/pool/poolMotion';
 import type { Slot } from '@/lib/letterPool/slotRules';
 
@@ -66,12 +65,15 @@ export function SlotCell({ slot, isCaret, reduced }: SlotCellProps) {
         >
             {slot.char && (
                 <motion.span
-                    // Matches the pool tile's id, so a letter drawn out of the
-                    // pool is the same element arriving rather than a new one.
-                    layoutId={reduced || !slot.poolId ? undefined : `letter-${slot.poolId}`}
-                    initial={reduced || slot.poolId ? false : { scale: 0.8, opacity: 0 }}
+                    // No `layoutId` pairing with the halo tile. The halo lives in
+                    // the scrolling message list and this cell in the composer,
+                    // and framer's shared-layout projection reports stale
+                    // positions across a scroll container — the letter would
+                    // launch from the wrong place. The halo tile shrinks away
+                    // where it hangs and this cell pops at the same moment.
+                    initial={reduced ? false : { scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    transition={reduced ? { duration: 0 } : (slot.poolId ? POOL_HANDOFF : SETTLE_SPRING)}
+                    transition={reduced ? { duration: 0 } : SETTLE_SPRING}
                     className={`font-bold uppercase leading-[1.2] ${tone}`}
                     style={{ fontSize: 'var(--slot-font)' }}
                 >

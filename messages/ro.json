@@ -262,8 +262,8 @@
             "shuffled_note": "Literele apar într-o ordine aleatorie, așa că poziția lor nu îți spune nimic. Atinge cuvântul pentru a le amesteca din nou.",
             "shuffled_note_short": "Amestecate — ordine aleatorie. Atinge pentru a reamesteca.",
             "dismiss": "Închide",
-            "pool_note": "Literele găsite așteaptă sub caseta de text, în ordine aleatorie. Tastează una ca s-o plasezi — cele confirmate sunt completate automat.",
-            "pool_note_short": "Literele găsite așteaptă mai jos, în ordine aleatorie. Tastează una ca s-o plasezi."
+            "pool_note": "Literele găsite plutesc în jurul cuvântului însuși, în ordine aleatorie. Tastează una ca s-o plasezi — cele confirmate sunt completate automat.",
+            "pool_note_short": "Literele găsite plutesc în jurul cuvântului. Tastează una ca s-o plasezi."
         },
         "Pool": {
             "aria_label": "{count} litere găsite, în ordine aleatorie, încă neplasate"

@@ -1,4 +1,4 @@
-import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import type { User } from '@supabase/supabase-js';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +6,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import type { GameState, Message, Player } from '@/hooks/useGameLogic';
 import { MAX_HINT_LEVEL } from '@/lib/daily/dailyScoring';
 import { LETTER_POOL } from '@/lib/gameConfig';
-import { LetterPool } from '@/components/game/pool/LetterPool';
+import { LetterHalo, useHaloAnchor } from '@/components/game/pool/LetterHalo';
 import { useSlotTyping } from './input/useSlotTyping';
 import { RevealButton } from './input/RevealButton';
 import { HintButton } from './input/HintButton';
@@ -132,6 +132,10 @@ export function GameInput({
         setInput,
     });
 
+    // The found letters hang around the target bubble, not in the composer, so
+    // the composer only has to know which element to hand them to.
+    const haloAnchor = useHaloAnchor(stripActive ? targetMessage?.id : undefined);
+
     // Matches `CipherText`, so the strip and the word above it never disagree
     // about which way the answer reads.
     const dir = targetMessage && /[֐-׿]/.test(targetMessage.content) ? 'rtl' : 'ltr';
@@ -169,12 +173,12 @@ export function GameInput({
             onTouchStart={tooltip.markInteracted}
         >
             <TooltipProvider>
-                <LayoutGroup>
                 {model && (
-                    <LetterPool
+                    <LetterHalo
                         letters={model.pool}
                         placed={model.placed}
-                        dir={dir}
+                        anchor={haloAnchor}
+                        mirror={Boolean(user?.id) && targetMessage?.user_id === user?.id}
                     />
                 )}
 
@@ -254,7 +258,6 @@ export function GameInput({
                         onInteract={tooltip.markInteracted}
                     />
                 </div>
-                </LayoutGroup>
             </TooltipProvider>
         </div>
     );

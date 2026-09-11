@@ -262,8 +262,8 @@
             "shuffled_note": "Die Buchstaben erscheinen in zufälliger Reihenfolge, ihre Position verrät also nichts. Tippe auf das Wort, um sie neu zu mischen.",
             "shuffled_note_short": "Gemischt — zufällige Reihenfolge. Zum Neumischen tippen.",
             "dismiss": "Schließen",
-            "pool_note": "Gefundene Buchstaben warten unter dem Textfeld, in zufälliger Reihenfolge. Tippe einen, um ihn zu setzen — bestätigte Buchstaben werden für dich eingefügt.",
-            "pool_note_short": "Gefundene Buchstaben warten unten, ungeordnet. Tippe einen, um ihn zu setzen."
+            "pool_note": "Gefundene Buchstaben schweben um das Wort selbst, in zufälliger Reihenfolge. Tippe einen, um ihn zu setzen — bestätigte Buchstaben werden für dich eingefügt.",
+            "pool_note_short": "Gefundene Buchstaben schweben um das Wort. Tippe einen, um ihn zu setzen."
         },
         "Pool": {
             "aria_label": "{count} gefundene Buchstaben in zufälliger Reihenfolge, noch nicht platziert"

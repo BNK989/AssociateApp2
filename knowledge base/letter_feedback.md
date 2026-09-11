@@ -13,7 +13,7 @@ Three states, and each says exactly one thing:
 | Tile | Means | Underline | Where it appears |
 | :--- | :--- | :--- | :--- |
 | **Green** (`--tile-placed`) | Confirmed in place. The letter belongs exactly here. | Solid | The word line, and the composer's strip |
-| **Orange** (`--tile-present`) | Found, but with no confirmed place. | Dotted | **The pool only** — never inside the word line, and never in the answer's order |
+| **Orange** (`--tile-present`) | Found, but with no confirmed place. | — | **The halo only** — around the word, never inside the word line, and never in the answer's order |
 | **Grey** (`--tile-unknown`) | Still hidden. A filler glyph, not a letter. | None | The word line |
 
 > **Orange left the word line on 2026-09-11.** The invariant below was true and
@@ -203,8 +203,9 @@ draws that tile down into the slot. Placing is an act, not an inference.
 | Piece | Where |
 | :--- | :--- |
 | The rules, pure and tested | `src/lib/letterPool/poolRules.ts` (43 tests) |
+| Where a loose letter hangs | `src/lib/letterPool/haloLayout.ts` (10 tests) |
 | Typed ↔ pool ↔ strip binding | `src/components/game/input/useSlotTyping.ts` (11 tests) |
-| The pool | `src/components/game/pool/` |
+| The halo | `src/components/game/pool/LetterHalo.tsx` |
 | The strip | `src/components/game/input/SlotStrip.tsx`, `SlotCell.tsx` |
 | Motion contract | `src/components/game/pool/poolMotion.ts` |
 | Keyframes and cell sizing | `src/app/letter-pool.css` |
@@ -443,6 +444,84 @@ which is the constraint `poolMotion.ts` exists to enforce; `.pool-track`'s
 computes `overflow-y` to auto and crops anything that leaves the box — which is
 how the pool shipped the first time. Net, the band is 2px *shorter* than before:
 40px against 42px, and 36px against 38px on a phone. The composer does not grow.
+
+### The band could not be saved, so it went (2026-09-11)
+
+Scrambling the pool and scattering it inside its strip was not enough, and the
+reason is structural rather than a question of degree. **A horizontal band whose
+only content is letters is read left to right**, because that is what a band is
+for. Jitter fights the container, and the container wins: three letters with
+seeded lift and seeded gaps still read as three letters in a row — worse, the
+dotted rule under each one made them read as three *blanks*, fill-in-the-blank
+slots, which is the precise meaning the pool must never carry. That rule was
+added to keep a non-hue channel and it bought a stronger wrong signal than the
+dashed boxes it replaced.
+
+So the letters leave the band, the same way they once left the word line: by
+leaving the container that was making the claim. They now hang **around the
+target bubble**, and the band is deleted.
+
+Three things follow, none of them decoration:
+
+- **There is no reading direction.** A scatter has no first item. The eye jumps
+  between letters rather than scanning them, which is the honest depiction of a
+  set with no order.
+- **They belong to a word, visibly.** The band never said *which* word its
+  letters came from; the player held that themselves.
+- **They scroll with it.** `LetterHalo` is portalled into the bubble, which is
+  already `position: relative` and carries a stable `msg-bubble-<id>`. So the
+  layer needs no measurement, no `ResizeObserver` and no scroll listener, and it
+  cannot fall out of sync with the thing it annotates. Scroll the word away and
+  its letters go with it — correct, because they are that word's letters.
+
+### Finding the free space, twice wrongly
+
+`haloLayout.ts` is pure and tested because the geometry is a rule, and because
+two plausible versions of it failed in ways only a picture showed.
+
+1. **An arc around the bubble.** Parameterised by angle, most of the range lands
+   on whichever edge is longest — and a chat bubble is tall. Seven letters came
+   out as a near-vertical column down the trailing side: a list, read top to
+   bottom, the same defect as the row wearing a different coat.
+2. **A wide column beside the bubble**, sampled in two dimensions. The scatter
+   was right; the column is not there. `max-w-[70%]` suggests a third of the row
+   is free, but a bubble carrying a hint panel runs close to that maximum and
+   what is actually left is nearer 40px than 85. Letters sampled 50px out ran
+   off the screen.
+
+What works is **hugging the perimeter**: letters straddle the bubble's own
+edges, a little outside and a little over its padding. That region's size does
+not depend on how wide the bubble happens to be, which is the only reason it
+cannot overflow — and it reads better than the column did, because the letters
+cling to the word rather than floating in a margin near it.
+
+Three edges, never the leading one: the avatar is there, and so is every
+neighbouring bubble, which is `max-w-[70%]` on the same side. Positions are
+`calc(P% + Qpx)` on each axis, resolved by the browser against the live element,
+so a bubble that grows a hint panel spreads its halo for free. `inset-inline-*`
+carries the mirroring, so Hebrew and Arabic hang the halo on their own trailing
+side with no second code path.
+
+Two details that are load-bearing:
+
+- **Farthest-point sampling.** Seeded positions alone clump — two letters land
+  on top of each other often enough to look like a defect. Each letter proposes
+  eight seeded spots and keeps the one furthest from those already placed.
+- **`EDGE_ORDER`, not `index % 10`.** The plain modulo weights the three edges
+  correctly and still fails the commonest case: with three letters it put two on
+  the trailing edge, which is a vertical line — the column again, at the pool
+  size players meet most. The sequence visits all three edges in its first three
+  draws and still lands on the same 5 / 3 / 2 split over ten.
+
+### The flight is gone, deliberately
+
+The halo hangs in the scrolling message list; the strip sits in the composer.
+Framer's shared-layout projection across a scroll container reports stale
+positions — the same trap that stopped the old pool flying up from the bubble —
+so a `layoutId` pairing would launch the letter from the wrong place. `SlotCell`
+no longer carries one. Placing is told twice instead, once at each end and in
+the same moment: the halo letter shrinks and fades where it hangs, the slot cell
+pops. Two halves of one event, with nothing for the browser to get wrong.
 
 ### Reading the keystrokes instead of imposing a shape (2026-09-11)
 

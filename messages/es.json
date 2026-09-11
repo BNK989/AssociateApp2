@@ -262,8 +262,8 @@
             "shuffled_note": "Las letras aparecen en orden aleatorio, así que su posición no dice nada. Toca la palabra para volver a mezclarlas.",
             "shuffled_note_short": "Mezcladas: orden aleatorio. Toca para volver a mezclar.",
             "dismiss": "Cerrar",
-            "pool_note": "Las letras halladas esperan bajo el cuadro de texto, en orden aleatorio. Escribe una para colocarla; las confirmadas se rellenan solas.",
-            "pool_note_short": "Las letras halladas esperan abajo, sin orden. Escribe una para colocarla."
+            "pool_note": "Las letras halladas flotan alrededor de la propia palabra, en orden aleatorio. Escribe una para colocarla; las confirmadas se rellenan solas.",
+            "pool_note_short": "Las letras halladas flotan alrededor de la palabra. Escribe una para colocarla."
         },
         "Pool": {
             "aria_label": "{count} letras halladas, en orden aleatorio, aún sin colocar"

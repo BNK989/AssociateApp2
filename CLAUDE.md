@@ -248,7 +248,7 @@ a file that has grown past it needs splitting, not pinning.
 
 **Other open items:**
 
-`npm run lint` reports **0 errors, 68 warnings** (measured 2026-09-07). Every
+`npm run lint` reports **0 errors, 72 warnings** (measured 2026-09-11). Every
 rule in this document is enforced and green.
 
 | Count | Rule | Severity | Note |
@@ -257,7 +257,7 @@ rule in this document is enforced and green.
 | 0 | `no-restricted-syntax` (RTL) | error | cleared 2026-08-21, 3 annotated exceptions |
 | 0 | `no-console` | error | cleared 2026-08-21 |
 | 0 | `prefer-const`, `ban-ts-comment`, `no-require-imports`, `react/no-unescaped-entities`, `react-hooks/immutability`, `react-hooks/purity` | error | cleared 2026-08-21 |
-| 20 | `react-hooks/set-state-in-effect` | **warn** | deliberate, see below |
+| 21 | `react-hooks/set-state-in-effect` | **warn** | deliberate, see below |
 | 38 | `@typescript-eslint/no-unused-vars` | warn | |
 | 7 | `react-hooks/exhaustive-deps` | warn | |
 | 3 | `@next/next/no-img-element` | warn | |
@@ -280,6 +280,10 @@ is what effects exist for:
 - `useCountUp`, `useWelcomeOverlay`, `useHintNudge`, `useHintTooltip`,
   `useAutoHint`, `useDailyGame`, `useDailySettings` — sync animation or
   preference state to changed props.
+- `useHaloAnchor` — resolves the target bubble's element for the letter halo to
+  portal into. The composer and the bubble are cousins, so nothing in the tree
+  hands one to the other; `useBubbleWidth` reads the board the same way for the
+  same reason.
 
 The count rises as files are split, which is expected rather than alarming:
 extracting an inline closure into a named hook makes a setState the analyser

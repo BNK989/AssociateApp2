@@ -262,8 +262,8 @@
             "shuffled_note": "Les lettres apparaissent dans un ordre aléatoire, leur position n'indique donc rien. Touchez le mot pour les mélanger à nouveau.",
             "shuffled_note_short": "Mélangées : ordre aléatoire. Touchez pour remélanger.",
             "dismiss": "Fermer",
-            "pool_note": "Les lettres trouvées attendent sous le champ de texte, dans un ordre aléatoire. Tapez-en une pour la placer — les lettres confirmées sont remplies pour vous.",
-            "pool_note_short": "Les lettres trouvées attendent en dessous, sans ordre. Tapez-en une pour la placer."
+            "pool_note": "Les lettres trouvées flottent autour du mot lui-même, dans un ordre aléatoire. Tapez-en une pour la placer — les lettres confirmées sont remplies pour vous.",
+            "pool_note_short": "Les lettres trouvées flottent autour du mot. Tapez-en une pour la placer."
         },
         "Pool": {
             "aria_label": "{count} lettres trouvées, dans un ordre aléatoire, pas encore placées"

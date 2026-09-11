@@ -13,58 +13,42 @@
  */
 
 /*
- * Every step carries `--pool-lift`, the tile's seeded offset from the band's
- * centre line. Leaving it out of the keyframes would make the animation snap
- * each tile back to a shared baseline the moment it starts — which is the one
- * thing the scatter exists to break.
+ * The halo: found letters hung around the word they belong to.
+ *
+ * The bob carries no `--pool-lift` any more. The old pool was a horizontal
+ * band, so a seeded vertical offset was the only thing breaking its baseline;
+ * an arc has no baseline to break. Position comes from `layoutHalo` as `calc`
+ * offsets on the letter's own box, and this keyframe only has to make it
+ * breathe.
+ *
+ * `rotate` and nothing else, because the element's centring lives on its
+ * parent: framer animates `x`/`y`/`scale` there, and a transform here would be
+ * composed against it rather than fighting it.
  */
 @keyframes pool-bob {
   0%,
   100% {
-    transform: translateY(var(--pool-lift, 0px)) rotate(var(--pool-tilt, 0deg));
+    transform: translateY(0) rotate(var(--pool-tilt, 0deg));
   }
   33% {
-    transform: translateY(calc(var(--pool-lift, 0px) - 3px))
-      rotate(calc(var(--pool-tilt, 0deg) * -0.55));
+    transform: translateY(-3px) rotate(calc(var(--pool-tilt, 0deg) * -0.55));
   }
   66% {
-    transform: translateY(calc(var(--pool-lift, 0px) + 2px)) rotate(var(--pool-tilt, 0deg));
+    transform: translateY(2px) rotate(var(--pool-tilt, 0deg));
   }
 }
 
-.pool-socket {
-  /* The resting angle and lift, kept when the animation is paused or switched
-     off: a tile sitting off the line at its own angle still says "this letter
-     has no place", and it is the cue a reduced-motion player is left with. */
-  transform: translateY(var(--pool-lift, 0px)) rotate(var(--pool-tilt, 0deg));
-  /* Seeded per tile, because an even rhythm is half of what makes a row of
-     letters read as a sequence. Logical, so it is the right edge in Hebrew. */
-  margin-inline-start: var(--pool-gap, 0px);
+.halo-letter {
+  /* The resting angle, kept when the drift is switched off: a letter sitting at
+     its own angle still says "this has no place", and it is the cue a
+     reduced-motion player is left with. */
+  transform: rotate(var(--pool-tilt, 0deg));
   animation: pool-bob 4.4s ease-in-out infinite;
   animation-delay: var(--pool-phase, 0s);
 }
 
-/*
- * The track scrolls sideways when the pool outgrows one row.
- *
- * `padding-block` is load-bearing, not spacing: `overflow-x: auto` makes the
- * computed `overflow-y` **auto** as well (one axis non-visible forces the
- * other), so without room inside the scroll box the tiles' drift and their glow
- * are cropped at the top — which is exactly how this shipped.
- *
- * There is no edge fade. It was applied unconditionally, so it dimmed the first
- * tile whenever the pool fitted, which is almost always — a permanent artefact
- * paid for a hint that is only occasionally needed.
- */
-.pool-track {
-  scroll-snap-type: x proximity;
-  /* 5px covered the bob and the glow. The seeded lift adds MAX_LIFT_PX (3) on
-     top of it, and a cropped tile is how this shipped the first time. */
-  padding-block: 8px;
-}
-
-.pool-track > * {
-  scroll-snap-align: center;
+.halo-still {
+  animation: none;
 }
 
 /*
@@ -107,7 +91,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pool-socket,
+  .halo-letter,
   .slot-caret {
     animation: none;
   }
