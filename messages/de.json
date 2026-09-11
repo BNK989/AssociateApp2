@@ -241,6 +241,10 @@
             "shuffled_note": "Die Buchstaben erscheinen in zufälliger Reihenfolge, ihre Position verrät also nichts. Tippe auf das Wort, um sie neu zu mischen.",
             "shuffled_note_short": "Gemischt — zufällige Reihenfolge. Zum Neumischen tippen.",
             "dismiss": "Schließen"
+        },
+        "Pool": {
+            "label": "Gefunden",
+            "aria_label": "{count} gefundene Buchstaben, noch nicht platziert"
         }
     },
     "HomePage": {

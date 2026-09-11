@@ -241,6 +241,10 @@
             "shuffled_note": "Literele apar într-o ordine aleatorie, așa că poziția lor nu îți spune nimic. Atinge cuvântul pentru a le amesteca din nou.",
             "shuffled_note_short": "Amestecate — ordine aleatorie. Atinge pentru a reamesteca.",
             "dismiss": "Închide"
+        },
+        "Pool": {
+            "label": "Găsite",
+            "aria_label": "{count} litere găsite, încă neplasate"
         }
     },
     "HomePage": {

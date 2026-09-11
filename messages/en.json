@@ -247,6 +247,10 @@
             "shuffled_note": "Letters appear in a random order, so where a tile sits tells you nothing. Tap the word to shuffle them again.",
             "shuffled_note_short": "Shuffled — letters are in a random order. Tap to reshuffle.",
             "dismiss": "Dismiss"
+        },
+        "Pool": {
+            "label": "Found",
+            "aria_label": "{count} found letters, not yet placed"
         }
     },
     "HomePage": {

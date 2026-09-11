@@ -241,6 +241,10 @@
             "shuffled_note": "Las letras aparecen en orden aleatorio, así que su posición no dice nada. Toca la palabra para volver a mezclarlas.",
             "shuffled_note_short": "Mezcladas: orden aleatorio. Toca para volver a mezclar.",
             "dismiss": "Cerrar"
+        },
+        "Pool": {
+            "label": "Halladas",
+            "aria_label": "{count} letras halladas, aún sin colocar"
         }
     },
     "HomePage": {

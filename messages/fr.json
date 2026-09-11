@@ -241,6 +241,10 @@
             "shuffled_note": "Les lettres apparaissent dans un ordre aléatoire, leur position n'indique donc rien. Touchez le mot pour les mélanger à nouveau.",
             "shuffled_note_short": "Mélangées : ordre aléatoire. Touchez pour remélanger.",
             "dismiss": "Fermer"
+        },
+        "Pool": {
+            "label": "Trouvées",
+            "aria_label": "{count} lettres trouvées, pas encore placées"
         }
     },
     "HomePage": {

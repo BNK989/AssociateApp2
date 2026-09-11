@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./letter-pool.css";
 
 
 @custom-variant dark (&:is(.dark *));

@@ -168,6 +168,107 @@ Full review, with traced examples and contrast measurements:
 
 ---
 
+## The letter pool (composer half, landed 2026-09-11)
+
+The invariant above — *orange never claims anything about position* — was true
+and unlearnable. A line of glyphs means sequence, so a letter drawn inside one
+is read as being *at* that spot no matter what is done to it, and by 2026-09-11
+the renderer was spending five channels (hue, weight, a dotted underline, a
+seeded tilt, an endless drift) arguing against that single fact. The conflict is
+structural: the word line was being asked to carry an ordered thing and an
+unordered thing at once.
+
+So the unordered half leaves the line.
+
+### What the player sees
+
+Found-but-unplaced letters live in a **pool** docked above the composer, outside
+the sentence. A tile that is not in the word cannot be misread as a position in
+it — the rule stops being something to remember and becomes something visible.
+
+The composer then draws the answer's **shape**: one slot per letter, greens
+pre-filled, and the caret jumping over them so the player types only the gaps
+and never retypes a letter they earned. Typing a letter that is in the pool
+draws that tile down into the slot. Placing is an act, not an inference.
+
+| Piece | Where |
+| :--- | :--- |
+| The rules, pure and tested | `src/lib/letterPool/poolRules.ts` (43 tests) |
+| Typed ↔ pool ↔ strip binding | `src/components/game/input/useSlotTyping.ts` (11 tests) |
+| The pool | `src/components/game/pool/` |
+| The strip | `src/components/game/input/SlotStrip.tsx`, `SlotCell.tsx` |
+| Motion contract | `src/components/game/pool/poolMotion.ts` |
+| Keyframes and cell sizing | `src/app/letter-pool.css` |
+| Compiled floor | `LETTER_POOL` in `gameConfig.ts` |
+
+### It reveals nothing new
+
+Greens at their index, the found letters, the word's length, its spaces and its
+repeat counts are all already on screen — the length via the `typed / total`
+counter, the repeat counts via the letter budget in `buildScrambleItems`. The
+strip appears behind **exactly the gate the counter had** (single player, or
+hint level 1+) and *replaces* it, so the composer's height is unchanged.
+
+Punctuation is given rather than guessed, for the same reason spaces always
+were: the strip already discloses the shape, and asking where an apostrophe
+falls tests typing, not association.
+
+### Long phrases
+
+Cells group into words; the strip wraps **between** groups, never inside one, so
+"morning glory" is two lines of full-size cells rather than thirteen cramped
+ones. Cell width is then sized against the longest single *word* — the only run
+that has to fit on a line — as a container query, not a measured value:
+
+```
+--slot-w: clamp(18px, (100cqi - 24px - gaps) / longest-word, 32px)
+```
+
+18px is where a mono glyph stops being readable; 32px is where the cells start
+to look like a different game from the word above them. No `ResizeObserver`, and
+it re-solves on a keyboard opening or a rotation for free.
+
+### Why it stays smooth
+
+The composer is the one surface a player touches continuously, so the motion
+rules are constraints, not preferences. They live in `poolMotion.ts`:
+
+1. **Only `transform` and `opacity` animate.** A placed letter leaves its socket
+   behind rather than being removed from the pool, so the row never reflows.
+   Cell widths are fixed per word, so a keystroke changes only what is drawn
+   inside a cell.
+2. **Springs, not durations.** A spring retargets from its current velocity, so
+   typing faster than the animation never queues a backlog or snaps.
+3. **Idle drift is a CSS keyframe, not a framer `repeat: Infinity`.** A
+   repeating framer animation keeps a JS loop alive per tile — which the board
+   already pays for every masked word — while a keyframe runs on the compositor.
+   Above `MAX_DRIFTING_TILES` (12) the drift switches off entirely: motion is a
+   signal, and every tile emitting it at once is noise.
+4. **No flight from the bubble to the pool.** The bubble sits inside the
+   scrolling message list and framer's layout projection across a scroll
+   container reports stale positions, so the tile would launch from the wrong
+   place. A newly found letter springs into being in the pool instead. The
+   pool → slot flight, the one that carries the meaning, is a `layoutId` handoff
+   entirely inside the composer, where there is no scroll container to fight.
+5. **Reduced motion** drops drift and handoff and keeps the static tilt, the
+   same split `motionState()` already makes.
+
+### Still to land
+
+The **word line still draws found letters inside it**. Until `readMaskTile` and
+`buildScrambleItems` stop emitting them, a found letter appears both in the line
+and in the pool — redundant, and the original mis-read survives in the bubble.
+That change is deliberately separate: it is the shared renderer for both modes,
+and it also decides what `LetterLegend`, `pickLegendSamples` and the
+`present_*` / `shuffled_note` copy in seven locales should say once orange is no
+longer a thing that appears in a word.
+
+`LETTER_POOL.CARET_SKIPS_GREENS` is the compiled floor only. The game-master
+control over it (`game_settings.letter_pool`, its parser, its admin section and
+its migration) is not wired yet, so the setting is currently the default.
+
+---
+
 ## Still open
 
 - Tapping anywhere on a hint-2 bubble reshuffles it, not just the shuffle

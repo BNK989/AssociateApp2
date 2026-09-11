@@ -1,0 +1,108 @@
+import { act, renderHook } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { useSlotTyping } from './useSlotTyping';
+
+const setup = (overrides: Partial<Parameters<typeof useSlotTyping>[0]> = {}) => {
+    const setInput = vi.fn();
+    const view = renderHook((props: Parameters<typeof useSlotTyping>[0]) => useSlotTyping(props), {
+        initialProps: {
+            text: 'Harmony',
+            guesses: ['harpoon'],
+            mode: 'skip' as const,
+            targetId: 'msg1',
+            setInput,
+            ...overrides,
+        },
+    });
+    return { ...view, setInput };
+};
+
+describe('useSlotTyping — ownership of the submitted value', () => {
+    // The regression this guards: the hook runs on every render of the composer,
+    // including the chain phase where there is no word to solve. Without the
+    // guard it blanked the player's message on mount.
+    it('does not touch the input when there is no word to solve', () => {
+        const { setInput } = setup({ text: null });
+        expect(setInput).not.toHaveBeenCalled();
+    });
+
+    it('reports an empty value while the strip is incomplete', () => {
+        const { setInput } = setup();
+        expect(setInput).toHaveBeenLastCalledWith('');
+    });
+
+    it('reports the assembled answer once every slot is filled', () => {
+        const { result, setInput } = setup();
+        act(() => result.current.onTypedChange('mny'));
+        expect(setInput).toHaveBeenLastCalledWith('Harmony');
+    });
+
+    it('assembles from the greens the player never typed', () => {
+        // Only three characters were typed; the other four are earned.
+        const { result } = setup();
+        act(() => result.current.onTypedChange('mny'));
+        expect(result.current.typed).toBe('mny');
+        expect(result.current.model?.attempt).toBe('Harmony');
+    });
+});
+
+describe('useSlotTyping — typing', () => {
+    it('drops characters the strip has no room for', () => {
+        const { result } = setup();
+        act(() => result.current.onTypedChange('mnyXXXX'));
+        expect(result.current.typed).toBe('mny');
+    });
+
+    it('ignores a typed space, which the strip supplies itself', () => {
+        const { result } = setup({ text: 'go on', guesses: [] });
+        act(() => result.current.onTypedChange('go on'));
+        expect(result.current.typed).toBe('goon');
+        expect(result.current.model?.attempt).toBe('go on');
+    });
+
+    it('binds a typed letter to the pool tile it came from', () => {
+        const { result } = setup();
+        act(() => result.current.onTypedChange('m'));
+        // 'n' is the only pooled letter; 'm' was never found, so nothing binds.
+        expect(result.current.model?.placed.size).toBe(0);
+
+        act(() => result.current.onTypedChange('mn'));
+        expect(result.current.model?.placed.has('pool-5')).toBe(true);
+    });
+
+    it('puts the caret on the first unfilled slot', () => {
+        const { result } = setup();
+        expect(result.current.model?.caretIndex).toBe(3);
+        act(() => result.current.onTypedChange('m'));
+        expect(result.current.model?.caretIndex).toBe(5);
+    });
+
+    it('has no caret once the strip is full', () => {
+        const { result } = setup();
+        act(() => result.current.onTypedChange('mny'));
+        expect(result.current.model?.caretIndex).toBeNull();
+    });
+});
+
+describe('useSlotTyping — resets', () => {
+    it('clears the strip when the chain moves to a new word', () => {
+        const { result, rerender, setInput } = setup();
+        act(() => result.current.onTypedChange('mny'));
+        expect(result.current.typed).toBe('mny');
+
+        rerender({
+            text: 'Chord', guesses: [], mode: 'skip', targetId: 'msg2', setInput,
+        });
+        expect(result.current.typed).toBe('');
+    });
+
+    it('clears the strip when a guess is recorded', () => {
+        const { result, rerender, setInput } = setup();
+        act(() => result.current.onTypedChange('mn'));
+
+        rerender({
+            text: 'Harmony', guesses: ['harpoon', 'harmons'], mode: 'skip', targetId: 'msg1', setInput,
+        });
+        expect(result.current.typed).toBe('');
+    });
+});
