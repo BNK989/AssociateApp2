@@ -268,12 +268,11 @@
             "shuffled_note": "Letters appear in a random order, so where a tile sits tells you nothing. Tap the word to shuffle them again.",
             "shuffled_note_short": "Shuffled — letters are in a random order. Tap to reshuffle.",
             "dismiss": "Dismiss",
-            "pool_note": "Found letters wait under the text box. Type one to place it — confirmed letters are filled in for you.",
-            "pool_note_short": "Found letters wait below. Type one to place it."
+            "pool_note": "Found letters wait under the text box, in no particular order. Type one to place it — confirmed letters are filled in for you.",
+            "pool_note_short": "Found letters wait below, in no order. Type one to place it."
         },
         "Pool": {
-            "label": "Found",
-            "aria_label": "{count} found letters, not yet placed"
+            "aria_label": "{count} found letters, in no particular order, not yet placed"
         }
     },
     "HomePage": {

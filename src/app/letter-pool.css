@@ -12,24 +12,34 @@
  * composer and a stuttering one.
  */
 
+/*
+ * Every step carries `--pool-lift`, the tile's seeded offset from the band's
+ * centre line. Leaving it out of the keyframes would make the animation snap
+ * each tile back to a shared baseline the moment it starts — which is the one
+ * thing the scatter exists to break.
+ */
 @keyframes pool-bob {
   0%,
   100% {
-    transform: translateY(0) rotate(var(--pool-tilt, 0deg));
+    transform: translateY(var(--pool-lift, 0px)) rotate(var(--pool-tilt, 0deg));
   }
   33% {
-    transform: translateY(-3px) rotate(calc(var(--pool-tilt, 0deg) * -0.55));
+    transform: translateY(calc(var(--pool-lift, 0px) - 3px))
+      rotate(calc(var(--pool-tilt, 0deg) * -0.55));
   }
   66% {
-    transform: translateY(2px) rotate(var(--pool-tilt, 0deg));
+    transform: translateY(calc(var(--pool-lift, 0px) + 2px)) rotate(var(--pool-tilt, 0deg));
   }
 }
 
 .pool-socket {
-  /* The resting tilt, kept when the animation is paused or switched off: a
-     static angle still says "this letter has no place", and it is the cue a
-     reduced-motion player is left with. */
-  transform: rotate(var(--pool-tilt, 0deg));
+  /* The resting angle and lift, kept when the animation is paused or switched
+     off: a tile sitting off the line at its own angle still says "this letter
+     has no place", and it is the cue a reduced-motion player is left with. */
+  transform: translateY(var(--pool-lift, 0px)) rotate(var(--pool-tilt, 0deg));
+  /* Seeded per tile, because an even rhythm is half of what makes a row of
+     letters read as a sequence. Logical, so it is the right edge in Hebrew. */
+  margin-inline-start: var(--pool-gap, 0px);
   animation: pool-bob 4.4s ease-in-out infinite;
   animation-delay: var(--pool-phase, 0s);
 }
@@ -48,7 +58,9 @@
  */
 .pool-track {
   scroll-snap-type: x proximity;
-  padding-block: 5px;
+  /* 5px covered the bob and the glow. The seeded lift adds MAX_LIFT_PX (3) on
+     top of it, and a cropped tile is how this shipped the first time. */
+  padding-block: 8px;
 }
 
 .pool-track > * {

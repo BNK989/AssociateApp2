@@ -1,5 +1,6 @@
 import type { Transition } from 'framer-motion';
 import type { CSSProperties } from 'react';
+import { seedFromId } from '@/lib/letterPool/poolRules';
 
 /**
  * How the pool and the slot strip move.
@@ -65,21 +66,53 @@ export const SPAWN_SPRING: Transition = {
 export const MAX_DRIFTING_TILES = 12;
 
 /**
- * Per-tile drift seed.
+ * How far a tile may sit off the band's centre line, in px.
+ *
+ * The pool is one row and stays one row — a scatter that grows the composer
+ * when a letter arrives would move the board under the player's thumb, which is
+ * the thing this module exists to prevent. So the scatter happens *inside* a
+ * fixed band: the tiles lose their shared baseline without the band losing its
+ * height. `.pool-track`'s `padding-block` is sized to cover this plus the bob
+ * and the glow, or `overflow-x: auto` crops the lifted tiles.
+ */
+export const MAX_LIFT_PX = 3;
+
+/** The seeded range of the gap in front of a tile, in px. */
+const GAP_MIN_PX = 5;
+const GAP_RANGE_PX = 9;
+
+/**
+ * Per-tile scatter: tilt, lift, the gap in front of it, and the drift's phase.
  *
  * Keyed off the tile's own id rather than its position in the row, so a tile
  * that outlives a rebuild keeps its angle and phase instead of twitching —
  * the same mistake `cipherVariants.tiltSeed` was written to fix.
+ *
+ * Why these three properties and not a label: the pool holds letters that have
+ * no order, and the way to say so is to stop drawing them as a sequence.
+ * An even rhythm on a shared baseline reads as a row whatever it is called, so
+ * the baseline and the rhythm both go — irregular gaps, each tile lifted a
+ * little differently, each at its own angle. Form states the rule; no chrome
+ * has to assert it, and nothing has to be translated into seven languages.
+ *
+ * `seedFromId` is the pool's own seed, shared with the scramble so a tile's
+ * look and its place come from one number. It also avalanches, which matters
+ * here for the same reason it matters there: tile ids differ only in their last
+ * character, and the old `hash * 31 + code` turned that into a sawtooth — tilts
+ * that alternated sign and cycled through four values in lockstep down the row.
  */
 export function driftStyle(id: string, drifting: boolean): CSSProperties {
-    let hash = 0;
-    for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) % 10_000;
+    const seed = seedFromId(id);
 
-    const tilt = (hash % 2 === 0 ? 1 : -1) * (2 + (hash % 4));
-    const phase = (hash % 13) * 0.34;
+    const tilt = (seed % 2 === 0 ? 1 : -1) * (2 + ((seed >>> 3) % 5));
+    const lift = (((seed >>> 7) % (MAX_LIFT_PX * 2 + 1)) - MAX_LIFT_PX);
+    const gap = GAP_MIN_PX + ((seed >>> 13) % GAP_RANGE_PX);
+    const phase = ((seed >>> 19) % 13) * 0.34;
 
     return {
         '--pool-tilt': `${tilt}deg`,
+        '--pool-lift': `${lift}px`,
+        '--pool-gap': `${gap}px`,
         '--pool-phase': `-${phase.toFixed(2)}s`,
         animationPlayState: drifting ? 'running' : 'paused',
     } as CSSProperties;

@@ -68,6 +68,9 @@ export function isGapChar(char: string): boolean {
  *
  * A green occurrence is not in the pool — it has a place, which is the whole
  * distinction the pool exists to draw.
+ *
+ * The result is returned in a seeded order that is not the answer's — see
+ * `scramblePool`, which is the other half of that same distinction.
  */
 export function buildLetterPool(
     text: string,
@@ -92,7 +95,7 @@ export function buildLetterPool(
         }
     }
 
-    return [...text].flatMap((char, index) => {
+    const found = [...text].flatMap((char, index) => {
         if (placed.has(index) || isGapChar(char)) return [];
 
         const lower = char.toLowerCase();
@@ -108,6 +111,66 @@ export function buildLetterPool(
         const id = `${idPrefix}-${index}`;
         return [{ id, char, slotIndex: held.get(id)?.slotIndex ?? null }];
     });
+
+    return scramblePool(found);
+}
+
+/**
+ * A tile's seed, derived from its own id. Its place in the pool, its tilt, its
+ * lift and the gap in front of it are all drawn from this one number, so every
+ * scattered property of a tile moves with its identity rather than its slot.
+ *
+ * FNV-1a **plus a final avalanche**, and the second half is not optional. Tile
+ * ids differ only in their last character — `…-4`, `…-5` — and a bare
+ * accumulate-and-multiply turns a delta of one into a delta of one prime: the
+ * eight keys of an eight-letter word come out as `base + n * prime`, whose sort
+ * order is one cyclic sequence rotated. Measured before this mix was added,
+ * `starling` scrambled to `gnilrats` — its exact reverse — and two different
+ * words drew the identical order. The murmur3 finaliser diffuses the low bits
+ * across all 32, which is what makes the permutation actually depend on the
+ * word.
+ */
+export function seedFromId(id: string): number {
+    let hash = 0x811c9dc5;
+    for (let i = 0; i < id.length; i++) {
+        hash ^= id.charCodeAt(i);
+        hash = Math.imul(hash, 0x01000193) >>> 0;
+    }
+
+    hash ^= hash >>> 16;
+    hash = Math.imul(hash, 0x85ebca6b) >>> 0;
+    hash ^= hash >>> 13;
+    hash = Math.imul(hash, 0xc2b2ae35) >>> 0;
+    return (hash ^ (hash >>> 16)) >>> 0;
+}
+
+/**
+ * The pool's display order: seeded, and deliberately not the answer's.
+ *
+ * Built in text order, the pool re-asserted the one thing the pool exists to
+ * deny. Every tile individually claims nothing about position — but a row of
+ * them left to right is a sequence, and a player can read the remaining letters
+ * off in order and type them without ever recalling the word. From hint level 2
+ * it was worse than a hint: the server's mask is an *anagram* there, and
+ * building the pool by walking `text` sorted that anagram back into the answer,
+ * handing over more than the hint was sold as.
+ *
+ * Two properties make the order safe to look at:
+ *
+ * - **Keyed on the full id, which carries the word.** A permutation seeded on
+ *   the index alone is the same permutation for every word of that length, so a
+ *   player who learns it once can invert it forever. Same class of mistake as
+ *   `tiltSeed` keying off a slot.
+ * - **Stable under insertion.** A sort by per-tile key leaves the existing
+ *   tiles' relative order alone when a newly found letter arrives. A seeded
+ *   Fisher-Yates over the array would re-roll the whole pool on every reveal
+ *   and make every tile jump, which is the twitching this codebase has now
+ *   fixed twice.
+ */
+export function scramblePool(letters: PoolLetter[]): PoolLetter[] {
+    return [...letters].sort(
+        (a, b) => seedFromId(a.id) - seedFromId(b.id) || (a.id < b.id ? -1 : 1),
+    );
 }
 
 /**

@@ -13,7 +13,7 @@ Three states, and each says exactly one thing:
 | Tile | Means | Underline | Where it appears |
 | :--- | :--- | :--- | :--- |
 | **Green** (`--tile-placed`) | Confirmed in place. The letter belongs exactly here. | Solid | The word line, and the composer's strip |
-| **Orange** (`--tile-present`) | Found, but with no confirmed place. | Dotted | **The pool only** — never inside the word line |
+| **Orange** (`--tile-present`) | Found, but with no confirmed place. | Dotted | **The pool only** — never inside the word line, and never in the answer's order |
 | **Grey** (`--tile-unknown`) | Still hidden. A filler glyph, not a letter. | None | The word line |
 
 > **Orange left the word line on 2026-09-11.** The invariant below was true and
@@ -31,6 +31,10 @@ The invariant everything else follows from:
 > **Orange never claims anything about position.** It says only that the letter
 > is in the answer. Whether its slot means anything is stated separately, by the
 > board and by the legend, never by the colour.
+
+This binds the pool as a *collection*, not only its tiles. A row in the answer's
+order claims a great deal about position no matter what each tile says — see
+*The pool had an order* below.
 
 Below hint level 2 the mask is built position by position, so revealed letters
 sit where they belong. From hint level 2 the mask is an *anagram* of the answer
@@ -360,6 +364,85 @@ Five defects, found by playing a Hebrew daily word on a phone:
   `justify-start` takes that from `dir`, so it is the right edge in Hebrew and
   Arabic and the left in everything else — which centring could not express
   either way.
+
+### The pool had an order, and the order was the answer's (2026-09-11)
+
+`buildLetterPool` built the pool by walking the answer, so the tiles came out in
+**answer order**. Every tile individually claimed nothing about position — which
+is the invariant — but a row of them left to right is a sequence, and the pool
+had quietly rebuilt the thing it was created to dismantle. A player with the
+whole word found could read the remainder off and type it without ever recalling
+it.
+
+From hint level 2 it was worse than a leak. The server's mask is an *anagram*
+there, deliberately, so that order carries no information; walking `text` to
+spend the mask's letter budget sorted that anagram straight back into the answer.
+The hint handed over more than it was sold as.
+
+The pool is now returned in a **seeded order that is not the answer's**
+(`scramblePool`). Two properties make it safe:
+
+- **Seeded on the whole tile id, which carries the word.** A permutation seeded
+  on the index alone is the same permutation for every word of that length, so a
+  player who learns it once inverts it forever — the `tiltSeed` mistake again.
+- **Stable under insertion.** It is a sort by per-tile key, not a shuffle of the
+  array, so a newly found letter takes its place without moving the tiles
+  already there. A seeded Fisher-Yates would re-roll the whole pool on every
+  reveal and make every tile jump.
+
+`seedFromId` avalanches (FNV-1a plus the murmur3 finaliser) and that half is
+load-bearing. Tile ids differ only in their last character, so a plain
+accumulate-and-multiply yields `base + n * prime` and the whole permutation
+collapses to one cyclic sequence, rotated. Measured: `starling` scrambled to
+`gnilrats`, its exact reverse, and two different words drew the identical order.
+`poolScramble.test.ts` guards the distribution, not just the fact of a shuffle.
+
+The same seed now drives the tilt, so the drift lost a sawtooth nobody had
+noticed: the old hash made angles alternate sign and cycle through four values
+in lockstep down the row.
+
+### Saying it without saying it (2026-09-11)
+
+Scrambling silently would only mean the row lies more quietly. A row still reads
+as a sequence, and a player who trusts it draws a false lead about how the word
+begins. So the arrangement had to say so — and the way *not* to say it is a
+"shuffled" badge, because "scrambled" asserts that there is a correct order here
+which has been disturbed, and invites the player to unscramble the pool. Outside
+the sentence there is no order to recover. The letters are **unordered**, which
+is a different claim and a different visual language.
+
+What changed, all of it form rather than chrome:
+
+- **The "Found" heading is gone.** It framed the pool as a headed list, and it
+  cost ~40px of a phone's row. `GameRoom.Pool.label` is deleted from all seven
+  locales. The accessible name survives on the track's `aria-label`, which now
+  states the fact the scatter states visually — a screen-reader user gets none
+  of the arrangement, so the words have to carry it there.
+- **No shared baseline.** Each tile is lifted by its own seed, within
+  `MAX_LIFT_PX` (3) of the band's centre.
+- **No even rhythm.** The flex `gap` is gone; the space in front of each tile is
+  seeded between 4 and 13px (`--pool-gap`, logical, so it is the right edge in
+  Hebrew and Arabic).
+- **No boxes.** The dashed, tinted socket made the pool a grid of cells, and a
+  grid of cells is a structure with positions in it. What remains is the letter,
+  its angle, and a dotted rule under it — which is not decoration but the
+  non-hue channel carrying "found, unplaced" for a player who cannot separate
+  the orange from the green (WCAG 1.4.1). A placed letter leaves the dimmed rule
+  behind as the origin its tile flies back to.
+- **One clause of teaching**, in `Legend.pool_note`: "in no particular order".
+
+The dotted rule has to sit **under the glyph**, which means a short tile. At the
+old 32px with the letter centred, the rule floated ten pixels below it and read
+as a separate tick — and a row of ticks is the grid this change just removed. The
+tile is now 24px (20px on a phone) with the glyph bottom-aligned.
+
+The scatter is jitter **inside a fixed band**, never free positioning. A pool
+that grew when a letter arrived would move the board under the player's thumb,
+which is the constraint `poolMotion.ts` exists to enforce; `.pool-track`'s
+`padding-block` went 5px → 8px to cover the lift, since `overflow-x: auto`
+computes `overflow-y` to auto and crops anything that leaves the box — which is
+how the pool shipped the first time. Net, the band is 2px *shorter* than before:
+40px against 42px, and 36px against 38px on a phone. The composer does not grow.
 
 ### Reading the keystrokes instead of imposing a shape (2026-09-11)
 
