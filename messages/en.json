@@ -40,6 +40,7 @@
             "cost_pts": "{cost} pts",
             "cost_deducted": "Deducted from word value",
             "reveal_word": "Reveal",
+            "open_other_end": "Open the other end",
             "counter_remain": "{count} guesses remain",
             "counter_last": "last guess",
             "free_for_all": "FREE FOR ALL",

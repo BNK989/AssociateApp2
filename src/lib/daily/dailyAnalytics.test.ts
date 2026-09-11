@@ -40,8 +40,8 @@ describe('dailyEvent', () => {
     // Two events that describe the same word have to describe it the same way,
     // or no dashboard can join a miss to the solve that followed it.
     it('describes a word identically across two different events', () => {
-        const word = { hint_level: 2, strikes: 1, park_count: 1 };
-        const shared = wordContext(word, 4, 9_000);
+        const word = { hint_level: 2, strikes: 1 };
+        const shared = wordContext(word, 4, 9_000, true);
 
         const missed = dailyEvent(context, 'daily_guess_missed', {
             ...shared, band: 'near', similarity: 0.7, strike_forgiven: true,
@@ -52,10 +52,9 @@ describe('dailyEvent', () => {
             score_gained: 12,
             total_score: 40,
             consecutive: 1,
-            solved_after_park: true,
         });
 
-        for (const key of ['word_index', 'hint_level', 'strikes', 'park_count', 'ms_on_word']) {
+        for (const key of ['word_index', 'hint_level', 'strikes', 'other_end_open', 'ms_on_word']) {
             expect(missed.properties[key]).toEqual(solved.properties[key]);
         }
     });
@@ -63,16 +62,16 @@ describe('dailyEvent', () => {
 
 describe('wordContext', () => {
     it('reports zero rather than undefined for a word missing a field', () => {
-        expect(wordContext({}, 0, 0)).toEqual({
+        expect(wordContext({}, 0, 0, false)).toEqual({
             word_index: 0,
             hint_level: 0,
             strikes: 0,
-            park_count: 0,
+            other_end_open: false,
             ms_on_word: 0,
         });
     });
 
     it('rounds the elapsed time, since PostHog gains nothing from fractions', () => {
-        expect(wordContext({}, 1, 1234.7).ms_on_word).toBe(1235);
+        expect(wordContext({}, 1, 1234.7, false).ms_on_word).toBe(1235);
     });
 });

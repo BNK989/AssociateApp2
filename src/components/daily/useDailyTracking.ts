@@ -39,7 +39,6 @@ export type FinishedWord = {
     points: number;
     totalScore: number;
     consecutive: number;
-    parkCount: number;
     /** Active time on the word, as recorded by the results log. */
     ms: number;
     /** Whether the ladder was spent before the player revealed it. */
@@ -60,7 +59,27 @@ export function useDailyTracking({
         words_total: wordsTotal,
     });
 
-    const totals = useRef({ solved: 0, revealed: 0, hints: 0, parks: 0 });
+    const totals = useRef({ solved: 0, revealed: 0, hints: 0, openedOtherEnd: false });
+
+    /**
+     * Whether the chain has been opened from its start.
+     *
+     * Held here rather than passed to each call so that every word-level event
+     * reports it the same way and no call site can forget it. A setter rather
+     * than an argument because the board that knows the answer is built from
+     * these very callbacks — the cycle has to break somewhere.
+     */
+    const otherEndRef = useRef(false);
+    const setOtherEndOpen = useCallback((open: boolean) => {
+        otherEndRef.current = open;
+    }, []);
+
+    /** One reading of the board, so every event in a batch agrees. */
+    const contextFor = useCallback(
+        (word: WordSnapshot, index: number, ms: number) =>
+            wordContext(word, index, ms, otherEndRef.current),
+        [],
+    );
 
     // Entrance is counted once, after auth resolves. It is the denominator for
     // every drop-off rate the daily game has, so counting it twice would
@@ -73,12 +92,11 @@ export function useDailyTracking({
     }, [authLoading, track]);
 
     const trackWordFinished = useCallback((word: FinishedWord) => {
-        const snapshot: WordSnapshot = {
-            hint_level: word.hintLevel,
-            strikes: word.strikes,
-            park_count: word.parkCount,
-        };
-        const shared = wordContext(snapshot, word.index, word.ms);
+        const shared = contextFor(
+            { hint_level: word.hintLevel, strikes: word.strikes },
+            word.index,
+            word.ms,
+        );
 
         if (word.outcome === 'solved') {
             totals.current.solved += 1;
@@ -97,7 +115,7 @@ export function useDailyTracking({
         }
 
         track('daily_word_struck_out', { ...shared, total_score: word.totalScore });
-    }, [track]);
+    }, [track, contextFor]);
 
     /**
      * A solve, which carries the word itself and so cannot come from
@@ -108,12 +126,9 @@ export function useDailyTracking({
      * the answer. It is safe here — a word only reaches this after it is off
      * the board.
      */
-    const trackWordSolved = useCallback((args: FinishedWord & {
-        word: string;
-        solvedAfterPark: boolean;
-    }) => {
-        const shared = wordContext(
-            { hint_level: args.hintLevel, strikes: args.strikes, park_count: args.parkCount },
+    const trackWordSolved = useCallback((args: FinishedWord & { word: string }) => {
+        const shared = contextFor(
+            { hint_level: args.hintLevel, strikes: args.strikes },
             args.index,
             args.ms,
         );
@@ -124,9 +139,8 @@ export function useDailyTracking({
             score_gained: args.points,
             total_score: args.totalScore,
             consecutive: args.consecutive,
-            solved_after_park: args.solvedAfterPark,
         });
-    }, [track]);
+    }, [track, contextFor]);
 
     const trackHint = useCallback((
         word: WordSnapshot,
@@ -136,8 +150,8 @@ export function useDailyTracking({
         toLevel: number,
     ) => {
         totals.current.hints += 1;
-        track('daily_hint_revealed', { ...wordContext(word, index, ms), source, to_level: toLevel });
-    }, [track]);
+        track('daily_hint_revealed', { ...contextFor(word, index, ms), source, to_level: toLevel });
+    }, [track, contextFor]);
 
     const trackMiss = useCallback((
         word: WordSnapshot,
@@ -148,21 +162,25 @@ export function useDailyTracking({
         strikeForgiven: boolean,
     ) => {
         track('daily_guess_missed', {
-            ...wordContext(word, index, ms),
+            ...contextFor(word, index, ms),
             band,
             similarity: Number(similarity.toFixed(3)),
             strike_forgiven: strikeForgiven,
         });
-    }, [track]);
+    }, [track, contextFor]);
 
-    const trackParked = useCallback((word: WordSnapshot, index: number, ms: number, remaining: number) => {
-        totals.current.parks += 1;
-        track('daily_word_parked', { ...wordContext(word, index, ms), words_remaining: remaining });
-    }, [track]);
-
-    const trackReturned = useCallback((word: WordSnapshot, index: number, remaining: number) => {
-        track('daily_word_returned', { ...wordContext(word, index, 0), words_remaining: remaining });
-    }, [track]);
+    const trackOtherEndOpened = useCallback((
+        word: WordSnapshot,
+        index: number,
+        ms: number,
+        remaining: number,
+    ) => {
+        totals.current.openedOtherEnd = true;
+        track('daily_other_end_opened', {
+            ...contextFor(word, index, ms),
+            words_remaining: remaining,
+        });
+    }, [track, contextFor]);
 
     const trackCompleted = useCallback((
         finalScore: number,
@@ -176,7 +194,7 @@ export function useDailyTracking({
             outcome_tier: outcomeTier,
             hints_taken: totals.current.hints,
             words_revealed: totals.current.revealed,
-            parks_used: totals.current.parks,
+            opened_other_end: totals.current.openedOtherEnd,
         });
     }, [track]);
 
@@ -192,8 +210,8 @@ export function useDailyTracking({
         trackWordSolved,
         trackHint,
         trackMiss,
-        trackParked,
-        trackReturned,
+        trackOtherEndOpened,
+        setOtherEndOpen,
         trackCompleted,
         trackChainRevealed,
     };

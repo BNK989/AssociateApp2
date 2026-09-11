@@ -234,6 +234,74 @@ describe('useDailyGame near misses', () => {
     });
 });
 
+describe('useDailyGame other end', () => {
+    beforeEach(() => {
+        localStorage.clear();
+        vi.useFakeTimers();
+    });
+
+    it('offers the other end on a fresh chain and withdraws it once used', () => {
+        const { result } = setup();
+        expect(result.current.canOpenOtherEnd).toBe(true);
+
+        act(() => { result.current.openOtherEnd(); });
+        settle();
+
+        expect(result.current.canOpenOtherEnd).toBe(false);
+        expect(result.current.otherEndOpen).toBe(true);
+    });
+
+    // The point of the mechanic: the player was stuck on the word the chain
+    // runs backwards into, and afterwards they are guessing the word right
+    // after the one they have just been given -- which has a known neighbour.
+    it('moves the player to the forward front', () => {
+        const { result } = setup();
+        expect(result.current.targetMessage!.content).toBe('gamma');
+
+        act(() => { result.current.openOtherEnd(); });
+        settle();
+
+        expect(result.current.targetMessage!.content).toBe('beta');
+    });
+
+    it('gives the first word away rather than scoring it', () => {
+        const { result } = setup();
+        const scoreBefore = result.current.score;
+
+        act(() => { result.current.openOtherEnd(); });
+        settle();
+
+        const first = result.current.messages[0];
+        expect(first.is_solved).toBe(true);
+        expect(first.winner_points).toBe(0);
+        expect(result.current.score).toBe(scoreBefore);
+    });
+
+    // A word was given away, but the player did not fail at anything -- and
+    // stacking a streak cost on top is the double punishment that made giving
+    // up feel like a mistake to make.
+    it('leaves the streak alone', () => {
+        const { result } = setup();
+        solveDownTo(result, 2);
+        const streakBefore = result.current.consecutive;
+
+        act(() => { result.current.openOtherEnd(); });
+        settle();
+
+        expect(result.current.consecutive).toBe(streakBefore);
+    });
+
+    it('reports the move so it can be told apart from a surrender', () => {
+        const onOtherEndOpened = vi.fn();
+        const { result } = setup({ onOtherEndOpened });
+
+        act(() => { result.current.openOtherEnd(); });
+        settle();
+
+        expect(onOtherEndOpened).toHaveBeenCalledWith(expect.objectContaining({ index: 0 }));
+    });
+});
+
 describe('useDailyGame streak', () => {
     beforeEach(() => {
         localStorage.clear();

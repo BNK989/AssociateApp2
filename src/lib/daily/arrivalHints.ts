@@ -1,5 +1,5 @@
 import type { Message } from '@/hooks/useGameLogic';
-import { findTargetMessage } from '@/lib/gameLogic';
+import { findDailyTarget } from './chainFronts';
 import { MAX_HINT_LEVEL } from './dailyScoring';
 import { startLevelFor, type DailyHintPolicy } from './hintPolicy';
 import { hintLevelUpdates } from './hintVisuals';
@@ -27,7 +27,7 @@ export function applyArrivalHint(
     policy: DailyHintPolicy,
     resolveClue: ResolveClue,
 ): Message[] {
-    const target = findTargetMessage(messages);
+    const target = findDailyTarget(messages);
     if (!target) return messages;
 
     const index = messages.indexOf(target);

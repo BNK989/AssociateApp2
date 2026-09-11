@@ -8,6 +8,7 @@ import { calculateSolvePoints, MATCH_THRESHOLD, MAX_STRIKES } from '@/lib/daily/
 import { startLevelFor, type DailyHintPolicy } from '@/lib/daily/hintPolicy';
 import { solveFeedback } from '@/lib/daily/feedbackTiers';
 import { streakAfterSolve, streakAfterUnsolved } from '@/lib/daily/streakRules';
+import { canOpenOtherEnd, wordsInPlay } from '@/lib/daily/chainFronts';
 import { consumesStrike, missBandFor, type MissBand } from '@/lib/daily/guessFeedback';
 import type { WordOutcome } from '@/lib/daily/dailyResults';
 
@@ -42,6 +43,8 @@ type WordReport = {
 
 type UseDailyMovesArgs = {
     targetMessage?: Message;
+    /** The whole board, which opening the other end acts on rather than the target. */
+    messages: Message[];
     gameOver: boolean;
     words: string[];
     policy: DailyHintPolicy;
@@ -60,6 +63,8 @@ type UseDailyMovesArgs = {
     onCompleted?: (finalScore: number, endedOn: WordOutcome) => void;
     playSolveSound?: (feedback: ReturnType<typeof solveFeedback>) => void;
     playMissSound?: () => void;
+    /** Announces the chain being entered from its start. */
+    onOtherEndOpened?: (args: { message: Message; index: number; remaining: number }) => void;
     /** Announces a wrong guess, with how close it was and what it cost. */
     onMissed?: (args: {
         message: Message;
@@ -72,6 +77,7 @@ type UseDailyMovesArgs = {
 
 export function useDailyMoves({
     targetMessage,
+    messages,
     gameOver,
     words,
     policy,
@@ -90,6 +96,7 @@ export function useDailyMoves({
     playSolveSound,
     playMissSound,
     onMissed,
+    onOtherEndOpened,
 }: UseDailyMovesArgs) {
     const t = useTranslations('GameRoom.Chat');
     const [sending, setSending] = useState(false);
@@ -230,5 +237,39 @@ export function useDailyMoves({
         score, consecutive, setConsecutive, setInput,
     ]);
 
-    return { solve, revealWord, sending };
+    /**
+     * Opens the chain from its first word, so a stuck player can guess forward.
+     *
+     * The chain is strictly pairwise and runs one way, so the word *after* the
+     * one being guessed is the only thing there is to reason from — which makes
+     * a word the player cannot get a wall rather than a detour. This gives them
+     * the other end of it instead: the first word has no predecessor, so it is
+     * the only other place the chain can be entered, and from there the two
+     * fronts converge until the word that stopped them is between two
+     * neighbours they know.
+     *
+     * It costs the word itself — nothing scored, white on the grid, like any
+     * reveal — and nothing else. Charging the streak on top would be the same
+     * double punishment that made giving up feel like a mistake to make.
+     */
+    const openOtherEnd = useCallback(() => {
+        if (gameOver || !canOpenOtherEnd(messages)) return;
+
+        const first = messages[0];
+        const remaining = finishWord(first, takenBy(0));
+
+        reportWord(first, {
+            outcome: 'gave_up',
+            points: 0,
+            totalScore: score,
+            remaining,
+            consecutive,
+        });
+
+        onOtherEndOpened?.({ message: first, index: 0, remaining: wordsInPlay(messages).length - 1 });
+
+        if (remaining === 0) onCompleted?.(score, 'gave_up');
+    }, [messages, gameOver, finishWord, reportWord, onCompleted, onOtherEndOpened, score, consecutive]);
+
+    return { solve, revealWord, openOtherEnd, sending };
 }

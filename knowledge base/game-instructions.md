@@ -68,6 +68,16 @@ Three things exist so that a word you cannot get is a pause rather than an exit.
     on a three-letter one; this evens that out. The second near miss on the same
     word is charged, so it cannot be walked one letter at a time toward the
     answer.
+*   **Open the other end** lets you attack the chain from its start. The chain
+    is strictly pairwise — each word associates with the one after it — and play
+    runs backwards from the free final word, so the word *after* the one you are
+    guessing is the only thing you have to reason from. That makes a word you
+    cannot get a wall rather than a detour. This gives you the chain's first
+    word instead, the one word with no predecessor and therefore the only other
+    place the chain can be entered. From there you guess forwards, the two
+    fronts converge, and the word that stopped you ends up between two
+    neighbours you know. It costs that first word — nothing scored, white on the
+    grid — and can be done once per chain.
 *   **Reveal** shows you the word and moves the chain on. It was "Give Up",
     styled in red behind a flag, which is a strange way to dress the only route
     past a word you do not know. Nothing about the move changed — it still

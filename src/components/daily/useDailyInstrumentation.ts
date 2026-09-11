@@ -70,11 +70,11 @@ export function useDailyInstrumentation({
             completed: boolean;
         }) => {
             const ms = recordWordRef.current?.(args) ?? 0;
-            const finished = { ...args, parkCount: 0, ms };
+            const finished = { ...args, ms };
 
             trackingRef.current.trackWordFinished(finished);
             if (args.outcome === 'solved') {
-                trackingRef.current.trackWordSolved({ ...finished, solvedAfterPark: false });
+                trackingRef.current.trackWordSolved(finished);
             }
 
             showProgressCue({
@@ -125,6 +125,15 @@ export function useDailyInstrumentation({
                 args.toLevel,
             );
         },
+
+        onOtherEndOpened: (args: { message: Message; index: number; remaining: number }) => {
+            trackingRef.current.trackOtherEndOpened(
+                args.message,
+                args.index,
+                elapsedRef.current?.() ?? 0,
+                args.remaining,
+            );
+        },
     }), [guessableWords, showProgressCue, showMissCue]);
 
     /**
@@ -162,5 +171,7 @@ export function useDailyInstrumentation({
         outcomeTierRef.current = tier;
     }, []);
 
-    return { callbacks, attachResults, setOutcomeTier, trackChainRevealed };
+    const { setOtherEndOpen } = tracking;
+
+    return { callbacks, attachResults, setOutcomeTier, setOtherEndOpen, trackChainRevealed };
 }

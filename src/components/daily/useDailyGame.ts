@@ -3,11 +3,8 @@ import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 import type { Message } from '@/hooks/useGameLogic';
 import { calculateSimilarity } from '@/lib/gameLogic';
-import {
-    countRemainingAfterSolve,
-    findTargetMessage,
-    LOCAL_USER_ID,
-} from '@/lib/daily/dailyMessages';
+import { countRemainingAfterSolve, LOCAL_USER_ID } from '@/lib/daily/dailyMessages';
+import { canOpenOtherEnd, findDailyTarget, isOtherEndOpen } from '@/lib/daily/chainFronts';
 import { applyArrivalHint } from '@/lib/daily/arrivalHints';
 import { calculateSolvePoints, MATCH_THRESHOLD, MAX_HINT_LEVEL, MAX_STRIKES } from '@/lib/daily/dailyScoring';
 import { clearDailyGame } from '@/lib/daily/dailyStorage';
@@ -63,6 +60,8 @@ type UseDailyGameArgs = {
         toLevel: number;
         source: HintSource;
     }) => void;
+    /** Fires when the player enters the chain from its start. */
+    onOtherEndOpened?: (args: { message: Message; index: number; remaining: number }) => void;
     /** Fires on every wrong guess, with how close it was and what it cost. */
     onMissed?: (args: {
         message: Message;
@@ -93,6 +92,7 @@ export function useDailyGame({
     playMissSound,
     onHintRevealed,
     onMissed,
+    onOtherEndOpened,
 }: UseDailyGameArgs) {
     const t = useTranslations('GameRoom.Chat');
 
@@ -105,7 +105,7 @@ export function useDailyGame({
     const [input, setInput] = useState('');
     const { shakeMessageId, justSolvedData, flashSolved, shakeWord } = useMoveFeedback();
 
-    const targetMessage = useMemo(() => findTargetMessage(messages), [messages]);
+    const targetMessage = useMemo(() => findDailyTarget(messages), [messages]);
 
     const { fallbackHint, freshMessages, resolveClue } = useChainClues({
         words, policy, hints, connectionScores,
@@ -199,8 +199,9 @@ export function useDailyGame({
         });
     }, [onWordFinished, indexOfMessage]);
 
-    const { solve, revealWord, sending } = useDailyMoves({
+    const { solve, revealWord, openOtherEnd, sending } = useDailyMoves({
         targetMessage,
+        messages,
         gameOver,
         words,
         policy,
@@ -219,6 +220,7 @@ export function useDailyGame({
         playSolveSound,
         playMissSound,
         onMissed,
+        onOtherEndOpened,
     });
 
     const revealHint = useDailyHintReveal({
@@ -274,6 +276,9 @@ export function useDailyGame({
         justSolvedData,
         solve,
         revealWord,
+        openOtherEnd,
+        canOpenOtherEnd: canOpenOtherEnd(messages),
+        otherEndOpen: isOtherEndOpen(messages),
         revealHint,
         reset,
         forceGameOver,

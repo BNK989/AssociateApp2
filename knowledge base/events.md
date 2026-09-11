@@ -71,9 +71,15 @@ events about the same word describe it identically — asserted in
 ### Context on every *word-level* event
 
 `word_index` (position in the chain, the same index the results table uses),
-`hint_level`, `strikes`, `park_count`, and `ms_on_word` — active time on the
-word, taken from the same reading the results table stores, so a PostHog
+`hint_level`, `strikes`, `other_end_open`, and `ms_on_word` — active time on
+the word, taken from the same reading the results table stores, so a PostHog
 dashboard and the `daily_results` row can never disagree about one duration.
+
+`other_end_open` is on every word-level event rather than only the one that
+opens it, because the question the mechanic has to answer is what happens to
+the *rest* of the chain afterwards — solve rate, hints taken, time per word. A
+flag that appeared only on the move itself could not be broken down against any
+of them.
 
 ### 5. `daily_game_entered`
 Fired once when a user visits the Daily Game page, after auth resolves so
@@ -86,7 +92,7 @@ game has.
 Fired when a word leaves the board solved.
 
 - **Properties**: word context, plus `word`, `score_gained`, `total_score`,
-  `consecutive`, `solved_after_park`.
+  `consecutive`.
 - The answer itself only ever leaves the client for a word already off the board.
 
 ### 6a. `daily_word_revealed`
@@ -125,8 +131,13 @@ Fired whenever a hint lands, however it was triggered.
 - A level the *policy* hands over before the player has done anything is not an
   event. It shows up as a non-zero `hint_level` on the word's first event.
 
-### 6e. `daily_word_parked` / `daily_word_returned`
-Fired when a word goes to the back of the queue and when it comes back.
+### 6e. `daily_other_end_opened`
+Fired when the player enters the chain from its first word to guess forward.
+
+Its own event rather than a flavour of `daily_word_revealed`. The results table
+records it as `gave_up`, because a word was given away and the grid has to say
+so — but it is a strategic move, and counting it as a surrender would bury the
+one number that says whether the mechanic works.
 
 - **Properties**: word context, plus `words_remaining`.
 
@@ -138,7 +149,7 @@ ending on a reveal or a third strike were never counted.
 
 - **Properties**: `final_score`, `ended_on` (`solved` \| `gave_up` \|
   `struck_out`), `words_solved`, `outcome_tier` (`perfect` \| `strong` \|
-  `partial` \| `blank`), `hints_taken`, `words_revealed`, `parks_used`.
+  `partial` \| `blank`), `hints_taken`, `words_revealed`, `opened_other_end`.
 - `outcome_tier` is read off the share grid, so the event, the end screen and
   the squares a player pastes into a chat cannot disagree.
 

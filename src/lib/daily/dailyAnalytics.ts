@@ -52,8 +52,16 @@ export type WordContext = {
     /** Hint level the word carried at the moment of the event. */
     hint_level: number;
     strikes: number;
-    /** Times this word has been parked and come back. */
-    park_count: number;
+/**
+     * Whether the player had opened the chain's other end by this point.
+     *
+     * On every word-level event rather than only the one that opens it, because
+     * the question the mechanic has to answer is what happens to the *rest* of
+     * the chain afterwards — solve rate, hints taken, time per word. A flag
+     * that only appears on the move itself cannot be broken down against any of
+     * them.
+     */
+    other_end_open: boolean;
     /** Active milliseconds the player has spent on this word. */
     ms_on_word: number;
 };
@@ -67,8 +75,6 @@ export type DailyEventProps = {
         score_gained: number;
         total_score: number;
         consecutive: number;
-        /** True when the word was solved after coming back from a park. */
-        solved_after_park: boolean;
     };
 
     /**
@@ -88,11 +94,15 @@ export type DailyEventProps = {
     /** A word ran out of strikes. */
     daily_word_struck_out: WordContext & { total_score: number };
 
-    /** A word went to the back of the queue instead of off the board. */
-    daily_word_parked: WordContext & { words_remaining: number };
-
-    /** A parked word came back to the front. */
-    daily_word_returned: WordContext & { words_remaining: number };
+    /**
+     * The player entered the chain from its first word to guess forward.
+     *
+     * Its own event rather than a flavour of `daily_word_revealed`: the results
+     * table records it as `gave_up`, because a word was given away and the grid
+     * has to say so, but it is a strategic move and counting it as a surrender
+     * would bury the one number that says whether the mechanic works.
+     */
+    daily_other_end_opened: WordContext & { words_remaining: number };
 
     /**
      * A wrong guess.
@@ -123,7 +133,8 @@ export type DailyEventProps = {
         outcome_tier: string;
         hints_taken: number;
         words_revealed: number;
-        parks_used: number;
+        /** Whether the player worked the chain from both ends. */
+        opened_other_end: boolean;
     };
 
     /**
@@ -174,7 +185,6 @@ export function dailyEvent<N extends DailyEventName>(
 export type WordSnapshot = {
     hint_level?: number | null;
     strikes?: number | null;
-    park_count?: number | null;
 };
 
 /**
@@ -190,12 +200,13 @@ export function wordContext(
     word: WordSnapshot,
     index: number,
     msOnWord: number,
+    otherEndOpen: boolean,
 ): WordContext {
     return {
         word_index: index,
         hint_level: word.hint_level ?? 0,
         strikes: word.strikes ?? 0,
-        park_count: word.park_count ?? 0,
+        other_end_open: otherEndOpen,
         ms_on_word: Math.round(msOnWord),
     };
 }

@@ -40,6 +40,7 @@
             "cost_pts": "{cost} נק'",
             "cost_deducted": "יורד מערך המילה",
             "reveal_word": "גלה",
+            "open_other_end": "פתח את הקצה השני",
             "counter_remain": "נותרו {count} ניחושים",
             "counter_last": "ניחוש אחרון",
             "free_for_all": "חופשי לכולם",

@@ -29,6 +29,8 @@ type GameInputProps = {
     onTyping?: () => void;
     isSinglePlayer?: boolean;
     onReveal?: () => void;
+    canOpenOtherEnd?: boolean;
+    onOpenOtherEnd?: () => void;
     autoHintProgress?: number;
     autoHintSecondsLeft?: number;
     isAutoHintActive?: boolean;
@@ -58,6 +60,8 @@ export function GameInput({
     onTyping,
     isSinglePlayer = false,
     onReveal,
+    canOpenOtherEnd,
+    onOpenOtherEnd,
     autoHintProgress = 0,
     autoHintSecondsLeft = 0,
     isAutoHintActive = false,
@@ -116,6 +120,8 @@ export function GameInput({
             onGetHint={onGetHint}
             onToggleHintPause={onToggleHintPause}
             onReveal={onReveal}
+            canOpenOtherEnd={canOpenOtherEnd}
+            onOpenOtherEnd={onOpenOtherEnd}
             onOpenSettings={onOpenSettings}
             onInteract={tooltip.markInteracted}
         />

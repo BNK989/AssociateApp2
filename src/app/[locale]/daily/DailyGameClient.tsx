@@ -90,7 +90,7 @@ function DailyGameBoard({
     });
 
     const {
-        callbacks, attachResults, setOutcomeTier, trackChainRevealed,
+        callbacks, attachResults, setOutcomeTier, setOtherEndOpen, trackChainRevealed,
     } = useDailyInstrumentation({
         tracking,
         guessableWords,
@@ -134,6 +134,10 @@ function DailyGameBoard({
     useEffect(() => {
         setOutcomeTier(outcome.tier);
     }, [setOutcomeTier, outcome.tier]);
+
+    useEffect(() => {
+        setOtherEndOpen(game.otherEndOpen);
+    }, [setOtherEndOpen, game.otherEndOpen]);
     const { showSummary } = useDailyCompletion(game.gameOver, game.restoredComplete, outcome.celebrate);
     const tutorial = useDailyTutorial({ authUser, authLoading, words: dailyWords, date });
 
@@ -271,6 +275,8 @@ function DailyGameBoard({
                 isEmpty={false}
                 isSinglePlayer
                 onReveal={game.revealWord}
+                canOpenOtherEnd={game.canOpenOtherEnd}
+                onOpenOtherEnd={game.openOtherEnd}
                 autoHintProgress={autoHint.progress}
                 autoHintSecondsLeft={autoHint.secondsLeft}
                 isAutoHintActive={autoHint.isActive}

@@ -34,6 +34,7 @@
             "cost_pts": "{cost} pts",
             "cost_deducted": "Deducido del valor de la palabra",
             "reveal_word": "Revelar",
+            "open_other_end": "Abrir el otro extremo",
             "counter_remain": "Quedan {count} intentos",
             "counter_last": "último intento",
             "free_for_all": "TODOS CONTRA TODOS",

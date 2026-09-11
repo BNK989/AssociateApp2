@@ -366,6 +366,42 @@ Two details that look like bugs and are not:
   board by any route. Points are the discriminator: a real solve always scores
   something, even after every hint, while a surrender scores zero.
 
+### Two fronts: opening the chain's other end
+
+The daily chain is **strictly pairwise**. The generator is told "each word
+associates naturally with the one after it", and play runs one way — from the
+free final word backwards. One consequence is easy to miss and shapes every
+stuck-word mechanic: the word *after* the one being guessed is the only thing
+the player has to reason from.
+
+So skipping a word does not work. Park it and come back to it, and the next
+word has no anchor at all — the parked word *was* the anchor. Deferring a hard
+word makes this game harder, not kinder, which is the opposite of what a
+skip is for.
+
+The same prompt states the way out: "every link must read in both directions".
+So a stuck player can open the chain's **first** word — the one word with no
+predecessor, and therefore the only other place a chain can be entered. From
+there they guess forwards while the backward front stays put, the two fronts
+converge, and the word that stopped them ends up squeezed between two
+neighbours they know.
+
+`src/lib/daily/chainFronts.ts` owns the rules:
+
+| | |
+| :--- | :--- |
+| Target | The backward front normally; the forward front once the other end is open. |
+| Availability | Once per chain, and only with at least 3 words still in play — below that the word it hands over is the stuck word or its neighbour, which makes it an expensive way to press Reveal. |
+| Cost | The first word itself: nothing scored, white on the grid, recorded as `gave_up`. The streak is untouched — a word was given away, but the player did not fail at anything, and charging both is the double punishment that made giving up feel like a mistake to make. |
+| State | Derived, not stored. In an ordinary game the first word is solved *last*, so it being off the board while others remain can only mean it was opened deliberately. A restored save gets this for free. |
+
+**Open design question.** The move currently lives only in the hint button's
+dropdown menu. That is the safe placement — the input row is already four
+controls wide on a phone — but it is also the least discoverable, and a
+mechanic whose whole job is to stop a player quitting has to be found by a
+player who is about to quit. `daily_other_end_opened` against
+`daily_game_completed` will say whether it is being found at all.
+
 ### Every tier gets the chain
 
 Beneath the grid the end screen spells the day's chain out in full — every

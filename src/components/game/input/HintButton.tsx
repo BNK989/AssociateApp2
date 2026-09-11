@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Eye, Lightbulb, Loader2, Pause, Play, Settings, Shuffle } from 'lucide-react';
+import { Eye, Lightbulb, Loader2, Pause, Play, Settings, Shuffle, Split } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
     DropdownMenu,
@@ -28,6 +28,9 @@ type HintButtonProps = {
     onGetHint: () => void;
     onToggleHintPause?: () => void;
     onReveal?: () => void;
+    /** Absent, or false, hides the other-end item entirely. */
+    canOpenOtherEnd?: boolean;
+    onOpenOtherEnd?: () => void;
     onOpenSettings?: () => void;
     onInteract: () => void;
 };
@@ -60,6 +63,8 @@ export function HintButton({
     onGetHint,
     onToggleHintPause,
     onReveal,
+    canOpenOtherEnd,
+    onOpenOtherEnd,
     onOpenSettings,
     onInteract,
 }: HintButtonProps) {
@@ -147,6 +152,13 @@ export function HintButton({
                             ? <Play className="w-4 h-4 me-2" />
                             : <Pause className="w-4 h-4 me-2" />}
                         {isHintPaused ? t('resume_auto_hint') : t('pause_auto_hint')}
+                    </DropdownMenuItem>
+                )}
+
+                {canOpenOtherEnd && (
+                    <DropdownMenuItem onClick={() => onOpenOtherEnd?.()}>
+                        <Split className="w-4 h-4 me-2" />
+                        {t('open_other_end')}
                     </DropdownMenuItem>
                 )}
 

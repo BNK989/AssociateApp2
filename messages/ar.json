@@ -34,6 +34,7 @@
             "cost_pts": "{cost} نقطة",
             "cost_deducted": "مخصومة من قيمة الكلمة",
             "reveal_word": "اكشف",
+            "open_other_end": "افتح الطرف الآخر",
             "counter_remain": "تبقى {count} تخمينات",
             "counter_last": "التخمين الأخير",
             "free_for_all": "متاح للجميع",
