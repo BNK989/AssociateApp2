@@ -245,8 +245,8 @@
             "placed_desc": "Confirmed in place. This letter belongs exactly here.",
             "placed_short": "Right place",
             "present_title": "Orange",
-            "present_desc": "In the word. You've found this letter.",
-            "present_short": "In the word",
+            "present_desc": "In the word. It waits below the text box until you place it.",
+            "present_short": "Found",
             "unknown_title": "Grey",
             "unknown_desc": "Still hidden. A placeholder, not a letter.",
             "unknown_short": "Hidden",
@@ -254,7 +254,13 @@
             "ordered_note_short": "Letters sit where they belong.",
             "shuffled_note": "Letters appear in a random order, so where a tile sits tells you nothing. Tap the word to shuffle them again.",
             "shuffled_note_short": "Shuffled — letters are in a random order. Tap to reshuffle.",
-            "dismiss": "Dismiss"
+            "dismiss": "Dismiss",
+            "pool_note": "Found letters wait under the text box. Type one to place it — confirmed letters are filled in for you.",
+            "pool_note_short": "Found letters wait below. Type one to place it."
+        },
+        "Pool": {
+            "label": "Found",
+            "aria_label": "{count} found letters, not yet placed"
         }
     },
     "HomePage": {

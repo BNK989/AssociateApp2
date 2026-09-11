@@ -3,8 +3,11 @@ import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 import type { Message } from '@/hooks/useGameLogic';
 import { calculateSimilarity } from '@/lib/gameLogic';
+import { checkAnswer } from '@/lib/letterPool/answerCheck';
+import { stripSuppliesShape } from '@/lib/letterPool/poolRules';
+import { LETTER_POOL } from '@/lib/gameConfig';
 import { LOCAL_USER_ID } from '@/lib/daily/dailyMessages';
-import { calculateSolvePoints, MATCH_THRESHOLD, MAX_STRIKES } from '@/lib/daily/dailyScoring';
+import { calculateSolvePoints, MAX_STRIKES } from '@/lib/daily/dailyScoring';
 import { startLevelFor, type DailyHintPolicy } from '@/lib/daily/hintPolicy';
 import { solveFeedback } from '@/lib/daily/feedbackTiers';
 import { streakAfterSolve, streakAfterUnsolved } from '@/lib/daily/streakRules';
@@ -104,8 +107,20 @@ export function useDailyMoves({
     const solve = useCallback((guess: string) => {
         if (!targetMessage || gameOver) return;
 
+        const hintLevel = targetMessage.hint_level || 0;
+
+        // The daily game is single-player, so the slot strip supplies the
+        // answer's shape and the comparison is exact. A fuzzy threshold would
+        // score letters the strip filled in for the player: a seven-letter word
+        // with six confirmed reaches 0.857 with its last letter wrong.
+        const shapeSupplied = stripSuppliesShape({
+            enabled: LETTER_POOL.ENABLED, hintLevel, isSinglePlayer: true,
+        });
+        const isMatch = checkAnswer(guess, targetMessage.content, {
+            hintLevel, isSinglePlayer: true,
+        });
+
         const similarity = calculateSimilarity(guess, targetMessage.content);
-        const isMatch = similarity >= MATCH_THRESHOLD;
         setSending(true);
 
         setTimeout(() => {
@@ -113,12 +128,14 @@ export function useDailyMoves({
             setInput('');
 
             if (!isMatch) {
-                // A near miss is a spelling slip on a word the player has
-                // already worked out. MATCH_THRESHOLD is a ratio, so one wrong
-                // letter is waved through on a nine-letter word and fatal on a
-                // three-letter one; forgiving the first near miss per word
-                // evens that out without handing anyone a free extra guess.
-                const band = missBandFor(similarity);
+                // A near miss is a spelling slip, and it is only forgiven where
+                // a spelling slip is still possible. Once the strip supplies
+                // the shape there is no typo left to forgive — the length and
+                // the confirmed letters are fixed for the player, so a wrong
+                // letter is simply a wrong answer. The band rides on the same
+                // decision as the match itself rather than a second opinion
+                // about it.
+                const band = shapeSupplied ? 'off' : missBandFor(similarity);
                 const forgivenSoFar = targetMessage.near_misses || 0;
                 const charged = consumesStrike(band, forgivenSoFar);
 

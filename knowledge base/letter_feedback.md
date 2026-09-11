@@ -10,11 +10,16 @@ component.
 
 Three states, and each says exactly one thing:
 
-| Tile | Means | Underline | Behaviour |
+| Tile | Means | Underline | Where it appears |
 | :--- | :--- | :--- | :--- |
-| **Green** (`--tile-placed`) | Confirmed in place. The letter belongs exactly here. | Solid | Still |
-| **Orange** (`--tile-present`) | The letter is in the word. | Dotted | Still, or drifting when the word is shuffled |
-| **Grey** (`--tile-unknown`) | Still hidden. A filler glyph, not a letter. | None | Still |
+| **Green** (`--tile-placed`) | Confirmed in place. The letter belongs exactly here. | Solid | The word line, and the composer's strip |
+| **Orange** (`--tile-present`) | Found, but with no confirmed place. | Dotted | **The pool only** — never inside the word line |
+| **Grey** (`--tile-unknown`) | Still hidden. A filler glyph, not a letter. | None | The word line |
+
+> **Orange left the word line on 2026-09-11.** The invariant below was true and
+> unlearnable, because a line of glyphs asserts sequence louder than any styling
+> can deny it. Rather than add a sixth channel to the argument, the unordered
+> half moved out of the line entirely — see *The letter pool* below.
 
 The underline is a **second channel**, carrying the same three states with no
 reference to hue. Green and orange converge under deuteranopia and hue used to
@@ -165,6 +170,247 @@ Three defects motivated the current shape; each has a test guarding it.
 
 Full review, with traced examples and contrast measurements:
 `The Orange Problem` (UX review, 2026-09-05).
+
+---
+
+## The letter pool (composer half, landed 2026-09-11)
+
+The invariant above — *orange never claims anything about position* — was true
+and unlearnable. A line of glyphs means sequence, so a letter drawn inside one
+is read as being *at* that spot no matter what is done to it, and by 2026-09-11
+the renderer was spending five channels (hue, weight, a dotted underline, a
+seeded tilt, an endless drift) arguing against that single fact. The conflict is
+structural: the word line was being asked to carry an ordered thing and an
+unordered thing at once.
+
+So the unordered half leaves the line.
+
+### What the player sees
+
+Found-but-unplaced letters live in a **pool** docked above the composer, outside
+the sentence. A tile that is not in the word cannot be misread as a position in
+it — the rule stops being something to remember and becomes something visible.
+
+The composer then draws the answer's **shape**: one slot per letter, greens
+pre-filled, and the caret jumping over them so the player types only the gaps
+and never retypes a letter they earned. Typing a letter that is in the pool
+draws that tile down into the slot. Placing is an act, not an inference.
+
+| Piece | Where |
+| :--- | :--- |
+| The rules, pure and tested | `src/lib/letterPool/poolRules.ts` (43 tests) |
+| Typed ↔ pool ↔ strip binding | `src/components/game/input/useSlotTyping.ts` (11 tests) |
+| The pool | `src/components/game/pool/` |
+| The strip | `src/components/game/input/SlotStrip.tsx`, `SlotCell.tsx` |
+| Motion contract | `src/components/game/pool/poolMotion.ts` |
+| Keyframes and cell sizing | `src/app/letter-pool.css` |
+| Compiled floor | `LETTER_POOL` in `gameConfig.ts` |
+
+### It reveals nothing new
+
+Greens at their index, the found letters, the word's length, its spaces and its
+repeat counts are all already on screen — the length via the `typed / total`
+counter, the repeat counts via the letter budget in `buildScrambleItems`. The
+strip appears behind **exactly the gate the counter had** (single player, or
+hint level 1+) and *replaces* it, so the composer's height is unchanged.
+
+Punctuation is given rather than guessed, for the same reason spaces always
+were: the strip already discloses the shape, and asking where an apostrophe
+falls tests typing, not association.
+
+### Long phrases
+
+Cells group into words; the strip wraps **between** groups, never inside one, so
+"morning glory" is two lines of full-size cells rather than thirteen cramped
+ones. Cell width is then sized against the longest single *word* — the only run
+that has to fit on a line — as a container query, not a measured value:
+
+```
+--slot-w: clamp(18px, (100cqi - 24px - gaps) / longest-word, 32px)
+```
+
+18px is where a mono glyph stops being readable; 32px is where the cells start
+to look like a different game from the word above them. No `ResizeObserver`, and
+it re-solves on a keyboard opening or a rotation for free.
+
+### Why it stays smooth
+
+The composer is the one surface a player touches continuously, so the motion
+rules are constraints, not preferences. They live in `poolMotion.ts`:
+
+1. **Only `transform` and `opacity` animate.** A placed letter leaves its socket
+   behind rather than being removed from the pool, so the row never reflows.
+   Cell widths are fixed per word, so a keystroke changes only what is drawn
+   inside a cell.
+2. **Springs, not durations.** A spring retargets from its current velocity, so
+   typing faster than the animation never queues a backlog or snaps.
+3. **Idle drift is a CSS keyframe, not a framer `repeat: Infinity`.** A
+   repeating framer animation keeps a JS loop alive per tile — which the board
+   already pays for every masked word — while a keyframe runs on the compositor.
+   Above `MAX_DRIFTING_TILES` (12) the drift switches off entirely: motion is a
+   signal, and every tile emitting it at once is noise.
+4. **No flight from the bubble to the pool.** The bubble sits inside the
+   scrolling message list and framer's layout projection across a scroll
+   container reports stale positions, so the tile would launch from the wrong
+   place. A newly found letter springs into being in the pool instead. The
+   pool → slot flight, the one that carries the meaning, is a `layoutId` handoff
+   entirely inside the composer, where there is no scroll container to fight.
+5. **Reduced motion** drops drift and handoff and keeps the static tilt, the
+   same split `motionState()` already makes.
+
+### The word line (landed the same day)
+
+`readMaskTile` takes a `hideUnplaced` flag, defaulted from `LETTER_POOL.ENABLED`,
+and under it the line draws **only what it can say honestly**: confirmed letters,
+spaces, and filler. A letter with no confirmed place is replaced by a filler
+glyph chosen from its index — from the index, not at random, because this one is
+picked on the render path and a fresh glyph per frame would make hidden
+positions shimmer.
+
+Two consequences follow:
+
+- **The shuffled view is gone.** It existed to say "these slots mean nothing";
+  with nothing loose left in the line, every slot means something. `CipherText`
+  passes `scrambling: false`, `messageFlags.canShuffle` is off, and the shuffle
+  button went with the thing it shuffled.
+- **A hint's letters had to find a new home.** From hint 2 the mask is an
+  anagram, and hiding it from the line would have made a purchased hint reveal
+  *nothing*. `buildLetterPool` therefore drains the mask into the pool, spending
+  a per-letter budget so it shows no more of a letter than the mask exposes.
+  Below hint 2 the mask is positional, so `placedIndices` counts its reveals as
+  confirmed and the strip fills them in rather than asking the player to retype
+  a letter the board already shows as settled.
+
+Matching changed with it. `checkAnswer` (`lib/letterPool/answerCheck.ts`) is the
+one place all three solve paths ask, and once the strip supplies the shape the
+comparison is **exact**. That is a correctness fix, not a strictness preference:
+the strip fills confirmed letters in, so a fuzzy threshold scores letters the
+player never wrote — a seven-letter word with six confirmed reaches 0.857 with
+its last letter wrong, and sails past the 0.8 threshold. `normaliseAnswer` folds
+case, whitespace and **diacritics**, since the daily game's words are translated
+into seven languages and a phone keyboard will often not produce the accents.
+
+### The caret rule is a game-master setting
+
+`caretSkipsGreens` is tunable from `/admin/game-settings` under *How the answer
+box takes typing* (key `letter_pool`, seeded by
+`20260911120000_seed_letter_pool_settings.sql`). `LETTER_POOL.CARET_SKIPS_GREENS`
+in `gameConfig.ts` remains the floor beneath it, so an unapplied migration or an
+unreachable table plays exactly as the code does. See
+[game_master_guide.md](game_master_guide.md).
+
+It reaches the composer **server-side**, through the daily page, so the board
+never renders on one rule and then switches to another. That is also why it is
+daily-only: a multiplayer room is a client component, and a fetched setting
+would change the caret's behaviour partway through a word.
+
+Whether the pool exists at all stays compiled. It decides what the word line
+draws, which `messageFlags`, `CipherText` and `readMaskTile` all read directly,
+and a switch that reached the composer but not the bubble would be worse than
+no switch.
+
+### Fixes from the first production pass (2026-09-11)
+
+Five defects, found by playing a Hebrew daily word on a phone:
+
+- **The first letter bought at hint 1 vanished from hint 2 up.** The guarantee
+  lived only in `buildScrambleItems` — the shuffled view, which this change
+  switched off — and nothing else carried it. It is now the first thing
+  `readMaskTile` answers under `hideUnplaced`, read from the answer rather than
+  the mask so it holds whatever the mask carries, and `placedIndices` agrees so
+  the strip does not ask for a letter the player has paid for.
+- **A keystroke past the last slot stayed in the DOM.** The model clamped it,
+  which produced the string it already held, so React re-rendered nothing, the
+  field's sync effect never ran, and the rejected character sat there invisible
+  — eating the next Backspace. A controlled field cannot fix this itself, so
+  `PlainTextField` takes a `normalize` prop: whatever it strips is rolled back
+  out of the DOM, and `onRejected` shakes the strip once, because with the text
+  drawn transparent silence reads as a broken keyboard.
+- **The pool cropped its own tiles.** `overflow-x: auto` computes `overflow-y`
+  to **auto** as well — one axis non-visible forces the other — so the drift and
+  the glow were cut off at the top. The track now carries `padding-block` for
+  them. The edge fade went with it: it was unconditional, so it dimmed the first
+  tile in the common case where nothing scrolled.
+- **`font-mono` has no Hebrew.** Pool tiles and slot cells fell back to a system
+  font with different metrics, which both clipped tall glyphs under
+  `leading-none` and stopped them matching the board. Both now use the app's own
+  face at `leading-[1.2]`.
+- **A long word ran off the edge instead of wrapping.** Once `--slot-w` is at
+  its 18px floor and even that overflows, the word group now wraps. Breaking a
+  word across lines is bad; running past the field is worse. The cell ceiling
+  also came down from 32px to 26px, which is what a three-letter word needed to
+  stop looking like scattered dashes.
+
+### Second production pass (2026-09-11)
+
+- **The palette button is gone.** It existed to state the half of the colour
+  rule that said whether a tile's position meant anything — a question the pool
+  answers by construction. The key is still reached from How to play, and still
+  introduces itself in the bubble the first time a word colours a tile.
+  `legend_opened` now only ever reports `source: 'how_to_play'`; see
+  [events.md](events.md).
+- **Pool tiles animate in.** They did not, and the reason was identity rather
+  than animation: `buildLetterPool` keyed a tile as `pool-<index>`, so the next
+  word's tiles inherited the previous word's elements — React saw the same keys,
+  swapped the characters in place, and nothing ever mounted. The id now carries
+  the word, and the arrival is staggered by 50ms a tile so the pool reads as
+  filling up rather than blinking into existence.
+- **The strip aligns to the start of the field, not its centre.** It sits where
+  the text it replaced sat, and the caret opens where the eye already is.
+  `justify-start` takes that from `dir`, so it is the right edge in Hebrew and
+  Arabic and the left in everything else — which centring could not express
+  either way.
+
+### Reading the keystrokes instead of imposing a shape (2026-09-11)
+
+Skipping confirmed letters was silently modal. A player who typed the answer out
+in full — much the commoner instinct — got it shifted by a letter, and on a word
+like OOZE the strip filled with `Oooz` and then shook at them. The fix is not to
+pick a side but to stop needing one: `resolveTyping` in
+[`slotRules.ts`](../src/lib/letterPool/slotRules.ts) reads the keystrokes two
+ways at once and lets them rule each other out.
+
+- **gaps** — each character goes to the next *open* slot. Dies by overflowing.
+- **whole** — each character goes to the next slot of any kind, so one landing on
+  a confirmed letter has to match it. Dies on a disagreement.
+
+The composer never consults the answer to decide — that would be reading the
+thing it exists to hide. It looks only at what the player can already see: the
+letters it has given them, and how many slots there are. That is enough, because
+the two readings fail in different ways.
+
+| Answer | Confirmed | Typed | gaps | whole | Read as |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| SAMPLE | `S_m___` | `sample` | overflows | complete | **whole** |
+| SAMPLE | `S_m___` | `aple` | complete | dies on `a`≠`S` | **gaps** |
+| HARMONY | `HAR_O__` | `harmony` | overflows | complete | **whole** |
+| OOZE | `O___` | `ooze` | overflows | complete | **whole** |
+| OOZE | `O___` | `oze` | complete | unfinished | **gaps** |
+
+Where both survive, the one that fills every slot wins. Where neither is
+finished, *whole* is preferred: the player has matched a letter they were given,
+and typing the answer as they would say it is the commoner habit.
+
+**The one rough edge, stated plainly.** A word whose first letter repeats —
+OOZE, LLAMA, AARDVARK — is the only shape where neither reading can be ruled out
+early, because the first keystroke is consistent with both. Someone who *skips*
+on such a word sees *whole*'s arrangement while typing, and the strip settles to
+*gaps* on their last keystroke. Preferring *gaps* instead would move that jump
+onto every player who types a word out in full, which is far the worse trade.
+
+If neither reading survives — a typo over a confirmed letter — *whole* is shown
+with the disagreement marked, because someone who has mistyped is better served
+seeing where than seeing nothing.
+
+A confirmed letter that the player merely retypes keeps **the game's** casing
+rather than theirs. Otherwise typing LLAMA out in full assembled as `llama`.
+
+### Still to land
+
+`pickLegendSamples` reads the word line for its orange samples and now finds
+none there, so the inline key falls back to the generic `B`. It should be
+reading the pool. Harmless — the fallback is a path it already had — but the key
+is less personal than it was.
 
 ---
 

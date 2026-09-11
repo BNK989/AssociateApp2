@@ -1,4 +1,4 @@
-import { MAX_HINT_LEVEL } from '@/lib/gameConfig';
+import { LETTER_POOL, MAX_HINT_LEVEL } from '@/lib/gameConfig';
 import type { GameState, Message } from '@/hooks/useGameLogic';
 
 /** The daily game runs as a single pseudo-game under this fixed id. */
@@ -95,7 +95,10 @@ export function deriveMessageFlags({
     const showStrikeIndicator =
         (strikes > 0 && strikes < MAX_STRIKES && !isVisible) || isFailed || isCorrect;
 
-    const canShuffle = message.hint_level >= 2 && !isVisible && !isRevealed;
+    // With the pool on, the line holds only confirmed letters and filler, so a
+    // reshuffle would move nothing. The button went with what it shuffled.
+    const canShuffle = !LETTER_POOL.ENABLED
+        && message.hint_level >= 2 && !isVisible && !isRevealed;
 
     const isTarget = isSolving && targetMessageId === message.id;
     const stage: MessageStage = isTarget ? 'active' : isVisible ? 'settled' : 'upcoming';

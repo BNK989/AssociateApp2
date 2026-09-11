@@ -8,6 +8,11 @@ import {
     parseFeedbackPolicy,
     type DailyFeedbackPolicy,
 } from '@/lib/daily/feedbackPolicy';
+import {
+    DEFAULT_LETTER_POOL_POLICY,
+    parseLetterPoolPolicy,
+    type LetterPoolPolicy,
+} from '@/lib/daily/letterPoolPolicy';
 
 // Re-exported so callers of this module do not need to know where the error
 // codes live; the definition is shared with the daily-results write path.
@@ -105,6 +110,40 @@ export function feedbackFromRow(row: SettingsRow | null | undefined): DailyFeedb
 
     return {
         policy: parseFeedbackPolicy(row.value),
+        revision: typeof row.revision === 'number' && Number.isFinite(row.revision)
+            ? row.revision
+            : NO_REVISION,
+    };
+}
+
+/* ------------------------------------------------------------------ *
+ * Letter pool
+ * ------------------------------------------------------------------ */
+
+export type LetterPoolSettings = {
+    policy: LetterPoolPolicy;
+    /** The configuration's revision, so a change can be attributed. */
+    revision: number;
+};
+
+/**
+ * What the composer falls back to when the row is absent or unreadable.
+ *
+ * Same floor rule as the other two keys: the code ships before the migration is
+ * applied, so a missing `letter_pool` row is a normal state and must play
+ * exactly like the compiled defaults.
+ */
+export const FALLBACK_LETTER_POOL_SETTINGS: LetterPoolSettings = {
+    policy: DEFAULT_LETTER_POOL_POLICY,
+    revision: NO_REVISION,
+};
+
+/** Narrows a row into the composer's settings. This key has no scope. */
+export function letterPoolFromRow(row: SettingsRow | null | undefined): LetterPoolSettings {
+    if (!row) return FALLBACK_LETTER_POOL_SETTINGS;
+
+    return {
+        policy: parseLetterPoolPolicy(row.value),
         revision: typeof row.revision === 'number' && Number.isFinite(row.revision)
             ? row.revision
             : NO_REVISION,

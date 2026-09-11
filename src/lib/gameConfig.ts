@@ -67,6 +67,25 @@ export const STREAK_BONUS_AT = 3;
 
 export const STREAK_MULTIPLIER = 1.5;
 
+/**
+ * The letter pool: where found-but-unplaced letters live, and how they are placed.
+ *
+ * These are the compiled floor beneath `game_settings.letter_pool`, in the same
+ * shape as every other game-master control — an unreachable settings table
+ * degrades to exactly this rather than breaking the composer.
+ */
+export const LETTER_POOL = {
+    /** Off returns the board to drawing found letters inside the word line. */
+    ENABLED: true,
+    /**
+     * The caret jumps over confirmed letters, so the player types only the gaps
+     * and never retypes a letter they earned. Turning this off gives the
+     * familiar word-game shape: type the whole answer, greens acting as
+     * checkpoints that mark a disagreement rather than blocking the keystroke.
+     */
+    CARET_SKIPS_GREENS: true,
+} as const;
+
 export const CIPHER_SIGNS = [...'⊗⊕⊖⊙⊚⊛⊠⌖⌂⌁⌇⌖⌂⌁🜁🜂🜄🜃🜁🜄🜂◆◇▲▼○●⬡⬢⬟░▲●★☆☉✵✶∝∞∧∨∩∪∴∵∶∷✷✸✹✺✱✲✢✣✤✥✦❈❉❊❋❀❁❂❃❖❘❙❚✦✧✩✪✫✬✭✮✯♃♄♅♆♇☉☾☽☿🜚🜛🜜🜝🜞🜟🜓🜔🜕🜖🜗🜘🜌🜅🜆🜇🜈🜉🜊🜋🜍🜎🜏🜐🜑'];
 
 export const GAME_MODES = [

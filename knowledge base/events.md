@@ -188,16 +188,19 @@ Fired when that in-bubble key goes away, whichever way it went.
     - `reason`: 'dismissed' | 'guessed' | 'word_settled'
 
 ### 10. `legend_opened`
-Fired when a player opens the colour key deliberately. The point of counting it
-is the composer's palette button: it holds 48px of the input row for the whole
-of solving, and this event says whether players actually reach for it or only
-ever meet the key when it introduces itself.
+Fired when a player opens the colour key deliberately.
 
-- **Trigger**: Client-side, on open, in `input/LegendButton.tsx` and
-  `info/HowToPlayDialog.tsx`.
+It was added to answer whether the composer's palette button earned the 48px it
+held. The answer turned out to be moot: once found letters moved out of the word
+line and into the pool, the half of the key that button existed to explain —
+whether a tile's position means anything — stopped being a question, and the
+button was removed on 2026-09-11. The key is still reached from How to play, and
+still introduces itself in the bubble the first time a word colours a tile.
+
+- **Trigger**: Client-side, on open, in `info/HowToPlayDialog.tsx`.
 - **Properties**:
-    - `source`: 'palette' | 'how_to_play'
-    - `hint_level`: number (palette only — the dialog is read away from any word)
+    - `source`: 'how_to_play' (the retired button reported 'palette')
+    - `hint_level`: number — no longer sent; the dialog is read away from any word
 
 
 ### 11. `app_shared`

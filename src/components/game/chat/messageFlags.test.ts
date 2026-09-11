@@ -120,10 +120,12 @@ describe('deriveMessageFlags — indicators', () => {
         expect(derive(makeMessage(), makeGame()).showStrikeIndicator).toBe(false);
     });
 
-    it('allows shuffling a partially revealed word', () => {
+    // The shuffle button went with the thing it shuffled. Once unplaced letters
+    // moved to the pool, the line carries only confirmed letters and filler, so
+    // a reshuffle moves nothing and the affordance would be a lie.
+    it('offers no shuffle on a partially revealed word, now the pool holds the loose letters', () => {
         const flags = derive(makeMessage({ hint_level: 2 }), makeGame({ status: 'solving' }));
-        expect(flags.canShuffle).toBe(true);
-        expect(flags.needsExtraPadding).toBe(true);
+        expect(flags.canShuffle).toBe(false);
     });
 
     it('does not allow shuffling once an admin has revealed the word', () => {

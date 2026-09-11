@@ -166,7 +166,7 @@ describe('useDailyGame near misses', () => {
         vi.useFakeTimers();
     });
 
-    /** 'beta' with one letter wrong: close enough to remark on, not to accept. */
+    /** 'beta' with one letter wrong: close in spelling, not the word. */
     const nearMiss = (result: { current: Game }) => {
         act(() => { result.current.solve('beto'); });
         settle();
@@ -174,34 +174,34 @@ describe('useDailyGame near misses', () => {
 
     /**
      * Puts 'beta' in play. The chain is solved backwards and its last word is
-     * typed out on entry, so the first target is 'gamma' -- five letters, where
-     * a one-letter slip clears MATCH_THRESHOLD and is simply accepted. The band
-     * only bites on shorter words, which is the whole point of it.
+     * typed out on entry, so the first target is 'gamma'.
      */
     const openBeta = (result: { current: Game }) => {
         solveDownTo(result, 2);
         expect(result.current.targetMessage!.content).toBe('beta');
     };
 
-    it('does not charge a strike for the first near miss on a word', () => {
+    /**
+     * With the letter pool on, the daily game charges every wrong answer.
+     *
+     * Near-miss forgiveness exists to excuse a *typo*, and the slot strip
+     * removes typos: it fixes the length, fills confirmed letters in for the
+     * player, and only accepts an exact answer. A wrong letter through the
+     * strip is a wrong answer, not a slip, so forgiving it would be handing
+     * out a free guess rather than correcting an unfairness.
+     *
+     * The forgiving path is still reachable with LETTER_POOL.ENABLED off,
+     * which is where free typing — and therefore typos — comes back. The band
+     * itself is covered in guessFeedback.test.ts.
+     */
+    it('charges a spelling-close answer while the strip supplies the shape', () => {
         const { result } = setup();
         openBeta(result);
 
-        nearMiss(result);
-
-        expect(result.current.targetMessage!.strikes).toBe(0);
-        expect(result.current.targetMessage!.near_misses).toBe(1);
-    });
-
-    it('charges the second one, so the forgiveness cannot be farmed', () => {
-        const { result } = setup();
-        openBeta(result);
-
-        nearMiss(result);
         nearMiss(result);
 
         expect(result.current.targetMessage!.strikes).toBe(1);
-        expect(result.current.targetMessage!.near_misses).toBe(1);
+        expect(result.current.targetMessage!.near_misses).toBe(0);
     });
 
     it('still charges a guess that was nowhere near', () => {
@@ -211,24 +211,17 @@ describe('useDailyGame near misses', () => {
         missOnce(result);
 
         expect(result.current.targetMessage!.strikes).toBe(1);
-        expect(result.current.targetMessage!.near_misses).toBe(0);
     });
 
-    it('reports the miss with how close it was and what it cost', () => {
+    it('reports every miss, so what players type is measurable either way', () => {
         const onMissed = vi.fn();
         const { result } = setup({ onMissed });
         openBeta(result);
 
         nearMiss(result);
+
         expect(onMissed).toHaveBeenLastCalledWith(expect.objectContaining({
             index: 1,
-            band: 'near',
-            strikeForgiven: true,
-        }));
-
-        missOnce(result);
-        expect(onMissed).toHaveBeenLastCalledWith(expect.objectContaining({
-            band: 'off',
             strikeForgiven: false,
         }));
     });

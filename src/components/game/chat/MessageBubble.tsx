@@ -1,3 +1,4 @@
+import { LETTER_POOL } from '@/lib/gameConfig';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { CipherText } from '@/components/CipherText';
@@ -173,7 +174,7 @@ export function MessageBubble({
 
                         <InlineLegend
                             open={legendIntro.isOpen}
-                            positionNote={message.hint_level >= 2 ? 'shuffled' : 'ordered'}
+                            positionNote={LETTER_POOL.ENABLED ? 'pool' : (message.hint_level >= 2 ? 'shuffled' : 'ordered')}
                             samples={legendSamples}
                             onDismiss={legendIntro.dismiss}
                         />

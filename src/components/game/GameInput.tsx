@@ -1,13 +1,15 @@
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import type { User } from '@supabase/supabase-js';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { GameState, Message, Player } from '@/hooks/useGameLogic';
 import { MAX_HINT_LEVEL } from '@/lib/daily/dailyScoring';
+import { LETTER_POOL } from '@/lib/gameConfig';
+import { LetterPool } from '@/components/game/pool/LetterPool';
+import { useSlotTyping } from './input/useSlotTyping';
 import { RevealButton } from './input/RevealButton';
 import { HintButton } from './input/HintButton';
-import { LegendButton } from './input/LegendButton';
 import { MessageInput } from './input/MessageInput';
 import { getEffectiveHintLevel, getHintTier, getTurnState, isSubmitDisabled } from './input/inputRules';
 import { useHintNudge } from './input/useHintNudge';
@@ -37,6 +39,12 @@ type GameInputProps = {
     isHintPaused?: boolean;
     onToggleHintPause?: () => void;
     onOpenSettings?: () => void;
+    /**
+     * Whether the caret jumps over confirmed letters, so the player types only
+     * the gaps. A game-master setting; falls back to the compiled default when
+     * the settings table is unreachable.
+     */
+    caretSkipsGreens?: boolean;
 };
 
 /**
@@ -68,6 +76,7 @@ export function GameInput({
     isHintPaused = false,
     onToggleHintPause,
     onOpenSettings,
+    caretSkipsGreens = LETTER_POOL.CARET_SKIPS_GREENS,
 }: GameInputProps) {
     const t = useTranslations('GameRoom.Input');
 
@@ -100,6 +109,32 @@ export function GameInput({
 
     const isSolving = game.status === 'solving';
     const showHintControls = isSolving && Boolean(targetMessage);
+
+    /**
+     * The strip discloses the answer's length, so it appears exactly where the
+     * `typed / total` counter already did — never earlier. Same gate, same
+     * information, one fewer thing in the composer.
+     */
+    const showTargetLength = isSinglePlayer || (targetMessage?.hint_level || 0) >= 1;
+    const stripActive = LETTER_POOL.ENABLED && isSolving && Boolean(targetMessage) && showTargetLength;
+
+    const { typed, onTypedChange, normalise, model } = useSlotTyping({
+        text: stripActive && targetMessage ? targetMessage.content : null,
+        guesses: targetMessage?.guesses || [],
+        mode: caretSkipsGreens ? 'skip' : 'full',
+        // The same mask the bubble draws. Below hint 2 it confirms positions;
+        // from hint 2 its anagram is where a purchased hint's letters come
+        // from, and without it buying one would reveal nothing at all.
+        mask: targetMessage?.cipher_text
+            ? { cipher: targetMessage.cipher_text, hintLevel: targetMessage.hint_level || 0 }
+            : undefined,
+        targetId: targetMessage?.id,
+        setInput,
+    });
+
+    // Matches `CipherText`, so the strip and the word above it never disagree
+    // about which way the answer reads.
+    const dir = targetMessage && /[֐-׿]/.test(targetMessage.content) ? 'rtl' : 'ltr';
 
     // Guests cannot buy the AI hint, so they get an escape hatch beside it.
     const showGuestReveal = showHintControls
@@ -134,6 +169,15 @@ export function GameInput({
             onTouchStart={tooltip.markInteracted}
         >
             <TooltipProvider>
+                <LayoutGroup>
+                {model && (
+                    <LetterPool
+                        letters={model.pool}
+                        placed={model.placed}
+                        dir={dir}
+                    />
+                )}
+
                 <div className="flex gap-2 items-center relative">
                     <AnimatePresence>
                         {isSolving && turn.isFreeForAll && !isSinglePlayer && (
@@ -181,8 +225,6 @@ export function GameInput({
                         <RevealButton disabled={controlsDisabled} onReveal={onReveal} />
                     )}
 
-                    {showHintControls && <LegendButton hintLevel={effectiveLevel} />}
-
                     <MessageInput
                         game={game}
                         input={input}
@@ -197,12 +239,22 @@ export function GameInput({
                         })}
                         placeholder={placeholder}
                         targetMessage={targetMessage}
-                        showTargetLength={isSinglePlayer || (targetMessage?.hint_level || 0) >= 1}
+                        showTargetLength={showTargetLength}
+                        strip={model ? {
+                            groups: model.groups,
+                            longest: model.longest,
+                            caretIndex: model.caretIndex,
+                            dir,
+                        } : null}
+                        typedValue={typed}
+                        onTypedChange={model ? onTypedChange : undefined}
+                        normalizeTyped={normalise}
                         onSend={onSendMessage}
                         onTyping={onTyping}
                         onInteract={tooltip.markInteracted}
                     />
                 </div>
+                </LayoutGroup>
             </TooltipProvider>
         </div>
     );

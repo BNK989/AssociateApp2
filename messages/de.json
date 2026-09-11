@@ -239,8 +239,8 @@
             "placed_desc": "Position bestätigt. Dieser Buchstabe gehört genau hierher.",
             "placed_short": "Richtige Stelle",
             "present_title": "Orange",
-            "present_desc": "Im Wort enthalten. Du hast diesen Buchstaben gefunden.",
-            "present_short": "Im Wort",
+            "present_desc": "Im Wort. Er wartet unter dem Textfeld, bis du ihn setzt.",
+            "present_short": "Gefunden",
             "unknown_title": "Grau",
             "unknown_desc": "Noch verborgen. Ein Platzhalter, kein Buchstabe.",
             "unknown_short": "Verborgen",
@@ -248,7 +248,13 @@
             "ordered_note_short": "Buchstaben stehen an ihrem Platz.",
             "shuffled_note": "Die Buchstaben erscheinen in zufälliger Reihenfolge, ihre Position verrät also nichts. Tippe auf das Wort, um sie neu zu mischen.",
             "shuffled_note_short": "Gemischt — zufällige Reihenfolge. Zum Neumischen tippen.",
-            "dismiss": "Schließen"
+            "dismiss": "Schließen",
+            "pool_note": "Gefundene Buchstaben warten unter dem Textfeld. Tippe einen, um ihn zu setzen — bestätigte Buchstaben werden für dich eingefügt.",
+            "pool_note_short": "Gefundene Buchstaben warten unten. Tippe einen, um ihn zu setzen."
+        },
+        "Pool": {
+            "label": "Gefunden",
+            "aria_label": "{count} gefundene Buchstaben, noch nicht platziert"
         }
     },
     "HomePage": {

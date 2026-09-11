@@ -42,13 +42,40 @@ has to go, or the experiment has to move into the policy itself.
 
 ## 2. What you control
 
-The page has two halves. Everything in sections 2–6 below is the **hint policy**
-(key `daily_hint_policy`). The second half — *How a correct guess feels* — is the
+The page has three panels. Everything in sections 2–6 below is the **hint
+policy** (key `daily_hint_policy`). *How a correct guess feels* is the
 **reward-feedback policy** (key `daily_feedback`): the solve chime, its streak
 pitch, the wrong-guess tone, the spark burst and the flourish scale. It has its
 own guide, because its resolution rules differ in one important way (a player's
 mute always wins, and there is no `force` scope):
 **[reward_feedback.md](reward_feedback.md)**.
+
+*How the answer box takes typing* is the **letter pool policy** (key
+`letter_pool`), and it is one switch: **work out what the player meant**.
+
+| Setting | On (default) | Off |
+| :--- | :--- | :--- |
+| `caretSkipsGreens` | The cursor rests on the first gap, but typing the answer out in full works too. With S and M confirmed in SAMPLE, `aple` and `sample` both land as SAMPLE. | The player must type the whole answer. A keystroke that disagrees with a confirmed letter is marked, never refused. |
+
+On is the default and should stay it unless something surprising turns up: it
+accommodates both habits rather than asking a player to learn one. How it tells
+them apart — and the one word shape it cannot settle until the last keystroke —
+is in **[letter_feedback.md](letter_feedback.md)**.
+
+> The key's name is narrower than what it now does. It was a literal
+> skip-the-greens switch when it was added; it survives under that name because
+> renaming it would orphan the stored row.
+
+Two things about this key are worth knowing before you touch it:
+
+- **It applies to the daily game only.** A multiplayer room renders entirely in
+  the browser and has no way to read a server-side setting without the composer
+  changing behaviour mid-word, so a room runs on the compiled default.
+- **Whether the pool exists at all is not tunable here.** That decides what the
+  *word line* draws, and it is read by client modules with no route to a
+  server-read setting; a switch that applied to half the screen would be worse
+  than none. It stays `LETTER_POOL.ENABLED` in `gameConfig.ts`. The design is in
+  **[letter_feedback.md](letter_feedback.md)**.
 
 ### How words open
 
@@ -369,6 +396,15 @@ history:
 | :--- | :--- |
 | `20260822140000_create_game_settings.sql` | `game_settings`, `game_settings_history` |
 | `20260823090000_add_settings_revision_to_daily_results.sql` | `daily_results.settings_revision` |
+
+A third key was added on 2026-09-11:
+
+| Migration | Adds |
+| :--- | :--- |
+| `20260911120000_seed_letter_pool_settings.sql` | the `letter_pool` row |
+
+Seeded empty like the others, so an unapplied migration leaves the composer on
+the compiled default rather than breaking it.
 
 The seed row is `daily_hint_policy` with an empty `{}` value at **revision 1**,
 which means "whatever the code says" — an absent field falls back to the

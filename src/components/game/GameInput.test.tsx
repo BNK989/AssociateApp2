@@ -23,7 +23,6 @@ vi.mock('lucide-react', () => ({
     Lightbulb: () => <div data-testid="lightbulb-icon" />,
     Eye: () => <div data-testid="eye-icon" />,
     Clock: () => <div data-testid="clock-icon" />,
-    Palette: () => <div data-testid="palette-icon" />,
 }));
 
 // Mock Framer Motion
@@ -34,8 +33,11 @@ vi.mock('framer-motion', () => ({
         ),
         div: ({ children, className }: MockComponentProps) => <div className={className}>{children}</div>,
         rect: ({ className }: MockComponentProps) => <rect className={className} />,
+        span: ({ children, className }: MockComponentProps) => <span className={className}>{children}</span>,
     },
     AnimatePresence: ({ children }: MockComponentProps) => <div>{children}</div>,
+    LayoutGroup: ({ children }: MockComponentProps) => <div>{children}</div>,
+    useReducedMotion: () => false,
 }));
 
 // Mock Sonner
@@ -65,6 +67,7 @@ vi.mock('@/lib/gameConfig', () => ({
     STREAK_MULTIPLIER: 1.5,
     // Reached through the colour key's default sample tile, not by the input itself.
     CIPHER_SIGNS: [...'⊗⊕⊖'],
+    LETTER_POOL: { ENABLED: true, CARET_SKIPS_GREENS: true },
 }));
 
 vi.mock('@/lib/gameLogic', () => ({
@@ -229,54 +232,38 @@ describe('GameInput Character Counter', () => {
         expect(fullCount).toBeNull();
     });
 
-    it('displays target message count ignoring spaces when allowed', () => {
-        const props = {
-            ...defaultProps,
-            isSinglePlayer: true,
-            input: 'hello', // 5
-        };
+    // Where the counter used to print `typed / total`, the slot strip now draws
+    // one cell per letter, which says the same thing without a second reading.
+    it('draws a slot per letter instead of a total, in single player', () => {
+        render(<GameInput {...defaultProps} isSinglePlayer />);
 
-        render(<GameInput {...props} />);
-
-        // Target 'Hello World' has 10 non-space characters.
-        const counter = screen.getByTestId('char-counter');
-        expect(counter.textContent).toContain('5');
-        const total = screen.getByTestId('char-total');
-        expect(total.textContent).toContain('/ 10');
+        // 'Hello World' is 10 letters; the space is the gap between the groups.
+        expect(document.querySelectorAll('[data-slot-index]')).toHaveLength(10);
+        expect(screen.queryByTestId('char-total')).toBeNull();
+        expect(screen.queryByTestId('char-counter')).toBeNull();
     });
 
-    it('displays target message count ignoring spaces when hint level >= 1', () => {
+    it('draws the strip once a hint has earned the length', () => {
         const props = {
             ...defaultProps,
-            targetMessage: {
-                ...defaultProps.targetMessage,
-                hint_level: 1,
-            },
-            input: 'test', // 4
+            targetMessage: { ...defaultProps.targetMessage, hint_level: 1 },
         };
 
         render(<GameInput {...props} />);
 
-        // Target 'Hello World' has 10 non-space characters.
-        const counter = screen.getByTestId('char-counter');
-        expect(counter.textContent).toContain('4');
-        const total = screen.getByTestId('char-total');
-        expect(total.textContent).toContain('/ 10');
+        expect(document.querySelectorAll('[data-slot-index]')).toHaveLength(10);
+        expect(screen.queryByTestId('char-counter')).toBeNull();
     });
 
-    it('turns red when input length exceeds target length (ignoring spaces)', () => {
-        const props = {
-            ...defaultProps,
-            isSinglePlayer: true,
-            input: 'hello world extra', // 17 chars, 15 non-space
-        };
+    it('keeps the counter, and its over-length warning, where the strip is not earned', () => {
+        // Multiplayer at hint 0: the length has not been earned, so neither the
+        // strip nor the `/ total` appears, and the counter still does its job.
+        render(<GameInput {...defaultProps} input="hello world extra" />);
 
-        render(<GameInput {...props} />);
-
-        // 15 / 10
         const counterDiv = screen.getByTestId('char-counter');
         expect(counterDiv.textContent).toContain('15');
         expect(counterDiv.className).toContain('text-red-500');
+        expect(document.querySelectorAll('[data-slot-index]')).toHaveLength(0);
     });
 
     it('ignores multiple spaces', () => {

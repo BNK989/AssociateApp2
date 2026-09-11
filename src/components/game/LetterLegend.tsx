@@ -17,7 +17,7 @@ const SAMPLE_ORDER: TileState[] = ['placed', 'present', 'unknown'];
  * caller says which half applies. `both` is for the rules dialog, which is read
  * away from any particular word.
  */
-type PositionNote = 'ordered' | 'shuffled' | 'both';
+type PositionNote = 'ordered' | 'shuffled' | 'both' | 'pool';
 
 /**
  * How much room the key has.
@@ -64,6 +64,11 @@ export function LetterLegend({
     const isInline = variant === 'inline';
 
     const notes: string[] = [];
+    // With the pool on, order is never in question: the line holds only
+    // confirmed letters, so the note says where the rest are instead.
+    if (positionNote === 'pool') {
+        notes.push(t(isInline ? 'pool_note_short' : 'pool_note'));
+    }
     if (positionNote === 'ordered' || positionNote === 'both') {
         notes.push(t(isInline ? 'ordered_note_short' : 'ordered_note'));
     }

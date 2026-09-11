@@ -28,7 +28,11 @@ import { useMissCue } from '@/components/daily/useMissCue';
 import { useProgressCue } from '@/components/daily/useProgressCue';
 import { useStartWordAnimation } from '@/components/daily/useStartWordAnimation';
 import { useRewardFeedback } from '@/hooks/useRewardFeedback';
-import type { DailyFeedbackSettings, DailyHintSettings } from '@/lib/gameSettings/settingsRow';
+import type {
+    DailyFeedbackSettings,
+    DailyHintSettings,
+    LetterPoolSettings,
+} from '@/lib/gameSettings/settingsRow';
 
 type DailyGameClientProps = {
     dailyWords: string[];
@@ -40,6 +44,8 @@ type DailyGameClientProps = {
     hintSettings: DailyHintSettings;
     /** Game-master reward-feedback policy, resolved on the server for the same reason. */
     feedbackSettings: DailyFeedbackSettings;
+    /** Game-master composer policy, resolved on the server for the same reason. */
+    letterPoolSettings: LetterPoolSettings;
 };
 
 export default function DailyGameClient(props: DailyGameClientProps) {
@@ -58,6 +64,7 @@ function DailyGameBoard({
     initialConnectionScores,
     hintSettings,
     feedbackSettings,
+    letterPoolSettings,
 }: DailyGameClientProps) {
     const router = useRouter();
     const { user: authUser, session, loading: authLoading } = useAuth();
@@ -273,6 +280,7 @@ function DailyGameBoard({
                 }}
                 onGetHint={askForHint}
                 isEmpty={false}
+                caretSkipsGreens={letterPoolSettings.policy.caretSkipsGreens}
                 isSinglePlayer
                 onReveal={game.revealWord}
                 canOpenOtherEnd={game.canOpenOtherEnd}

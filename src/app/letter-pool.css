@@ -1,0 +1,125 @@
+/*
+ * The letter pool and the composer's slot strip.
+ *
+ * Kept out of globals.css for two reasons: that file is at the 350-line cap,
+ * and everything here belongs to one feature and reads better beside itself.
+ *
+ * The rule this file exists to honour: the pool's idle drift is a CSS keyframe,
+ * not a framer `repeat: Infinity`. A repeating framer animation keeps a
+ * JavaScript loop alive per tile — the board already pays that for every
+ * masked word — while a keyframe runs on the compositor and never wakes the
+ * main thread. With a long phrase that is the difference between a smooth
+ * composer and a stuttering one.
+ */
+
+@keyframes pool-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--pool-tilt, 0deg));
+  }
+  33% {
+    transform: translateY(-3px) rotate(calc(var(--pool-tilt, 0deg) * -0.55));
+  }
+  66% {
+    transform: translateY(2px) rotate(var(--pool-tilt, 0deg));
+  }
+}
+
+.pool-socket {
+  /* The resting tilt, kept when the animation is paused or switched off: a
+     static angle still says "this letter has no place", and it is the cue a
+     reduced-motion player is left with. */
+  transform: rotate(var(--pool-tilt, 0deg));
+  animation: pool-bob 4.4s ease-in-out infinite;
+  animation-delay: var(--pool-phase, 0s);
+}
+
+/*
+ * The track scrolls sideways when the pool outgrows one row.
+ *
+ * `padding-block` is load-bearing, not spacing: `overflow-x: auto` makes the
+ * computed `overflow-y` **auto** as well (one axis non-visible forces the
+ * other), so without room inside the scroll box the tiles' drift and their glow
+ * are cropped at the top — which is exactly how this shipped.
+ *
+ * There is no edge fade. It was applied unconditionally, so it dimmed the first
+ * tile whenever the pool fitted, which is almost always — a permanent artefact
+ * paid for a hint that is only occasionally needed.
+ */
+.pool-track {
+  scroll-snap-type: x proximity;
+  padding-block: 5px;
+}
+
+.pool-track > * {
+  scroll-snap-align: center;
+}
+
+/*
+ * Cell width, solved by the browser rather than measured in JavaScript.
+ *
+ * `--slot-count` is the longest *word*, not the whole answer, because a word is
+ * the only run that has to fit on one line — the strip wraps between words. The
+ * host is the field, which carries `container-type`, since an element cannot
+ * query its own size.
+ *
+ * 18px is where a mono glyph stops being readable; 32px is where the cells
+ * start to look like a different game from the word above them.
+ */
+.slot-strip-host {
+  container-type: inline-size;
+}
+
+.slot-strip {
+  --slot-gap: 2px;
+  --slot-w: clamp(
+    18px,
+    calc((100cqi - 24px - (var(--slot-count, 1) - 1) * var(--slot-gap)) / var(--slot-count, 1)),
+    26px
+  );
+  --slot-font: clamp(11px, calc(var(--slot-w) * 0.62), 17px);
+}
+
+@keyframes slot-caret {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+.slot-caret {
+  animation: slot-caret 1.1s steps(2, start) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pool-socket,
+  .slot-caret {
+    animation: none;
+  }
+}
+
+/*
+ * A keystroke the strip has no room for.
+ *
+ * The field rolls the character back, which is correct but silent — and silence
+ * here reads as a broken keyboard, because the typed text is transparent and
+ * the player has nothing else to go on.
+ */
+@keyframes strip-reject {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+
+.strip-reject {
+  animation: strip-reject 0.2s ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .strip-reject {
+    animation: none;
+  }
+}

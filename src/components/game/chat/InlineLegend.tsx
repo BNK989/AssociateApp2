@@ -7,7 +7,7 @@ import type { LegendSamples } from './legendRules';
 type InlineLegendProps = {
     open: boolean;
     /** Which half of the position rule currently applies to this word. */
-    positionNote: 'ordered' | 'shuffled';
+    positionNote: 'ordered' | 'shuffled' | 'pool';
     /** The word's own tiles, so the samples are the ones just above them. */
     samples: LegendSamples;
     onDismiss: () => void;

@@ -9,10 +9,22 @@ type PlainTextFieldProps = {
     placeholder: string;
     /** Rejected when exceeded: the edit is rolled back and `onOverflow` fires. */
     maxLength?: number;
+    /**
+     * Reduces a raw edit to what the owner will accept. Anything it strips is
+     * rolled back out of the DOM and `onRejected` fires.
+     *
+     * A controlled field cannot do this on its own: when the owner clamps an
+     * edit back to the value it already held, React re-renders nothing, the
+     * sync effect below never runs, and the rejected character sits in the DOM
+     * where only the next Backspace finds it.
+     */
+    normalize?: (raw: string) => string;
     className?: string;
     placeholderClassName?: string;
     onChange: (value: string) => void;
     onOverflow?: () => void;
+    /** Fired when `normalize` discarded part of an edit. */
+    onRejected?: () => void;
     onKeyDown?: (e: React.KeyboardEvent<HTMLDivElement>) => void;
     onFocus?: () => void;
 };
@@ -36,10 +48,12 @@ export function PlainTextField({
     value,
     placeholder,
     maxLength,
+    normalize,
     className = '',
     placeholderClassName = '',
     onChange,
     onOverflow,
+    onRejected,
     onKeyDown,
     onFocus,
 }: PlainTextFieldProps) {
@@ -87,10 +101,18 @@ export function PlainTextField({
                         onOverflow?.();
                         return;
                     }
+                    const accepted = normalize ? normalize(text) : text;
+
+                    if (accepted !== text) {
+                        el.textContent = accepted;
+                        moveCaretToEnd(el);
+                        onRejected?.();
+                    }
+
                     // Browsers leave a stray <br> behind on the last delete, which
                     // would keep the field non-empty and hide the placeholder.
-                    if (text === '' && el.innerHTML !== '') el.innerHTML = '';
-                    onChange(text);
+                    if (accepted === '' && el.innerHTML !== '') el.innerHTML = '';
+                    onChange(accepted);
                 }}
                 onPaste={(e) => {
                     // Paste plain text only: no markup, no line breaks.

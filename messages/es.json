@@ -239,8 +239,8 @@
             "placed_desc": "Confirmada en su sitio. Esta letra va exactamente aquí.",
             "placed_short": "En su sitio",
             "present_title": "Naranja",
-            "present_desc": "Está en la palabra. Has encontrado esta letra.",
-            "present_short": "En la palabra",
+            "present_desc": "Está en la palabra. Espera bajo el cuadro de texto hasta que la coloques.",
+            "present_short": "Hallada",
             "unknown_title": "Gris",
             "unknown_desc": "Aún oculta. Un marcador de posición, no una letra.",
             "unknown_short": "Oculta",
@@ -248,7 +248,13 @@
             "ordered_note_short": "Las letras están en su sitio.",
             "shuffled_note": "Las letras aparecen en orden aleatorio, así que su posición no dice nada. Toca la palabra para volver a mezclarlas.",
             "shuffled_note_short": "Mezcladas: orden aleatorio. Toca para volver a mezclar.",
-            "dismiss": "Cerrar"
+            "dismiss": "Cerrar",
+            "pool_note": "Las letras halladas esperan bajo el cuadro de texto. Escribe una para colocarla; las confirmadas se rellenan solas.",
+            "pool_note_short": "Las letras halladas esperan abajo. Escribe una para colocarla."
+        },
+        "Pool": {
+            "label": "Halladas",
+            "aria_label": "{count} letras halladas, aún sin colocar"
         }
     },
     "HomePage": {
