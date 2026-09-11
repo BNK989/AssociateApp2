@@ -60,9 +60,10 @@ export function LetterPool({ letters, placed, dir }: LetterPoolProps) {
                             className="pool-track flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                             aria-label={t('aria_label', { count: letters.length })}
                         >
-                            {letters.map((letter) => (
+                            {letters.map((letter, order) => (
                                 <PoolTile
                                     key={letter.id}
+                                    order={order}
                                     letter={letter}
                                     isHome={!placed.has(letter.id)}
                                     drifting={drifting}

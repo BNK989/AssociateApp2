@@ -8,6 +8,8 @@ type PoolTileProps = {
     isHome: boolean;
     drifting: boolean;
     reduced: boolean;
+    /** Position in the row, which staggers the arrival. */
+    order: number;
 };
 
 /**
@@ -19,7 +21,7 @@ type PoolTileProps = {
  * the thing that travels, and it carries a `layoutId` so framer morphs it into
  * the slot rather than cross-fading two different elements.
  */
-export function PoolTile({ letter, isHome, drifting, reduced }: PoolTileProps) {
+export function PoolTile({ letter, isHome, drifting, reduced, order }: PoolTileProps) {
     // Density is a media query rather than a measured prop: a short viewport is
     // a rendering concern, and reading it in JavaScript would cost a state
     // update on every keyboard open for something CSS already knows.
@@ -39,9 +41,9 @@ export function PoolTile({ letter, isHome, drifting, reduced }: PoolTileProps) {
                     // Shared with the slot cell: the same element in two places,
                     // so the move is one continuous thing rather than two.
                     layoutId={reduced ? undefined : `letter-${letter.id}`}
-                    initial={reduced ? false : { scale: 0.55, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={reduced ? { duration: 0 } : SPAWN_SPRING}
+                    initial={reduced ? false : { scale: 0.5, opacity: 0, y: 6 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    transition={reduced ? { duration: 0 } : { ...SPAWN_SPRING, delay: order * 0.05 }}
                     // Only handed to the compositor while it is actually moving.
                     style={{ willChange: 'transform' }}
                     className="font-bold leading-[1.2] text-[var(--tile-present)] drop-shadow-[0_0_2px_var(--tile-glow)]"

@@ -323,3 +323,20 @@ describe('buildLetterPool — letters bought with a hint', () => {
         expect(pool.filter((letter) => letter.char === 'a')).toHaveLength(3);
     });
 });
+
+describe('buildLetterPool — tile identity across words', () => {
+    // The defect: keyed on position alone, the next word's tiles inherited the
+    // previous word's DOM elements. React saw the same keys, swapped the
+    // characters in place, and no tile ever animated in.
+    it('gives two different words different tile ids', () => {
+        const first = buildLetterPool('Harmony', ['harpoon'], [], undefined, 'pool-msg1');
+        const second = buildLetterPool('Harmony', ['harpoon'], [], undefined, 'pool-msg2');
+        expect(first[0].id).not.toBe(second[0].id);
+    });
+
+    it('keeps an id stable across rebuilds of the same word', () => {
+        const first = buildLetterPool('Harmony', ['harpoon'], [], undefined, 'pool-msg1');
+        const again = buildLetterPool('Harmony', ['harpoon'], first, undefined, 'pool-msg1');
+        expect(again[0].id).toBe(first[0].id);
+    });
+});

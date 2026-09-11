@@ -69,7 +69,7 @@ export function useSlotTyping({ text, guesses, mode, mask, targetId, setInput }:
     const model = useMemo(() => {
         if (!text) return null;
 
-        const pool = buildLetterPool(text, guesses, [], mask);
+        const pool = buildLetterPool(text, guesses, [], mask, `pool-${targetId ?? 'word'}`);
         const bare = buildSlots({ text, guesses, typed, mode, mask });
         const placements = resolvePlacements(pool, bare);
         const slots = buildSlots({ text, guesses, typed, mode, placements, mask });
@@ -89,7 +89,7 @@ export function useSlotTyping({ text, guesses, mode, mask, targetId, setInput }:
         };
         // guessKey stands in for the array, whose identity changes every render.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [text, guessKey, typed, mode, mask?.cipher, mask?.hintLevel]);
+    }, [text, guessKey, typed, mode, mask?.cipher, mask?.hintLevel, targetId]);
 
     // The parent submits `input`, so it carries the assembled answer rather
     // than the keystrokes: in skip mode those are only the gaps between greens.

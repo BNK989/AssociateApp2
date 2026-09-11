@@ -16,6 +16,12 @@ type SlotStripProps = {
 /**
  * The answer's shape, drawn inside the composer.
  *
+ * Aligned to the *start* of the field, not centred: the strip sits where the
+ * text it replaces would have sat, and the caret opens where a player's eye
+ * already is. `justify-start` reads that from `dir`, so it is the right edge in
+ * Hebrew and Arabic and the left in everything else — which centring could not
+ * express either way.
+ *
  * How a phrase stays legible: cells are grouped into words and the strip wraps
  * *between* groups, so "morning glory" becomes two lines of full-size cells
  * rather than thirteen cramped ones. Cell width is then sized against the
@@ -41,7 +47,7 @@ export function SlotStrip({ groups, longest, caretIndex, dir, rejected = false }
             // In flow, not overlaid: the strip is what gives the field its
             // height, so a phrase that wraps to two rows grows the field
             // instead of spilling out of a fixed 40px box.
-            className={`slot-strip pointer-events-none relative flex min-h-10 flex-wrap items-center justify-center gap-x-2 gap-y-1 px-2 py-1 ${rejected ? 'strip-reject' : ''}`}
+            className={`slot-strip pointer-events-none relative flex min-h-10 flex-wrap items-center justify-start gap-x-2 gap-y-1 px-3 py-1 ${rejected ? 'strip-reject' : ''}`}
             style={{ '--slot-count': longest } as React.CSSProperties}
             aria-hidden="true"
         >
@@ -52,7 +58,7 @@ export function SlotStrip({ groups, longest, caretIndex, dir, rejected = false }
                     // `--slot-w` is at its floor and even that overflows, wrapping
                     // inside the word is the graceful failure; running off the
                     // edge of the field is not.
-                    className="flex flex-wrap items-center justify-center gap-px"
+                    className="flex flex-wrap items-center justify-start gap-px"
                 >
                     {group.slots.map((slot) => (
                         <SlotCell

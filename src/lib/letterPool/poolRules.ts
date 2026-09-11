@@ -32,7 +32,13 @@ export function stripSuppliesShape(
 
 /** A letter the player has found but not yet pinned to a position. */
 export interface PoolLetter {
-    /** Stable across rebuilds so a tile keeps its identity, tilt and animation. */
+    /**
+     * Stable across rebuilds so a tile keeps its identity, tilt and animation —
+     * and distinct *between* words, which is why the caller passes a prefix.
+     * Keyed on position alone, the second word's tiles inherited the first
+     * word's elements: React saw the same keys, swapped the characters in
+     * place, and no tile ever animated in.
+     */
     id: string;
     char: string;
     /** The slot it is currently placed in, or null while it is still adrift. */
@@ -68,6 +74,7 @@ export function buildLetterPool(
     guesses: string[],
     previous: PoolLetter[] = [],
     mask?: MaskState,
+    idPrefix = 'pool',
 ): PoolLetter[] {
     const { revealedChars } = computeGuessState(text, guesses);
     const placed = placedIndices(text, guesses, mask);
@@ -98,7 +105,7 @@ export function buildLetterPool(
             fromMask[lower] -= 1;
         }
 
-        const id = `pool-${index}`;
+        const id = `${idPrefix}-${index}`;
         return [{ id, char, slotIndex: held.get(id)?.slotIndex ?? null }];
     });
 }

@@ -66,8 +66,11 @@ describe('useSlotTyping — typing', () => {
         // 'n' is the only pooled letter; 'm' was never found, so nothing binds.
         expect(result.current.model?.placed.size).toBe(0);
 
+        // Read the id off the pool rather than spelling it out: it carries the
+        // word's identity so that tiles animate in when the chain advances.
+        const nTile = result.current.model!.pool.find((letter) => letter.char === 'n')!;
         act(() => result.current.onTypedChange('mn'));
-        expect(result.current.model?.placed.has('pool-5')).toBe(true);
+        expect(result.current.model?.placed.has(nTile.id)).toBe(true);
     });
 
     it('puts the caret on the first unfilled slot', () => {

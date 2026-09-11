@@ -341,6 +341,26 @@ Five defects, found by playing a Hebrew daily word on a phone:
   also came down from 32px to 26px, which is what a three-letter word needed to
   stop looking like scattered dashes.
 
+### Second production pass (2026-09-11)
+
+- **The palette button is gone.** It existed to state the half of the colour
+  rule that said whether a tile's position meant anything — a question the pool
+  answers by construction. The key is still reached from How to play, and still
+  introduces itself in the bubble the first time a word colours a tile.
+  `legend_opened` now only ever reports `source: 'how_to_play'`; see
+  [events.md](events.md).
+- **Pool tiles animate in.** They did not, and the reason was identity rather
+  than animation: `buildLetterPool` keyed a tile as `pool-<index>`, so the next
+  word's tiles inherited the previous word's elements — React saw the same keys,
+  swapped the characters in place, and nothing ever mounted. The id now carries
+  the word, and the arrival is staggered by 50ms a tile so the pool reads as
+  filling up rather than blinking into existence.
+- **The strip aligns to the start of the field, not its centre.** It sits where
+  the text it replaced sat, and the caret opens where the eye already is.
+  `justify-start` takes that from `dir`, so it is the right edge in Hebrew and
+  Arabic and the left in everything else — which centring could not express
+  either way.
+
 ### Still to land
 
 `pickLegendSamples` reads the word line for its orange samples and now finds
