@@ -342,8 +342,9 @@ in Hebrew/Arabic (§13).
   `20260822090100_pin_function_search_path.sql`,
   `20260822090200_document_api_usage_rls.sql`,
   `20260822140000_create_game_settings.sql`,
-  `20260823090000_add_settings_revision_to_daily_results.sql` and
-  `20260907120000_seed_daily_feedback_settings.sql`.
+  `20260823090000_add_settings_revision_to_daily_results.sql`,
+  `20260907120000_seed_daily_feedback_settings.sql` and
+  `20260911120000_seed_letter_pool_settings.sql`.
   For the first, deploy the app first — it removes the EXECUTE grant the
   pre-deploy code relied on for `distribute_game_points`. See
   [knowledge base/database_security.md](knowledge%20base/database_security.md).

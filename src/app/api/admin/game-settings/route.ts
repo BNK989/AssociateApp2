@@ -3,11 +3,14 @@ import { requireAdmin } from '@/lib/adminAuth';
 import { createLogger } from '@/lib/logger';
 import { DEFAULT_HINT_POLICY, parseHintPolicy } from '@/lib/daily/hintPolicy';
 import { DEFAULT_FEEDBACK_POLICY, parseFeedbackPolicy } from '@/lib/daily/feedbackPolicy';
+import { DEFAULT_LETTER_POOL_POLICY, parseLetterPoolPolicy } from '@/lib/daily/letterPoolPolicy';
 import {
     DAILY_FEEDBACK_KEY,
     DAILY_HINT_POLICY_KEY,
     getDailyFeedbackSettings,
     getDailyHintSettings,
+    getLetterPoolSettings,
+    LETTER_POOL_KEY,
 } from '@/lib/gameSettings/server';
 import { writeSetting } from '@/lib/gameSettings/writeSetting';
 
@@ -39,6 +42,13 @@ const KEYS = {
         codeDefault: DEFAULT_FEEDBACK_POLICY,
         hasScope: false,
     },
+    // No scope either: the caret rule is how the composer behaves for everyone,
+    // and there is no per-player preference for `force` to override.
+    [LETTER_POOL_KEY]: {
+        parse: parseLetterPoolPolicy,
+        codeDefault: DEFAULT_LETTER_POOL_POLICY,
+        hasScope: false,
+    },
 } as const;
 
 type SettingsKey = keyof typeof KEYS;
@@ -66,9 +76,10 @@ export async function GET() {
         return NextResponse.json({ error: auth.reason }, { status: auth.status });
     }
 
-    const [hints, feedback] = await Promise.all([
+    const [hints, feedback, letterPool] = await Promise.all([
         getDailyHintSettings(),
         getDailyFeedbackSettings(),
+        getLetterPoolSettings(),
     ]);
 
     return NextResponse.json({
@@ -82,6 +93,12 @@ export async function GET() {
             policy: feedback.policy,
             revision: feedback.revision,
             codeDefault: DEFAULT_FEEDBACK_POLICY,
+        },
+        letterPool: {
+            key: LETTER_POOL_KEY,
+            policy: letterPool.policy,
+            revision: letterPool.revision,
+            codeDefault: DEFAULT_LETTER_POOL_POLICY,
         },
     });
 }

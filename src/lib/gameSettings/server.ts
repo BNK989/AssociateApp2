@@ -4,11 +4,14 @@ import { createLogger } from '@/lib/logger';
 import {
     FALLBACK_DAILY_FEEDBACK_SETTINGS,
     FALLBACK_DAILY_HINT_SETTINGS,
+    FALLBACK_LETTER_POOL_SETTINGS,
     feedbackFromRow,
     isMissingTable,
+    letterPoolFromRow,
     settingsFromRow,
     type DailyFeedbackSettings,
     type DailyHintSettings,
+    type LetterPoolSettings,
     type SettingsRow,
 } from './settingsRow';
 
@@ -22,6 +25,7 @@ export const GAME_SETTINGS_TAG = 'game-settings';
 
 export const DAILY_HINT_POLICY_KEY = 'daily_hint_policy';
 export const DAILY_FEEDBACK_KEY = 'daily_feedback';
+export const LETTER_POOL_KEY = 'letter_pool';
 
 /** The migration that creates the table, named in the log when it is missing. */
 const SETTINGS_MIGRATION = 'supabase/migrations/20260822140000_create_game_settings.sql';
@@ -36,9 +40,11 @@ const REVALIDATE_SECONDS = 60;
 export {
     FALLBACK_DAILY_FEEDBACK_SETTINGS,
     FALLBACK_DAILY_HINT_SETTINGS,
+    FALLBACK_LETTER_POOL_SETTINGS,
     NO_REVISION,
     type DailyFeedbackSettings,
     type DailyHintSettings,
+    type LetterPoolSettings,
 } from './settingsRow';
 
 /**
@@ -159,5 +165,32 @@ export const getDailyHintSettings = unstable_cache(
 export const getDailyFeedbackSettings = unstable_cache(
     readDailyFeedbackSettings,
     ['daily-feedback-settings'],
+    { tags: [GAME_SETTINGS_TAG], revalidate: REVALIDATE_SECONDS },
+);
+
+async function readLetterPoolSettings(): Promise<LetterPoolSettings> {
+    const row = await readSettingsRow(LETTER_POOL_KEY);
+    if (!row) return FALLBACK_LETTER_POOL_SETTINGS;
+
+    const settings = letterPoolFromRow(row);
+
+    log.debug('read', 'Letter pool policy loaded', {
+        key: LETTER_POOL_KEY,
+        revision: settings.revision,
+        caret_skips_greens: settings.policy.caretSkipsGreens,
+    });
+
+    return settings;
+}
+
+/**
+ * How the composer's slot strip behaves, cached across requests.
+ *
+ * Shares the other keys' cache tag, so one admin save revalidates every panel
+ * on the page and they cannot disagree about which revision is live.
+ */
+export const getLetterPoolSettings = unstable_cache(
+    readLetterPoolSettings,
+    ['letter-pool-settings'],
     { tags: [GAME_SETTINGS_TAG], revalidate: REVALIDATE_SECONDS },
 );

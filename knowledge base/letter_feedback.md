@@ -290,11 +290,26 @@ its last letter wrong, and sails past the 0.8 threshold. `normaliseAnswer` folds
 case, whitespace and **diacritics**, since the daily game's words are translated
 into seven languages and a phone keyboard will often not produce the accents.
 
-### Still to land
+### The caret rule is a game-master setting
 
-`LETTER_POOL.CARET_SKIPS_GREENS` is the compiled floor only. The game-master
-control over it (`game_settings.letter_pool`, its parser, its admin section and
-its migration) is not wired yet, so the setting is currently the default.
+`caretSkipsGreens` is tunable from `/admin/game-settings` under *How the answer
+box takes typing* (key `letter_pool`, seeded by
+`20260911120000_seed_letter_pool_settings.sql`). `LETTER_POOL.CARET_SKIPS_GREENS`
+in `gameConfig.ts` remains the floor beneath it, so an unapplied migration or an
+unreachable table plays exactly as the code does. See
+[game_master_guide.md](game_master_guide.md).
+
+It reaches the composer **server-side**, through the daily page, so the board
+never renders on one rule and then switches to another. That is also why it is
+daily-only: a multiplayer room is a client component, and a fetched setting
+would change the caret's behaviour partway through a word.
+
+Whether the pool exists at all stays compiled. It decides what the word line
+draws, which `messageFlags`, `CipherText` and `readMaskTile` all read directly,
+and a switch that reached the composer but not the bubble would be worse than
+no switch.
+
+### Still to land
 
 `pickLegendSamples` reads the word line for its orange samples and now finds
 none there, so the inline key falls back to the generic `B`. It should be

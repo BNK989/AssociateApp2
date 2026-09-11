@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_HINT_POLICY } from '@/lib/daily/hintPolicy';
+import { DEFAULT_LETTER_POOL_POLICY } from '@/lib/daily/letterPoolPolicy';
 import {
     FALLBACK_DAILY_HINT_SETTINGS,
+    FALLBACK_LETTER_POOL_SETTINGS,
     isMissingTable,
+    letterPoolFromRow,
     NO_REVISION,
     settingsFromRow,
 } from './settingsRow';
@@ -86,5 +89,34 @@ describe('settingsFromRow', () => {
     it('keeps a real revision distinguishable from the no-revision marker', () => {
         expect(NO_REVISION).toBe(0);
         expect(settingsFromRow({ value: {}, scope: 'default', revision: 1 }).revision).toBe(1);
+    });
+});
+
+describe('letterPoolFromRow', () => {
+    it('falls back when there is no row, which is the pre-migration state', () => {
+        expect(letterPoolFromRow(null)).toEqual(FALLBACK_LETTER_POOL_SETTINGS);
+        expect(letterPoolFromRow(undefined)).toEqual(FALLBACK_LETTER_POOL_SETTINGS);
+    });
+
+    it('reads a stored policy and its revision', () => {
+        const settings = letterPoolFromRow({
+            value: { caretSkipsGreens: false },
+            scope: 'default',
+            revision: 4,
+        });
+
+        expect(settings.policy.caretSkipsGreens).toBe(false);
+        expect(settings.revision).toBe(4);
+    });
+
+    it('reports no revision when the column is not a number', () => {
+        expect(letterPoolFromRow({ value: {}, scope: 'default', revision: null }).revision)
+            .toBe(NO_REVISION);
+    });
+
+    it('survives a malformed value rather than failing the read', () => {
+        const settings = letterPoolFromRow({ value: 'not a policy', scope: 'default', revision: 2 });
+        expect(settings.policy).toEqual(DEFAULT_LETTER_POOL_POLICY);
+        expect(settings.revision).toBe(2);
     });
 });
