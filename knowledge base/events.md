@@ -141,15 +141,20 @@ one number that says whether the mechanic works.
 
 - **Properties**: word context, plus `words_remaining`.
 
-### 6f. `daily_stuck_offer_shown` / `_taken` / `_dismissed`
+### 6f. `daily_stuck_offer_shown` / `_reopened` / `_taken` / `_dismissed`
 Fired when the game speaks first to a player who has gone quiet on a word, and
-when they take it up or wave it away.
+when they pull it back open, take it up, or wave it away.
 
-Three events rather than one with an outcome, because the interesting numbers
+Separate events rather than one with an outcome, because the interesting numbers
 are the ratios between them: an offer shown and never taken is the wrong offer,
 and one dismissed is an unwanted interruption. `shown` fires once per offer per
-word — the offer is re-decided on a timer and would otherwise drown the other
-two.
+word — the offer is re-decided on a timer and would otherwise drown the others.
+
+`reopened` is the one number that says whether collapsing aside beats closing.
+An actionable offer steps aside to a chip after nine seconds instead of
+disappearing; without this event a chip nobody ever touches looks exactly like
+one that was never needed. It can fire more than once per word and is not
+deduplicated, since a player opening the same offer twice is itself the signal.
 
 - **Properties**: word context, plus `offer` (`stake` | `other_end` | `letter`
   | `reveal`).

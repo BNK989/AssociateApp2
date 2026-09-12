@@ -407,6 +407,47 @@ Dismissal is **per word**: waving an offer away silences it for that word alone.
 A dismissal that lasted the whole day would turn one irritated tap into opting
 out of every future nudge.
 
+#### How long it stays: fade or step aside
+
+Deciding *what* to say is only half of it. Every offer used to behave the same
+way once said — sit above the composer until the word changed or the player
+pushed it away — and that is right for one of them and wrong for the rest.
+
+The split is whether there is anything to act on
+(`src/lib/daily/offerPresentation.ts`), and the phase clock that applies it is
+`useOfferPhase`:
+
+| Offer | Presentation | At full width for | Then |
+| :--- | :--- | ---: | :--- |
+| `stake` | transient | 5s (`TRANSIENT_HOLD_MS`) | gone |
+| `other_end`, `letter`, `reveal` | collapsing | 9s (`COLLAPSE_AFTER_MS`) | a chip on the inline-end edge |
+
+"Three words left in the chain" is a remark: read once, nothing to do with it,
+and a bar still standing over the board two minutes later turns a small kindness
+into clutter. It is held a little longer than the progress toasts (3.5s) because
+the player is mid-guess when it lands rather than watching the slot it appears
+in, so it is timed for someone who glances over a beat late.
+
+"Stuck on this one?" is the opposite. It carries a way out, and the player it
+was written for is the one still thinking — who gets to the end of that thought
+well after any timeout. So it collapses instead of closing: same anchored strip,
+one corner instead of a full row, still one tap away. Both states are absolutely
+positioned on that strip, so one replacing the other moves nothing on the board.
+
+Two rules the chip depends on:
+
+- **Tapping it reopens the bar, it never fires the action.** `reveal` spends the
+  word, and a chip small enough to be brushed by a thumb must not be able to
+  give away an answer.
+- **A reopened offer stays open.** The hold is the game's one attempt at
+  stepping aside politely, not a loop the player has to keep beating. Once they
+  have asked for it back it stays until they act, dismiss, or the word changes.
+
+An offer that escalates mid-word gets a fresh turn at full width: a faded
+`stake` is replaced by `other_end` seconds later, and that one has not had its
+say. Between words the phase is cleared with the offer, so the next word's
+remark is never born already faded.
+
 This is also how the other-end mechanic gets discovered. It lives in the hint
 dropdown, where nobody will find it; the offer puts it in front of exactly the
 player it was built for, without adding a fifth control to the input row.
@@ -522,7 +563,10 @@ toast, chosen by how time-critical it is rather than how good the news is:
 | `halfway` | the move that crosses the midpoint | a run has a middle worth marking |
 
 Each can only fire on the single move that makes it true, so nothing repeats
-per word — anything that fires on every word stops being read. The results log
+per word — anything that fires on every word stops being read. They are toasts
+because they are remarks: nothing to act on, so they say their piece and go.
+Encouragement that carries a button is the stuck offer above, and steps aside
+instead of vanishing. The results log
 (§4) is the reason this exists at all: mid-chain abandonment is the number that
 matters most, and these target the two moments where a player decides to stop.
 

@@ -250,6 +250,7 @@
             "letter_action": "Show one",
             "reveal_title": "Ready to move on?",
             "reveal_action": "Reveal it",
+            "reopen": "Show the offer again",
             "dismiss": "Dismiss"
         },
         "Legend": {

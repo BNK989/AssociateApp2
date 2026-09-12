@@ -244,6 +244,7 @@
             "letter_action": "En montrer une",
             "reveal_title": "On passe à la suite ?",
             "reveal_action": "Révéler",
+            "reopen": "Afficher à nouveau la proposition",
             "dismiss": "Masquer"
         },
         "Legend": {

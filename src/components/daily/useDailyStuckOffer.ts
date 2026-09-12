@@ -27,9 +27,9 @@ type UseDailyStuckOfferArgs = Actions & {
     canOpenOtherEnd: boolean;
     consecutive: number;
     gameOver: boolean;
-    /** Reports an offer's life: shown, taken, or waved away. */
+    /** Reports an offer's life: shown, reopened, taken, or waved away. */
     trackOffer: (
-        event: 'shown' | 'taken' | 'dismissed',
+        event: 'shown' | 'reopened' | 'taken' | 'dismissed',
         word: { hint_level?: number | null; strikes?: number | null },
         index: number,
         offer: string,
@@ -67,7 +67,7 @@ export function useDailyStuckOffer({
         wordRef.current = { message: targetMessage, index: targetIndex };
     }, [targetMessage, targetIndex]);
 
-    const report = useCallback((event: 'shown' | 'taken' | 'dismissed', kind: string) => {
+    const report = useCallback((event: 'shown' | 'reopened' | 'taken' | 'dismissed', kind: string) => {
         const { message, index } = wordRef.current;
         if (!message) return;
         trackOffer(event, message, index, kind);
@@ -88,10 +88,21 @@ export function useDailyStuckOffer({
         else if (kind === 'reveal') revealWord();
     }, [report, accept, openOtherEnd, revealHint, revealWord]);
 
+    /**
+     * The player pulling a collapsed offer back open.
+     *
+     * Not an acceptance and not a dismissal: it says the offer was wanted but
+     * the timing was wrong, which is the only evidence that collapsing aside
+     * beats closing outright.
+     */
+    const onReopen = useCallback(() => {
+        if (offer) report('reopened', offer.kind);
+    }, [offer, report]);
+
     const onDismiss = useCallback(() => {
         if (offer) report('dismissed', offer.kind);
         dismiss();
     }, [offer, report, dismiss]);
 
-    return { offer, onAct, onDismiss };
+    return { offer, onAct, onReopen, onDismiss };
 }

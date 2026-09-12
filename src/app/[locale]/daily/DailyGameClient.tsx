@@ -296,7 +296,7 @@ function DailyGameBoard({
               * the page breaking rather than as the game offering something.
               */}
             <div className="relative shrink-0">
-            <StuckOffer offer={stuck.offer} onAct={stuck.onAct} onDismiss={stuck.onDismiss} />
+            <StuckOffer offer={stuck.offer} onAct={stuck.onAct} onDismiss={stuck.onDismiss} onReopen={stuck.onReopen} />
 
             <GameInput
                 game={gameState}

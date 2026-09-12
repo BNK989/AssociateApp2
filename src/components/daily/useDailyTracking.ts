@@ -203,6 +203,23 @@ export function useDailyTracking({
         track('daily_stuck_offer_shown', { ...contextFor(word, index, ms), offer });
     }, [track, contextFor]);
 
+    /**
+     * A collapsed offer the player opened back up.
+     *
+     * The one number that says whether stepping aside worked. An offer that
+     * collapses and is never touched again is indistinguishable from one that
+     * was dismissed, except that the player never had to say so — so without
+     * this the chip could be dead furniture and nothing would show it.
+     */
+    const trackOfferReopened = useCallback((
+        word: WordSnapshot,
+        index: number,
+        ms: number,
+        offer: string,
+    ) => {
+        track('daily_stuck_offer_reopened', { ...contextFor(word, index, ms), offer });
+    }, [track, contextFor]);
+
     const trackOfferTaken = useCallback((
         word: WordSnapshot,
         index: number,
@@ -251,6 +268,7 @@ export function useDailyTracking({
         trackMiss,
         trackOtherEndOpened,
         trackOfferShown,
+        trackOfferReopened,
         trackOfferTaken,
         trackOfferDismissed,
         setOtherEndOpen,

@@ -146,6 +146,12 @@ export type DailyEventProps = {
      * is an unwanted interruption. Those need to be told apart.
      */
     daily_stuck_offer_shown: WordContext & { offer: string };
+    /**
+     * A collapsed offer the player pulled back open — the only evidence that
+     * stepping aside beats closing, since an offer that collapses and is never
+     * touched again looks identical to one nobody wanted.
+     */
+    daily_stuck_offer_reopened: WordContext & { offer: string };
     daily_stuck_offer_taken: WordContext & { offer: string };
     daily_stuck_offer_dismissed: WordContext & { offer: string };
 

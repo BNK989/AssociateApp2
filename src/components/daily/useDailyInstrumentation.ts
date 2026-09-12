@@ -152,15 +152,15 @@ export function useDailyInstrumentation({
     }, []);
 
     /**
-     * The three halves of an offer's life, reported against the word it
-     * appeared on.
+     * An offer's life, reported against the word it appeared on: shown, opened
+     * back up after it stepped aside, taken, or waved away.
      *
      * Takes the word and index from the caller rather than holding the board,
      * for the same reason every other callback here does: this hook is glue and
      * must not become a second source of truth about which word is in play.
      */
     const trackOffer = useCallback((
-        event: 'shown' | 'taken' | 'dismissed',
+        event: 'shown' | 'reopened' | 'taken' | 'dismissed',
         word: { hint_level?: number | null; strikes?: number | null },
         index: number,
         offer: string,
@@ -169,6 +169,7 @@ export function useDailyInstrumentation({
         const tracking = trackingRef.current;
 
         if (event === 'shown') tracking.trackOfferShown(word, index, ms, offer);
+        else if (event === 'reopened') tracking.trackOfferReopened(word, index, ms, offer);
         else if (event === 'taken') tracking.trackOfferTaken(word, index, ms, offer);
         else tracking.trackOfferDismissed(word, index, ms, offer);
     }, []);

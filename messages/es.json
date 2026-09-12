@@ -244,6 +244,7 @@
             "letter_action": "Muéstrame una",
             "reveal_title": "¿Seguimos adelante?",
             "reveal_action": "Revelar",
+            "reopen": "Volver a mostrar la oferta",
             "dismiss": "Descartar"
         },
         "Legend": {
