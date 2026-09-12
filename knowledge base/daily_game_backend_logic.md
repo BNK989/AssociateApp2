@@ -320,14 +320,24 @@ which is why the timer can afford to be patient.
 
 ### The grid
 
-A finished day shares as a spoiler-free result:
+A finished day shares as:
 
 ```
-Associ8 #238 — 4/4 · 50 pts
+Associ8 #238 — Buried Treasure
 🟨🟩🟦🟩
+4/4 · 50 pts · 🔥 3 day streak
+50 to beat. Your turn.
 
 https://associ8game.com/daily
 ```
+
+Four lines, in that order for a reason. The **theme** leads, so the first thing
+a reader meets is a subject rather than a serial number. The **grid** comes
+second, while it is still the most striking thing in the post. The **numbers**
+come third, because they mean nothing to someone who has not played. The
+**challenge** lands last, next to the link it wants pressed. The link keeps its
+own blank line above it so previews attach cleanly, and any part the day did not
+earn — no theme, no streak — is dropped rather than left as an empty line.
 
 | Glyph | Meaning |
 | :--- | :--- |
@@ -355,8 +365,40 @@ did not earn tells them a way the day could have gone.
 
 The property worth protecting is the one that made Wordle's grid travel: it is
 **meaningless until you have played**. It reports how the day went without
-naming a word, a hint, or the theme. The theme is itself a spoiler — knowing
-the subject is most of the work — which is why it is not in the message.
+naming a word, a hint, or the order of the chain.
+
+### Why the theme is named again
+
+It was not, between 2026-08-22 and 2026-09-12, on the grounds that knowing the
+subject is most of the work. That is true of a player who has not started — and
+the reader of a shared result is not that player. They are someone being
+recruited, and a post that says only how well a stranger did at something
+unnamed gives them nothing to be curious about. The theme is the only part of
+the day that is interesting *before* you play.
+
+What the recipient gets is a slightly easier first game: the subject, and no
+word, clue or chain order. That is the trade, made deliberately, and the grid
+itself stays shape-only for anyone who wants to strip the rest.
+
+The end screen's caption under the grid preview changed with it — it used to
+promise "no answers, no theme".
+
+### The closing line
+
+Keyed on the outcome tier (`cta_perfect` … `cta_blank` in `DailyShare`), read
+off the same squares the grid is drawn from, so the message can never brag over
+a board that says otherwise:
+
+| Tier | English copy |
+| :--- | :--- |
+| `perfect` | Whole chain, no gaps. Beat {score}? |
+| `strong` | {score} to beat. Your turn. |
+| `partial` | I left words on the board. Beat {score}? |
+| `blank` | The chain won today. Think you can crack it? |
+
+A blank day names no number to beat — "beat 0" is not a challenge — and admits
+it lost, which is the better invitation of the two: nobody opens a puzzle to
+watch someone else be good at it.
 
 Two details that look like bugs and are not:
 
@@ -540,7 +582,12 @@ mirror the emoji the share text uses, and are elements rather than emoji because
 
 `useDailyShareText` builds the string; both the end-of-game summary and the
 info screen's share button take the finished text. They used to format
-separately and had drifted — the info screen's version named the theme.
+separately and had drifted — the info screen's version named the theme, which
+is now what both of them do.
+
+The result line is assembled from separately translated fragments (score,
+streak) joined by `joinSegments`, so the spacing around the middot is decided in
+one place rather than in seven locale files.
 
 The grid glyphs live in code rather than `messages/*.json` because they are
 language-neutral. They are emoji in component code, which CLAUDE.md §3

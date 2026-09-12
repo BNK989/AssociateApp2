@@ -209,7 +209,7 @@
             "subtitle_progress": "حللت {solved} من {totalWords} كلمة.",
             "grid_label": "نتيجتك",
             "grid_alt": "نتيجتك في كلمات اليوم الـ{total}",
-            "grid_spoiler_free": "بلا إجابات ولا موضوع — يمكنك المشاركة.",
+            "grid_spoiler_free": "بلا إجابات — يمكن مشاركتها.",
             "come_back": "سلسلة جديدة غدًا.",
             "score_label": "النتيجة النهائية",
             "upsell_title": "اللعب مع الأصدقاء؟",
@@ -593,7 +593,13 @@
         "skip": "Skip"
     },
     "DailyShare": {
-        "headline": "Associ8 #{number} — {solved}/{total} · {score} نقطة",
-        "streak": "🔥 {streak} أيام متتالية"
+        "headline": "Associ8 #{number} — {theme}",
+        "headline_untitled": "Associ8 #{number}",
+        "stats": "{solved}/{total} · {score} نقطة",
+        "streak": "🔥 {streak} أيام متتالية",
+        "cta_perfect": "سلسلة كاملة بلا أخطاء. هل تتجاوز {score}؟",
+        "cta_strong": "{score} نقطة يجب تجاوزها. دورك.",
+        "cta_partial": "تركت كلمات على اللوح. هل تتجاوز {score}؟",
+        "cta_blank": "فازت السلسلة اليوم. هل تستطيع حلّها؟"
     }
 }

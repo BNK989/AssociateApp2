@@ -209,7 +209,7 @@
             "subtitle_progress": "Du hast {solved} von {totalWords} Wörtern gelöst.",
             "grid_label": "Dein Ergebnis",
             "grid_alt": "Dein Ergebnis für die {total} Wörter von heute",
-            "grid_spoiler_free": "Keine Lösungen, kein Thema – gefahrlos teilbar.",
+            "grid_spoiler_free": "Keine Lösungen — kann geteilt werden.",
             "come_back": "Morgen kommt eine neue Kette.",
             "score_label": "Endpunktzahl",
             "upsell_title": "Mit Freunden spielen?",
@@ -593,7 +593,13 @@
         "skip": "Skip"
     },
     "DailyShare": {
-        "headline": "Associ8 #{number} — {solved}/{total} · {score} Pkt",
-        "streak": "🔥 {streak} Tage in Folge"
+        "headline": "Associ8 #{number} — {theme}",
+        "headline_untitled": "Associ8 #{number}",
+        "stats": "{solved}/{total} · {score} Pkt",
+        "streak": "🔥 {streak} Tage in Folge",
+        "cta_perfect": "Ganze Kette, keine Lücke. Schaffst du mehr als {score}?",
+        "cta_strong": "{score} Punkte zu schlagen. Du bist dran.",
+        "cta_partial": "Ein paar Wörter sind liegen geblieben. Schaffst du mehr als {score}?",
+        "cta_blank": "Heute hat die Kette gewonnen. Knackst du sie?"
     }
 }

@@ -209,7 +209,7 @@
             "subtitle_progress": "Ai rezolvat {solved} din {totalWords} cuvinte.",
             "grid_label": "Rezultatul tău",
             "grid_alt": "Rezultatul tău pentru cele {total} cuvinte de azi",
-            "grid_spoiler_free": "Fără răspunsuri și fără temă — poți da mai departe.",
+            "grid_spoiler_free": "Fără răspunsuri — îl poți distribui.",
             "come_back": "Mâine apare un lanț nou.",
             "score_label": "Scor Final",
             "upsell_title": "Joci cu Prieteni?",
@@ -593,7 +593,13 @@
         "skip": "Skip"
     },
     "DailyShare": {
-        "headline": "Associ8 #{number} — {solved}/{total} · {score} pct",
-        "streak": "🔥 {streak} zile la rând"
+        "headline": "Associ8 #{number} — {theme}",
+        "headline_untitled": "Associ8 #{number}",
+        "stats": "{solved}/{total} · {score} pct",
+        "streak": "🔥 {streak} zile la rând",
+        "cta_perfect": "Lanț complet, fără greșeli. Bați {score}?",
+        "cta_strong": "{score} puncte de bătut. E rândul tău.",
+        "cta_partial": "Am lăsat cuvinte pe tablă. Bați {score}?",
+        "cta_blank": "Azi a câștigat lanțul. Crezi că îl spargi?"
     }
 }

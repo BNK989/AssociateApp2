@@ -215,7 +215,7 @@
             "subtitle_progress": "פתרתם {solved} מתוך {totalWords} מילים.",
             "grid_label": "התוצאה שלך",
             "grid_alt": "התוצאה שלכם ל־{total} המילים של היום",
-            "grid_spoiler_free": "בלי תשובות ובלי נושא — אפשר לשתף.",
+            "grid_spoiler_free": "בלי תשובות — אפשר לשתף.",
             "come_back": "מחר מגיעה שרשרת חדשה.",
             "score_label": "ניקוד סופי",
             "upsell_title": "לשחק עם חברים?",
@@ -593,7 +593,13 @@
         "debug_mode_hint": "מפיק אבחון מפורט למסוף הדפדפן. גלוי למנהלים בלבד; שחקנים לעולם אינם רואים את פלט היומן."
     },
     "DailyShare": {
-        "headline": "Associ8 #{number} — {solved}/{total} · {score} נק׳",
-        "streak": "🔥 {streak} ימים ברצף"
+        "headline": "Associ8 #{number} — {theme}",
+        "headline_untitled": "Associ8 #{number}",
+        "stats": "{solved}/{total} · {score} נק׳",
+        "streak": "🔥 {streak} ימים ברצף",
+        "cta_perfect": "שרשרת מלאה, בלי פספוס אחד. תעברו את {score}?",
+        "cta_strong": "{score} נקודות לעבור. תורכם.",
+        "cta_partial": "השארתי מילים על הלוח. תעברו את {score}?",
+        "cta_blank": "היום השרשרת ניצחה. נראה אתכם מנצחים אותה."
     }
 }

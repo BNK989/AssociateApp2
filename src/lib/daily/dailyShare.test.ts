@@ -3,6 +3,7 @@ import {
     DAILY_EPOCH,
     buildShareText,
     countSolved,
+    joinSegments,
     dailyPuzzleNumber,
     gridFor,
     squareFor,
@@ -110,44 +111,53 @@ describe('countSolved', () => {
     });
 });
 
+describe('joinSegments', () => {
+    it('joins what there is and drops what there is not', () => {
+        expect(joinSegments(['4/4 · 50 pts', null, '2 day streak'])).toBe('4/4 · 50 pts · 2 day streak');
+        expect(joinSegments(['4/4 · 50 pts', undefined, ''])).toBe('4/4 · 50 pts');
+    });
+});
+
 describe('buildShareText', () => {
     const url = 'https://associ8game.com/daily';
 
-    it('puts the grid on its own line and the link after a blank one', () => {
-        const text = buildShareText({
-            headline: 'Associ8 #238 - 3/4',
-            squares: ['clean', 'hinted', 'missed'],
-            url,
-        });
+    const base = {
+        headline: 'Associ8 #238 - Buried Treasure',
+        statsLine: '3/4 · 50 pts',
+        ctaLine: '50 to beat. Your turn.',
+        url,
+    };
 
-        expect(text).toBe(`Associ8 #238 - 3/4\n${GREEN}${YELLOW}${WHITE}\n\n${url}`);
+    it('orders theme, grid, numbers, challenge, then the link after a blank line', () => {
+        const text = buildShareText({ ...base, squares: ['clean', 'hinted', 'missed'] });
+
+        expect(text).toBe(
+            'Associ8 #238 - Buried Treasure\n'
+            + `${GREEN}${YELLOW}${WHITE}\n`
+            + '3/4 · 50 pts\n'
+            + '50 to beat. Your turn.\n'
+            + `\n${url}`,
+        );
     });
 
-    it('includes a streak line when there is one', () => {
-        const text = buildShareText({
-            headline: 'Associ8 #238 - 4/4',
-            squares: ['clean'],
-            streakLine: '3 day streak',
-            url,
-        });
+    it('leaves no empty line where a part is missing', () => {
+        const text = buildShareText({ ...base, squares: [], ctaLine: null });
 
-        expect(text.split('\n')[2]).toBe('3 day streak');
+        expect(text).toBe(`Associ8 #238 - Buried Treasure\n3/4 · 50 pts\n\n${url}`);
     });
 
-    it('gives away no word, hint, or theme', () => {
+    it('gives away no word and no hint', () => {
         const text = buildShareText({
-            headline: 'Associ8 #238 - 3/4',
+            ...base,
             squares: summarizeChain([solved(0), solved(1), gaveUp, startWord]),
-            url,
         });
 
-        // The whole point of the grid: it says how the day went, not what it was.
-        for (const secret of ['Pipe', 'Backyard Campout', 'Metal tube']) {
+        // The theme is named on purpose (see buildShareText); the answers are not.
+        for (const secret of ['Pipe', 'Metal tube']) {
             expect(text).not.toContain(secret);
         }
 
-        // Nothing beyond the caller's own headline and the link is prose --
-        // the middle of the message is squares and nothing else.
+        // The grid line is squares and nothing else.
         const [, grid] = text.split('\n');
         expect(grid).toMatch(/^[\u{1F7E8}\u{1F7E9}⬜]+$/u);
     });

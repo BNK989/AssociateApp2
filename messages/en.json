@@ -215,7 +215,7 @@
             "subtitle_progress": "You solved {solved} of {totalWords} words.",
             "grid_label": "Your result",
             "grid_alt": "Your result for today's {total} words",
-            "grid_spoiler_free": "No answers, no theme — safe to share.",
+            "grid_spoiler_free": "No answers — safe to share.",
             "come_back": "A new chain lands tomorrow.",
             "score_label": "Final Score",
             "upsell_title": "Play with Friends?",
@@ -593,7 +593,13 @@
         "debug_mode_hint": "Emits verbose diagnostics to the browser console. Visible to administrators only; players never see logger output."
     },
     "DailyShare": {
-        "headline": "Associ8 #{number} — {solved}/{total} · {score} pts",
-        "streak": "🔥 {streak} day streak"
+        "headline": "Associ8 #{number} — {theme}",
+        "headline_untitled": "Associ8 #{number}",
+        "stats": "{solved}/{total} · {score} pts",
+        "streak": "🔥 {streak} day streak",
+        "cta_perfect": "Whole chain, no gaps. Beat {score}?",
+        "cta_strong": "{score} to beat. Your turn.",
+        "cta_partial": "I left words on the board. Beat {score}?",
+        "cta_blank": "The chain won today. Think you can crack it?"
     }
 }

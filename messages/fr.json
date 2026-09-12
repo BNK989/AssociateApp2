@@ -209,7 +209,7 @@
             "subtitle_progress": "Tu as trouvé {solved} mots sur {totalWords}.",
             "grid_label": "Ton résultat",
             "grid_alt": "Ton résultat sur les {total} mots du jour",
-            "grid_spoiler_free": "Ni réponses ni thème : partage sans risque.",
+            "grid_spoiler_free": "Aucune réponse — tu peux le partager.",
             "come_back": "Une nouvelle chaîne arrive demain.",
             "score_label": "Score Final",
             "upsell_title": "Jouer avec des Amis ?",
@@ -593,7 +593,13 @@
         "skip": "Skip"
     },
     "DailyShare": {
-        "headline": "Associ8 #{number} — {solved}/{total} · {score} pts",
-        "streak": "🔥 {streak} jours d’affilée"
+        "headline": "Associ8 #{number} — {theme}",
+        "headline_untitled": "Associ8 #{number}",
+        "stats": "{solved}/{total} · {score} pts",
+        "streak": "🔥 {streak} jours d’affilée",
+        "cta_perfect": "Chaîne complète, sans accroc. Tu fais mieux que {score} ?",
+        "cta_strong": "{score} points à battre. À toi.",
+        "cta_partial": "J’ai laissé des mots en route. Tu fais mieux que {score} ?",
+        "cta_blank": "La chaîne a gagné aujourd’hui. Tu t’y risques ?"
     }
 }

@@ -5,10 +5,11 @@ import { MAX_HINT_LEVEL, MAX_STRIKES } from './dailyScoring';
  *
  * The model is Wordle's grid, and the property that made it travel is that it
  * is **meaningless until you have played**. It shows how the day went without
- * showing a single answer -- or the theme, which is itself a spoiler, since
- * knowing the subject is most of the work.
+ * showing a single answer.
  *
- * So nothing here emits a word, a hint, or a theme. Only shape.
+ * So nothing here emits a word or a hint. Only shape -- plus, since
+ * 2026-09-12, the day's theme, which is a deliberate exception argued in
+ * `buildShareText` below.
  */
 
 /** The first daily chain. Puzzle numbering counts from here. */
@@ -104,12 +105,28 @@ export function countSolved(squares: ShareSquare[]): number {
     return squares.filter((square) => square !== 'missed').length;
 }
 
+/** Separator between the parts of the result line. Spaced, so it reads in RTL too. */
+export const SEGMENT_SEPARATOR = ' \u00B7 ';
+
+/**
+ * Joins the parts of a line, dropping the ones this day did not earn.
+ *
+ * The result line is assembled from independently translated fragments -- the
+ * score, the streak -- so the spacing around the separator is decided here
+ * rather than baked into seven locale files.
+ */
+export function joinSegments(segments: Array<string | null | undefined>): string {
+    return segments.filter((segment): segment is string => Boolean(segment)).join(SEGMENT_SEPARATOR);
+}
+
 export type ShareTextArgs = {
-    /** Already-translated headline line. */
+    /** Already-translated first line: the puzzle number, and the day's theme when there is one. */
     headline: string;
     squares: ShareSquare[];
-    /** Already-translated streak line, when there is a streak worth showing. */
-    streakLine?: string | null;
+    /** Already-translated result line -- solved count, score, and the streak when there is one. */
+    statsLine: string;
+    /** Already-translated closing line, addressed to whoever reads the post. */
+    ctaLine?: string | null;
     url: string;
 };
 
@@ -118,11 +135,26 @@ export type ShareTextArgs = {
  *
  * The grid sits on its own line so it survives clients that reflow text, and
  * the link is separated by a blank line so previews attach to it cleanly.
+ *
+ * Order is doing work. The theme rides the headline, so the first thing a
+ * reader sees is a subject rather than a serial number; the grid comes second
+ * while it is still the most striking thing in the post; the numbers come
+ * third, because they mean nothing to someone who has not played; and the
+ * challenge lands last, next to the link it wants pressed.
+ *
+ * **On naming the theme.** This module used to refuse to, on the grounds that
+ * knowing the subject is most of the work. That is true of the player who has
+ * not started -- and the reader of a shared result is not that player. They are
+ * someone being recruited, and a post that says only how well a stranger did at
+ * something unnamed gives them no reason to care. The theme is the only part of
+ * the day that is interesting before you play. A recipient still gets no word,
+ * no clue and no chain order; what they get is a slightly easier first game,
+ * which is the trade this makes on purpose. The grid alone stays spoiler-free
+ * for anyone who wants it -- `gridFor` emits shape and nothing else.
  */
-export function buildShareText({ headline, squares, streakLine, url }: ShareTextArgs): string {
-    const lines = [headline, gridFor(squares)];
-
-    if (streakLine) lines.push(streakLine);
+export function buildShareText({ headline, squares, statsLine, ctaLine, url }: ShareTextArgs): string {
+    const lines = [headline, gridFor(squares), statsLine, ctaLine]
+        .filter((line): line is string => Boolean(line));
 
     lines.push('', url);
 

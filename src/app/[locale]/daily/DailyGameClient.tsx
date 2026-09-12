@@ -135,6 +135,7 @@ function DailyGameBoard({
         date,
         score: game.score,
         messages: game.messages,
+        theme,
         streak: results.streak,
     });
 
