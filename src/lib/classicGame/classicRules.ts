@@ -151,3 +151,40 @@ export function getRemainingSeconds(
 
     return remaining <= 0 ? 0 : Math.ceil(remaining / 1000);
 }
+
+/**
+ * Wrong guesses kept on one word.
+ *
+ * `MAX_STRIKES` already retires a word after three, so this is only a bound on
+ * the pathological case — two players guessing wrong in the same instant, or a
+ * retry that lands twice. The column is read on every render of the word, so it
+ * gets a ceiling rather than trusting the strike count to hold.
+ */
+export const MAX_RECORDED_GUESSES = 12;
+
+/**
+ * A word's guess list after a wrong answer.
+ *
+ * The list *is* the letter feedback: `computeGuessState` reads it for the
+ * positions a player has confirmed (green) and the letters they have shown to
+ * be in the answer (orange). Nothing else records them, so a guess dropped here
+ * is a green letter the player earned and never sees.
+ *
+ * Blanks and repeats are dropped — a repeat reveals nothing that is not already
+ * revealed. Once at the ceiling the list stops growing rather than rolling:
+ * dropping the oldest guess would un-reveal letters, and feedback that goes
+ * backwards is worse than feedback that stops.
+ */
+export function appendGuess(
+    existing: string[] | null | undefined,
+    guess: string,
+): string[] {
+    const current = (existing ?? []).filter((g) => typeof g === 'string' && g.trim() !== '');
+    const trimmed = guess.trim();
+
+    if (trimmed === '') return current;
+    if (current.length >= MAX_RECORDED_GUESSES) return current;
+    if (current.some((g) => g.toLowerCase() === trimmed.toLowerCase())) return current;
+
+    return [...current, trimmed];
+}

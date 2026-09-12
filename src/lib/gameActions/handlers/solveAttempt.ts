@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { appendGuess } from '@/lib/classicGame/classicRules';
 import { createLogger } from '@/lib/logger';
 import { createAdminClient } from '@/lib/supabase-admin';
 import type { ActionContext, ActionPayload } from '../context';
@@ -86,18 +87,56 @@ async function applyCorrectGuess(
     await completeGameOrAdvanceTurn(ctx);
 }
 
-/** Records a wrong guess: one strike, and every streak back to zero. */
+/**
+ * Whether an update failed only because a column is not in the database yet.
+ *
+ * PostgREST answers `PGRST204` from its schema cache; Postgres answers `42703`
+ * when the statement reaches it.
+ */
+function isMissingColumn(error: { code?: string | null }): boolean {
+    return error.code === 'PGRST204' || error.code === '42703';
+}
+
+/**
+ * Records a wrong guess: the guess itself, one strike, and every streak back to
+ * zero.
+ *
+ * The guess is what colours the word's tiles for everyone in the room, so it is
+ * appended to the row rather than kept on the guesser's client — a refetch or
+ * another player's screen would otherwise never see it. The list is read back
+ * from the fetched row, not from the payload, so two players guessing at once
+ * cannot drop each other's letters.
+ */
 async function applyWrongGuess(
     ctx: ActionContext,
-    targetId: string,
+    target: { id: string; guesses?: string[] | null },
+    guess: string,
     currentStrikes: number | undefined,
 ): Promise<void> {
     const { strikes, isOutOfPlay } = applyStrike(currentStrikes);
+    const strike = { strikes, is_solved: isOutOfPlay };
 
-    await ctx.supabase
+    const { error } = await ctx.supabase
         .from('messages')
-        .update({ strikes, is_solved: isOutOfPlay })
-        .eq('id', targetId);
+        .update({ ...strike, guesses: appendGuess(target.guesses, guess) })
+        .eq('id', target.id);
+
+    if (error && isMissingColumn(error)) {
+        // Apply supabase/migrations/20260912120000_add_guesses_to_messages.sql.
+        // The strike still has to land without it, or a wrong guess costs
+        // nothing and the word can never be lost.
+        log.warn('wrong_guess', 'messages.guesses is missing, recording the strike only — apply 20260912120000_add_guesses_to_messages.sql', {
+            game_id: ctx.gameId, user_id: ctx.user.id, message_id: target.id, code: error.code,
+        });
+
+        const { error: strikeError } = await ctx.supabase
+            .from('messages')
+            .update(strike)
+            .eq('id', target.id);
+        if (strikeError) throw strikeError;
+    } else if (error) {
+        throw error;
+    }
 
     await ctx.supabase
         .from('game_players')
@@ -161,5 +200,10 @@ export async function handleSolveAttempt(
         return;
     }
 
-    await applyWrongGuess(ctx, targetId, readNumber(payload, 'strikes'));
+    await applyWrongGuess(
+        ctx,
+        targetMessage,
+        readString(payload, 'guess') ?? '',
+        readNumber(payload, 'strikes'),
+    );
 }

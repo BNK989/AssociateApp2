@@ -115,6 +115,16 @@ The rules that decide state are pure and tested in `cipher/cipherRules.ts`:
 - `computeGuessState(text, guesses)` — `greenIndices` (guessed in position) and
   `revealedChars` (letters shown to be in the answer). `revealedChars` is a set
   of *characters*, so one guess colours every occurrence of that letter.
+  **Where `guesses` comes from differs by mode:** the daily game keeps the list
+  in client state (`useDailyMoves` appends on a miss), a room keeps it on the row
+  in `messages.guesses`, appended by `appendGuess` in both the optimistic client
+  update (`useSolveActions`) and the authoritative write
+  (`gameActions/handlers/solveAttempt`). A room needs the column because every
+  wrong guess must survive the post-action refetch and reach the other players'
+  screens — the letters are the room's, not the guesser's, exactly like
+  `hint_level`. Until 2026-09-12 the room wrote nothing at all: a wrong guess
+  recorded a strike and no letters, so "deven" against "seven" earned four
+  confirmed letters and showed none of them.
 - `readMaskTile(...)` — one position of a mask into `{ char, state, displaced }`.
   Used by `CipherChars`.
 - `buildScrambleItems(...)` — the tiles `ScrambleView` animates, including the

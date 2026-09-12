@@ -359,22 +359,32 @@ in Hebrew/Arabic (§13).
 - `src/types/database.types.ts` (590 lines) is a generated artifact and is
   exempt from the §2 line cap.
 - Emojis in ~8 component files and in `messages/*.json` copy (10–13 per locale).
-- Six migrations are written but **not yet applied**:
+- Seven migrations are written but **not yet applied**:
   `20260822090000_lock_down_function_execute.sql`,
   `20260822090100_pin_function_search_path.sql`,
   `20260822090200_document_api_usage_rls.sql`,
   `20260822140000_create_game_settings.sql`,
   `20260823090000_add_settings_revision_to_daily_results.sql`,
-  `20260907120000_seed_daily_feedback_settings.sql` and
-  `20260911120000_seed_letter_pool_settings.sql`.
+  `20260907120000_seed_daily_feedback_settings.sql`,
+  `20260911120000_seed_letter_pool_settings.sql` and
+  `20260912120000_add_guesses_to_messages.sql`.
   For the first, deploy the app first — it removes the EXECUTE grant the
   pre-deploy code relied on for `distribute_game_points`. See
   [knowledge base/database_security.md](knowledge%20base/database_security.md).
-  The last two are additive and independent of the others; until they are
-  applied the game runs on compiled defaults and results record without
-  attribution, both of which are logged with the filename to apply. See
+  `20260823090000_add_settings_revision_to_daily_results.sql` and
+  `20260911120000_seed_letter_pool_settings.sql` are additive and independent of
+  the others; until they are applied the game runs on compiled defaults and
+  results record without attribution, both of which are logged with the filename
+  to apply. See
   [knowledge base/game_master_guide.md](knowledge%20base/game_master_guide.md).
-  The last one seeds the `daily_feedback` row and depends on
+  `20260912120000_add_guesses_to_messages.sql` adds `messages.guesses`, which
+  is what colours a room's letters. Until it is applied a wrong guess in a
+  multiplayer room records its strike and no letters — the write falls back to
+  the strike alone and logs `[api/game/action] wrong_guess` with the filename to
+  apply, so the word can still be lost rather than the whole update failing.
+  The daily game is unaffected; it keeps its guesses in client state.
+
+  The `seed_daily_feedback_settings` one seeds the `daily_feedback` row and depends on
   `20260822140000_create_game_settings.sql` having run first; until then reward
   feedback plays on the compiled `REWARD_FEEDBACK` defaults and the admin
   panel's feedback section cannot save. See

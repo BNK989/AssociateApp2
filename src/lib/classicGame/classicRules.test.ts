@@ -1,14 +1,17 @@
 import { describe, it, expect } from 'vitest';
+import { computeGuessState } from '@/components/cipher/cipherRules';
 import { GAME_CONFIG } from '@/lib/gameConfig';
 import { calculateMessageValue, HINT_COSTS } from '@/lib/gameLogic';
 import {
     ACCURACY_PENALTY,
+    appendGuess,
     canActOnTarget,
     findTargetMessage,
     getHintDeduction,
     getRemainingSeconds,
     getSolveValue,
     getStreakMultiplier,
+    MAX_RECORDED_GUESSES,
     validateOutgoingMessage,
 } from './classicRules';
 
@@ -204,5 +207,51 @@ describe('getRemainingSeconds', () => {
 
     it('reports the full duration at the moment it starts', () => {
         expect(getRemainingSeconds(ago(0), 10_000, NOW)).toBe(10);
+    });
+});
+
+describe('appendGuess', () => {
+    it('records the first guess against a word with none', () => {
+        expect(appendGuess(undefined, 'deven')).toEqual(['deven']);
+        expect(appendGuess(null, 'deven')).toEqual(['deven']);
+        expect(appendGuess([], 'deven')).toEqual(['deven']);
+    });
+
+    it('keeps earlier guesses, oldest first', () => {
+        expect(appendGuess(['deven'], 'zeven')).toEqual(['deven', 'zeven']);
+    });
+
+    it('trims the guess', () => {
+        expect(appendGuess([], '  deven  ')).toEqual(['deven']);
+    });
+
+    it('drops a blank guess rather than recording an empty string', () => {
+        expect(appendGuess(['deven'], '   ')).toEqual(['deven']);
+        expect(appendGuess([], '')).toEqual([]);
+    });
+
+    it('drops a repeat, in any case — it reveals nothing new', () => {
+        expect(appendGuess(['deven'], 'deven')).toEqual(['deven']);
+        expect(appendGuess(['Deven'], 'deVEN')).toEqual(['Deven']);
+    });
+
+    it('discards blanks already sitting in the stored list', () => {
+        expect(appendGuess(['deven', '  '], 'zeven')).toEqual(['deven', 'zeven']);
+    });
+
+    it('stops at the ceiling instead of dropping earned letters', () => {
+        const full = Array.from({ length: MAX_RECORDED_GUESSES }, (_, i) => `guess${i}`);
+
+        expect(appendGuess(full, 'onemore')).toEqual(full);
+    });
+
+    it('is what the tiles read: a near miss earns its confirmed letters', () => {
+        // The reported bug, end to end. "deven" against "seven" is four letters
+        // in place; before the guess was recorded anywhere the word stayed grey.
+        const { greenIndices, revealedChars } = computeGuessState('seven', appendGuess([], 'deven'));
+
+        expect([...greenIndices].sort()).toEqual([1, 2, 3, 4]);
+        expect(revealedChars.has('e')).toBe(true);
+        expect(revealedChars.has('d')).toBe(false);
     });
 });

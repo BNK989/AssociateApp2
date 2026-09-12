@@ -5,6 +5,7 @@ import { calculatePointDistribution, calculateSimilarity } from '@/lib/gameLogic
 import { checkAnswer } from '@/lib/letterPool/answerCheck';
 import { createLogger } from '@/lib/logger';
 import {
+    appendGuess,
     canActOnTarget,
     findTargetMessage,
     getSolveValue,
@@ -111,8 +112,16 @@ export function useSolveActions({
         if (!isMatch) {
             const strikes = (target.strikes || 0) + 1;
 
+            // The guess is the letter feedback. Recorded optimistically here so
+            // the colours land with the shake rather than a round-trip later,
+            // and again on the server, which is what survives the refetch.
             setMessages((prev) => prev.map((m) => (m.id === target.id
-                ? { ...m, strikes, is_solved: strikes >= MAX_STRIKES ? true : m.is_solved }
+                ? {
+                    ...m,
+                    strikes,
+                    guesses: appendGuess(m.guesses, input),
+                    is_solved: strikes >= MAX_STRIKES ? true : m.is_solved,
+                }
                 : m)));
 
             setShakeMessageId(target.id);
@@ -127,6 +136,7 @@ export function useSolveActions({
                 targetId: target.id,
                 isMatch: false,
                 strikes: target.strikes || 0,
+                guess: input,
             });
             return;
         }

@@ -70,6 +70,7 @@ Stores messages sent within games.
 | `hint_level` | integer | `0` | Current hint level revealed for this message |
 | `ai_hint` | text | - | AI-generated hint for the message |
 | `strikes` | integer | `0` | Number of failed guess attempts |
+| `guesses` | text[] | `'{}'` | Wrong guesses made against this word, oldest first. Read by `computeGuessState` to colour confirmed (green) and found (orange) letters; shared by the whole room, like `hint_level` |
 | `author_points` | integer | `0` | Points awarded to the author |
 | `winner_points` | integer | `0` | Points awarded to the solver |
 | `created_at` | timestamptz | `now()` | Message timestamp |
