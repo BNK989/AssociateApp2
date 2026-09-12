@@ -4,7 +4,9 @@ import { usePostHog } from 'posthog-js/react';
 import { useTranslations } from 'next-intl';
 import { supabase } from '@/lib/supabase';
 import { createLogger } from '@/lib/logger';
-import { useWalkthrough, type WalkthroughStep } from '@/components/ui/walkthrough';
+import { Keyboard, Lightbulb, Link2, Palette } from 'lucide-react';
+import { useWalkthrough, type WalkthroughStep } from '@/components/walkthrough';
+import { MAX_STRIKES } from '@/lib/gameConfig';
 
 const log = createLogger('daily/tutorial');
 
@@ -65,13 +67,17 @@ export function useDailyTutorial({ authUser, authLoading, words, date }: UseDail
             title: t('step1_title'),
             content: t('step1_desc'),
             position: introPosition,
+            icon: Link2,
         },
         {
             id: 'step-input',
             targetId: 'game-input-area',
             title: t('step2_title'),
-            content: t('step2_desc'),
+            // Read from the same constant the board enforces, so the tour
+            // cannot promise a number of tries the game does not give.
+            content: t('step2_desc', { strikes: MAX_STRIKES }),
             position: 'top',
+            icon: Keyboard,
         },
         {
             id: 'step-colors',
@@ -79,6 +85,7 @@ export function useDailyTutorial({ authUser, authLoading, words, date }: UseDail
             title: t('step3_title'),
             content: t('step3_desc'),
             position: 'top',
+            icon: Palette,
         },
         {
             id: 'step-hint',
@@ -86,6 +93,7 @@ export function useDailyTutorial({ authUser, authLoading, words, date }: UseDail
             title: t('step4_title'),
             content: t('step4_desc'),
             position: 'top',
+            icon: Lightbulb,
         },
     ], [t, words.length]);
 
@@ -94,6 +102,7 @@ export function useDailyTutorial({ authUser, authLoading, words, date }: UseDail
         localStorage.removeItem(SEEN_KEY);
 
         startTour(buildSteps('center'), {
+            finishLabel: t('play_now'),
             onComplete: () => {
                 markSeen();
                 posthog.capture('daily_tutorial_restarted_completed', { date });
@@ -103,7 +112,7 @@ export function useDailyTutorial({ authUser, authLoading, words, date }: UseDail
                 posthog.capture('daily_tutorial_restarted_skipped', { date });
             },
         });
-    }, [buildSteps, startTour, markSeen, posthog, date]);
+    }, [buildSteps, startTour, markSeen, posthog, date, t]);
 
     // First run: start the tour unless this player has already seen it.
     useEffect(() => {
@@ -131,13 +140,17 @@ export function useDailyTutorial({ authUser, authLoading, words, date }: UseDail
 
             setTimeout(() => {
                 if (cancelled) return;
-                startTour(buildSteps('bottom'), { onComplete: markSeen, onSkip: markSeen });
+                startTour(buildSteps('bottom'), {
+                    finishLabel: t('play_now'),
+                    onComplete: markSeen,
+                    onSkip: markSeen,
+                });
             }, START_DELAY_MS);
         };
 
         maybeStart();
         return () => { cancelled = true; };
-    }, [authLoading, authUser, words.length, startTour, buildSteps, markSeen]);
+    }, [authLoading, authUser, words.length, startTour, buildSteps, markSeen, t]);
 
     return { restart };
 }

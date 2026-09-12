@@ -4,16 +4,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { AnimatePresence } from 'framer-motion';
 import { WalkthroughOverlay } from './WalkthroughOverlay';
 import { WalkthroughPopover } from './WalkthroughPopover';
-
-export type WalkthroughStep = {
-    id: string;
-    targetId: string; // The DOM ID of the element to highlight
-    title: string;
-    content: string;
-    position?: 'top' | 'bottom' | 'left' | 'right' | 'center';
-    onNext?: () => void;
-    onPrev?: () => void;
-};
+import { scrollTargetIntoView, useTargetRect } from './useTargetRect';
+import type { WalkthroughOptions, WalkthroughStep } from './types';
 
 type WalkthroughContextType = {
     startTour: (steps: WalkthroughStep[], options?: WalkthroughOptions) => void;
@@ -26,23 +18,27 @@ type WalkthroughContextType = {
     currentStep: WalkthroughStep | null;
 };
 
-export type WalkthroughOptions = {
-    onSkip?: () => void;
-    onComplete?: () => void;
-};
-
 const WalkthroughContext = createContext<WalkthroughContextType | undefined>(undefined);
 
+/**
+ * The tour, rendered once above the whole app.
+ *
+ * The scrim and the card are separate elements sharing one measurement of the
+ * step's target (`useTargetRect`), so they cannot disagree about where it is.
+ */
 export function WalkthroughProvider({ children }: { children: React.ReactNode }) {
     const [steps, setSteps] = useState<WalkthroughStep[]>([]);
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [isOpen, setIsOpen] = useState(false);
     const [options, setOptions] = useState<WalkthroughOptions>({});
 
+    const currentStep = isOpen && steps[currentStepIndex] ? steps[currentStepIndex] : null;
+    const targetRect = useTargetRect(currentStep?.targetId ?? '');
+
     const startTour = useCallback((newSteps: WalkthroughStep[], newOptions?: WalkthroughOptions) => {
         if (newSteps.length === 0) return;
         setSteps(newSteps);
-        if (newOptions) setOptions(newOptions);
+        setOptions(newOptions ?? {});
         setCurrentStepIndex(0);
         setIsOpen(true);
     }, []);
@@ -61,38 +57,50 @@ export function WalkthroughProvider({ children }: { children: React.ReactNode })
     }, [options]);
 
     const nextStep = useCallback(() => {
+        steps[currentStepIndex]?.onNext?.();
+
         if (currentStepIndex < steps.length - 1) {
-            steps[currentStepIndex].onNext?.();
-            setCurrentStepIndex(prev => prev + 1);
+            setCurrentStepIndex((prev) => prev + 1);
         } else {
-            // Finished
-            steps[currentStepIndex].onNext?.(); // Call onNext of last step too if exists
             endTour(true);
         }
     }, [currentStepIndex, steps, endTour]);
 
     const prevStep = useCallback(() => {
-        if (currentStepIndex > 0) {
-            steps[currentStepIndex].onPrev?.();
-            setCurrentStepIndex(prev => prev - 1);
-        }
+        if (currentStepIndex === 0) return;
+        steps[currentStepIndex]?.onPrev?.();
+        setCurrentStepIndex((prev) => prev - 1);
     }, [currentStepIndex, steps]);
 
-    const currentStep = isOpen && steps[currentStepIndex] ? steps[currentStepIndex] : null;
-
-    // Handle Escape Key
+    // Bring each step's subject on screen before it is pointed at.
     useEffect(() => {
+        if (currentStep) scrollTargetIntoView(currentStep.targetId);
+    }, [currentStep]);
+
+    /**
+     * Keyboard control.
+     *
+     * The arrows follow the *reading* direction rather than the screen: in
+     * Hebrew and Arabic the tour runs right to left, so ArrowLeft advances it.
+     * Mapping them physically meant the back button and the back key pointed
+     * opposite ways for half the app's locales.
+     */
+    useEffect(() => {
+        if (!isOpen) return;
+
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (isOpen && e.key === 'Escape') {
+            const rtl = document.documentElement.dir === 'rtl';
+
+            if (e.key === 'Escape') {
                 endTour(false);
+                return;
             }
-            // ... keys ...
-            if (isOpen && e.key === 'ArrowRight') {
-                nextStep();
-            }
-            if (isOpen && e.key === 'ArrowLeft') {
-                prevStep();
-            }
+
+            const forward = rtl ? 'ArrowLeft' : 'ArrowRight';
+            const backward = rtl ? 'ArrowRight' : 'ArrowLeft';
+
+            if (e.key === forward) nextStep();
+            if (e.key === backward) prevStep();
         };
 
         window.addEventListener('keydown', handleKeyDown);
@@ -108,22 +116,26 @@ export function WalkthroughProvider({ children }: { children: React.ReactNode })
             currentStepIndex,
             totalSteps: steps.length,
             isOpen,
-            currentStep
+            currentStep,
         }}>
             {children}
+
             <AnimatePresence>
-                {isOpen && currentStep && (
-                    <>
-                        <WalkthroughOverlay targetId={currentStep.targetId} onClickOutside={() => endTour(false)} />
+                {currentStep && (
+                    <React.Fragment key="walkthrough">
+                        <WalkthroughOverlay rect={targetRect} onClickOutside={() => endTour(false)} />
                         <WalkthroughPopover
+                            key={currentStep.id}
                             step={currentStep}
+                            targetRect={targetRect}
+                            finishLabel={options.finishLabel}
                             current={currentStepIndex}
                             total={steps.length}
                             onNext={nextStep}
                             onPrev={prevStep}
                             onSkip={() => endTour(false)}
                         />
-                    </>
+                    </React.Fragment>
                 )}
             </AnimatePresence>
         </WalkthroughContext.Provider>

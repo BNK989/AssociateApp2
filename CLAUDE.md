@@ -60,6 +60,11 @@ a file that has grown past it needs splitting, not pinning.
 - The app supports **light and dark** themes. Every UI change must be verified in both.
 - Use semantic Tailwind tokens (`bg-background`, `text-foreground`, `border-border`,
   `text-muted-foreground`) — never hardcoded colors.
+- The product accent is `bg-brand` / `text-brand-foreground`, with
+  `bg-brand-subtle` / `text-brand-subtle-foreground` for tinted chips. Defined in
+  [globals.css](src/app/globals.css). Reach for these rather than spelling the
+  purple out as `bg-purple-600`, which is a hardcoded colour with no dark-theme
+  answer — the reason the older surfaces each improvised one.
 
 ## 6. Internationalization
 
@@ -89,6 +94,11 @@ The app runs LTR (en/de/es/fr/ro) and RTL (he/ar) from the same markup.
 **Exception:** vendored shadcn primitives in `src/components/ui/` may retain
 upstream physical properties until upstream changes them — do not fight the library.
 Everything in `src/components/` outside `ui/` and everything in `src/app/` must be logical.
+
+> The exemption is scoped to the *directory*, so anything parked there inherits
+> it whether or not it came from shadcn. The walkthrough did, for months, and
+> silently skipped this rule until it was moved to `src/components/walkthrough/`
+> on 2026-09-12. Do not put app-authored components under `ui/`.
 
 ## 8. Error Handling & The Debugger
 
@@ -280,6 +290,9 @@ is what effects exist for:
 - `useCountUp`, `useWelcomeOverlay`, `useHintNudge`, `useHintTooltip`,
   `useAutoHint`, `useDailyGame`, `useDailySettings` — sync animation or
   preference state to changed props.
+- `useTargetRect` — measures the element a walkthrough step points at. The
+  rectangle only exists once the DOM has committed, and the scrim and the card
+  both read it, so it is measured once here rather than twice in the leaves.
 - `useHaloAnchor` — resolves the target bubble's element for the letter halo to
   portal into. The composer and the bubble are cousins, so nothing in the tree
   hands one to the other; `useBubbleWidth` reads the board the same way for the

@@ -22,6 +22,10 @@
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-subtle: var(--brand-subtle);
+  --color-brand-subtle-foreground: var(--brand-subtle-foreground);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -160,6 +164,35 @@ html[dir="rtl"] body {
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+}
+
+/* ---------------------------------------------------------------------------
+   Brand accent tokens
+
+   The base shadcn palette this app uses is neutral: `--primary` is near-black
+   in light and near-white in dark, which is right for ordinary controls and
+   says nothing about the product. Associ8's accent has always been purple, but
+   it was spelled `bg-purple-600` at each call site -- a hardcoded colour under
+   CLAUDE.md 5, and one with no dark-theme answer, so every surface improvised.
+
+   `--brand` holds the same hue in both themes, which is what the purple-600
+   sites were already doing and is guaranteed legible under white text either
+   way. Only the *subtle* pair, used for tinted chips behind an icon, changes:
+   a pale wash cannot survive on a dark ground.
+--------------------------------------------------------------------------- */
+
+:root {
+  --brand: oklch(0.558 0.288 302.321);
+  --brand-foreground: oklch(0.985 0 0);
+  --brand-subtle: oklch(0.946 0.033 307.174);
+  --brand-subtle-foreground: oklch(0.496 0.265 301.924);
+}
+
+.dark {
+  --brand: oklch(0.558 0.288 302.321);
+  --brand-foreground: oklch(0.985 0 0);
+  --brand-subtle: oklch(0.38 0.12 303 / 35%);
+  --brand-subtle-foreground: oklch(0.811 0.111 293.571);
 }
 
 @layer base {

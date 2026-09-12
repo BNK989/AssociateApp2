@@ -10,7 +10,7 @@ import { GameHeader } from '@/components/game/GameHeader';
 import { GameInput } from '@/components/game/GameInput';
 import { GameShell } from '@/components/game/GameShell';
 import { DailyEndGamePopover } from '@/components/game/DailyEndGamePopover';
-import { WalkthroughProvider } from '@/components/ui/walkthrough';
+import { WalkthroughProvider } from '@/components/walkthrough';
 import { GAME_CONFIG } from '@/lib/gameConfig';
 import { buildDailyGameState, buildDailyPlayers, MOCK_USER } from '@/components/daily/dailyPlayers';
 import { useAutoHint } from '@/components/daily/useAutoHint';
