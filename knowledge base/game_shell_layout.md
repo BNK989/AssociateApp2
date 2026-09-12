@@ -131,6 +131,27 @@ One knock-on: a `contenteditable` clips at its padding box, so long text scrolls
 character counter is therefore anchored to the field edge and paints on the
 field's own background, which hides the text passing beneath it.
 
+### The free-for-all chip floats above the composer's rule
+
+`GameInput` announces free-for-all with a `Badge` absolutely positioned against
+the control row. It is parked **wholly above** the composer's top border
+(`bottom-full` + `mb-3`), not straddling it.
+
+That is a fix, not a preference. At `-top-3` the chip sat across the 1px rule
+that separates the composer from the message list, and because the chip fades in
+and out, every frame of that fade let the rule show through the pill — which
+reads exactly like a line struck through the words. The pill's `bg-muted` is
+opaque, so the defect only appeared *while animating*, which is why it looked
+intermittent. The entry now settles downward (`y: -4 → 0`) so no frame of the
+motion crosses the rule either.
+
+The chip is `pointer-events-none`: it hangs over the last chat bubble, and it is
+an announcement, not a control.
+
+`AutoHintBadge` still uses `-top-3`, anchored to the hint button rather than the
+row. It straddles the same rule, and if it is ever given a fade it will show the
+same artefact.
+
 ### What a bubble looks like depends on its stage
 
 `ChatArea` frames the list; the individual bubble changes shape across its own

@@ -216,10 +216,19 @@ export function GameInput({
                     <AnimatePresence>
                         {isSolving && turn.isFreeForAll && !isSinglePlayer && (
                             <motion.div
-                                initial={{ opacity: 0, y: 10 }}
+                                // Clear of the composer's top rule, not across
+                                // it. At `-top-3` the pill straddled that 1px
+                                // border, and since it fades in and out the
+                                // border showed through the translucent pill
+                                // mid-animation and read as a line struck
+                                // through the words. `bottom-full` + `mb-3`
+                                // parks it wholly above the rule, and the entry
+                                // now settles downward so no frame of it ever
+                                // crosses the line either.
+                                initial={{ opacity: 0, y: -4 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: 10 }}
-                                className="absolute -top-3 end-14 z-10"
+                                exit={{ opacity: 0, y: -4 }}
+                                className="pointer-events-none absolute bottom-full end-14 z-30 mb-3"
                             >
                                 <Badge variant="subtle" className="shadow-sm">
                                     {t('free_for_all')}
