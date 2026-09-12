@@ -563,6 +563,45 @@ Two details that are load-bearing:
   size players meet most. The sequence visits all three edges in its first three
   draws and still lands on the same 5 / 3 / 2 split over ten.
 
+### Letters are extracted from the word (2026-09-12)
+
+A letter used to appear at its spot from nothing — scale 0.4 to 1, which is a
+notification badge's pop, not an object a player is meant to read as
+substantial. Worse, it had no cause: something simply materialised beside the
+bubble.
+
+It does have a cause, and always the same one: **the word gave it up.** So a
+letter now starts inside the bubble and travels out to its place. That is also
+the vocabulary the flight already speaks — letters move between the word and
+their places — so the feature has one grammar rather than two, and `layoutHalo`
+derives the approach from the edge a letter hangs on (`enterX`/`enterY`).
+
+**It settles to a tilt, never to flat**, and that is the point rather than a
+detail. A letter being *placed* unwinds all the way to zero, because flat means
+settled. A letter *arriving* swings through its resting angle and stops there,
+because a tilt means this letter has no place yet. The two animations state the
+same rule pointing opposite ways.
+
+### The stagger was measuring the wrong thing
+
+The delay was `order * 0.04` where `order` is a letter's index in the whole
+halo. So a single letter deduced from a guess waited on however many letters
+happened to be hanging there already: seven in, and it appeared a quarter of a
+second after the keystroke that earned it, for no reason the player could see.
+
+It now counts within the **batch that just arrived** (`useArrivalStagger`), which
+is also the only thing distinguishing a bought hint from a deduced letter — and
+deliberately so. A hint delivers a handful and they cascade; a guess delivers one
+and it arrives at once. Quantity does the work, so there is one arrival to design
+and tune rather than three, and nothing has to tell the player which button they
+just pressed.
+
+Rejected along the way, each for a reason worth keeping: a **bounce** (it
+contradicts stillness-means-settled), a **blur dissolve** (a filter on up to
+thirteen elements is the wrong thing to ask a phone for), and **sparkles**
+(wrong register for a word game, and that kind of flourish delights once and
+irritates on the twentieth play).
+
 ### The flight, measured rather than inferred (2026-09-12)
 
 A framer `layoutId` handoff is still impossible here, and for the reason it

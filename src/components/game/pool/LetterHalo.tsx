@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import { MAX_DRIFTING_TILES, SPAWN_SPRING } from './poolMotion';
+import { ARRIVAL_STAGGER, MAX_DRIFTING_TILES, MAX_STAGGER_STEPS, SPAWN_SPRING } from './poolMotion';
 import type { HaloPlacement } from '@/lib/letterPool/haloLayout';
 
 type LetterHaloProps = {
@@ -53,6 +53,8 @@ export function LetterHalo({ placements, hidden, anchor }: LetterHaloProps) {
     // compositor. A long phrase keeps its angles and loses the bob.
     const drifting = placements.length <= MAX_DRIFTING_TILES && !reduced;
 
+    const arrival = useArrivalStagger(placements.map((placement) => placement.id));
+
     if (!anchor) return null;
 
     return createPortal(
@@ -61,7 +63,7 @@ export function LetterHalo({ placements, hidden, anchor }: LetterHaloProps) {
             aria-label={t('aria_label', { count: placements.length })}
         >
             <AnimatePresence initial={false}>
-                {placements.map((placement, order) => (
+                {placements.map((placement) => (
                         <motion.div
                             key={placement.id}
                             className="absolute"
@@ -71,10 +73,23 @@ export function LetterHalo({ placements, hidden, anchor }: LetterHaloProps) {
                             }}
                             // x/y go through framer rather than a CSS transform,
                             // or animating `scale` would overwrite the centring.
-                            initial={reduced ? { x: '-50%', y: '-50%' } : { x: '-50%', y: '-50%', scale: 0.4, opacity: 0 }}
-                            animate={{ x: '-50%', y: '-50%', scale: 1, opacity: 1 }}
+                            // The offsets are added to the -50% that centres the
+                            // chip on its spot, so the letter starts inside the
+                            // bubble and travels out to its place.
+                            initial={reduced
+                                ? { x: '-50%', y: '-50%' }
+                                : {
+                                    x: `calc(-50% + ${placement.enterX}px)`,
+                                    y: `calc(-50% + ${placement.enterY}px)`,
+                                    rotate: placement.enterTwist,
+                                    scale: 0.72,
+                                    opacity: 0,
+                                }}
+                            animate={{ x: '-50%', y: '-50%', rotate: 0, scale: 1, opacity: 1 }}
                             exit={reduced ? { opacity: 0 } : { x: '-50%', y: '-50%', scale: 0.5, opacity: 0 }}
-                            transition={reduced ? { duration: 0 } : { ...SPAWN_SPRING, delay: order * 0.04 }}
+                            transition={reduced
+                                ? { duration: 0 }
+                                : { ...SPAWN_SPRING, delay: arrival.delayOf(placement.id) }}
                         >
                             <span
                                 // Measured by the flight, which needs to find
@@ -131,4 +146,42 @@ export function useHaloAnchor(targetId?: string): HTMLElement | null {
     }, [targetId]);
 
     return anchor;
+}
+
+/**
+ * When each letter of an arrival appears.
+ *
+ * A batch cascades; a lone letter does not wait. The delay is fixed the first
+ * time a letter is seen and never recomputed, because a `transition` that
+ * changes underneath a running animation is a rendering bug waiting to happen.
+ *
+ * The seen-set is rebuilt from the current letters each pass rather than added
+ * to, so it cannot grow without bound and a new word starts a fresh cascade.
+ *
+ * The refs are written during render, which is safe here for the reason React
+ * allows a memoisation cache to be: the pass is idempotent. A render that is
+ * discarded and repeated recomputes `step` from zero and writes the same delays
+ * back, and nothing outside this component can observe either ref.
+ */
+function useArrivalStagger(ids: string[]) {
+    const seen = useRef(new Set<string>());
+    const delays = useRef(new Map<string, number>());
+
+    let step = 0;
+    for (const id of ids) {
+        if (seen.current.has(id)) continue;
+        delays.current.set(id, Math.min(step, MAX_STAGGER_STEPS) * ARRIVAL_STAGGER);
+        step += 1;
+    }
+
+    useEffect(() => {
+        seen.current = new Set(ids);
+        for (const id of delays.current.keys()) {
+            if (!seen.current.has(id)) delays.current.delete(id);
+        }
+        // The ids are the dependency; their array identity changes every render.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [ids.join(',')]);
+
+    return { delayOf: (id: string) => delays.current.get(id) ?? 0 };
 }

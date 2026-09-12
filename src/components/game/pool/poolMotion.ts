@@ -34,13 +34,40 @@ export const SETTLE_SPRING: Transition = {
     mass: 0.5,
 };
 
-/** A letter arriving in the halo for the first time. */
+/**
+ * A letter arriving in the halo for the first time.
+ *
+ * Softer and heavier than it was. The old values sprang a chip from 40% to full
+ * size in a blink, which is a cartoon pop — fine for a notification badge,
+ * wrong for an object the player is meant to read as substantial. This settles
+ * rather than snaps, with just enough overshoot to register as a landing.
+ */
 export const SPAWN_SPRING: Transition = {
     type: 'spring',
-    stiffness: 520,
-    damping: 30,
-    mass: 0.7,
+    stiffness: 380,
+    damping: 26,
+    mass: 0.9,
 };
+
+/**
+ * The gap between letters of the same arrival, in seconds.
+ *
+ * Counted within the batch that just arrived, not by position in the halo. Keyed
+ * on the latter — which is what this did — a single letter deduced from a guess
+ * waited on however many letters happened to already be hanging there: seven in,
+ * and it appeared a full quarter-second after the keystroke that earned it, for
+ * no reason the player could see.
+ *
+ * It is also the only thing distinguishing a bought hint from a deduced letter,
+ * and deliberately so. A hint delivers a handful and they cascade; a guess
+ * delivers one and it arrives at once. The quantity does the work, so there is
+ * one arrival to design and tune rather than three, and nothing has to tell the
+ * player which button they just pressed.
+ */
+export const ARRIVAL_STAGGER = 0.055;
+
+/** Where the cascade stops lengthening, so a long phrase does not trickle in. */
+export const MAX_STAGGER_STEPS = 8;
 
 /**
  * Above this many letters the idle drift is switched off.

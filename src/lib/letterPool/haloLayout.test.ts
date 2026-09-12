@@ -132,3 +132,65 @@ describe('layoutHalo', () => {
         expect(layoutHalo([])).toEqual([]);
     });
 });
+
+describe('layoutHalo — where a letter comes from', () => {
+    const bySide = (count = 11) => {
+        const out = { trailing: [] as number[][], bottom: [] as number[][], top: [] as number[][] };
+        for (const placement of layoutHalo(pool('abcdefghijk'.slice(0, count)))) {
+            const x = parse(placement.inlineStart);
+            const y = parse(placement.blockStart);
+            const entry = [placement.enterX, placement.enterY];
+            if (x.percent === 100) out.trailing.push(entry);
+            else if (y.percent === 100) out.bottom.push(entry);
+            else out.top.push(entry);
+        }
+        return out;
+    };
+
+    // A letter that materialises where it lives has no cause. Travelling out of
+    // the bubble says the word gave it up, which is the only thing that ever
+    // makes one appear.
+    it('enters from inside the bubble, whichever edge it hangs on', () => {
+        const sides = bySide();
+        for (const [x, y] of sides.trailing) {
+            expect(x).toBeLessThan(0);
+            expect(y).toBe(0);
+        }
+        for (const [x, y] of sides.bottom) {
+            expect(y).toBeLessThan(0);
+            expect(x).toBe(0);
+        }
+        for (const [x, y] of sides.top) {
+            expect(y).toBeGreaterThan(0);
+            expect(x).toBe(0);
+        }
+    });
+
+    it('comes from far enough to read, and not so far it flies in', () => {
+        for (const placement of layoutHalo(pool('abcdefghijk'))) {
+            const reach = Math.hypot(placement.enterX, placement.enterY);
+            expect(reach).toBeGreaterThanOrEqual(24);
+            expect(reach).toBeLessThanOrEqual(35);
+        }
+    });
+
+    it('mirrors the approach along with the halo', () => {
+        const normal = layoutHalo(pool('abcdefg'));
+        const mirrored = layoutHalo(pool('abcdefg'), true);
+        normal.forEach((placement, index) => {
+            expect(mirrored[index].enterX).toBeCloseTo(-placement.enterX, 4);
+            expect(mirrored[index].enterY).toBe(placement.enterY);
+        });
+    });
+
+    // Arriving settles *to* a tilt; being placed unwinds all the way to flat.
+    // The two animations state the same rule pointing opposite ways, so the
+    // twist has to swing through the resting angle rather than ease down to it.
+    it('swings in against the resting tilt rather than with it', () => {
+        for (const placement of layoutHalo(pool('abcdefghijk'))) {
+            expect(Math.sign(placement.enterTwist)).not.toBe(Math.sign(placement.tilt));
+            expect(Math.abs(placement.enterTwist)).toBeGreaterThanOrEqual(9);
+            expect(Math.abs(placement.enterTwist)).toBeLessThanOrEqual(16);
+        }
+    });
+});

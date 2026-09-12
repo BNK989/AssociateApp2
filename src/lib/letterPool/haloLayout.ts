@@ -98,6 +98,10 @@ const TOP_OUT = -14;
 const TOP_START = 48;
 const TOP_SPAN = 44;
 
+/** How far inside the bubble a letter starts before travelling out to its spot. */
+const ENTER_MIN = 24;
+const ENTER_SPAN = 11;
+
 /**
  * How far a letter may wander inside its own band, as a share of the band.
  *
@@ -124,6 +128,26 @@ export interface HaloPlacement {
     scale: number;
     /** Negative animation delay, seconds, so chips do not bob in unison. */
     phase: number;
+    /**
+     * Where the letter comes from, as an offset from its resting spot.
+     *
+     * Always *inward* — a letter emerges from the word and travels out to its
+     * place, because that is the only thing that ever causes one to appear. A
+     * chip that simply materialises where it lives has no cause; one that is
+     * extracted from the bubble says the word gave it up, which is exactly what
+     * a hint buys and what a guess earns.
+     */
+    enterX: number;
+    enterY: number;
+    /**
+     * The extra angle it carries in, unwound to the resting tilt on arrival.
+     *
+     * Note the direction: an arrival settles *to* a tilt, never to flat, while
+     * a letter being placed unwinds all the way to zero. That is the game's own
+     * rule stated by two animations pointing opposite ways — a tilt means this
+     * letter has no place, and flat means it has one.
+     */
+    enterTwist: number;
 }
 
 /**
@@ -164,15 +188,23 @@ export function layoutHalo(letters: PoolLetter[], mirror = false): HaloPlacement
         const across = unit(seed, 1);
 
         const spot = place(edge, along, across);
+        const tilt = (seed % 2 === 0 ? 1 : -1) * (4 + ((seed >>> 3) % 15));
+        const reach = ENTER_MIN + unit(seed, 2) * ENTER_SPAN;
+        const enter = inward(edge, reach);
 
         return {
             id: letter.id,
             char: letter.char,
             inlineStart: offset(mirror ? 100 - spot.xPct : spot.xPct, mirror ? -spot.xPx : spot.xPx),
             blockStart: offset(spot.yPct, spot.yPx),
-            tilt: (seed % 2 === 0 ? 1 : -1) * (4 + ((seed >>> 3) % 15)),
+            tilt,
             scale: chip * (0.95 + ((seed >>> 11) % 4) * 0.04),
             phase: ((seed >>> 19) % 13) * 0.34,
+            enterX: Math.round((mirror ? -enter.x : enter.x) * 10) / 10,
+            enterY: Math.round(enter.y * 10) / 10,
+            // Swung through the resting angle rather than eased down to it, so
+            // the letter reads as being turned over and set down.
+            enterTwist: (tilt >= 0 ? -1 : 1) * (9 + ((seed >>> 23) % 8)),
         };
     });
 }
@@ -182,6 +214,18 @@ interface Spot {
     xPx: number;
     yPct: number;
     yPx: number;
+}
+
+/**
+ * Which way the bubble is, from a letter on this edge.
+ *
+ * The offset it enters from, so travelling to zero carries it outward — out of
+ * the word and into its place.
+ */
+function inward(edge: Edge, reach: number): { x: number; y: number } {
+    if (edge === 'trailing') return { x: -reach, y: 0 };
+    if (edge === 'bottom') return { x: 0, y: -reach };
+    return { x: 0, y: reach };
 }
 
 /** One letter's spot: `along` runs down or across its edge, `across` straddles it. */
