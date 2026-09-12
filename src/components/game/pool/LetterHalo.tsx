@@ -1,21 +1,28 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import { layoutHalo } from '@/lib/letterPool/haloLayout';
 import { MAX_DRIFTING_TILES, SPAWN_SPRING } from './poolMotion';
-import type { PoolLetter } from '@/lib/letterPool/poolRules';
+import type { HaloPlacement } from '@/lib/letterPool/haloLayout';
 
 type LetterHaloProps = {
-    letters: PoolLetter[];
-    /** Pool ids currently sitting in a slot; they leave the halo. */
-    placed: Set<string>;
+    /**
+     * Where each loose letter hangs. Solved by the composer rather than here,
+     * because the flight needs the same angles to unwind them — one solve, one
+     * answer, no chance of the chip and its flight disagreeing.
+     */
+    placements: HaloPlacement[];
+    /**
+     * Pool ids whose chip must not be visible: placed, or still flying home
+     * after a backspace. They are **hidden, not unmounted** — an unmounted chip
+     * has no rectangle, and the flight is measured after the commit that placed
+     * the letter. It is also what a letter flies back to.
+     */
+    hidden: Set<string>;
     /** The target bubble. The halo is portalled into it, so it moves with it. */
     anchor: HTMLElement | null;
-    /** True when the target is the player's own message, on the other side. */
-    mirror: boolean;
 };
 
 /**
@@ -37,26 +44,24 @@ type LetterHaloProps = {
  * the same moment. Two halves of one event, told in two places, with nothing
  * for the browser to get wrong.
  */
-export function LetterHalo({ letters, placed, anchor, mirror }: LetterHaloProps) {
+export function LetterHalo({ placements, hidden, anchor }: LetterHaloProps) {
     const t = useTranslations('GameRoom.Pool');
     const reduced = Boolean(useReducedMotion());
-    const placements = useMemo(() => layoutHalo(letters, mirror), [letters, mirror]);
 
     // Motion is a signal — "these letters have no place yet" — and every tile on
     // screen emitting it at once is noise as well as the densest case for the
     // compositor. A long phrase keeps its angles and loses the bob.
-    const drifting = letters.length <= MAX_DRIFTING_TILES && !reduced;
+    const drifting = placements.length <= MAX_DRIFTING_TILES && !reduced;
 
     if (!anchor) return null;
 
     return createPortal(
         <div
             className="pointer-events-none absolute inset-0 z-20"
-            aria-label={t('aria_label', { count: letters.length })}
+            aria-label={t('aria_label', { count: placements.length })}
         >
             <AnimatePresence initial={false}>
                 {placements.map((placement, order) => (
-                    placed.has(placement.id) ? null : (
                         <motion.div
                             key={placement.id}
                             className="absolute"
@@ -72,6 +77,9 @@ export function LetterHalo({ letters, placed, anchor, mirror }: LetterHaloProps)
                             transition={reduced ? { duration: 0 } : { ...SPAWN_SPRING, delay: order * 0.04 }}
                         >
                             <span
+                                // Measured by the flight, which needs to find
+                                // this exact chip from outside the component.
+                                id={`halo-${placement.id}`}
                                 // Everything the chip looks like lives in
                                 // `.halo-letter`, because the face, the cast
                                 // shadow and the lit edge are one object and
@@ -82,12 +90,15 @@ export function LetterHalo({ letters, placed, anchor, mirror }: LetterHaloProps)
                                     '--pool-tilt': `${placement.tilt}deg`,
                                     '--pool-phase': `-${placement.phase.toFixed(2)}s`,
                                     fontSize: `calc(1.05rem * ${placement.scale.toFixed(2)})`,
+                                    // Hidden, not removed: it still has to be
+                                    // measurable, and it is where the letter
+                                    // comes back to.
+                                    visibility: hidden.has(placement.id) ? 'hidden' : 'visible',
                                 } as React.CSSProperties}
                             >
                                 {placement.char}
                             </span>
                         </motion.div>
-                    )
                 ))}
             </AnimatePresence>
         </div>,

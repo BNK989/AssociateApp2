@@ -1,4 +1,5 @@
-import { AnimatePresence, motion } from 'framer-motion';
+import { useMemo } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import type { User } from '@supabase/supabase-js';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +7,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import type { GameState, Message, Player } from '@/hooks/useGameLogic';
 import { MAX_HINT_LEVEL } from '@/lib/daily/dailyScoring';
 import { LETTER_POOL } from '@/lib/gameConfig';
+import { layoutHalo } from '@/lib/letterPool/haloLayout';
 import { LetterHalo, useHaloAnchor } from '@/components/game/pool/LetterHalo';
+import { LetterFlight } from '@/components/game/pool/LetterFlight';
+import { useLetterFlights } from '@/components/game/pool/useLetterFlights';
 import { useSlotTyping } from './input/useSlotTyping';
 import { RevealButton } from './input/RevealButton';
 import { HintButton } from './input/HintButton';
@@ -15,6 +19,10 @@ import { getEffectiveHintLevel, getHintTier, getTurnState, isSubmitDisabled } fr
 import { useHintNudge } from './input/useHintNudge';
 import { useHintTooltip } from './input/useHintTooltip';
 import { usePlaceholder } from './input/usePlaceholder';
+
+/** Stable empties, so a composer with no word does not rebuild them per render. */
+const EMPTY_IDS: Set<string> = new Set();
+const EMPTY_PLACEMENTS: Map<string, number> = new Map();
 
 type GameInputProps = {
     game: GameState;
@@ -136,6 +144,27 @@ export function GameInput({
     // the composer only has to know which element to hand them to.
     const haloAnchor = useHaloAnchor(stripActive ? targetMessage?.id : undefined);
 
+    // Placing a letter is one state change told in two places at once. The
+    // composer owns both ends, so it is the only place that can keep them in
+    // step: it hides the chip, holds the slot blank, and flies the letter
+    // between them.
+    const reducedMotion = Boolean(useReducedMotion());
+
+    // The one solve of where the letters hang, shared by the halo that draws
+    // them and the flight that has to leave from exactly there.
+    const isOwnTarget = Boolean(user?.id) && targetMessage?.user_id === user?.id;
+    const haloPlacements = useMemo(
+        () => layoutHalo(model?.pool ?? [], isOwnTarget),
+        [model?.pool, isOwnTarget],
+    );
+
+    const flight = useLetterFlights({
+        placed: model?.placed ?? EMPTY_IDS,
+        placements: model?.placements ?? EMPTY_PLACEMENTS,
+        letters: haloPlacements,
+        reduced: reducedMotion,
+    });
+
     // Matches `CipherText`, so the strip and the word above it never disagree
     // about which way the answer reads.
     const dir = targetMessage && /[֐-׿]/.test(targetMessage.content) ? 'rtl' : 'ltr';
@@ -175,12 +204,13 @@ export function GameInput({
             <TooltipProvider>
                 {model && (
                     <LetterHalo
-                        letters={model.pool}
-                        placed={model.placed}
+                        placements={haloPlacements}
+                        hidden={flight.hidden}
                         anchor={haloAnchor}
-                        mirror={Boolean(user?.id) && targetMessage?.user_id === user?.id}
                     />
                 )}
+
+                <LetterFlight flights={flight.flights} onLand={flight.land} />
 
                 <div className="flex gap-2 items-center relative">
                     <AnimatePresence>
@@ -249,6 +279,7 @@ export function GameInput({
                             longest: model.longest,
                             caretIndex: model.caretIndex,
                             dir,
+                            held: flight.held,
                         } : null}
                         typedValue={typed}
                         onTypedChange={model ? onTypedChange : undefined}

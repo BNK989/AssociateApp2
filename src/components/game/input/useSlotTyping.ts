@@ -46,10 +46,10 @@ type UseSlotTypingArgs = {
  * guess arriving and turning an orange letter green all land on the same path
  * as an ordinary keystroke, instead of each needing its own handling.
  *
- * The animation does not need the events either. A letter moves because it is
- * rendered somewhere new and framer matches it by `layoutId`, so there is no
- * imperative flight to keep in step with state, and nothing to get stuck
- * mid-air if a re-render interrupts it.
+ * The animation does not need the events either. `useLetterFlights` watches the
+ * placements this produces and launches a flight when one appears, so nothing
+ * here has to fire, sequence or clean up an animation — a letter that is placed
+ * twice is simply placed twice, and the flight follows.
  */
 export function useSlotTyping({ text, guesses, mode, mask, targetId, setInput }: UseSlotTypingArgs) {
     const [typed, setTyped] = useState('');

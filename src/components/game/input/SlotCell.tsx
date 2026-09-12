@@ -7,6 +7,12 @@ type SlotCellProps = {
     /** The caret sits here: this is the next cell the player will fill. */
     isCaret: boolean;
     reduced: boolean;
+    /**
+     * The letter is still in the air. The cell keeps its rule and its caret and
+     * draws nothing, so the player never sees the same letter in two places at
+     * once — the flight arrives, and only then does this fill.
+     */
+    held?: boolean;
 };
 
 /**
@@ -21,7 +27,7 @@ type SlotCellProps = {
  * second one, so a green in the strip is the same green as the green in the
  * word above it.
  */
-export function SlotCell({ slot, isCaret, reduced }: SlotCellProps) {
+export function SlotCell({ slot, isCaret, reduced, held = false }: SlotCellProps) {
     if (slot.kind === 'gap') {
         // A space is drawn as the gap between word groups, never as a cell; a
         // hyphen or apostrophe is scenery the player is given.
@@ -63,7 +69,7 @@ export function SlotCell({ slot, isCaret, reduced }: SlotCellProps) {
             }`}
             style={{ width: 'var(--slot-w)', height: 'calc(var(--slot-w) * 1.2)' }}
         >
-            {slot.char && (
+            {slot.char && !held && (
                 <motion.span
                     // No `layoutId` pairing with the halo tile. The halo lives in
                     // the scrolling message list and this cell in the composer,

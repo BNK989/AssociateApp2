@@ -11,6 +11,8 @@ type SlotStripProps = {
     dir: 'ltr' | 'rtl';
     /** A keystroke was just rolled back; shake once to say so. */
     rejected?: boolean;
+    /** Pool ids still flying in. Their cells stay blank until they land. */
+    held?: Set<string>;
 };
 
 /**
@@ -38,7 +40,7 @@ type SlotStripProps = {
  * player how long the answer was. The strip says that natively, so the
  * composer's height is unchanged.
  */
-export function SlotStrip({ groups, longest, caretIndex, dir, rejected = false }: SlotStripProps) {
+export function SlotStrip({ groups, longest, caretIndex, dir, rejected = false, held }: SlotStripProps) {
     const reduced = Boolean(useReducedMotion());
 
     return (
@@ -66,6 +68,7 @@ export function SlotStrip({ groups, longest, caretIndex, dir, rejected = false }
                             slot={slot}
                             isCaret={slot.index === caretIndex}
                             reduced={reduced}
+                            held={Boolean(slot.poolId && held?.has(slot.poolId))}
                         />
                     ))}
                 </span>

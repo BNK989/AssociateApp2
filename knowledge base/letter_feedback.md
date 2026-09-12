@@ -205,6 +205,8 @@ draws that tile down into the slot. Placing is an act, not an inference.
 | The rules, pure and tested | `src/lib/letterPool/poolRules.ts` (43 tests) |
 | Where a loose letter hangs | `src/lib/letterPool/haloLayout.ts` (12 tests) |
 | What a loose letter looks like | `.halo-letter` in `src/app/letter-pool.css` |
+| The flight into the slot | `src/lib/letterPool/flightPath.ts` (13 tests) |
+| Its timing and both ends | `src/components/game/pool/useLetterFlights.ts`, `LetterFlight.tsx` |
 | Typed ↔ pool ↔ strip binding | `src/components/game/input/useSlotTyping.ts` (11 tests) |
 | The halo | `src/components/game/pool/LetterHalo.tsx` |
 | The strip | `src/components/game/input/SlotStrip.tsx`, `SlotCell.tsx` |
@@ -561,15 +563,59 @@ Two details that are load-bearing:
   size players meet most. The sequence visits all three edges in its first three
   draws and still lands on the same 5 / 3 / 2 split over ten.
 
-### The flight is gone, deliberately
+### The flight, measured rather than inferred (2026-09-12)
 
-The halo hangs in the scrolling message list; the strip sits in the composer.
-Framer's shared-layout projection across a scroll container reports stale
-positions — the same trap that stopped the old pool flying up from the bubble —
-so a `layoutId` pairing would launch the letter from the wrong place. `SlotCell`
-no longer carries one. Placing is told twice instead, once at each end and in
-the same moment: the halo letter shrinks and fades where it hangs, the slot cell
-pops. Two halves of one event, with nothing for the browser to get wrong.
+A framer `layoutId` handoff is still impossible here, and for the reason it
+always was: the halo hangs in the scrolling message list, the strip sits in the
+composer, and framer's shared-layout projection across a scroll container
+reports stale positions. But that only rules out *framer doing the measuring*.
+
+So the measuring is ours. At the moment a letter is placed both ends are on
+screen, so `useLetterFlights` reads both with `getBoundingClientRect` and
+`LetterFlight` animates a copy in a **fixed layer on `document.body`** — viewport
+coordinates, no containing block, no scroll parent, nothing left for projection
+to be wrong about. `planFlight` turns the two rectangles into keyframes and is
+pure and tested; the component only reads the DOM and hands the result over.
+
+**Chips are hidden, not unmounted, when placed.** That is what makes the
+measurement possible: the effect runs after the commit that placed the letter,
+and an unmounted chip has no rectangle. It is also what a letter flies back to
+on a backspace, which is why that direction costs almost nothing.
+
+The composer owns both ends and therefore owns the timing. It hides the chip,
+holds the slot's glyph back (`SlotCell`'s `held`), and drops both the moment the
+flight lands — otherwise the player sees the same letter in two places at once.
+
+What the flight does, and why each part is there:
+
+- **Lands flat.** The chip's tilt unwinds to zero. This is the only part
+  carrying meaning rather than polish: everywhere else a tilt means *this letter
+  has no place* and stillness means settled, so a letter straightening as it
+  arrives is that rule stated in motion.
+- **Lobs.** A quadratic arc, bowed upward whichever way it travels — picking the
+  side by the direction of travel makes a flight left and a flight right curve
+  opposite ways, which reads as two different animations.
+- **Sheds the keycap.** Face and shadow dissolve over the second half, so the
+  letter arrives as strip text rather than as a chip dropped on top of one.
+- **Leaves a trace.** The chip's outline lingers 190ms where it stood. Without
+  it the departure has no cause — something simply appears in mid-air.
+- **Arrives at the size the cell will draw it.** Scaling by the two *boxes*
+  landed the letter at 13px where the cell draws it at 15px, so it popped bigger
+  the instant it arrived, which is the one thing a docking animation must not
+  do. `planFlight` scales by the two *type* sizes instead, duplicating
+  `1.85em` (the chip's height) and `0.62` (`--slot-font`) from CSS rather than
+  forcing a `getComputedStyle` on the typing path. A test measures the result.
+
+Position keyframes are sampled at *eased* times and played back linearly.
+Handing framer one easing curve for a keyframe array applies it between every
+pair, and a fourteen-segment path stutters fourteen times.
+
+A scroll mid-flight lands every flight at once. The path was measured against a
+list that has since moved, and finishing early is honest where playing out a
+flight from the wrong origin is not.
+
+Under `prefers-reduced-motion` there are no flights: the letter is simply where
+it landed.
 
 ### Reading the keystrokes instead of imposing a shape (2026-09-11)
 

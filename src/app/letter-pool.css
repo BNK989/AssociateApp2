@@ -57,23 +57,44 @@
  * lowercase `l` is a vertical bar — the production build drew the two loose
  * letters of PULL as two ticks.
  */
+/* The paint, shared with the copy that flies into the slot so the two cannot
+   drift apart. `.halo-skin` is that copy's face only: it carries no size of its
+   own, because it is stretched over whatever the flight is currently scaled to,
+   and it dissolves on the way down while the glyph rides all the way. */
+.halo-letter,
+.halo-skin {
+  border-radius: 0.6em;
+  background: var(--popover);
+  border: 1px solid color-mix(in srgb, var(--tile-present) 55%, transparent);
+  box-shadow:
+    0 3px 8px rgb(0 0 0 / 0.16),
+    0 1px 2px rgb(0 0 0 / 0.12),
+    inset 0 1px 0 rgb(255 255 255 / 0.7);
+}
+
+.halo-skin {
+  position: absolute;
+  inset: 0;
+}
+
+/* The trace left where a chip was. Outline only: a filled one reads as a
+   second chip sitting on the bubble rather than as the absence of the one that
+   just left. */
+.halo-ghost {
+  background: transparent;
+  box-shadow: none;
+}
+
 .halo-letter {
   display: grid;
   place-items: center;
   min-width: 1.85em;
   height: 1.85em;
   padding-inline: 0.28em;
-  border-radius: 0.6em;
-  background: var(--popover);
-  border: 1px solid color-mix(in srgb, var(--tile-present) 55%, transparent);
   color: var(--tile-present);
   font-weight: 700;
   line-height: 1;
   text-transform: uppercase;
-  box-shadow:
-    0 3px 8px rgb(0 0 0 / 0.16),
-    0 1px 2px rgb(0 0 0 / 0.12),
-    inset 0 1px 0 rgb(255 255 255 / 0.7);
   /* The resting angle, kept when the drift is switched off: a chip sitting at
      its own angle still says "this letter has no place", and it is the cue a
      reduced-motion player is left with. */
@@ -82,7 +103,8 @@
   animation-delay: var(--pool-phase, 0s);
 }
 
-.dark .halo-letter {
+.dark .halo-letter,
+.dark .halo-skin {
   box-shadow:
     0 4px 10px rgb(0 0 0 / 0.55),
     0 1px 3px rgb(0 0 0 / 0.7),

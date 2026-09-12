@@ -25,7 +25,14 @@ type MessageInputProps = {
      * player is editing — in skip mode those are not the same string, because
      * the greens are given rather than typed.
      */
-    strip?: { groups: SlotGroup[]; longest: number; caretIndex: number | null; dir: 'ltr' | 'rtl' } | null;
+    strip?: {
+        groups: SlotGroup[];
+        longest: number;
+        caretIndex: number | null;
+        dir: 'ltr' | 'rtl';
+        /** Pool ids still in the air; those cells stay blank until they land. */
+        held?: Set<string>;
+    } | null;
     typedValue?: string;
     onTypedChange?: (value: string) => void;
     /** What the strip would keep of a raw edit, so the field can roll back the rest. */
@@ -145,6 +152,7 @@ export function MessageInput({
                         longest={strip.longest}
                         caretIndex={strip.caretIndex}
                         dir={strip.dir}
+                        held={strip.held}
                     />
                 )}
 
