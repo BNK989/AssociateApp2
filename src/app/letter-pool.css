@@ -38,13 +38,55 @@
   }
 }
 
+/*
+ * A found letter, drawn as a keycap floating over the conversation.
+ *
+ * It shipped as a bare glyph and read as a stray mark — no body, nothing to say
+ * it was a game piece rather than a rendering artefact. Three things fix that
+ * and each is doing a job:
+ *
+ * - **A face.** `--popover` is the app's own raised surface, so the chip is the
+ *   same material as every other thing that floats above the page, in both
+ *   themes, without inventing a colour.
+ * - **A cast shadow.** This is the only cue that says *above* rather than *on*.
+ *   Without it a chip overlapping the bubble reads as a hole cut into it.
+ * - **A lit top edge.** One inset highlight line, which is what makes the face
+ *   read as tilted toward a light source rather than as flat fill.
+ *
+ * The glyph is uppercase because the strip in the composer is, and because a
+ * lowercase `l` is a vertical bar — the production build drew the two loose
+ * letters of PULL as two ticks.
+ */
 .halo-letter {
-  /* The resting angle, kept when the drift is switched off: a letter sitting at
-     its own angle still says "this has no place", and it is the cue a
+  display: grid;
+  place-items: center;
+  min-width: 1.85em;
+  height: 1.85em;
+  padding-inline: 0.28em;
+  border-radius: 0.6em;
+  background: var(--popover);
+  border: 1px solid color-mix(in srgb, var(--tile-present) 55%, transparent);
+  color: var(--tile-present);
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+  box-shadow:
+    0 3px 8px rgb(0 0 0 / 0.16),
+    0 1px 2px rgb(0 0 0 / 0.12),
+    inset 0 1px 0 rgb(255 255 255 / 0.7);
+  /* The resting angle, kept when the drift is switched off: a chip sitting at
+     its own angle still says "this letter has no place", and it is the cue a
      reduced-motion player is left with. */
   transform: rotate(var(--pool-tilt, 0deg));
   animation: pool-bob 4.4s ease-in-out infinite;
   animation-delay: var(--pool-phase, 0s);
+}
+
+.dark .halo-letter {
+  box-shadow:
+    0 4px 10px rgb(0 0 0 / 0.55),
+    0 1px 3px rgb(0 0 0 / 0.7),
+    inset 0 1px 0 rgb(255 255 255 / 0.1);
 }
 
 .halo-still {

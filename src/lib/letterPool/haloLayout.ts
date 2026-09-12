@@ -1,7 +1,7 @@
 import { seedFromId, type PoolLetter } from './poolRules';
 
 /**
- * Where a found letter sits around the word it belongs to.
+ * Where a found letter hangs around the word it belongs to.
  *
  * The pool used to be a docked strip above the composer, and no amount of
  * jitter rescued it: a horizontal band whose only content is letters is read
@@ -9,97 +9,107 @@ import { seedFromId, type PoolLetter } from './poolRules';
  * leave the band the same way they once left the word line — by leaving the
  * container that was making the claim.
  *
- * They now hang around the target bubble itself. Three things follow from that
- * and none of them is decoration:
+ * They now hang around the target bubble itself. Three things follow, and none
+ * of them is decoration:
  *
- * - **There is no reading direction.** An arc has no first item. The eye jumps
- *   between letters instead of scanning them, which is the honest depiction of
- *   a set with no order.
+ * - **There is no reading direction.** A scatter has no first item. The eye
+ *   jumps between letters instead of scanning them, which is the honest
+ *   depiction of a set with no order.
  * - **They belong to a word, visibly.** The strip never said *which* word its
- *   letters came from; the player had to hold that themselves.
+ *   letters came from; the player held that themselves.
  * - **They scroll with it.** The halo is a child of the bubble, so it needs no
- *   measurement, no `ResizeObserver` and no scroll listener, and it cannot
- *   drift out of sync with the thing it annotates. Scroll the word away and its
- *   letters go with it, which is correct: they are that word's letters.
+ *   measurement, no `ResizeObserver` and no scroll listener, and cannot drift
+ *   out of sync with the thing it annotates.
  *
- * Everything here is expressed as CSS offsets from the bubble's own box — `calc`
- * of a percentage and a pixel pad — so the layout is resolved by the browser
- * against the live element. A bubble that grows a hint panel spreads its halo
- * wider for free.
+ * Everything here is a CSS offset from the bubble's own box — `calc` of a
+ * percentage and a pixel pad — so the browser resolves it against the live
+ * element. A bubble that grows a hint panel spreads its halo for free.
  */
 
 /**
- * The free region, in the bubble's own coordinates.
+ * The three usable edges, and the order they are handed out in.
  *
- * Two attempts failed here and both are worth keeping, because each one looked
- * right in the abstract:
+ * Each edge owns its own stretch and stops short of the corners, because the
+ * bands below only guarantee spacing *within* an edge. Left overlapping, a
+ * bottom-edge chip and a trailing-edge chip met at the corner and sat on top of
+ * each other — which no amount of per-edge spacing could have caught.
  *
- * 1. **An arc.** Parameterised by angle, most of the range lands on whichever
- *    edge is longest, and a chat bubble is tall. Seven letters came out as a
- *    near-vertical column down the trailing side — a list, read top to bottom,
- *    the same defect as the row it replaced wearing a different coat.
- * 2. **A wide column beside the bubble.** The scatter was right, but the column
- *    is not there. A bubble is `max-w-[70%]`, which suggests about a third of
- *    the row is free — but a bubble carrying a hint panel runs close to that
- *    maximum, and what is actually left is nearer 40px than 85. Letters sampled
- *    50px out ran off the edge of the screen.
+ * Never the leading one: the avatar is there, and so is every neighbouring
+ * bubble, which is `max-w-[70%]` on the same side.
  *
- * So the letters **hug the bubble's perimeter**, straddling it: a little
- * outside, a little over its padding. That is the only region whose size does
- * not depend on how wide the bubble happens to be, which makes it the only one
- * that cannot overflow. It also reads better than the column did — the letters
- * cling to the word they belong to rather than floating in a margin near it.
+ * The cycle visits all three in its first three draws. A plain weighted modulo
+ * gets the proportions right and still fails the commonest case — with three
+ * letters it put two on the trailing edge, which is a vertical line, the column
+ * this layout exists to avoid.
  *
- * Three edges, never the leading one: the avatar is there, and so is every
- * neighbouring bubble, which is `max-w-[70%]` on the same side.
+ * Over ten letters it lands on 5 bottom, 3 trailing, 2 top, which is what the
+ * edges can actually hold. The split is not a taste call: the bottom edge is
+ * the full width of the bubble (~180px of usable run), the trailing edge only
+ * its height (~127px), and the top edge just the trailing half of its width. An
+ * even-handed split put five chips on the trailing edge, which needs 120px of
+ * the 127 available and leaves no room to jitter — so they touched.
  */
+type Edge = 'trailing' | 'bottom' | 'top';
 
-/** Which edge a letter hugs: below `TRAILING_SHARE` the trailing one, below `BOTTOM_SHARE` the bottom, else the top. */
-const TRAILING_SHARE = 5;
-const BOTTOM_SHARE = 8;
+const EDGE_CYCLE: Edge[] = [
+    'bottom', 'trailing', 'top',
+    'bottom', 'trailing', 'bottom',
+    'top', 'bottom', 'trailing', 'bottom',
+];
 
 /**
- * The order the edges are handed out in.
+ * Straddling the trailing edge: how far inside and outside it a chip's centre
+ * may sit, and how far past the corners it may run.
  *
- * A plain `index % 10` weights the edges correctly and still fails the case
- * that prompted all of this: with three letters it put two of them on the
- * trailing edge, which is a vertical line — the column again, at exactly the
- * pool size a player sees most often. This sequence visits all three edges in
- * its first three draws and still lands on the same 5 / 3 / 2 split over ten.
+ * These are centre points and a letter is a ~30px chip drawn around one, so
+ * they are tighter than they look: a centre 18px out puts the chip's far side
+ * at 33px, and the free column beside a wide bubble is about 40px. Reaching
+ * further in is what starts covering the word being solved.
  */
-const EDGE_ORDER = [0, 6, 8, 2, 5, 9, 4, 7, 1, 3];
+const TRAILING_IN = -8;
+const TRAILING_OUT = 18;
+const TRAILING_TOP = 2;
+const TRAILING_SPAN = 86;
 
-/** Straddling the trailing edge: from just inside it to just outside. */
-const TRAILING_IN = -10;
-const TRAILING_OUT = 26;
+/**
+ * Straddling the bottom edge, within the 16px gap to the next message.
+ *
+ * The run starts a third of the way across — further toward the leading side
+ * and a chip sits over the top corner of the message below — and ends past the
+ * trailing corner, where the free column continues and there is nothing to
+ * collide with.
+ */
+const BOTTOM_IN = -6;
+const BOTTOM_OUT = 14;
+const BOTTOM_START = 32;
+const BOTTOM_SPAN = 80;
 
-/** Straddling the bottom edge, within the 16px gap to the next message. */
-const BOTTOM_IN = -8;
-const BOTTOM_OUT = 16;
-/** …and where across it, from the bubble's middle to its trailing corner. */
-const BOTTOM_START = 35;
-const BOTTOM_SPAN = 65;
-
-/** Straddling the top edge, trailing half only — the leading half is the previous message. */
-const TOP_IN = 6;
+/**
+ * Straddling the top edge, trailing half only.
+ *
+ * The tightest of the three, because it reaches into the 16px row gap: a centre
+ * 14px above the edge already puts a chip's top at 29px, kissing the previous
+ * bubble's lower trailing corner. That corner is empty in practice — a bubble
+ * is `max-w-[70%]` and leading-aligned — but it is the first thing to check on
+ * a real board.
+ */
+const TOP_IN = 2;
 const TOP_OUT = -14;
-const TOP_START = 55;
-const TOP_SPAN = 45;
+const TOP_START = 48;
+const TOP_SPAN = 44;
 
 /**
- * How many placements each letter tries before taking the best.
+ * How far a letter may wander inside its own band, as a share of the band.
  *
- * Seeded sampling alone clumps: two letters land on top of each other often
- * enough to look like a defect. Each letter therefore proposes this many spots
- * and keeps whichever is furthest from the letters already placed — farthest
- * point sampling, which spreads a set without solving for the whole arrangement
- * at once, and stays deterministic because the candidates are seeded.
+ * Not 1: at a full band's width two neighbours can meet at the boundary, which
+ * is the overlap the bands exist to prevent.
  */
-const CANDIDATES = 8;
+const BAND_JITTER = 0.4;
 
-/** A nominal bubble, used only to compare candidate spacings. */
-const NOMINAL_W = 200;
-const NOMINAL_H = 80;
+/** Pool sizes between which the chips shrink to keep fitting. */
+const ROOMY_UP_TO = 5;
+const CROWDED_FROM = 12;
+const CROWDED_SCALE = 0.78;
 
 export interface HaloPlacement {
     id: string;
@@ -110,46 +120,58 @@ export interface HaloPlacement {
     blockStart: string;
     /** Resting angle, degrees. */
     tilt: number;
-    /** Multiplier on the base glyph size. */
+    /** Multiplier on the base chip size. */
     scale: number;
-    /** Negative animation delay, seconds, so tiles do not bob in unison. */
+    /** Negative animation delay, seconds, so chips do not bob in unison. */
     phase: number;
 }
 
 /**
  * Place every loose letter around the bubble.
  *
+ * Each edge is divided into one band per letter that landed on it, and the
+ * letter is jittered inside its band. That is what guarantees the chips do not
+ * collide — the first version sampled the region freely and took the best of
+ * fourteen tries, which was enough for bare glyphs and not nearly enough once
+ * each letter became a 30px keycap: seven of them piled up along one edge.
+ *
  * `mirror` flips the region to the leading side, for the rare target that is
- * the player's own message and therefore sits on the other side of the row.
+ * the player's own message and sits on the other side of the row.
  */
 export function layoutHalo(letters: PoolLetter[], mirror = false): HaloPlacement[] {
-    const taken: Array<{ x: number; y: number }> = [];
+    const chip = chipScale(letters.length);
+    const edges = letters.map((_, index) => EDGE_CYCLE[index % EDGE_CYCLE.length]);
+
+    // Which band each letter takes on its edge. Ordered by seed rather than by
+    // position in the pool, so even the sequence along one edge carries nothing.
+    const bands = new Map<string, number>();
+    for (const edge of ['trailing', 'bottom', 'top'] as Edge[]) {
+        letters
+            .filter((_, index) => edges[index] === edge)
+            .sort((a, b) => seedFromId(a.id) - seedFromId(b.id))
+            .forEach((letter, band) => bands.set(letter.id, band));
+    }
+
+    const perEdge = (edge: Edge) => edges.filter((other) => other === edge).length;
 
     return letters.map((letter, index) => {
         const seed = seedFromId(letter.id);
-        const edge = EDGE_ORDER[index % EDGE_ORDER.length];
+        const edge = edges[index];
+        const band = bands.get(letter.id) ?? 0;
 
-        let best = propose(seed, 0, edge);
-        let bestGap = spacing(best, taken);
+        // The band's centre, nudged within it.
+        const along = (band + 0.5 + (unit(seed, 0) - 0.5) * BAND_JITTER) / perEdge(edge);
+        const across = unit(seed, 1);
 
-        for (let attempt = 1; attempt < CANDIDATES; attempt++) {
-            const spot = propose(seed, attempt, edge);
-            const gap = spacing(spot, taken);
-            if (gap > bestGap) {
-                best = spot;
-                bestGap = gap;
-            }
-        }
-
-        taken.push({ x: best.xPct / 100 * NOMINAL_W + best.xPx, y: best.yPct / 100 * NOMINAL_H + best.yPx });
+        const spot = place(edge, along, across);
 
         return {
             id: letter.id,
             char: letter.char,
-            inlineStart: offset(mirror ? 100 - best.xPct : best.xPct, mirror ? -best.xPx : best.xPx),
-            blockStart: offset(best.yPct, best.yPx),
+            inlineStart: offset(mirror ? 100 - spot.xPct : spot.xPct, mirror ? -spot.xPx : spot.xPx),
+            blockStart: offset(spot.yPct, spot.yPx),
             tilt: (seed % 2 === 0 ? 1 : -1) * (4 + ((seed >>> 3) % 15)),
-            scale: 0.92 + ((seed >>> 11) % 5) * 0.07,
+            scale: chip * (0.95 + ((seed >>> 11) % 4) * 0.04),
             phase: ((seed >>> 19) % 13) * 0.34,
         };
     });
@@ -162,56 +184,57 @@ interface Spot {
     yPx: number;
 }
 
-/** One candidate spot for a letter, in the bubble's own coordinates. */
-function propose(seed: number, attempt: number, edge: number): Spot {
-    const a = unit(seed, attempt * 3);
-    const b = unit(seed, attempt * 3 + 1);
-    const c = unit(seed, attempt * 3 + 2);
-
-    if (edge < TRAILING_SHARE) {
+/** One letter's spot: `along` runs down or across its edge, `across` straddles it. */
+function place(edge: Edge, along: number, across: number): Spot {
+    if (edge === 'trailing') {
         return {
             xPct: 100,
-            xPx: TRAILING_IN + a * (TRAILING_OUT - TRAILING_IN),
-            // Past the corners at both ends, so the trailing edge's letters do
-            // not stop dead where the bubble does.
-            yPct: -8 + b * 116,
+            xPx: TRAILING_IN + across * (TRAILING_OUT - TRAILING_IN),
+            yPct: TRAILING_TOP + along * TRAILING_SPAN,
             yPx: 0,
         };
     }
 
-    if (edge < BOTTOM_SHARE) {
+    if (edge === 'bottom') {
         return {
-            xPct: BOTTOM_START + a * BOTTOM_SPAN,
-            xPx: b * 18,
+            xPct: BOTTOM_START + along * BOTTOM_SPAN,
+            xPx: 0,
             yPct: 100,
-            yPx: BOTTOM_IN + c * (BOTTOM_OUT - BOTTOM_IN),
+            yPx: BOTTOM_IN + across * (BOTTOM_OUT - BOTTOM_IN),
         };
     }
 
     return {
-        xPct: TOP_START + a * TOP_SPAN,
-        xPx: b * 18,
+        xPct: TOP_START + along * TOP_SPAN,
+        xPx: 0,
         yPct: 0,
-        yPx: TOP_IN + c * (TOP_OUT - TOP_IN),
+        yPx: TOP_IN + across * (TOP_OUT - TOP_IN),
     };
 }
 
-/** How far a candidate sits from the nearest letter already placed. */
-function spacing(spot: Spot, taken: Array<{ x: number; y: number }>): number {
-    if (taken.length === 0) return Infinity;
+/**
+ * How big the chips are, given how many there are.
+ *
+ * A bubble's perimeter is fixed and a chip is not free, so past a handful the
+ * only way to keep them from touching is to make them smaller — the way a rack
+ * of tiles reads tighter as it fills. Full size up to five letters, which
+ * covers most words; down to 78% by twelve, which is where the longest daily
+ * phrases land.
+ */
+function chipScale(count: number): number {
+    if (count <= ROOMY_UP_TO) return 1;
+    if (count >= CROWDED_FROM) return CROWDED_SCALE;
 
-    const x = spot.xPct / 100 * NOMINAL_W + spot.xPx;
-    const y = spot.yPct / 100 * NOMINAL_H + spot.yPx;
-
-    return Math.min(...taken.map((other) => Math.hypot(x - other.x, y - other.y)));
+    const through = (count - ROOMY_UP_TO) / (CROWDED_FROM - ROOMY_UP_TO);
+    return 1 - through * (1 - CROWDED_SCALE);
 }
 
 /**
  * A seeded value in [0, 1).
  *
- * The stream has to be independent per draw, or a letter's x and y move
- * together and every candidate lands on one diagonal. Mixing the index in
- * before the avalanche is what separates them.
+ * The stream has to be independent per draw, or a letter's position along its
+ * edge and its offset across it move together and every chip lands on one
+ * diagonal. Mixing the index in before the avalanche is what separates them.
  */
 function unit(seed: number, index: number): number {
     let hash = (seed ^ Math.imul(index + 1, 0x9e3779b9)) >>> 0;

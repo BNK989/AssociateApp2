@@ -72,13 +72,16 @@ export function LetterHalo({ letters, placed, anchor, mirror }: LetterHaloProps)
                             transition={reduced ? { duration: 0 } : { ...SPAWN_SPRING, delay: order * 0.04 }}
                         >
                             <span
-                                className={`block font-bold leading-none text-[var(--tile-present)] drop-shadow-[0_0_3px_var(--tile-glow)] ${
-                                    drifting ? 'halo-letter' : 'halo-letter halo-still'
-                                }`}
+                                // Everything the chip looks like lives in
+                                // `.halo-letter`, because the face, the cast
+                                // shadow and the lit edge are one object and
+                                // splitting them across two files is how they
+                                // drift apart.
+                                className={drifting ? 'halo-letter' : 'halo-letter halo-still'}
                                 style={{
                                     '--pool-tilt': `${placement.tilt}deg`,
                                     '--pool-phase': `-${placement.phase.toFixed(2)}s`,
-                                    fontSize: `calc(1rem * ${placement.scale.toFixed(2)})`,
+                                    fontSize: `calc(1.05rem * ${placement.scale.toFixed(2)})`,
                                 } as React.CSSProperties}
                             >
                                 {placement.char}

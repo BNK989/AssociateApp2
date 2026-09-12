@@ -12,6 +12,12 @@ const parse = (value: string) => {
     return { percent: Number(match[1]), pixels: Number(match[2]) };
 };
 
+/** A nominal bubble, for measuring how far apart two letters land. */
+const NOMINAL_W = 235;
+const NOMINAL_H = 110;
+/** A chip is 1.85em of a 1.05rem base, scaled by its placement. */
+const chipPx = (scale: number) => 1.85 * 1.05 * 16 * scale;
+
 const spots = (count: number, mirror = false) =>
     layoutHalo(pool('abcdefghijk'.slice(0, count)), mirror)
         .map((placement) => ({
@@ -43,7 +49,7 @@ describe('layoutHalo', () => {
 
     it('stays off the leading side, where the avatar and every neighbour are', () => {
         for (const spot of spots(11)) {
-            expect(spot.x.percent).toBeGreaterThanOrEqual(35);
+            expect(spot.x.percent).toBeGreaterThanOrEqual(32);
         }
     });
 
@@ -82,12 +88,44 @@ describe('layoutHalo', () => {
             .not.toEqual(layoutHalo(pool('abcde', 'pool-msg2')));
     });
 
-    // Seeded sampling alone clumps often enough to look like a defect, which is
-    // what the farthest-point pass is for.
     it('does not put two letters at the same spot', () => {
         const places = layoutHalo(pool('abcdefghijk'))
             .map((placement) => `${placement.inlineStart}|${placement.blockStart}`);
         expect(new Set(places).size).toBe(places.length);
+    });
+
+    // The defect that arrived with the chips: free sampling kept bare glyphs
+    // apart and came nowhere near keeping 30px keycaps apart, which piled up
+    // along an edge. Measured pairwise across the whole halo rather than per
+    // edge, because the first fix spaced each edge correctly and still let a
+    // bottom chip and a trailing chip collide where the two met at a corner.
+    it('leaves room between every pair of letters, at every pool size', () => {
+        for (const count of [2, 5, 7, 9, 11, 13]) {
+            const placements = layoutHalo(pool('abcdefghijklm'.slice(0, count)));
+            const chip = chipPx(Math.max(...placements.map((p) => p.scale)));
+
+            const points = placements.map((placement) => ({
+                x: parse(placement.inlineStart).percent / 100 * NOMINAL_W
+                    + parse(placement.inlineStart).pixels,
+                y: parse(placement.blockStart).percent / 100 * NOMINAL_H
+                    + parse(placement.blockStart).pixels,
+            }));
+
+            for (let i = 0; i < points.length; i++) {
+                for (let j = i + 1; j < points.length; j++) {
+                    const apart = Math.hypot(points[i].x - points[j].x, points[i].y - points[j].y);
+                    expect(apart).toBeGreaterThan(chip * 0.8);
+                }
+            }
+        }
+    });
+
+    // More letters, smaller chips — the perimeter does not grow with the word.
+    it('shrinks the chips as the pool fills', () => {
+        const size = (count: number) =>
+            Math.max(...layoutHalo(pool('abcdefghijklm'.slice(0, count))).map((p) => p.scale));
+        expect(size(3)).toBeGreaterThan(size(8));
+        expect(size(8)).toBeGreaterThan(size(13));
     });
 
     it('is empty for an empty pool', () => {

@@ -203,7 +203,8 @@ draws that tile down into the slot. Placing is an act, not an inference.
 | Piece | Where |
 | :--- | :--- |
 | The rules, pure and tested | `src/lib/letterPool/poolRules.ts` (43 tests) |
-| Where a loose letter hangs | `src/lib/letterPool/haloLayout.ts` (10 tests) |
+| Where a loose letter hangs | `src/lib/letterPool/haloLayout.ts` (12 tests) |
+| What a loose letter looks like | `.halo-letter` in `src/app/letter-pool.css` |
 | Typed ↔ pool ↔ strip binding | `src/components/game/input/useSlotTyping.ts` (11 tests) |
 | The halo | `src/components/game/pool/LetterHalo.tsx` |
 | The strip | `src/components/game/input/SlotStrip.tsx`, `SlotCell.tsx` |
@@ -473,6 +474,53 @@ Three things follow, none of them decoration:
   layer needs no measurement, no `ResizeObserver` and no scroll listener, and it
   cannot fall out of sync with the thing it annotates. Scroll the word away and
   its letters go with it — correct, because they are that word's letters.
+
+### A letter needs a body (2026-09-12)
+
+The first production build drew each loose letter as a bare glyph, and in the
+game it read as a stray mark rather than a game piece — PULL's two loose letters
+looked like two ticks beside the bubble. Three separate causes, and the fix for
+each is in `.halo-letter`:
+
+- **No case.** The glyph came straight from the answer, so it was lowercase,
+  while the composer's strip has always been `uppercase`. A lowercase `l` is a
+  vertical bar. Half the "unrefined" read was this alone.
+- **No body.** A coloured glyph on a dark ground has no presence. The letter is
+  now a keycap: a `--popover` face, so it is the same material as every other
+  thing in the app that floats above the page, in both themes, without inventing
+  a colour. A tinted-glass face was tried and goes muddy in dark; a solid orange
+  one reads as a primary button and fights the hint card.
+- **No elevation.** A cast shadow is the only cue that says *above* rather than
+  *on* — without it a chip overlapping the bubble reads as a hole cut into it.
+  One inset highlight along the top edge does the rest, which is what makes the
+  face read as tilted toward a light source rather than as flat fill.
+
+### The chips broke the layout that fitted the glyphs
+
+Sizing is not cosmetic here. A 30px keycap needs roughly four times the room a
+glyph did, and the layout that had been spacing glyphs happily started stacking
+them. Two things followed:
+
+- **Bands, not sampling.** Free sampling with a farthest-point pass was enough
+  for glyphs and nowhere near enough for chips. Each edge is now divided into
+  one band per letter that landed on it, and the letter is jittered inside its
+  band — spacing by construction rather than by trying fourteen spots and hoping.
+  Bands are handed out in seed order, so even the sequence along one edge
+  carries nothing.
+- **Chips shrink as the pool fills.** A bubble's perimeter does not grow with
+  the word. Full size to five letters, down to 78% by twelve, the way a rack of
+  tiles reads tighter as it fills.
+
+The edge split is a consequence of the same arithmetic and not a taste call:
+5 bottom / 3 trailing / 2 top over ten letters, because the bottom edge is the
+full width of the bubble and the trailing edge only its height. An even-handed
+split put five chips on a 127px edge that needs 120px for them, leaving nothing
+to jitter, so they touched.
+
+**Each edge stops short of the corners.** Bands guarantee spacing *within* an
+edge; they say nothing about two edges meeting. Left overlapping, a bottom chip
+and a trailing chip sat on top of each other in the corner — which is why the
+test measures every pair across the whole halo rather than per edge.
 
 ### Finding the free space, twice wrongly
 
