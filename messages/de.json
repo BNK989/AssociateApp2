@@ -161,16 +161,15 @@
                     "text": "Vervollständige alle Wörter, um die tägliche Herausforderung zu beenden. Komm morgen für eine neue Herausforderung zurück!"
                 },
                 "tutorial": {
-                    "step1_title": "Tägliche Herausforderung 📅",
-                    "step1_desc": "Willkommen zu deinem täglichen Gehirntraining! Jeden Tag veröffentlichen wir eine neue Kette von wenigen verbundenen Wörtern.",
-                    "step2_title": "Errate das Wort",
-                    "step2_desc": "Gib hier deine Vermutung ein. Du hast 3 Versuche pro Wort.",
-                    "step3_title": "Bedeutung der Farben",
-                    "step3_desc": "Grüne Buchstaben stehen bestätigt an ihrem Platz. Orange Buchstaben kommen im Wort vor — du hast sie gefunden. Graue Symbole sind noch verborgen. Du löst immer die Nachricht mit dem farbigen Rahmen.",
-                    "play_now": "Jetzt spielen",
-                    "next": "Weiter",
-                    "step4_title": "Brauchst du einen Hinweis?",
-                    "step4_desc": "Hängst du fest? Tippe auf die Glühbirne für einen Hinweis oder auf die Flagge, um das aktuelle Wort aufzugeben. Hinweise können Buchstaben aufdecken oder die KI fragen."
+                    "step1_title": "Die Kette hinauf",
+                    "step1_desc": "Jeden Tag eine neue Kette aus Wörtern, jedes mit dem nächsten verbunden. Das letzte Wort steht schon da — arbeite dich zurück bis zum ersten.",
+                    "step2_title": "Rate, was davor kam",
+                    "step2_desc": "Tippe das Wort ein, das deiner Meinung nach vor dem sichtbaren steht. Du hast {strikes} Versuche, dann geht es ohne dieses Wort weiter.",
+                    "step3_title": "Die Farben lesen",
+                    "step3_desc": "Grüne Buchstaben stehen an der richtigen Stelle. Orange Buchstaben kommen im Wort vor. Graue Zeichen sind noch verborgen. Gelöst wird immer das Wort mit dem leuchtenden Rahmen.",
+                    "step4_title": "Hilfe, wenn du willst",
+                    "step4_desc": "Die Glühbirne öffnet die Leiter: erst die Wortlänge, dann Buchstaben, dann ein KI-Hinweis. Nur der Hinweis erscheint in deinem geteilten Ergebnis — die kleinen Schritte kosten nichts.",
+                    "play_now": "Los geht’s"
                 }
             },
             "restart_tutorial": "Restart Tutorial",
@@ -485,23 +484,26 @@
     },
     "Onboarding": {
         "welcome": {
-            "title": "Willkommen bei Associate!",
-            "description": "Das Spiel, bei dem große Geister gleich denken. Teste deine Verbindung mit Freunden in diesem Wortassoziationsspiel."
+            "title": "Willkommen bei Associ8",
+            "description": "Ein Wortassoziationsspiel. Jedes Rätsel ist eine Kette: jedes Wort mit dem vorherigen verbunden, und du findest die Verbindung."
         },
-        "phase1": {
-            "title": "Phase 1: Chat",
-            "description": "Fange an, ganz natürlich mit deinen Freunden zu chatten. Ziel ist es, Kontext für ein Gespräch aufzubauen."
+        "daily": {
+            "title": "Jeden Tag eine neue Kette",
+            "description": "Die tägliche Herausforderung bringt jeden Morgen eine frische Kette — weltweit für alle dieselbe. Löse sie und teile dein Ergebnis."
         },
-        "phase2": {
-            "title": "Phase 2: Lösen",
-            "description": "Errate das vorherige Wort! Hinweise sind verfügbar, wenn du festhängst, aber Vorsicht - zu viele falsche Antworten enthüllen das Wort."
+        "friends": {
+            "title": "Oder spiel mit Freunden",
+            "description": "Starte ein privates Spiel und schickt abwechselnd einzelne Wörter. Ist die Kette voll, raten alle um die Wette zurück nach oben."
         },
         "ready": {
-            "title": "Bereit zu spielen?",
-            "description": "Erstelle ein neues Spiel und lade deine Freunde ein, um zu beginnen!"
+            "title": "Mehr ist es nicht",
+            "description": "Die heutige Kette wartet auf der Startseite. Eine kurze Tour zeigt dir dort das Spielfeld."
         },
         "next": "Weiter",
-        "lets_go": "Los geht's!"
+        "back": "Zurück",
+        "skip": "Überspringen",
+        "lets_go": "Losspielen",
+        "progress": "Schritt {current} von {total}"
     },
     "Invite": {
         "button": "Einladen",
@@ -587,10 +589,11 @@
         "debug_mode_hint": "Gibt ausführliche Diagnosemeldungen an die Browser-Konsole aus. Nur für Administratoren sichtbar; Spieler sehen niemals Log-Ausgaben."
     },
     "Walkthrough": {
-        "next": "Next",
-        "back": "Back",
-        "finish": "Finish",
-        "skip": "Skip"
+        "next": "Weiter",
+        "back": "Zurück",
+        "finish": "Fertig",
+        "skip": "Tour überspringen",
+        "progress": "Schritt {current} von {total}"
     },
     "DailyShare": {
         "headline": "Associ8 #{number} — {theme}",

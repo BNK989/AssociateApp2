@@ -161,16 +161,15 @@
                     "text": "Completează toate cuvintele pentru a termina provocarea zilnică. Revino mâine pentru o nouă provocare!"
                 },
                 "tutorial": {
-                    "step1_title": "Provocare Zilnică 📅",
-                    "step1_desc": "Bine ai venit la antrenamentul tău mental zilnic! În fiecare zi, lansăm un lanț nou de câteva cuvinte conectate.",
-                    "step2_title": "Ghicește cuvântul",
-                    "step2_desc": "Scrie aici răspunsul tău. Ai 3 încercări pentru fiecare cuvânt.",
-                    "step3_title": "Semnificația culorilor",
-                    "step3_desc": "Literele verzi sunt confirmate la locul lor. Cele portocalii se află în cuvânt — le-ai găsit. Simbolurile gri sunt încă ascunse. Rezolvi mereu mesajul cu chenarul colorat.",
-                    "play_now": "Joacă Acum",
-                    "next": "Următorul",
-                    "step4_title": "Ai nevoie de un indiciu?",
-                    "step4_desc": "Blocat? Apasă pe bec pentru un indiciu sau pe steag ca să renunți la cuvântul curent. Indiciile pot dezvălui litere sau pot întreba IA."
+                    "step1_title": "Urcă lanțul",
+                    "step1_desc": "În fiecare zi apare un lanț de cuvinte legate unul de altul. Ultimul e deja pe tablă — tu trebuie să urci înapoi până la primul.",
+                    "step2_title": "Ghicește ce a fost înainte",
+                    "step2_desc": "Scrie cuvântul care crezi că vine înaintea celui afișat. Ai {strikes} încercări, apoi jocul merge mai departe fără el.",
+                    "step3_title": "Citește culorile",
+                    "step3_desc": "Literele verzi stau la locul lor. Cele portocalii sunt undeva în cuvânt. Simbolurile gri sunt încă ascunse. Rezolvi mereu cuvântul cu marginea luminoasă.",
+                    "step4_title": "Ajutor, când vrei tu",
+                    "step4_desc": "Becul deschide scara: întâi lungimea, apoi litere, apoi un indiciu AI. Doar indiciul apare în rezultatul pe care îl distribui — pașii mici nu te costă nimic.",
+                    "play_now": "Joacă acum"
                 }
             },
             "restart_tutorial": "Restart Tutorial",
@@ -485,23 +484,26 @@
     },
     "Onboarding": {
         "welcome": {
-            "title": "Bine ai venit la Associate!",
-            "description": "Jocul unde mințile mari gândesc la fel. Testează-ți conexiunea cu prietenii în acest joc de asociere de cuvinte."
+            "title": "Bine ai venit în Associ8",
+            "description": "Un joc de asociere de cuvinte. Fiecare puzzle e un lanț: fiecare cuvânt legat de cel dinainte, iar tu cauți legătura."
         },
-        "phase1": {
-            "title": "Faza 1: Chat",
-            "description": "Începe prin a discuta natural cu prietenii tăi. Scopul este de a construi context pentru o conversație."
+        "daily": {
+            "title": "Un lanț nou în fiecare zi",
+            "description": "Provocarea Zilnică aduce un lanț nou în fiecare dimineață, același pentru toată lumea. Rezolvă-l și distribuie rezultatul."
         },
-        "phase2": {
-            "title": "Faza 2: Rezolvare",
-            "description": "Ghicește cuvântul anterior! Indicii sunt disponibile dacă ești blocat, dar atenție - prea multe ghiciri greșite vor dezvălui cuvântul."
+        "friends": {
+            "title": "Sau joacă cu prietenii",
+            "description": "Pornește un joc privat și trimiteți pe rând câte un cuvânt. Când lanțul e plin, toți se întrec să îl ghicească înapoi."
         },
         "ready": {
-            "title": "Gata de Joacă?",
-            "description": "Creează un joc nou și invită-ți prietenii pentru a începe!"
+            "title": "Cam asta e tot",
+            "description": "Lanțul de azi te așteaptă pe ecranul principal. Un tur scurt îți arată tabla când intri."
         },
-        "next": "Următorul",
-        "lets_go": "Să mergem!"
+        "next": "Înainte",
+        "back": "Înapoi",
+        "skip": "Sari",
+        "lets_go": "Începe să joci",
+        "progress": "Pasul {current} din {total}"
     },
     "Invite": {
         "button": "Invită",
@@ -587,10 +589,11 @@
         "debug_mode_hint": "Emite diagnostice detaliate în consola browserului. Vizibil doar administratorilor; jucătorii nu văd niciodată jurnalele."
     },
     "Walkthrough": {
-        "next": "Next",
-        "back": "Back",
-        "finish": "Finish",
-        "skip": "Skip"
+        "next": "Înainte",
+        "back": "Înapoi",
+        "finish": "Gata",
+        "skip": "Sari peste tur",
+        "progress": "Pasul {current} din {total}"
     },
     "DailyShare": {
         "headline": "Associ8 #{number} — {theme}",

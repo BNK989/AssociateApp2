@@ -161,16 +161,15 @@
                     "text": "Completa todas las palabras para terminar el desafío diario. ¡Vuelve mañana para uno nuevo!"
                 },
                 "tutorial": {
-                    "step1_title": "Desafío Diario 📅",
-                    "step1_desc": "¡Bienvenido a tu entrenamiento mental diario! Cada día, lanzamos una nueva cadena de palabras conectadas.",
-                    "step2_title": "Adivina la palabra",
-                    "step2_desc": "Escribe aquí tu respuesta. Tienes 3 intentos por palabra.",
-                    "step3_title": "Significado de los colores",
-                    "step3_desc": "Las letras verdes están confirmadas en su sitio. Las naranjas están en la palabra: ya las has encontrado. Los símbolos grises siguen ocultos. Siempre resuelves el mensaje con el borde de color.",
-                    "play_now": "Jugar Ahora",
-                    "next": "Siguiente",
-                    "step4_title": "¿Necesitas una pista?",
-                    "step4_desc": "¿Atascado? Toca la bombilla para una pista, o la bandera para rendirte con la palabra actual. Las pistas pueden revelar letras o preguntar a la IA."
+                    "step1_title": "Sube por la cadena",
+                    "step1_desc": "Cada día trae una cadena de palabras enlazadas una con otra. La última ya está en el tablero: tu tarea es remontar hasta la primera.",
+                    "step2_title": "Adivina la anterior",
+                    "step2_desc": "Escribe la palabra que crees que va antes de la visible. Tienes {strikes} intentos antes de que el tablero siga sin ella.",
+                    "step3_title": "Lee los colores",
+                    "step3_desc": "Las letras verdes están en su sitio. Las naranjas aparecen en la palabra. Los símbolos grises siguen ocultos. Siempre resuelves la palabra del borde iluminado.",
+                    "step4_title": "Ayuda cuando la quieras",
+                    "step4_desc": "La bombilla abre la escalera: primero la longitud, luego letras, luego una pista de IA. Solo la pista se marca en tu resultado compartido; los empujoncitos no cuestan nada.",
+                    "play_now": "A jugar"
                 }
             },
             "restart_tutorial": "Restart Tutorial",
@@ -485,23 +484,26 @@
     },
     "Onboarding": {
         "welcome": {
-            "title": "¡Bienvenido a Associate!",
-            "description": "El juego donde las grandes mentes piensan igual. Prueba tu conexión con amigos en este juego de asociación de palabras."
+            "title": "Bienvenido a Associ8",
+            "description": "Un juego de asociación de palabras. Cada puzle es una cadena: cada palabra enlazada con la anterior, y tú buscas el enlace."
         },
-        "phase1": {
-            "title": "Fase 1: Chat",
-            "description": "Empieza chateando naturalmente con tus amigos. El objetivo es construir un contexto de conversación."
+        "daily": {
+            "title": "Una cadena nueva cada día",
+            "description": "El Reto Diario trae una cadena nueva cada mañana, la misma para todo el mundo. Resuélvela y comparte tu resultado."
         },
-        "phase2": {
-            "title": "Fase 2: Resolución",
-            "description": "¡Adivina la palabra anterior! Hay pistas disponibles si te atascas, pero cuidado - demasiados intentos incorrectos revelarán la palabra."
+        "friends": {
+            "title": "O juega con amigos",
+            "description": "Crea una partida privada y enviad palabras sueltas por turnos. Cuando la cadena esté llena, todos compiten por adivinarla de vuelta."
         },
         "ready": {
-            "title": "¿Listo para Jugar?",
-            "description": "¡Crea un juego nuevo e invita a tus amigos para empezar!"
+            "title": "Eso es todo el juego",
+            "description": "La cadena de hoy te espera en la pantalla de inicio. Un tour breve te señalará el tablero al entrar."
         },
         "next": "Siguiente",
-        "lets_go": "¡Vamos!"
+        "back": "Atrás",
+        "skip": "Saltar",
+        "lets_go": "Empezar a jugar",
+        "progress": "Paso {current} de {total}"
     },
     "Invite": {
         "button": "Invitar",
@@ -587,10 +589,11 @@
         "debug_mode_hint": "Emite diagnósticos detallados en la consola del navegador. Solo visible para administradores; los jugadores nunca ven los registros."
     },
     "Walkthrough": {
-        "next": "Next",
-        "back": "Back",
-        "finish": "Finish",
-        "skip": "Skip"
+        "next": "Siguiente",
+        "back": "Atrás",
+        "finish": "Listo",
+        "skip": "Saltar el tutorial",
+        "progress": "Paso {current} de {total}"
     },
     "DailyShare": {
         "headline": "Associ8 #{number} — {theme}",

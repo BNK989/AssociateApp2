@@ -161,16 +161,15 @@
                     "text": "Complétez tous les mots pour terminer le défi quotidien. Revenez demain pour un nouveau défi !"
                 },
                 "tutorial": {
-                    "step1_title": "Défi Quotidien 📅",
-                    "step1_desc": "Bienvenue dans votre entraînement cérébral quotidien ! Chaque jour, nous publions une nouvelle chaîne de quelques mots connectés.",
-                    "step2_title": "Devinez le mot",
-                    "step2_desc": "Saisissez votre réponse ici. Vous avez 3 essais par mot.",
-                    "step3_title": "Signification des couleurs",
-                    "step3_desc": "Les lettres vertes sont confirmées à leur place. Les lettres orange sont dans le mot : vous les avez trouvées. Les symboles gris restent masqués. Vous résolvez toujours le message au bord coloré.",
-                    "play_now": "Jouer Maintenant",
-                    "next": "Suivant",
-                    "step4_title": "Besoin d'un indice ?",
-                    "step4_desc": "Bloqué ? Appuyez sur l'ampoule pour un indice, ou sur le drapeau pour abandonner le mot en cours. Les indices peuvent révéler des lettres ou interroger l'IA."
+                    "step1_title": "Remonte la chaîne",
+                    "step1_desc": "Chaque jour, une chaîne de mots reliés les uns aux autres. Le dernier est déjà affiché : à toi de remonter jusqu’au premier.",
+                    "step2_title": "Devine le mot d’avant",
+                    "step2_desc": "Tape le mot qui, selon toi, précède celui qui est affiché. Tu as {strikes} essais avant que la partie passe au suivant.",
+                    "step3_title": "Lis les couleurs",
+                    "step3_desc": "Les lettres vertes sont à la bonne place. Les oranges sont dans le mot, ailleurs. Les symboles gris restent cachés. Tu résous toujours le mot au contour lumineux.",
+                    "step4_title": "De l’aide, si tu veux",
+                    "step4_desc": "L’ampoule ouvre l’échelle : la longueur d’abord, puis des lettres, puis un indice IA. Seul l’indice apparaît dans ton résultat partagé — les petits coups de pouce ne coûtent rien.",
+                    "play_now": "Jouer"
                 }
             },
             "restart_tutorial": "Restart Tutorial",
@@ -485,23 +484,26 @@
     },
     "Onboarding": {
         "welcome": {
-            "title": "Bienvenue sur Associate !",
-            "description": "Le jeu où les grands esprits se rencontrent. Testez votre connexion avec vos amis dans ce jeu d'association de mots."
+            "title": "Bienvenue sur Associ8",
+            "description": "Un jeu d’association de mots. Chaque grille est une chaîne : chaque mot relié au précédent, et à toi de trouver le lien."
         },
-        "phase1": {
-            "title": "Phase 1 : Chat",
-            "description": "Commencez par discuter naturellement avec vos amis. L'objectif est de construire un contexte de conversation."
+        "daily": {
+            "title": "Une nouvelle chaîne chaque jour",
+            "description": "Le Défi du jour propose une chaîne inédite chaque matin, la même pour tout le monde. Résous-la, puis partage ta grille."
         },
-        "phase2": {
-            "title": "Phase 2 : Résolution",
-            "description": "Devinez le mot précédent ! Des indices sont disponibles si vous êtes bloqué, mais attention - trop de mauvaises réponses révéleront le mot."
+        "friends": {
+            "title": "Ou joue avec des amis",
+            "description": "Lance une partie privée et envoyez des mots à tour de rôle. Une fois la chaîne remplie, tout le monde court pour la remonter."
         },
         "ready": {
-            "title": "Prêt à Jouer ?",
-            "description": "Créez un nouveau jeu et invitez vos amis pour commencer !"
+            "title": "C’est tout le jeu",
+            "description": "La chaîne du jour t’attend sur l’écran d’accueil. Une visite rapide te présentera le plateau."
         },
         "next": "Suivant",
-        "lets_go": "C'est parti !"
+        "back": "Retour",
+        "skip": "Passer",
+        "lets_go": "Commencer à jouer",
+        "progress": "Étape {current} sur {total}"
     },
     "Invite": {
         "button": "Inviter",
@@ -587,10 +589,11 @@
         "debug_mode_hint": "Émet des diagnostics détaillés dans la console du navigateur. Visible uniquement par les administrateurs ; les joueurs ne voient jamais les journaux."
     },
     "Walkthrough": {
-        "next": "Next",
-        "back": "Back",
-        "finish": "Finish",
-        "skip": "Skip"
+        "next": "Suivant",
+        "back": "Retour",
+        "finish": "Terminé",
+        "skip": "Passer le tour",
+        "progress": "Étape {current} sur {total}"
     },
     "DailyShare": {
         "headline": "Associ8 #{number} — {theme}",
