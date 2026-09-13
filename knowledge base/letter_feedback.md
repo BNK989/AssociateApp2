@@ -221,7 +221,8 @@ draws that tile down into the slot. Placing is an act, not an inference.
 | Piece | Where |
 | :--- | :--- |
 | The rules, pure and tested | `src/lib/letterPool/poolRules.ts` (43 tests) |
-| Where a loose letter hangs | `src/lib/letterPool/haloLayout.ts` (12 tests) |
+| Where a loose letter hangs | `src/lib/letterPool/haloLayout.ts` (16 tests) |
+| That it stays there as others leave | `src/lib/letterPool/haloRoster.ts` (9 tests) |
 | What a loose letter looks like | `.halo-letter` in `src/app/letter-pool.css` |
 | The flight into the slot | `src/lib/letterPool/flightPath.ts` (13 tests) |
 | Its timing and both ends | `src/components/game/pool/useLetterFlights.ts`, `LetterFlight.tsx` |
@@ -541,6 +542,38 @@ to jitter, so they touched.
 edge; they say nothing about two edges meeting. Left overlapping, a bottom chip
 and a trailing chip sat on top of each other in the corner — which is why the
 test measures every pair across the whole halo rather than per edge.
+
+### The halo is solved against a roster, not against the pool
+
+Bands are shares of an edge, handed out by position in the list `layoutHalo` is
+given. Given the *live* pool that was a bug, and a bad one: the pool shrinks
+every time a letter finds its place, the list closes up behind the departing
+letter, and everything after it moves up a band. The chips keep their identity
+across that re-solve, so the browser animated it — placing one letter sent the
+rest flying to each other's spots, and because they are different letters it
+read as them turning into one another.
+
+That is not a cosmetic fault. A player mid-word holds a picture of which
+letters they have and roughly where they sit; reshuffling it on every placement
+is the game undoing the thinking it had just helped with.
+
+So the layout is solved against **every letter this word has had** — the roster
+in `haloRoster.ts`, accumulated per word by `useHaloRoster`. A letter keeps its
+spot for as long as the word is in play, a letter that leaves leaves a gap, and
+nothing else moves. The gap is the point: it is the only honest mark of progress
+the halo can make. The halo draws the roster's placements filtered to what is
+still in the pool; the flights get the unfiltered set, so a letter still has a
+spot to be measured from on the frame it leaves.
+
+The roster only grows, and is bounded by the answer's length, since an id is a
+position in the word.
+
+**Known limit.** A letter *arriving* still re-divides the edge it lands on —
+there is one more band to share out. Left as is: the pool only grows when a hint
+uncovers more letters, which is at most once or twice a word and never after the
+anagram is drawn, since the mask is not regenerated again. It is also a moment
+the player is already watching change. The bug was the re-solve on *every*
+placement.
 
 ### Finding the free space, twice wrongly
 
