@@ -43,8 +43,10 @@ export function SettleSection({ policy, revision }: SettleSectionProps) {
                 The rung between the last hint and giving up. Found letters — the ones hanging
                 around the word with no place yet — walk into their real positions one at a time,
                 so a player who is stuck can still finish the word themselves instead of revealing
-                it. It gives away <strong>positions, never new letters</strong>: everything it
-                places, the player could already see.
+                it. Below the reveal level set here it gives away{' '}
+                <strong>positions, never new letters</strong>: everything it places, the player
+                could already see. At and above that level it may also open a letter they have
+                not been shown, because by then the only other thing left to offer is the reveal.
             </p>
             <p className="mb-2 text-xs text-muted-foreground">
                 Applies to the <strong>daily game</strong> only, like the panels above.
@@ -82,6 +84,32 @@ export function SettleSection({ policy, revision }: SettleSectionProps) {
                             <SelectItem value="0">0 — any word</SelectItem>
                             <SelectItem value="1">1 — after the first letter</SelectItem>
                             <SelectItem value="2">2 — after the scramble</SelectItem>
+                            <SelectItem value={String(MAX_HINT_LEVEL)}>
+                                3 — only after the AI clue
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                )}
+            />
+
+            <SettleField
+                label="May open new letters from"
+                hint="Up to this level the drip only places letters the player has already found, which on a word they have not guessed at means it has nothing to give and never appears at all. From this level it may also open a letter they have not seen — the last rung before the reveal. It never opens the first letter, which hint 1 already bought, and both ceilings below still bind."
+                disabled={off}
+                control={(
+                    <Select
+                        value={p.revealFromHintLevel === null
+                            ? 'never'
+                            : String(p.revealFromHintLevel)}
+                        onValueChange={(v) => form.setField(
+                            'revealFromHintLevel', v === 'never' ? null : Number(v),
+                        )}
+                    >
+                        <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="never">Never — found letters only</SelectItem>
+                            <SelectItem value="1">1 — after the first letter</SelectItem>
+                            <SelectItem value="2">2 — after the second rung</SelectItem>
                             <SelectItem value={String(MAX_HINT_LEVEL)}>
                                 3 — only after the AI clue
                             </SelectItem>

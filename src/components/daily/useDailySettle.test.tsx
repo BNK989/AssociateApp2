@@ -3,6 +3,7 @@ import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { useDailySettle } from './useDailySettle';
 import { DEFAULT_SETTLE_POLICY, type SettlePolicy } from '@/lib/daily/settlePolicy';
 import type { Message } from '@/hooks/useGameLogic';
+import { MAX_HINT_LEVEL } from '@/lib/gameConfig';
 
 /**
  * With the anagram switched on.
@@ -109,11 +110,46 @@ describe('availability', () => {
         expect(view.result.current.available).toBe(false);
     });
 
-    it('is not available with an empty pool', () => {
+    it('is not available with an empty pool below the reveal level', () => {
         // The self-gate: nothing found means nothing to place, so the rung
         // cannot fire before the player has been given something to work with.
         const { view } = setup({ message: word({ cipher_text: undefined }) });
         expect(view.result.current.available).toBe(false);
+    });
+
+    it('is available at the clue with an empty pool, which is the common case', () => {
+        // The rung had gone missing in exactly this state: at the clue, on a
+        // word the player never guessed at, there was no pool and therefore no
+        // offer — and the ladder fell through to the reveal.
+        const { view } = setup({
+            message: word({ hint_level: MAX_HINT_LEVEL, cipher_text: undefined }),
+        });
+
+        expect(view.result.current.available).toBe(true);
+        expect(view.result.current.lettersLeft).toBeGreaterThan(0);
+    });
+
+    it('honours a game master who turns the opening off', () => {
+        const { view } = setup({
+            message: word({ hint_level: MAX_HINT_LEVEL, cipher_text: undefined }),
+            policy: policy({ revealFromHintLevel: null }),
+        });
+
+        expect(view.result.current.available).toBe(false);
+    });
+
+    it('places an opened letter when the player accepts it', () => {
+        const { view, patchTarget, land } = setup({
+            message: word({ hint_level: MAX_HINT_LEVEL, cipher_text: undefined }),
+        });
+
+        act(() => view.result.current.accept());
+        land();
+
+        const [, updates] = patchTarget.mock.calls[0];
+        expect(updates.settled_indices).toHaveLength(1);
+        // Never the first letter: hint 1 bought that one already.
+        expect(updates.settled_indices).not.toContain(0);
     });
 
     it('is not available once the game is over', () => {

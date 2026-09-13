@@ -191,6 +191,30 @@ export const SETTLE = {
      * This is the one that stops the game solving the puzzle on short words.
      */
     MIN_UNSETTLED: 2,
+    /**
+     * Hint level from which the drip may place a letter the player has *not*
+     * been shown, rather than only one already hanging around the word.
+     *
+     * The drip's founding rule was that it gives away positions and never new
+     * letters, which was exactly right while hint 2 was an anagram: the pool
+     * was full, and what the player lacked was where those letters went. With
+     * `SCRAMBLE_MASK` off the pool is usually empty, so that rule quietly
+     * became "the drip never fires": a player at the clue with no wrong guesses
+     * behind them had no pool, therefore no candidates, therefore no offer and
+     * no button — the ladder fell straight through to the Reveal, which is the
+     * one move that ends in no solve at all.
+     *
+     * So from this level the drip may open a letter as well as place one. It is
+     * the clue level rather than lower because the rung must stay the *last*
+     * one before giving up: below it the player still has ladder left, and a
+     * drip that hands out unseen letters earlier is a shortcut past the hints.
+     *
+     * `null` restores the pool-only rule.
+     *
+     * The two floors below still bind, so this can never solve the word — at
+     * most half of it, and never the last two letters.
+     */
+    REVEAL_FROM_HINT_LEVEL: MAX_HINT_LEVEL as number | null,
     /** Which letter goes next. See `orderCandidates`. */
     ORDER: 'seeded',
     /** Fraction of the word's base value forfeited per settled letter. */

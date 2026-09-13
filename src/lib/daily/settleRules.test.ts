@@ -9,7 +9,9 @@ import {
     settleCandidates,
     settlePressure,
     settlesDueBy,
+    revealsUnseen,
 } from './settleRules';
+import { MAX_HINT_LEVEL } from '@/lib/gameConfig';
 import { DEFAULT_SETTLE_POLICY, type SettlePolicy } from './settlePolicy';
 
 /**
@@ -110,7 +112,12 @@ describe('orderCandidates', () => {
 });
 
 describe('settleCandidates', () => {
-    const base = { text: 'STARLING', guesses: [], settled: [], policy: policy() };
+    // Level 2: armed, and below the level at which the drip may open a letter
+    // the player has not seen. Everything here is therefore the original rule —
+    // positions out of the pool, nothing new. The clue level has its own block.
+    const base = {
+        text: 'STARLING', guesses: [], settled: [], policy: policy(), hintLevel: 2,
+    };
 
     it('is empty with nothing found', () => {
         expect(settleCandidates(base)).toEqual([]);
@@ -168,6 +175,7 @@ describe('nextSettleIndex', () => {
         mask: anagramMask('STARLING'),
         settled: [],
         policy: policy(),
+        hintLevel: 2,
     };
 
     it('returns a candidate while the allowance holds', () => {
@@ -185,15 +193,82 @@ describe('nextSettleIndex', () => {
     });
 
     it('gives nothing when the pool is empty, whatever the allowance allows', () => {
-        // The self-gate: with nothing found there is nothing to place, so the
-        // drip cannot fire before the player has been given something to work
-        // with.
+        // The self-gate, below the reveal level: with nothing found there is
+        // nothing to place, so the drip cannot fire before the player has been
+        // given something to work with. At the clue it no longer holds, and
+        // deliberately — see the block below.
         expect(canSettle({ ...stuck, mask: undefined })).toBe(false);
     });
 
     it('agrees with canSettle', () => {
         expect(canSettle(stuck)).toBe(true);
         expect(canSettle({ ...stuck, settled: [0, 1, 2, 3] })).toBe(false);
+    });
+});
+
+describe('at the clue, the drip may open a letter as well as place one', () => {
+    // The rung had quietly stopped existing. With the scramble gone the pool
+    // holds only what a wrong guess proved, so a player who reached the clue
+    // without guessing had no pool, no candidates, no offer and no button — and
+    // the ladder fell from the clue straight to the Reveal.
+    const atClue = {
+        text: 'STARLING',
+        guesses: [],
+        settled: [],
+        policy: policy(),
+        hintLevel: MAX_HINT_LEVEL,
+    };
+
+    it('has something to give on a word the player has not touched', () => {
+        expect(canSettle(atClue)).toBe(true);
+        expect(settleCandidates(atClue).length).toBeGreaterThan(0);
+    });
+
+    it('still leaves the first letter alone, which the player already has', () => {
+        expect(settleCandidates(atClue)).not.toContain(0);
+    });
+
+    it('spends the pool before it opens anything new', () => {
+        // STARLING against "sting": I, N and G are found but homeless, so they
+        // are the cheapest thing the drip can give and they go first.
+        const found = settleCandidates({ ...atClue, guesses: ['sting'] });
+        const pool = new Set(
+            settleCandidates({ ...atClue, guesses: ['sting'], hintLevel: 2 }),
+        );
+
+        expect(pool.size).toBeGreaterThan(0);
+        expect(found.slice(0, pool.size).every((index) => pool.has(index))).toBe(true);
+        expect(found.length).toBeGreaterThan(pool.size);
+    });
+
+    it('never offers a position the board is already showing', () => {
+        const mask = anagramMask('STARLING');
+        const shown = new Set(settleCandidates({ ...atClue, mask }));
+
+        // Whatever route a letter reached the player by — pool or line — it is
+        // offered at most once, and a settled one never again.
+        expect(settleCandidates({ ...atClue, mask, settled: [3] })).not.toContain(3);
+        expect(new Set(settleCandidates({ ...atClue, mask })).size).toBe(shown.size);
+    });
+
+    it('still cannot solve the word: both ceilings bind', () => {
+        const allowance = settleAllowance(atClue.text, atClue.policy);
+        const spent = { ...atClue, settled: [1, 2, 3, 4].slice(0, allowance) };
+
+        expect(allowance).toBe(4);
+        expect(nextSettleIndex(spent)).toBeNull();
+    });
+
+    it('stays pool-only when a game master turns the reveal off', () => {
+        const poolOnly = policy({ revealFromHintLevel: null });
+        expect(canSettle({ ...atClue, policy: poolOnly })).toBe(false);
+    });
+
+    it('is the level, not the arming, that decides it', () => {
+        expect(revealsUnseen(2, policy())).toBe(false);
+        expect(revealsUnseen(MAX_HINT_LEVEL, policy())).toBe(true);
+        expect(revealsUnseen(MAX_HINT_LEVEL, policy({ revealFromHintLevel: null }))).toBe(false);
+        expect(revealsUnseen(1, policy({ revealFromHintLevel: 1 }))).toBe(true);
     });
 });
 

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
     buildLetterPool,
+    withAnnounced,
     type MaskState,
 } from '@/lib/letterPool/poolRules';
 import {
@@ -124,9 +125,17 @@ export function useSlotTyping({
         if (!text) return null;
 
         const placedBySettle = new Set(settled ?? []);
-        const pool = buildLetterPool(
-            text, guesses, [], mask, `pool-${targetId ?? 'word'}`, placedBySettle,
+        const idPrefix = `pool-${targetId ?? 'word'}`;
+        const found = buildLetterPool(
+            text, guesses, [], mask, idPrefix, placedBySettle,
         );
+
+        // A letter the drip has opened rather than placed was never loose, so
+        // it has no chip to fly from. It borrows one for the length of its
+        // flight; everything else about it is an ordinary settle.
+        const pool = pendingSettle != null
+            ? withAnnounced(found, text, pendingSettle, idPrefix)
+            : found;
 
         // Which habit the player is typing in, decided from the keystrokes
         // rather than from a mode they were never told they were in.
@@ -148,7 +157,7 @@ export function useSlotTyping({
         // the strip is built so it cannot disturb the reading of what the
         // player typed: it fills a slot that was open and touches nothing else.
         const flying = pendingSettle != null
-            ? bindPending(slots, placements, pool, pendingSettle, `pool-${targetId ?? 'word'}`)
+            ? bindPending(slots, placements, pool, pendingSettle, idPrefix)
             : null;
 
         const groups = groupSlots(slots);

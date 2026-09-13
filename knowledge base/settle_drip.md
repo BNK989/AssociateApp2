@@ -23,21 +23,48 @@ surrender.
 
 ### It is not a cheaper hint
 
-The rule the whole mechanic rests on:
+The rule the mechanic was built on:
 
 > **The drip gives away positions, never new letters.** Everything it places
 > was already visible in the pool.
 
-That is what makes it a *distinct* rung rather than a fourth grade of hint. Hint
-level 2 deliberately **destroys** positional information: the mask becomes an
-anagram, and `readMaskTile` refuses to promote even a coincidental hit to
-`placed`. The drip is the only thing in the game that gives any of it back. It
-is the inverse of the hint immediately below it, which is exactly why it belongs
-after the ladder rather than inside it.
+That is what made it a *distinct* rung rather than a fourth grade of hint. Hint
+level 2 used to **destroy** positional information: the mask became an anagram,
+and `readMaskTile` refused to promote even a coincidental hit to `placed`. The
+drip was the only thing in the game that gave any of it back — the inverse of
+the hint immediately below it, which is exactly why it belongs after the ladder
+rather than inside it.
 
-It also **self-gates** on that rule. With an empty pool there is nothing to
-place, so the drip physically cannot fire before the player has been given
-something to work with.
+It also **self-gated** on that rule: with an empty pool there was nothing to
+place, so the drip could not fire before the player had been given something to
+work with.
+
+### What the scramble going did to that rule (2026-09-14)
+
+The self-gate stopped being a safety property and became the whole story. With
+`SCRAMBLE_MASK` off, the pool holds only what the player's own wrong guesses
+proved — so on a word they have not guessed at it is empty, and at the clue,
+where the drip is supposed to be the last rung before giving up, it had nothing
+to give. No candidates, therefore no offer, no button, and the ladder fell from
+the clue straight to the **Reveal**, which is the one move that ends in no solve
+at all. Reported from live play as *"why no floating letters at this stage?
+should be auto given but i don't even get a button"*.
+
+So the rule now has a level attached to it, `revealFromHintLevel`:
+
+> **Below it, unchanged: positions only, out of the pool, nothing new. At and
+> above it the drip may also *open* a letter the player has not seen.**
+
+Three things keep that from becoming a fourth hint:
+
+- **It is the clue level by default**, so the ladder is spent before it applies.
+  A drip that opens letters earlier is a shortcut past the hints.
+- **The pool is spent first.** A loose letter costs the player only its
+  position, so every one of them goes before anything new is opened.
+- **Both ceilings still bind** — at most half the word, never the last two
+  letters, never the first one (hint 1 bought that).
+
+`null` restores the original pool-only rule for a game master who wants it.
 
 ---
 
@@ -299,6 +326,7 @@ production 2026-09-13** at revision 1 with an empty value. The panel saves.
 | :--- | :--- | :--- |
 | `mode` | `offered` | `offered` \| `auto` \| `off` |
 | `armFromHintLevel` | `2` | Below this the rung does not exist |
+| `revealFromHintLevel` | `3` | From here it may open unseen letters; `null` = pool only |
 | `firstDelayMs` | `20000` | `auto` only |
 | `intervalMs` | `15000` | The pace the player actually feels |
 | `strikeCreditMs` | `12000` | `auto` only; mirrors `STRIKE_WORTH_MS` |
@@ -391,6 +419,17 @@ exists.
 **the same function**, so "what is hanging around the word" and "what may be
 placed" cannot disagree. A second copy of the mask budget would drift, and the
 failure would be the drip placing a letter the player was never shown.
+
+The letters the drip *opens* are derived by subtraction from that same seam —
+`unseenIndices` takes everything that is neither in `placedIndices` nor in
+`knownUnplacedIndices` — for the same reason and with the same failure mode
+reversed: re-reading the mask there could disagree with the board, and the drip
+would "open" a letter already in plain sight.
+
+An opened letter was never loose, so it has no halo chip to fly from.
+`withAnnounced` lends it one for the length of its flight, which is why the
+two-phase write in `useSettlePlacement` still works unchanged: the composer
+cannot tell an opened letter from a found one, and neither can the animation.
 
 ---
 

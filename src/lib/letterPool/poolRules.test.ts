@@ -2,6 +2,8 @@ import { describe, expect, it , vi } from 'vitest';
 import { CIPHER_SIGNS } from '@/lib/gameConfig';
 import {
     buildLetterPool,
+    scramblePool,
+    withAnnounced,
     isGapChar,
     knownUnplacedIndices,
     nextPoolMatch,
@@ -85,6 +87,44 @@ describe('buildLetterPool', () => {
 
     it('is empty before anything has been found', () => {
         expect(buildLetterPool('Harmony', [])).toEqual([]);
+    });
+});
+
+describe('withAnnounced', () => {
+    // What lets the drip open a letter that was never loose: it joins the pool
+    // for the length of its flight, so it has a chip to leave from instead of
+    // arriving by teleport.
+    const prefix = 'pool-msg1';
+
+    it('lends a chip to a letter the pool does not hold', () => {
+        const lent = withAnnounced([], 'STARLING', 3, prefix);
+
+        expect(lent.map((letter) => letter.id)).toEqual([`${prefix}-3`]);
+        expect(lent[0].char).toBe('R');
+        expect(lent[0].slotIndex).toBeNull();
+    });
+
+    it('leaves a pool that already holds it exactly as it was', () => {
+        const pool = buildLetterPool('STARLING', ['sting'], [], undefined, prefix);
+        const index = Number(pool[0].id.slice(prefix.length + 1));
+
+        expect(withAnnounced(pool, 'STARLING', index, prefix)).toBe(pool);
+    });
+
+    it('refuses a position that is not a letter', () => {
+        const pool = withAnnounced([], 'MORNING GLORY', 7, prefix);
+        expect(pool).toEqual([]);
+    });
+
+    it('seeds the lent chip into the arrangement rather than onto the end', () => {
+        // Same order the pool would have had if the letter had been found: the
+        // halo must not reshuffle around a letter that is about to leave it.
+        const found = buildLetterPool('STARLING', ['sting'], [], undefined, prefix);
+        const lent = withAnnounced(found, 'STARLING', 2, prefix);
+
+        expect(lent).toEqual(scramblePool([
+            ...found, { id: `${prefix}-2`, char: 'A', slotIndex: null },
+        ]));
     });
 });
 

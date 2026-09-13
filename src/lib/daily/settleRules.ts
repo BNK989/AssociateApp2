@@ -1,5 +1,7 @@
 import {
+    isGapChar,
     knownUnplacedIndices,
+    placedIndices,
     seedFromId,
     type MaskState,
 } from '@/lib/letterPool/poolRules';
@@ -13,16 +15,26 @@ import type { SettleOrder, SettlePolicy } from './settlePolicy';
  * decides what the player is allowed to see, and that must not be tangled up
  * with a timer. The hook above it owns *when*; everything about *what* is here.
  *
- * The one rule the whole mechanic rests on:
+ * The rule the mechanic rested on, and what replaced it:
  *
  * > **The drip places letters the player already has. It never reveals a new
  * > one.** A settled letter comes out of the pool, where the player could
  * > already read it. What they are given is its position, which is the one
  * > thing hint level 2 took away.
  *
- * That is what makes it a distinct rung rather than a cheaper hint, and it is
- * also why it self-gates: with an empty pool there is nothing to place, so the
- * drip cannot fire before the player has been given something to work with.
+ * That was exactly right while level 2 was an anagram: the pool was full, and
+ * position was the thing the player was short of. With `SCRAMBLE_MASK` off the
+ * pool holds only what the player's own wrong guesses proved, which on a word
+ * they have not guessed at is nothing — so the rule self-gated its way into
+ * never firing, and the ladder fell from the clue straight to the Reveal.
+ *
+ * So the rule now has a level attached to it. Below `revealFromHintLevel` it
+ * stands unchanged: positions only, out of the pool, nothing new. At and above
+ * it the drip may also open a letter the player has not seen, because there the
+ * only thing left to offer instead is the Reveal, which ends in no solve at all.
+ * Pool letters are still spent first — the cheapest information the drip has —
+ * and both ceilings bind throughout, so it can hand over at most half a word
+ * and never the last two letters.
  */
 
 /**
@@ -44,6 +56,14 @@ export type SettleState = {
     text: string;
     guesses: string[];
     mask?: MaskState;
+    /**
+     * The word's hint level, carried explicitly rather than read off `mask`.
+     *
+     * The mask is optional and the level is not: `revealsUnseen` has to give the
+     * same answer on a word whose `cipher_text` has not arrived yet as on one
+     * where it has, or the rung would blink in and out with the mask.
+     */
+    hintLevel: number;
     /** Indices already settled, as stored on the message. */
     settled: readonly number[];
     policy: SettlePolicy;
@@ -118,16 +138,82 @@ export function orderCandidates(
  * disagree. Already-settled positions are excluded by that call, since a
  * settled letter counts as placed.
  */
-export function settleCandidates({ text, guesses, mask, settled, policy }: SettleState): number[] {
-    const candidates = knownUnplacedIndices(text, guesses, mask, new Set(settled));
-    return orderCandidates(text, candidates, policy.order);
+export function settleCandidates(
+    { text, guesses, mask, settled, policy, hintLevel }: SettleState,
+): number[] {
+    const settledSet = new Set(settled);
+    const known = knownUnplacedIndices(text, guesses, mask, settledSet);
+    const fromPool = orderCandidates(text, known, policy.order);
+
+    if (!revealsUnseen(hintLevel, policy)) return fromPool;
+
+    // Pool first, always. A loose letter costs the player nothing they did not
+    // already have — only its position — so every one of them is spent before
+    // the drip opens a letter the word was still keeping from them.
+    return [...fromPool, ...orderCandidates(text, unseenIndices({
+        text, guesses, mask, settled: settledSet, known, hintLevel,
+    }), policy.order)];
+}
+
+/**
+ * Whether the drip may open a letter the player has not been shown.
+ *
+ * Its own predicate for the same reason `settleArmed` is: arming and having
+ * something to give fail for different reasons, and this is a third question
+ * again — *what kind* of thing the drip is allowed to give at this height on
+ * the ladder.
+ */
+export function revealsUnseen(hintLevel: number, policy: SettlePolicy): boolean {
+    return policy.revealFromHintLevel !== null && hintLevel >= policy.revealFromHintLevel;
+}
+
+/**
+ * Positions the player has neither been shown nor found — the word's remaining
+ * secrets, as indices.
+ *
+ * Deliberately derived by subtraction from the two sets that already exist
+ * rather than by re-deriving what the player knows: `placedIndices` and
+ * `knownUnplacedIndices` are what the line and the pool are drawn from, so
+ * anything in neither is, by construction, a letter nothing on screen is
+ * showing. A second reading of the mask here could disagree with the board, and
+ * the failure would be the drip "revealing" a letter already in plain sight.
+ */
+function unseenIndices(
+    { text, guesses, mask, settled, known, hintLevel }: {
+        text: string;
+        guesses: string[];
+        mask?: MaskState;
+        settled: ReadonlySet<number>;
+        known: readonly number[];
+        hintLevel: number;
+    },
+): number[] {
+    const placed = placedIndices(text, guesses, mask, settled);
+    const inPool = new Set(known);
+
+    // Hint level 1 buys the first letter and it stays bought. `placedIndices`
+    // says so too, but only once a mask has arrived to say it through — and
+    // "the drip never hands back a letter the player already paid for" must not
+    // depend on the timing of a `cipher_text`. Asked of the level directly, the
+    // same way `readMaskTile` asks it of the answer.
+    const firstIsBought = hintLevel >= 1;
+
+    return [...text].flatMap((char, index) => (
+        placed.has(index)
+        || inPool.has(index)
+        || isGapChar(char)
+        || (firstIsBought && index === 0)
+            ? []
+            : [index]
+    ));
 }
 
 /**
  * The next position to settle, or null when there is nothing to give.
  *
  * Null for three different reasons, all of which mean the same thing to the
- * caller: the allowance is spent, the pool is empty, or the mode is off. The
+ * caller: the allowance is spent, there is nothing left it may give, or the
+ * mode is off. The
  * stuck ladder reads this to decide whether the rung exists at all, so the
  * offer can never appear with nothing behind it.
  */

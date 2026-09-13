@@ -5,7 +5,7 @@ import {
     MIN_SETTLE_INTERVAL_MS,
     parseSettlePolicy,
 } from './settlePolicy';
-import { SETTLE } from '@/lib/gameConfig';
+import { MAX_HINT_LEVEL, SETTLE } from '@/lib/gameConfig';
 
 describe('parseSettlePolicy', () => {
     it('falls back to the compiled defaults for anything that is not an object', () => {
@@ -52,6 +52,23 @@ describe('parseSettlePolicy', () => {
     it('clamps the arming level to the ladder', () => {
         expect(parseSettlePolicy({ armFromHintLevel: -3 }).armFromHintLevel).toBe(0);
         expect(parseSettlePolicy({ armFromHintLevel: 99 }).armFromHintLevel).toBe(3);
+    });
+
+    it('stores null as the pool-only rule rather than reading it as absent', () => {
+        // The one field where null is a value: it means "positions only, never
+        // new letters", which is not the compiled default and so cannot be
+        // expressed by leaving the key out.
+        expect(parseSettlePolicy({ revealFromHintLevel: null }).revealFromHintLevel).toBeNull();
+        expect(parseSettlePolicy({}).revealFromHintLevel)
+            .toBe(DEFAULT_SETTLE_POLICY.revealFromHintLevel);
+    });
+
+    it('clamps the reveal level to the ladder, and ignores nonsense', () => {
+        expect(parseSettlePolicy({ revealFromHintLevel: 99 }).revealFromHintLevel)
+            .toBe(MAX_HINT_LEVEL);
+        expect(parseSettlePolicy({ revealFromHintLevel: -4 }).revealFromHintLevel).toBe(0);
+        expect(parseSettlePolicy({ revealFromHintLevel: 'clue' }).revealFromHintLevel)
+            .toBe(DEFAULT_SETTLE_POLICY.revealFromHintLevel);
     });
 
     it('never throws, whatever is in the column', () => {

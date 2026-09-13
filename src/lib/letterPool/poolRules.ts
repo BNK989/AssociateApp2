@@ -93,6 +93,38 @@ export function buildLetterPool(
 }
 
 /**
+ * The pool, plus a letter that has been announced but is not in it.
+ *
+ * The settle drip announces a letter before writing it down so the thing can be
+ * seen to travel — `useSettlePlacement` explains why at length — and a flight
+ * needs a chip to measure its starting point from. That was free while the drip
+ * only ever placed letters already loose. Now that it may open one at the clue
+ * level, the letter it opens has no chip and would arrive by teleport, which
+ * reads as the board glitching rather than as the game helping.
+ *
+ * So the announced letter joins the pool for exactly the length of its flight:
+ * it appears among the loose letters, then flies to its slot like any other.
+ * Seeded back through `scramblePool` so it takes a place in the arrangement
+ * rather than being tacked on the end.
+ *
+ * A no-op when the letter is already loose, which is the common case.
+ */
+export function withAnnounced(
+    pool: PoolLetter[],
+    text: string,
+    index: number,
+    idPrefix: string,
+): PoolLetter[] {
+    const id = `${idPrefix}-${index}`;
+    if (pool.some((letter) => letter.id === id)) return pool;
+
+    const char = [...text][index];
+    if (char === undefined || isGapChar(char)) return pool;
+
+    return scramblePool([...pool, { id, char, slotIndex: null }]);
+}
+
+/**
  * Positions whose letter the player knows but has no place for — the pool, as
  * indices into the answer rather than as tiles.
  *

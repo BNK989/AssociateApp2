@@ -47,6 +47,15 @@ export type SettlePolicy = {
     mode: SettleMode;
     /** Lowest hint level the drip arms on. */
     armFromHintLevel: number;
+    /**
+     * Lowest hint level at which the drip may open a letter the player has not
+     * been shown, rather than only place one that is already loose.
+     *
+     * `null` is the original rule: positions only, never new letters. It reads
+     * as generous and, with the scramble gone, means the rung almost never
+     * exists — see `SETTLE.REVEAL_FROM_HINT_LEVEL`.
+     */
+    revealFromHintLevel: number | null;
     /** Dwell before the first letter. `auto` only; `offered` uses the stuck clock. */
     firstDelayMs: number;
     /** Gap between letters, in both modes. */
@@ -66,6 +75,7 @@ export type SettlePolicy = {
 export const DEFAULT_SETTLE_POLICY: SettlePolicy = {
     mode: SETTLE.MODE as SettleMode,
     armFromHintLevel: SETTLE.ARM_FROM_HINT_LEVEL,
+    revealFromHintLevel: SETTLE.REVEAL_FROM_HINT_LEVEL,
     firstDelayMs: SETTLE.FIRST_DELAY_MS,
     intervalMs: SETTLE.INTERVAL_MS,
     strikeCreditMs: SETTLE.STRIKE_CREDIT_MS,
@@ -118,6 +128,17 @@ export function parseSettlePolicy(value: unknown): SettlePolicy {
         armFromHintLevel: Math.round(clampNumber(
             value.armFromHintLevel, 0, MAX_HINT_LEVEL, DEFAULT_SETTLE_POLICY.armFromHintLevel,
         )),
+        // The one field where `null` is a value rather than an absence: it
+        // stores the pool-only rule, which is not the compiled default, so it
+        // cannot be expressed by leaving the key out.
+        revealFromHintLevel: value.revealFromHintLevel === null
+            ? null
+            : Math.round(clampNumber(
+                value.revealFromHintLevel,
+                0,
+                MAX_HINT_LEVEL,
+                DEFAULT_SETTLE_POLICY.revealFromHintLevel ?? MAX_HINT_LEVEL,
+            )),
         firstDelayMs: Math.round(clampNumber(
             value.firstDelayMs, 0, MAX_SETTLE_DELAY_MS, DEFAULT_SETTLE_POLICY.firstDelayMs,
         )),

@@ -160,6 +160,7 @@ export function useDailySettle({
                 mask: targetMessage.cipher_text
                     ? { cipher: targetMessage.cipher_text, hintLevel }
                     : undefined,
+                hintLevel,
                 settled,
                 policy,
             }

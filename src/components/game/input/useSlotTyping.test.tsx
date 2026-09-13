@@ -175,13 +175,31 @@ describe('useSlotTyping — a letter the settle drip is flying in', () => {
         expect(slot?.poolId).toBe(FLYING_ID);
     });
 
-    it('does nothing when the pool has no letter for that position', () => {
-        // The board moved underneath the flight. Drawing a letter the pool
-        // cannot account for is the one outcome worth refusing outright.
+    it('lends a chip to a letter that was never loose, so the drip can open one', () => {
+        // No guesses, so nothing is found and the pool is empty — which since
+        // the scramble went is the ordinary state of a word at the clue. The
+        // drip may open a letter there, and an opened letter still has to be
+        // seen to travel, so it borrows a chip for the length of its flight.
         const { result } = setup({
             text: 'Harmony',
             guesses: [],
             pendingSettle: FLYING_INDEX,
+        });
+
+        expect(result.current.model!.pool.map((letter) => letter.id)).toContain(FLYING_ID);
+        expect(result.current.model!.flyingId).toBe(FLYING_ID);
+        expect(result.current.model!.slots.find((cell) => cell.index === FLYING_INDEX)?.char)
+            .toBe('n');
+    });
+
+    it('still refuses a position the strip is not holding open', () => {
+        // The board moved underneath the flight. Index 0 is green against
+        // "harpoon", so there is no open slot to land in and nothing is drawn —
+        // the refusal that matters, kept where it can still be checked.
+        const { result } = setup({
+            text: 'Harmony',
+            guesses: ['harpoon'],
+            pendingSettle: 0,
         });
 
         expect(result.current.model!.flyingId).toBeNull();
