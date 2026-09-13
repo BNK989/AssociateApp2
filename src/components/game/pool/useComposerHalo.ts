@@ -17,22 +17,26 @@ import { useHaloRoster } from './useHaloRoster';
  * - **`visible`** is the subset still loose, which is what gets drawn. A letter
  *   that found its place leaves a gap rather than closing the ranks up — see
  *   `haloRoster` for why that matters.
+ * - **`loose`** is that subset as ids, which the flights need to tell a
+ *   backspace (letter returns to the pool) from a settle (letter leaves it).
  */
 export function useComposerHalo(
     pool: PoolLetter[],
     targetId: string | undefined,
     mirror: boolean,
-): { placements: HaloPlacement[]; visible: HaloPlacement[] } {
+): { placements: HaloPlacement[]; visible: HaloPlacement[]; loose: Set<string> } {
     const roster = useHaloRoster(pool, targetId);
 
     const placements = useMemo(() => layoutHalo(roster, mirror), [roster, mirror]);
 
-    const visible = useMemo(() => {
-        const live = occupiedIds(pool);
-        return placements.filter((placement) => live.has(placement.id));
-    }, [placements, pool]);
+    const loose = useMemo(() => occupiedIds(pool), [pool]);
 
-    return { placements, visible };
+    const visible = useMemo(
+        () => placements.filter((placement) => loose.has(placement.id)),
+        [placements, loose],
+    );
+
+    return { placements, visible, loose };
 }
 
 /**

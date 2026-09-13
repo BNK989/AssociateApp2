@@ -566,6 +566,27 @@ twice while it is still on screen for the flight to measure.
 Nothing pointed at this, so the **`place` offer** was added to the stuck ladder
 in front of everything priced: see [hint_presentation.md](hint_presentation.md).
 
+### A settled letter must not fly back out
+
+Placing and un-placing look identical from the slot bindings alone: the pool id
+simply stops being in a slot. They are opposite events, though, and the flights
+have to tell them apart.
+
+- **Backspace** — the letter goes back to the pool, and flies home to the spot it
+  came from, which is still there because the chip was only hidden.
+- **Settle** — the letter is written onto the word and leaves the pool for good.
+  There is nothing to fly home to.
+
+Reading only the bindings, `useLetterFlights` called both of them a backspace, so
+a tapped letter flew into its slot, committed, and then flew straight back out
+again — the whole gesture undoing itself on screen a beat after it worked. It
+takes the live pool ids (`loose`) now and launches the homeward leg only for a
+letter that is actually back in the pool.
+
+Worth remembering when anything else starts consuming placements: *out of a
+slot* is not the same question as *back in the pool*, and only the second one
+means the player took something back.
+
 ### The halo is solved against a roster, not against the pool
 
 Bands are shares of an edge, handed out by position in the list `layoutHalo` is

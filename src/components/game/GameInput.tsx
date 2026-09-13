@@ -191,6 +191,7 @@ export function GameInput({
         // The full roster, so a letter mid-flight still has a spot to be
         // measured from even on the frame it leaves the pool.
         letters: halo.placements,
+        loose: halo.loose,
         reduced: reducedMotion,
     });
 

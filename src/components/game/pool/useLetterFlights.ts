@@ -21,6 +21,17 @@ type Args = {
     placements: Map<string, number>;
     /** The halo as solved: the character to fly, and the angle to unwind. */
     letters: HaloPlacement[];
+    /**
+     * Pool ids still loose — that is, still in the pool.
+     *
+     * Only used by the homeward leg, and it is what tells a backspace apart
+     * from a letter that has settled for good. Both look identical from
+     * `placed` alone: the id simply stops being in a slot. A backspace returns
+     * the letter to the pool and it must fly home; a settled letter has left
+     * the pool entirely and must not, or it lands and then flies straight back
+     * out again, which is what it did.
+     */
+    loose: Set<string>;
     /** No flights at all: the letter simply appears where it landed. */
     reduced: boolean;
 };
@@ -44,11 +55,13 @@ type Args = {
  * letter, and an unmounted chip has no rectangle to read. It also means a
  * letter's home is still there for it to fly back to on a backspace.
  */
-export function useLetterFlights({ placed, placements, letters, reduced }: Args) {
+export function useLetterFlights({ placed, placements, letters, loose, reduced }: Args) {
     // Read inside the layout effect below, which must not re-run when the halo
     // is re-solved — only when a letter actually moves.
     const halo = useRef(letters);
     halo.current = letters;
+    const stillLoose = useRef(loose);
+    stillLoose.current = loose;
     const [flights, setFlights] = useState<Flight[]>([]);
     const previous = useRef<{ placed: Set<string>; placements: Map<string, number> }>({
         placed: new Set(),
@@ -86,6 +99,9 @@ export function useLetterFlights({ placed, placements, letters, reduced }: Args)
         // still there because the chip was only ever hidden.
         for (const poolId of was.placed) {
             if (placed.has(poolId)) continue;
+            // Gone from the pool altogether: it settled rather than being
+            // taken back, so there is nothing for it to fly home to.
+            if (!stillLoose.current.has(poolId)) continue;
             const slotIndex = was.placements.get(poolId);
             if (slotIndex === undefined) continue;
 
