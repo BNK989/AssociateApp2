@@ -27,12 +27,11 @@
             "placeholder_free": "¡El autor se fue! ¡Todos pueden adivinar!",
             "placeholder_turn_me": "¡Es tu turno!",
             "placeholder_turn_other": "Es el turno de {user}",
-            "hint_1": "1º",
             "reveal_len": "Revelar Longitud",
             "hint_2": "Revelar 1º + 25%",
-            "hint_ai": "Pista IA",
+            "hint_clue": "Pista de la palabra",
             "cost_pts": "{cost} pts",
-            "cost_deducted": "Deducido del valor de la palabra",
+            "still_worth": "Sigue valiendo {points} pts si la resuelves",
             "reveal_word": "Revelar",
             "open_other_end": "Abrir el otro extremo",
             "counter_remain": "Quedan {count} intentos",
@@ -50,7 +49,7 @@
             "start_type": "O ESCRIBE ABAJO",
             "start_title": "¡Empieza el Juego!",
             "start_desc": "Sé el primero en enviar un mensaje o empieza con una palabra aleatoria.",
-            "consulting_ai": "Consultando IA...",
+            "decoding_clue": "Descifrando",
             "shuffle": "Mezclar letras",
             "shuffle_explainer": "Reordena las fichas para verlas con otros ojos. Nunca revela nada nuevo.",
             "solved": "Resuelto",
@@ -72,7 +71,7 @@
             "counter_last": "¡Último intento!",
             "float_solved": "<stealer>{stealer}</stealer> resolvió el texto de <author>{author}</author>",
             "float_solved_you": "<stealer>{stealer}</stealer> resolvió tu texto",
-            "toast_daily_limit": "Límite diario de pistas IA alcanzado",
+            "toast_daily_limit": "Límite diario de pistas alcanzado",
             "toast_word_lost": "Palabra perdida: {word}",
             "toast_reset_success": "Juego reiniciado al estado inicial",
             "hint_fallback": "Contiene {length} letras. La primera letra es {firstLetter}.",
@@ -136,7 +135,7 @@
                 },
                 "hints": {
                     "title": "Pistas",
-                    "text": "Si no sabes la palabra, hay pistas disponibles: 1) Longitud de la palabra, 2) Revelar letras, 3) Pista de contexto IA. Cuidado: ¡3 intentos incorrectos exponen la palabra!"
+                    "text": "Si no sabes la palabra, hay pistas disponibles: 1) Longitud de la palabra, 2) Revelar letras, 3) Una pista escrita. Cuidado: ¡3 intentos incorrectos exponen la palabra!"
                 },
                 "winning": {
                     "title": "Ganar",
@@ -168,7 +167,7 @@
                     "step3_title": "Lee los colores",
                     "step3_desc": "Las letras verdes están en su sitio. Las naranjas aparecen en la palabra. Los símbolos grises siguen ocultos. Siempre resuelves la palabra del borde iluminado.",
                     "step4_title": "Ayuda cuando la quieras",
-                    "step4_desc": "La bombilla abre la escalera: primero la longitud, luego letras, luego una pista de IA. Solo la pista se marca en tu resultado compartido; los empujoncitos no cuestan nada.",
+                    "step4_desc": "La bombilla abre la escalera: primero la longitud, luego letras, luego una pista escrita. Solo la pista se marca en tu resultado compartido; los empujoncitos no cuestan nada.",
                     "play_now": "A jugar"
                 }
             },

@@ -1,6 +1,17 @@
 import { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Eye, Lightbulb, Loader2, Pause, Play, Settings, Shuffle, Split } from 'lucide-react';
+import {
+    Eye,
+    Lightbulb,
+    Loader2,
+    MessageSquareQuote,
+    Pause,
+    Play,
+    Ruler,
+    Settings,
+    Shuffle,
+    Split,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
     DropdownMenu,
@@ -35,14 +46,20 @@ type HintButtonProps = {
     onInteract: () => void;
 };
 
-/** Glyph under the bulb showing which hint comes next. */
+/**
+ * Glyph under the bulb showing which hint comes next.
+ *
+ * One icon family, one size, no words. It read `1st`, a shuffle icon and `AI`
+ * before — three different kinds of mark in one 40px control, and the last of
+ * them named the machine that wrote the clue rather than the clue. What the
+ * player needs from this glyph is which rung is next; where the help comes from
+ * is the game's business, not theirs.
+ */
 function TierBadge({ badge }: { badge: HintTier['badge'] }) {
-    const t = useTranslations('GameRoom.Input');
-
     if (badge === null) return null;
-    if (badge === 'shuffle') return <Shuffle className="h-3 w-3" />;
-    if (badge === 'ai') return <span>AI</span>;
-    return <span>{t('hint_1')}</span>;
+    if (badge === 'length') return <Ruler className="h-3 w-3" aria-hidden="true" />;
+    if (badge === 'shuffle') return <Shuffle className="h-3 w-3" aria-hidden="true" />;
+    return <MessageSquareQuote className="h-3 w-3" aria-hidden="true" />;
 }
 
 /**
@@ -119,6 +136,7 @@ export function HintButton({
                             onGetHint();
                         }}
                         onContextMenu={openMenu}
+                        aria-label={tier ? t(tier.labelKey) : t('reveal_word')}
                         className="h-10 w-10 relative flex flex-col items-center justify-center rounded-lg transition-colors bg-secondary text-secondary-foreground hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isAutoHintActive && !sending && (
@@ -130,7 +148,7 @@ export function HintButton({
                                 ? <Loader2 className="h-4 w-4 animate-spin" />
                                 : <Lightbulb className="h-4 w-4" aria-hidden="true" />}
                         </span>
-                        <span className="text-[10px] font-bold leading-none z-10">
+                        <span className="leading-none z-10 text-brand-subtle-foreground">
                             <TierBadge badge={tier?.badge ?? null} />
                         </span>
                     </motion.button>

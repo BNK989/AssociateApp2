@@ -21,6 +21,8 @@ vi.mock('lucide-react', () => ({
     Play: () => <div data-testid="play-icon" />,
     Settings: () => <div data-testid="settings-icon" />,
     Lightbulb: () => <div data-testid="lightbulb-icon" />,
+    Ruler: () => <div data-testid="ruler-icon" />,
+    MessageSquareQuote: () => <div data-testid="clue-icon" />,
     Eye: () => <div data-testid="eye-icon" />,
     Clock: () => <div data-testid="clock-icon" />,
 }));

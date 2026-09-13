@@ -34,12 +34,11 @@
             "placeholder_free": "Author left! Free for all to guess!",
             "placeholder_turn_me": "It's your turn!",
             "placeholder_turn_other": "It is {user}'s turn",
-            "hint_1": "1st",
             "reveal_len": "Reveal Length",
             "hint_2": "Reveal 1st + 25%",
-            "hint_ai": "AI Hint",
+            "hint_clue": "Word clue",
             "cost_pts": "{cost} pts",
-            "cost_deducted": "Deducted from word value",
+            "still_worth": "Still worth {points} pts if you solve it",
             "reveal_word": "Reveal",
             "open_other_end": "Open the other end",
             "counter_remain": "{count} guesses remain",
@@ -57,7 +56,7 @@
             "start_type": "OR TYPE BELOW",
             "start_title": "Start the Game!",
             "start_desc": "Be the first to send a message or start with a random word.",
-            "consulting_ai": "Consulting AI...",
+            "decoding_clue": "Decoding",
             "shuffle": "Shuffle letters",
             "shuffle_explainer": "Rearranges the tiles for a fresh look. It never reveals anything new.",
             "solved": "Solved",
@@ -79,7 +78,7 @@
             "counter_last": "Last guess!",
             "float_solved": "<stealer>{stealer}</stealer> solved <author>{author}</author>'s text",
             "float_solved_you": "<stealer>{stealer}</stealer> solved your text",
-            "toast_daily_limit": "Daily AI Hint limit reached",
+            "toast_daily_limit": "Daily clue limit reached",
             "toast_word_lost": "Lost word: {word}",
             "toast_reset_success": "Game reset to initial state",
             "hint_fallback": "Contains {length} letters. First letter is {firstLetter}.",
@@ -144,7 +143,7 @@
                 },
                 "hints": {
                     "title": "Hints",
-                    "text": "If you don't know the word, hints are available: 1) Word length, 2) Reveal letters, 3) AI context clue. Careful: 3 incorrect guesses exposes the word!"
+                    "text": "If you don't know the word, hints are available: 1) Word length, 2) Reveal letters, 3) A written clue. Careful: 3 incorrect guesses exposes the word!"
                 },
                 "winning": {
                     "title": "Winning",
@@ -176,7 +175,7 @@
                     "step3_title": "Read the colours",
                     "step3_desc": "Green letters sit in the right place. Orange letters are in the word somewhere. Grey symbols are still hidden. You are always solving the word with the glowing border.",
                     "step4_title": "Help, when you want it",
-                    "step4_desc": "The lightbulb opens the ladder: word length first, then letters, then an AI clue. Only the clue is marked on your shared result — the small nudges cost you nothing.",
+                    "step4_desc": "The lightbulb opens the ladder: word length first, then letters, then a written clue. Only the clue is marked on your shared result — the small nudges cost you nothing.",
                     "play_now": "Play now"
                 }
             },

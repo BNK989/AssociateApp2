@@ -27,12 +27,11 @@
             "placeholder_free": "L'auteur est parti ! Tout le monde peut deviner !",
             "placeholder_turn_me": "C'est votre tour !",
             "placeholder_turn_other": "C'est le tour de {user}",
-            "hint_1": "1er",
             "reveal_len": "Révéler la longueur",
             "hint_2": "Révéler 1er + 25%",
-            "hint_ai": "Indice IA",
+            "hint_clue": "Indice du mot",
             "cost_pts": "{cost} pts",
-            "cost_deducted": "Déduit de la valeur du mot",
+            "still_worth": "Vaut encore {points} pts si vous trouvez",
             "reveal_word": "Révéler",
             "open_other_end": "Ouvrir l'autre bout",
             "counter_remain": "{count} essais restants",
@@ -50,7 +49,7 @@
             "start_type": "OU TAPEZ CI-DESSOUS",
             "start_title": "Commencez le jeu !",
             "start_desc": "Soyez le premier à envoyer un message ou commencez avec un mot aléatoire.",
-            "consulting_ai": "Consultation IA...",
+            "decoding_clue": "Déchiffrage",
             "shuffle": "Mélanger les lettres",
             "shuffle_explainer": "Réarrange les tuiles pour un regard neuf. Cela ne révèle jamais rien de nouveau.",
             "solved": "Résolu",
@@ -72,7 +71,7 @@
             "counter_last": "Dernier essai !",
             "float_solved": "<stealer>{stealer}</stealer> a résolu le texte de <author>{author}</author>",
             "float_solved_you": "<stealer>{stealer}</stealer> a résolu votre texte",
-            "toast_daily_limit": "Limite quotidienne d'indices IA atteinte",
+            "toast_daily_limit": "Limite quotidienne d'indices atteinte",
             "toast_word_lost": "Mot perdu : {word}",
             "toast_reset_success": "Jeu réinitialisé à l'état initial",
             "hint_fallback": "Contient {length} lettres. La première lettre est {firstLetter}.",
@@ -136,7 +135,7 @@
                 },
                 "hints": {
                     "title": "Indices",
-                    "text": "Si vous ne connaissez pas le mot, des indices sont disponibles : 1) Longueur du mot, 2) Révéler des lettres, 3) Indice de contexte IA. Attention : 3 mauvaises réponses révèlent le mot !"
+                    "text": "Si vous ne connaissez pas le mot, des indices sont disponibles : 1) Longueur du mot, 2) Révéler des lettres, 3) Un indice rédigé. Attention : 3 mauvaises réponses révèlent le mot !"
                 },
                 "winning": {
                     "title": "Gagner",
@@ -168,7 +167,7 @@
                     "step3_title": "Lis les couleurs",
                     "step3_desc": "Les lettres vertes sont à la bonne place. Les oranges sont dans le mot, ailleurs. Les symboles gris restent cachés. Tu résous toujours le mot au contour lumineux.",
                     "step4_title": "De l’aide, si tu veux",
-                    "step4_desc": "L’ampoule ouvre l’échelle : la longueur d’abord, puis des lettres, puis un indice IA. Seul l’indice apparaît dans ton résultat partagé — les petits coups de pouce ne coûtent rien.",
+                    "step4_desc": "L’ampoule ouvre l’échelle : la longueur d’abord, puis des lettres, puis un indice rédigé. Seul l’indice apparaît dans ton résultat partagé — les petits coups de pouce ne coûtent rien.",
                     "play_now": "Jouer"
                 }
             },

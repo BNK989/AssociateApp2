@@ -22,7 +22,10 @@ Once the message limit is reached or the players agree to switch:
 5.  **Hints**: Stuck? You can buy hints (costs points):
     *   💡 **1st Hint**: See word length.
     *   💡 **2nd Hint**: Reveal 25% of letters.
-    *   💡 **3rd Hint**: Get an AI-generated clue.
+    *   💡 **3rd Hint**: A written clue about the word.
+
+    The player is never told how a clue was produced — see
+    [hint_presentation.md](hint_presentation.md).
 
 ---
 
@@ -106,5 +109,5 @@ Four things exist so that a word you cannot get is a pause rather than an exit.
 
 ## ⚠️ Limitations
 
-*   **AI Hints**: Using the 3rd hint (AI-generated) is subject to availability and usage limits (5 per game, 100 per day per IP). Guest users do not have access to AI hints.
+*   **Written clues**: The 3rd hint is generated server-side by Gemini and is subject to availability and usage limits (5 per game, 100 per day per IP). Guest users cannot buy it, and get a Reveal beside the hint button instead. None of that reaches the player as the word "AI": the clue is the game's, however it was written.
 *   **Connection Score Indicator**: The UI element showing the strength of the link between words (e.g., "Loose Link", "Strong Link") in the Daily Game has been temporarily hidden via CSS based on user feedback to streamline the visual experience.

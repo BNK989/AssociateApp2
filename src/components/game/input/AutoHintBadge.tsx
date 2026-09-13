@@ -44,10 +44,10 @@ export function AutoHintBadge({ secondsLeft, isPaused, onToggle }: AutoHintBadge
         >
             <Badge
                 variant={isPaused ? 'destructive' : 'secondary'}
-                className="px-1 py-0 h-4 min-w-[32px] flex items-center justify-center gap-0.5 text-[9px] shadow-sm hover:scale-110 transition-transform bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-800 text-foreground"
+                className="px-1 py-0 h-4 min-w-[32px] flex items-center justify-center gap-0.5 text-[9px] shadow-sm hover:scale-110 transition-transform bg-background border border-brand/40 text-foreground"
             >
                 {isPaused ? (
-                    <Play className="w-2.5 h-2.5 text-green-600 animate-pulse" aria-hidden="true" />
+                    <Play className="w-2.5 h-2.5 text-brand animate-pulse" aria-hidden="true" />
                 ) : (
                     <>
                         <span className="font-mono font-bold leading-none">{secondsLeft}</span>

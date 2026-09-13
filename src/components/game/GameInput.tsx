@@ -15,7 +15,13 @@ import { useSlotTyping } from './input/useSlotTyping';
 import { RevealButton } from './input/RevealButton';
 import { HintButton } from './input/HintButton';
 import { MessageInput } from './input/MessageInput';
-import { getEffectiveHintLevel, getHintTier, getTurnState, isSubmitDisabled } from './input/inputRules';
+import {
+    getEffectiveHintLevel,
+    getHintTier,
+    getTurnState,
+    isSubmitDisabled,
+    valueAfterHint,
+} from './input/inputRules';
 import { useHintNudge } from './input/useHintNudge';
 import { useHintTooltip } from './input/useHintTooltip';
 import { usePlaceholder } from './input/usePlaceholder';
@@ -169,7 +175,7 @@ export function GameInput({
     // about which way the answer reads.
     const dir = targetMessage && /[֐-׿]/.test(targetMessage.content) ? 'rtl' : 'ltr';
 
-    // Guests cannot buy the AI hint, so they get an escape hatch beside it.
+    // Guests cannot buy the written clue, so they get an escape hatch beside it.
     const showGuestReveal = showHintControls
         && !isMaxHints
         && (targetMessage?.hint_level || 0) === 2
@@ -250,13 +256,24 @@ export function GameInput({
                             <Tooltip open={tooltip.isOpen} onOpenChange={tooltip.setIsOpen}>
                                 <TooltipTrigger asChild>{hintButton}</TooltipTrigger>
                                 <TooltipContent side="top" align="start">
+                                    {/*
+                                      * Benefit, price, then what survives — in
+                                      * that order. It used to open with the
+                                      * price and close with "deducted from word
+                                      * value", so the only two numbers a
+                                      * hesitating player read were both losses.
+                                      */}
                                     <div className="text-xs space-y-1">
                                         <p className="font-bold">{tier ? t(tier.labelKey) : ''}</p>
                                         <p className="text-muted-foreground">
                                             {t('cost_pts', { cost: -(tier?.cost ?? 0) })}
                                         </p>
                                         <p className="text-[10px] text-muted-foreground opacity-70">
-                                            {t('cost_deducted')}
+                                            {t('still_worth', {
+                                                points: targetMessage
+                                                    ? valueAfterHint(targetMessage, effectiveLevel)
+                                                    : 0,
+                                            })}
                                         </p>
                                     </div>
                                 </TooltipContent>

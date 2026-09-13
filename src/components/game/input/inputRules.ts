@@ -1,7 +1,7 @@
 import type { GameState, Message, Player } from '@/hooks/useGameLogic';
 import { GAME_CONFIG } from '@/lib/gameConfig';
 import { calculateMessageValue, calculateRevealedPercentage, HINT_COSTS } from '@/lib/gameLogic';
-import { MAX_HINT_LEVEL } from '@/lib/daily/dailyScoring';
+import { calculateSolvePoints, MAX_HINT_LEVEL } from '@/lib/daily/dailyScoring';
 import { DEFAULT_HINT_POLICY, type HintProgression } from '@/lib/daily/hintPolicy';
 
 /**
@@ -112,16 +112,24 @@ export type HintTier = {
     /** Points this hint will cost, deducted from the word's value on solve. */
     cost: number;
     /** i18n key describing what the next hint gives. */
-    labelKey: 'reveal_len' | 'hint_2' | 'hint_ai';
-    /** Glyph for the button: null renders the generic hint icon alone. */
-    badge: 'level' | 'shuffle' | 'ai' | null;
+    labelKey: 'reveal_len' | 'hint_2' | 'hint_clue';
+    /**
+     * Which rung's glyph the button wears; null renders the bulb alone.
+     *
+     * These name what the player *gets* — a length, a reshuffle, a written clue
+     * — and deliberately not where it came from. The third rung used to be
+     * badged `AI`, which told the player about the plumbing behind the clue and
+     * nothing about the help in it, and invited them to discount the help
+     * accordingly.
+     */
+    badge: 'length' | 'shuffle' | 'clue' | null;
 };
 
 /**
  * Cost and labelling for the next hint.
  *
  * Under the `jump` progression the ladder is skipped entirely — every hint goes
- * straight to the AI clue — so the button shows no intermediate glyph that
+ * straight to the written clue — so the button shows no intermediate glyph that
  * would imply a step the player will not pass through.
  */
 export function getHintTier(
@@ -138,7 +146,7 @@ export function getHintTier(
         return {
             cost: Math.ceil(wordValue * HINT_COSTS.TIER_1),
             labelKey: 'reveal_len',
-            badge: revealsEverything ? null : 'level',
+            badge: revealsEverything ? null : 'length',
         };
     }
 
@@ -152,9 +160,24 @@ export function getHintTier(
 
     return {
         cost: Math.ceil(wordValue * HINT_COSTS.TIER_3),
-        labelKey: 'hint_ai',
-        badge: revealsEverything ? null : 'ai',
+        labelKey: 'hint_clue',
+        badge: revealsEverything ? null : 'clue',
     };
+}
+
+/**
+ * What the word is still worth if the player takes this hint and then solves it.
+ *
+ * The composer used to state the hint's price and nothing else — "-12 pts",
+ * "Deducted from word value" — which is the whole transaction told from the
+ * losing side. The same number framed as what survives reads as a trade rather
+ * than a fine, and it is the number the player actually decides on.
+ *
+ * Streak-free on purpose: a multiplier the player may or may not still hold by
+ * the time they solve would make this a promise the game cannot keep.
+ */
+export function valueAfterHint(targetMessage: Message, effectiveLevel: number): number {
+    return calculateSolvePoints(targetMessage.content, effectiveLevel + 1, 0);
 }
 
 /** Non-space character count, which is what the counter compares. */

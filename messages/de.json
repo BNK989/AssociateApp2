@@ -27,12 +27,11 @@
             "placeholder_free": "Der Autor ist weg! Jeder kann raten!",
             "placeholder_turn_me": "Du bist dran!",
             "placeholder_turn_other": "{user} ist dran",
-            "hint_1": "1.",
             "reveal_len": "Länge aufdecken",
             "hint_2": "1. + 25% aufdecken",
-            "hint_ai": "KI-Hinweis",
+            "hint_clue": "Worthinweis",
             "cost_pts": "{cost} Pkt",
-            "cost_deducted": "Vom Wortwert abgezogen",
+            "still_worth": "Noch {points} Pkt. wert, wenn du löst",
             "reveal_word": "Aufdecken",
             "open_other_end": "Das andere Ende öffnen",
             "counter_remain": "{count} Versuche übrig",
@@ -50,7 +49,7 @@
             "start_type": "ODER UNTEN EIPPEN",
             "start_title": "Starte das Spiel!",
             "start_desc": "Sei der Erste, der eine Nachricht sendet, oder starte mit einem zufälligen Wort.",
-            "consulting_ai": "Konsultiere KI...",
+            "decoding_clue": "Entschlüsseln",
             "shuffle": "Buchstaben mischen",
             "shuffle_explainer": "Ordnet die Kacheln neu an, für einen frischen Blick. Es wird nie etwas Neues aufgedeckt.",
             "solved": "Gelöst",
@@ -72,7 +71,7 @@
             "counter_last": "Letzter Versuch!",
             "float_solved": "<stealer>{stealer}</stealer> hat den Text von <author>{author}</author> gelöst",
             "float_solved_you": "<stealer>{stealer}</stealer> hat deinen Text gelöst",
-            "toast_daily_limit": "Tägliches Limit für KI-Hinweise erreicht",
+            "toast_daily_limit": "Tägliches Hinweis-Limit erreicht",
             "toast_word_lost": "Verlorenes Wort: {word}",
             "toast_reset_success": "Spiel auf Ausgangszustand zurückgesetzt",
             "hint_fallback": "Enthält {length} Buchstaben. Der erste Buchstabe ist {firstLetter}.",
@@ -136,7 +135,7 @@
                 },
                 "hints": {
                     "title": "Hinweise",
-                    "text": "Wenn du das Wort nicht kennst, gibt es Hinweise: 1) Wortlänge, 2) Buchstaben aufdecken, 3) KI-Kontexthinweis. Vorsicht: 3 falsche Versuche decken das Wort auf!"
+                    "text": "Wenn du das Wort nicht kennst, gibt es Hinweise: 1) Wortlänge, 2) Buchstaben aufdecken, 3) Ein formulierter Hinweis. Vorsicht: 3 falsche Versuche decken das Wort auf!"
                 },
                 "winning": {
                     "title": "Gewinnen",
@@ -168,7 +167,7 @@
                     "step3_title": "Die Farben lesen",
                     "step3_desc": "Grüne Buchstaben stehen an der richtigen Stelle. Orange Buchstaben kommen im Wort vor. Graue Zeichen sind noch verborgen. Gelöst wird immer das Wort mit dem leuchtenden Rahmen.",
                     "step4_title": "Hilfe, wenn du willst",
-                    "step4_desc": "Die Glühbirne öffnet die Leiter: erst die Wortlänge, dann Buchstaben, dann ein KI-Hinweis. Nur der Hinweis erscheint in deinem geteilten Ergebnis — die kleinen Schritte kosten nichts.",
+                    "step4_desc": "Die Glühbirne öffnet die Leiter: erst die Wortlänge, dann Buchstaben, dann ein formulierter Hinweis. Nur der Hinweis erscheint in deinem geteilten Ergebnis — die kleinen Schritte kosten nichts.",
                     "play_now": "Los geht’s"
                 }
             },

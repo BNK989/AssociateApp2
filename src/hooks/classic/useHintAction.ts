@@ -25,7 +25,9 @@ type UseHintActionArgs = {
 /**
  * Buys the next hint level on the current word.
  *
- * The AI clue is withheld from guests because it costs a paid API call. The
+ * The written clue is withheld from guests because it costs a paid API call
+ * to generate — a fact of the plumbing, which is why the player is told they
+ * need an account rather than told about the machine behind it. The
  * `sending` flag is checked here as well as by the caller: buying a hint and
  * submitting a guess at the same moment would race for the same word.
  */
@@ -57,7 +59,7 @@ export function useHintAction({
         }
 
         if (nextLevel === MAX_HINT_LEVEL && user?.is_anonymous) {
-            toast.info('Register to get AI hints!');
+            toast.info('Register to unlock the final clue!');
             return;
         }
 

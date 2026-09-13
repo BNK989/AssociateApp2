@@ -8,7 +8,13 @@ type HintProgressRingProps = {
     progress: number;
 };
 
-/** Ring around the hint button that drains as the auto-hint timer counts down. */
+/**
+ * Ring around the hint button that drains as the auto-hint timer counts down.
+ *
+ * Brand-toned rather than `purple-500`/`purple-600`: the same accent the clue
+ * panel and every other product surface uses, and one that has an answer in
+ * both themes.
+ */
 export function HintProgressRing({ progress }: HintProgressRingProps) {
     const offset = PERIMETER * (1 - progress / 100);
 
@@ -18,12 +24,12 @@ export function HintProgressRing({ progress }: HintProgressRingProps) {
                 <rect
                     x="1" y="1" width="38" height="38" rx="7" ry="7"
                     fill="none" stroke="currentColor" strokeWidth="3"
-                    className="text-purple-500/30"
+                    className="text-brand/25"
                 />
                 <motion.rect
                     x="1" y="1" width="38" height="38" rx="7" ry="7"
                     fill="none" stroke="currentColor" strokeWidth="3"
-                    className="text-purple-600 dark:text-purple-400"
+                    className="text-brand"
                     strokeDasharray={PERIMETER}
                     strokeDashoffset={offset}
                     initial={{ strokeDashoffset: PERIMETER }}

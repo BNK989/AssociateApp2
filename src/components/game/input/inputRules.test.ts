@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { GameState, Message, Player } from '@/hooks/useGameLogic';
 import { calculateMessageValue, HINT_COSTS } from '@/lib/gameLogic';
-import { getNextHintLevel } from '@/lib/daily/dailyScoring';
+import { calculateSolvePoints, getNextHintLevel } from '@/lib/daily/dailyScoring';
 import {
     countMeaningfulChars,
     getActivePlayerId,
@@ -9,6 +9,7 @@ import {
     getHintTier,
     getTurnState,
     isSubmitDisabled,
+    valueAfterHint,
 } from './inputRules';
 
 const ME = 'user-me';
@@ -169,12 +170,12 @@ describe('getHintTier', () => {
     it('labels each tier', () => {
         expect(getHintTier(0, message, ladder)?.labelKey).toBe('reveal_len');
         expect(getHintTier(1, message, ladder)?.labelKey).toBe('hint_2');
-        expect(getHintTier(2, message, ladder)?.labelKey).toBe('hint_ai');
+        expect(getHintTier(2, message, ladder)?.labelKey).toBe('hint_clue');
     });
 
-    it('shows the step glyph on the ladder', () => {
+    it('shows the step glyph on the ladder, naming the help and not its source', () => {
         expect(getHintTier(1, message, ladder)?.badge).toBe('shuffle');
-        expect(getHintTier(2, message, ladder)?.badge).toBe('ai');
+        expect(getHintTier(2, message, ladder)?.badge).toBe('clue');
     });
 
     it('shows no glyph under the ALL reveal type, since no step is passed through', () => {
@@ -207,12 +208,36 @@ describe('hint cost and hint level agree', () => {
     });
 
     it('shows the step glyph now that the ladder is real', () => {
-        expect(getHintTier(0, word)?.badge).toBe('level');
+        expect(getHintTier(0, word)?.badge).toBe('length');
         expect(getHintTier(1, word)?.badge).toBe('shuffle');
-        expect(getHintTier(2, word)?.badge).toBe('ai');
+        expect(getHintTier(2, word)?.badge).toBe('clue');
     });
 });
 
+
+describe('valueAfterHint', () => {
+    const word = { id: 'm1', content: 'Harmony' } as Message;
+
+    it('states what the word is still worth once the tier is taken', () => {
+        for (const level of [0, 1, 2]) {
+            expect(valueAfterHint(word, level)).toBe(calculateSolvePoints(word.content, level + 1, 0));
+        }
+    });
+
+    it('falls as the player climbs the ladder', () => {
+        expect(valueAfterHint(word, 0)).toBeGreaterThan(valueAfterHint(word, 1));
+        expect(valueAfterHint(word, 1)).toBeGreaterThan(valueAfterHint(word, 2));
+    });
+
+    it('leaves something on the table even at the last rung', () => {
+        expect(valueAfterHint(word, 2)).toBeGreaterThan(0);
+    });
+
+    it('quotes no streak bonus it cannot promise', () => {
+        const value = calculateMessageValue(word.content);
+        expect(valueAfterHint(word, 0)).toBeLessThan(value);
+    });
+});
 
 describe('countMeaningfulChars', () => {
     it('ignores spaces wherever they fall', () => {

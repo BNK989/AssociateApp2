@@ -27,12 +27,11 @@
             "placeholder_free": "Autorul a plecat! Oricine poate ghici!",
             "placeholder_turn_me": "Este rândul tău!",
             "placeholder_turn_other": "Este rândul lui {user}",
-            "hint_1": "Primul",
             "reveal_len": "Dezvăluie Lungimea",
             "hint_2": "Dezvăluie Primul + 25%",
-            "hint_ai": "Indiciu AI",
+            "hint_clue": "Indiciu pentru cuvânt",
             "cost_pts": "{cost} pct",
-            "cost_deducted": "Dedus din valoarea cuvântului",
+            "still_worth": "Încă valorează {points} pct dacă îl rezolvi",
             "reveal_word": "Dezvăluie",
             "open_other_end": "Deschide celălalt capăt",
             "counter_remain": "{count} încercări rămase",
@@ -50,7 +49,7 @@
             "start_type": "SAU SCRIE MAI JOS",
             "start_title": "Începe Jocul!",
             "start_desc": "Fii primul care trimite un mesaj sau începe cu un cuvânt aleatoriu.",
-            "consulting_ai": "Consult AI...",
+            "decoding_clue": "Se decodează",
             "shuffle": "Amestecă literele",
             "shuffle_explainer": "Rearanjează plăcuțele pentru o privire proaspătă. Nu dezvăluie niciodată nimic nou.",
             "solved": "Rezolvat",
@@ -72,7 +71,7 @@
             "counter_last": "Ultima încercare!",
             "float_solved": "<stealer>{stealer}</stealer> a rezolvat textul lui <author>{author}</author>",
             "float_solved_you": "<stealer>{stealer}</stealer> a rezolvat textul tău",
-            "toast_daily_limit": "Limită zilnică de indicii AI atinsă",
+            "toast_daily_limit": "Limita zilnică de indicii atinsă",
             "toast_word_lost": "Cuvânt pierdut: {word}",
             "toast_reset_success": "Joc resetat la starea inițială",
             "hint_fallback": "Conține {length} litere. Prima literă este {firstLetter}.",
@@ -136,7 +135,7 @@
                 },
                 "hints": {
                     "title": "Indicii",
-                    "text": "Dacă nu știți cuvântul, indicii sunt disponibile: 1) Lungimea cuvântului, 2) Dezvăluie litere, 3) Indiciu context AI. Atenție: 3 încercări greșite dezvăluie cuvântul!"
+                    "text": "Dacă nu știți cuvântul, indicii sunt disponibile: 1) Lungimea cuvântului, 2) Dezvăluie litere, 3) Un indiciu scris. Atenție: 3 încercări greșite dezvăluie cuvântul!"
                 },
                 "winning": {
                     "title": "Câștigare",
@@ -168,7 +167,7 @@
                     "step3_title": "Citește culorile",
                     "step3_desc": "Literele verzi stau la locul lor. Cele portocalii sunt undeva în cuvânt. Simbolurile gri sunt încă ascunse. Rezolvi mereu cuvântul cu marginea luminoasă.",
                     "step4_title": "Ajutor, când vrei tu",
-                    "step4_desc": "Becul deschide scara: întâi lungimea, apoi litere, apoi un indiciu AI. Doar indiciul apare în rezultatul pe care îl distribui — pașii mici nu te costă nimic.",
+                    "step4_desc": "Becul deschide scara: întâi lungimea, apoi litere, apoi un indiciu scris. Doar indiciul apare în rezultatul pe care îl distribui — pașii mici nu te costă nimic.",
                     "play_now": "Joacă acum"
                 }
             },
