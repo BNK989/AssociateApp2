@@ -239,7 +239,6 @@
         "Stuck": {
             "stake_bonus": "Noch {solves} Lösung für ×{multiplier} Punkte.",
             "stake_words": "Noch {count} Wörter in der Kette.",
-            "place_title": "Du hast {count} Buchstaben — tippe einen an, um ihn zu setzen.",
             "other_end_title": "Hier festgefahren?",
             "other_end_action": "Anderes Ende",
             "letter_title": "Einen Buchstaben?",

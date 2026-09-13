@@ -27,7 +27,6 @@ type UseStuckOfferArgs = {
     /** Whether the settle drip has a letter left to place on this word. */
     canSettle: boolean;
     /** Loose letters the player could place themselves right now. */
-    looseLetters: number;
     /** Letters the drip may still place, for the settle offer's own copy. */
     settleLettersLeft: number;
     consecutive: number;
@@ -42,7 +41,6 @@ export function useStuckOffer({
     hintLevel,
     canOpenOtherEnd,
     canSettle,
-    looseLetters,
     settleLettersLeft,
     consecutive,
     wordsLeft,
@@ -83,7 +81,6 @@ export function useStuckOffer({
             hintLevel,
             canOpenOtherEnd,
             canSettle,
-            looseLetters,
             settleLettersLeft,
             consecutive,
             wordsLeft,
@@ -91,7 +88,7 @@ export function useStuckOffer({
         });
     }, [
         paused, targetId, msOnWord, strikes, hintLevel,
-        canOpenOtherEnd, canSettle, looseLetters, settleLettersLeft,
+        canOpenOtherEnd, canSettle, settleLettersLeft,
         consecutive, wordsLeft, dismissed,
     ]);
 

@@ -239,7 +239,6 @@
         "Stuck": {
             "stake_bonus": "Încă {solves} rezolvare pentru ×{multiplier} puncte.",
             "stake_words": "Au mai rămas {count} cuvinte în lanț.",
-            "place_title": "Ai {count} litere în mână — atinge una ca s-o plasezi.",
             "other_end_title": "Te-ai blocat aici?",
             "other_end_action": "Celălalt capăt",
             "letter_title": "Vrei o literă?",

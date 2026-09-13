@@ -1,5 +1,11 @@
 # Open defects and open decisions
 
+> **Status 2026-09-13, later the same day.** §2, §3 and §4 are **done and in
+> production**. §1 is **partly** done — the misleading free prompt is gone and
+> the ladder is one offer shorter — but the three questions it turns on are
+> still Ben's to answer, and they are the ones that decide whether the loop
+> actually feels different. Read §1 first.
+
 Raised from live play on production, 2026-09-13, after the hint-pacing and
 tap-to-place changes shipped. Kept here rather than in a session's memory because
 the container is ephemeral and these are the next thing to work on.
@@ -8,7 +14,7 @@ Ordered by how much they hurt.
 
 ---
 
-## 1. The loop feels like asking for hints, not playing
+## 1. The loop feels like asking for hints, not playing — PART DONE
 
 **Ben, after playing the shipped build:** *"it very much isn't a player 'fun'
 game — the player is forced into asking help and help again making them feel
@@ -41,7 +47,19 @@ Full review: <https://claude.ai/code/artifact/bec44945-41f7-4d72-9fda-9b7f6bc313
 
 ---
 
-## 2. A letter arriving wipes letters the player already placed
+**Done so far:** the free `place` prompt was removed, because §4 made tapping
+cost points and a prompt implying otherwise would have been a lie. Every word is
+therefore one offer quieter. That is a real reduction in chatter and it was
+forced by §4 rather than chosen, so treat it as a start, not an answer.
+
+**Still open — and still Ben's call.** The three questions above stand. The
+biggest lever remains making the daily ladder free, which removes the "spending
+points on help" frame entirely; second is the anagram rung, which is the reason
+a word gets harder to hold in your head halfway through.
+
+---
+
+## 2. A letter arriving wipes letters the player already placed — DONE
 
 **Ben:** *"if we already placed a letter and then the orange letter pops into
 place (cus of the new hint mechanism) then it just fucks up the already existing
@@ -60,7 +78,14 @@ explanation, at the moment the game was supposed to be helping.
 
 ---
 
-## 3. Placed letters show in the composer but not in the bubble
+**Fixed.** The composer now re-seats the keystrokes around the new letter
+instead of clearing them. Exactly one keystroke is dropped — the one that was
+sitting in the slot the letter took — and everything else keeps its place.
+Under the whole-word reading nothing moves at all. `reseatTyped`, 7 tests.
+
+---
+
+## 3. Placed letters show in the composer but not in the bubble — DONE
 
 **Ben:** *"the shown letters appear in the input but not in the chat bubble —
 also very unrefined."*
@@ -77,7 +102,14 @@ sense the player is asked to learn" — the bubble is not honouring that.
 
 ---
 
-## 4. Decision: what should tapping a loose letter do?
+**Fixed.** Settled positions are folded into the bubble's green set, so both
+surfaces read the same word the same way. No fourth tile state was added:
+`letter_feedback.md` already says a settled letter is green in every sense the
+player is asked to learn, and the bubble simply was not honouring it.
+
+---
+
+## 4. Decision: what should tapping a loose letter do? — DONE (option B)
 
 **Ben:** *"clicking on the letter just places them as the next character, not as
 I thought (place them correctly)."*
@@ -98,4 +130,12 @@ bug to fix.
 the review already flagged the drip and the scramble as two mechanics working
 against each other, and this merges them.
 
-Possibly moot depending on how §1 is settled — do that first.
+**Decided: B.** Tapping a loose letter now puts it where it belongs and costs
+what any settled letter costs. It is the settle drip with a better gesture, not
+a second mechanic beside it — the two are one code path now, and a tap refuses
+wherever the drip would: past the ceiling, or on a position it would not have
+chosen.
+
+The old reasoning for the caret behaviour was sound and beside the point. A tap
+that did anything other than the expected thing read as broken rather than as
+principled, and "broken" is what it cost us.

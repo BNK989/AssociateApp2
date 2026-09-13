@@ -239,7 +239,6 @@
         "Stuck": {
             "stake_bonus": "{solves} acierto más para ×{multiplier} puntos.",
             "stake_words": "Quedan {count} palabras en la cadena.",
-            "place_title": "Tienes {count} letras — toca una para colocarla.",
             "other_end_title": "¿Atascado con esta?",
             "other_end_action": "Otro extremo",
             "letter_title": "¿Quieres una letra?",

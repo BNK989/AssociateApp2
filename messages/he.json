@@ -246,7 +246,6 @@
         "Stuck": {
             "stake_bonus": "עוד {solves} פתרונות ל-×{multiplier} נקודות.",
             "stake_words": "נשארו {count} מילים בשרשרת.",
-            "place_title": "יש לך {count} אותיות ביד — הקישי על אחת כדי למקם אותה.",
             "other_end_title": "נתקעת כאן?",
             "other_end_action": "הקצה השני",
             "letter_title": "רוצה אות?",

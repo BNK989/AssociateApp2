@@ -162,6 +162,7 @@ export function MessageBubble({
                             isSolving={flags.isTarget}
                             hintLevel={message.hint_level}
                             guesses={message.guesses || []}
+                            settled={message.settled_indices || undefined}
                             forceScramble={scrambleTrigger}
                         />
 

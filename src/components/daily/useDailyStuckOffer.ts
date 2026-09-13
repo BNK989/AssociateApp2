@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { Message } from '@/hooks/useGameLogic';
 import { wordsInPlay } from '@/lib/daily/chainFronts';
-import { knownUnplacedIndices } from '@/lib/letterPool/poolRules';
 import type { WordSnapshot } from '@/lib/daily/dailyAnalytics';
 import type { StuckOfferKind } from '@/lib/daily/stuckSignals';
 import { useStuckOffer } from './useStuckOffer';
@@ -61,27 +60,6 @@ export function useDailyStuckOffer({
 }: UseDailyStuckOfferArgs) {
     const wordsLeft = useMemo(() => wordsInPlay(messages).length, [messages]);
 
-    /**
-     * Loose letters on the current word — the halo's own chips.
-     *
-     * Read from the same function the pool is built from, so the nudge cannot
-     * point at letters that are not there. It counts what the *word* discloses,
-     * not what the composer currently holds, so a player who has already tapped
-     * some into slots without submitting still counts them — acceptable for a
-     * nudge that only fires after fourteen seconds of quiet.
-     */
-    const looseLetters = useMemo(() => {
-        if (!targetMessage) return 0;
-
-        return knownUnplacedIndices(
-            targetMessage.content,
-            targetMessage.guesses || [],
-            targetMessage.cipher_text
-                ? { cipher: targetMessage.cipher_text, hintLevel: targetMessage.hint_level || 0 }
-                : undefined,
-            new Set(targetMessage.settled_indices || []),
-        ).length;
-    }, [targetMessage]);
 
     const { offer, dismiss, accept } = useStuckOffer({
         targetId: targetMessage?.id ?? null,
@@ -89,7 +67,6 @@ export function useDailyStuckOffer({
         hintLevel: targetMessage?.hint_level ?? 0,
         canOpenOtherEnd,
         canSettle,
-        looseLetters,
         settleLettersLeft,
         consecutive,
         wordsLeft,
@@ -119,9 +96,6 @@ export function useDailyStuckOffer({
         report('taken', kind);
         accept();
 
-        // `place` has no action: the letters it points at are already on
-        // screen and tappable. Taking it means the player tapped one.
-        if (kind === 'place') return;
         if (kind === 'other_end') openOtherEnd();
         else if (kind === 'letter') revealHint();
         else if (kind === 'settle') startSettle();

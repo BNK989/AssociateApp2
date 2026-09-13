@@ -246,7 +246,6 @@
         "Stuck": {
             "stake_bonus": "{solves} more solve for ×{multiplier} points.",
             "stake_words": "{count} words left in the chain.",
-            "place_title": "You've got {count} letters in hand — tap one to place it.",
             "other_end_title": "Stuck on this one?",
             "other_end_action": "Other end",
             "letter_title": "Want a letter?",

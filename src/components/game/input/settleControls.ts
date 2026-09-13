@@ -28,6 +28,16 @@ export type SettleControls = {
     pendingIndex: number | null;
     /** Take the next letter now rather than waiting the interval out. */
     onSettleNow: () => void;
+    /**
+     * Put *this* position's letter in place — the player tapped its chip.
+     *
+     * Costs what any settled letter costs, and refuses wherever the drip would:
+     * past the ceiling, or on a position it would not have chosen. Tapping used
+     * to type the letter at the caret, which is what a keystroke does and not
+     * what anyone expected — the letters are the word's own, so tapping one
+     * plainly means *put it where it goes*.
+     */
+    onSettleAt: (slotIndex: number) => void;
     /** Called once the flight lands, which is when the letter is written. */
     onLanded: () => void;
 };

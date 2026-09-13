@@ -334,6 +334,7 @@ export function useDailyGame({
             progress: settle.progress,
             pendingIndex: settle.pendingIndex,
             onSettleNow: settle.settleNow,
+            onSettleAt: settle.settleAt,
             onLanded: settle.onLanded,
         },
         reset,

@@ -52,15 +52,8 @@ export const TRANSIENT_HOLD_MS = 5000;
  */
 export const COLLAPSE_AFTER_MS = 9000;
 
-/**
- * Offers with nothing to act on. Everything else carries a button.
- *
- * `place` is here because its action is already on screen: the letters it is
- * pointing at. A button reading "place one" would have to pick a letter and a
- * slot for the player, which is precisely the choice the free rung exists to
- * leave with them — so it says its piece and gets out of the way.
- */
-const TRANSIENT_KINDS: readonly StuckOfferKind[] = ['stake', 'place'];
+/** Offers with nothing to act on. Everything else carries a button. */
+const TRANSIENT_KINDS: readonly StuckOfferKind[] = ['stake'];
 
 export function presentationFor(kind: StuckOfferKind): OfferPresentation {
     return TRANSIENT_KINDS.includes(kind) ? 'transient' : 'collapsing';

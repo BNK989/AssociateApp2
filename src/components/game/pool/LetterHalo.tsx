@@ -24,19 +24,23 @@ type LetterHaloProps = {
     /** The target bubble. The halo is portalled into it, so it moves with it. */
     anchor: HTMLElement | null;
     /**
-     * Places this letter at the caret, as though the player had typed it.
+     * Puts this letter where it belongs, at the cost of any settled letter.
      *
-     * Deliberately *not* "put this letter where it belongs". That is what the
-     * settle drip sells, and a free tap that dropped a letter into its true
-     * slot would hand over the answer's shape for nothing. A tap is a
-     * keystroke: the player still chooses where the letter goes and can still
-     * be wrong. What it saves them is hunting for the key — which on a phone,
-     * with the letters sitting right there, was the whole friction.
+     * It typed the letter at the caret at first, on the reasoning that a free
+     * tap which dropped a letter into its true slot would give away the
+     * answer's shape for nothing. True, and beside the point: the letters are
+     * the word's own, so tapping one plainly *means* put it where it goes, and
+     * a tap that did something else read as broken rather than as principled.
+     * So it does the expected thing and charges the expected price — it is the
+     * settle drip with a better gesture, not a second mechanic beside it.
+     *
+     * Takes the pool id, because the id carries the position; the character
+     * alone could not say which of two identical letters was tapped.
      *
      * Absent when the word is not this player's to answer, which is also what
      * keeps the chips inert on someone else's turn in a room.
      */
-    onPlace?: (char: string) => void;
+    onPlace?: (poolId: string) => void;
 };
 
 /**
@@ -123,7 +127,7 @@ type ChipProps = {
     placement: HaloPlacement;
     drifting: boolean;
     hidden: boolean;
-    onPlace?: (char: string) => void;
+    onPlace?: (poolId: string) => void;
 };
 
 /**
@@ -170,7 +174,7 @@ function Chip({ placement, drifting, hidden, onPlace }: ChipProps) {
             // Keeps the mobile keyboard up, exactly as the composer's own
             // controls do. Losing it on a tap would cost more than the tap saves.
             onMouseDown={(e) => e.preventDefault()}
-            onClick={() => onPlace(placement.char)}
+            onClick={() => onPlace(placement.id)}
             aria-label={t('place_letter', { letter: placement.char.toUpperCase() })}
             // A hidden chip is one already in flight or already placed; it must
             // stay measurable but must not be tappable twice.

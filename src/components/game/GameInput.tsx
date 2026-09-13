@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import type { User } from '@supabase/supabase-js';
@@ -7,13 +6,11 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import type { GameState, Message, Player } from '@/hooks/useGameLogic';
 import { MAX_HINT_LEVEL } from '@/lib/daily/dailyScoring';
 import { LETTER_POOL } from '@/lib/gameConfig';
-import { layoutHalo } from '@/lib/letterPool/haloLayout';
-import { occupiedIds } from '@/lib/letterPool/haloRoster';
 import type { PoolLetter } from '@/lib/letterPool/poolRules';
 import { LetterHalo, useHaloAnchor } from '@/components/game/pool/LetterHalo';
 import { LetterFlight } from '@/components/game/pool/LetterFlight';
 import { useLetterFlights } from '@/components/game/pool/useLetterFlights';
-import { useHaloRoster } from '@/components/game/pool/useHaloRoster';
+import { slotIndexOfPoolId, useComposerHalo } from '@/components/game/pool/useComposerHalo';
 import { useSlotTyping } from './input/useSlotTyping';
 import type { SettleControls } from './input/settleControls';
 import { RevealButton } from './input/RevealButton';
@@ -33,6 +30,7 @@ import { usePlaceholder } from './input/usePlaceholder';
 const EMPTY_IDS: Set<string> = new Set();
 const EMPTY_PLACEMENTS: Map<string, number> = new Map();
 const EMPTY_POOL: PoolLetter[] = [];
+
 
 type GameInputProps = {
     game: GameState;
@@ -185,28 +183,14 @@ export function GameInput({
     // them and the flight that has to leave from exactly there.
     const isOwnTarget = Boolean(user?.id) && targetMessage?.user_id === user?.id;
 
-    // Solved against every letter this word has had, not against the live pool:
-    // a letter that finds its place must not drag the rest of the halo after
-    // it. See `haloRoster`.
-    const roster = useHaloRoster(model?.pool ?? EMPTY_POOL, targetMessage?.id);
-    const rosterPlacements = useMemo(
-        () => layoutHalo(roster, isOwnTarget),
-        [roster, isOwnTarget],
-    );
-
-    // What the halo actually draws. A departed letter keeps its spot reserved
-    // and simply stops being drawn in it.
-    const haloPlacements = useMemo(() => {
-        const live = occupiedIds(model?.pool ?? EMPTY_POOL);
-        return rosterPlacements.filter((placement) => live.has(placement.id));
-    }, [rosterPlacements, model?.pool]);
+    const halo = useComposerHalo(model?.pool ?? EMPTY_POOL, targetMessage?.id, isOwnTarget);
 
     const flight = useLetterFlights({
         placed: model?.placed ?? EMPTY_IDS,
         placements: model?.placements ?? EMPTY_PLACEMENTS,
         // The full roster, so a letter mid-flight still has a spot to be
         // measured from even on the frame it leaves the pool.
-        letters: rosterPlacements,
+        letters: halo.placements,
         reduced: reducedMotion,
     });
 
@@ -243,15 +227,18 @@ export function GameInput({
             <TooltipProvider>
                 {model && (
                     <LetterHalo
-                        placements={haloPlacements}
+                        placements={halo.visible}
                         hidden={flight.hidden}
                         anchor={haloAnchor}
-                        // A tap is a keystroke, so it goes through exactly the
-                        // path a typed letter does — nothing here knows where
-                        // the letter belongs, and that is the point.
-                        onPlace={controlsDisabled
+                        // A tap puts the letter where it belongs and is
+                        // charged for it — the settle drip with a better
+                        // gesture. The position rides on the pool id.
+                        onPlace={controlsDisabled || !settle
                             ? undefined
-                            : (char) => onTypedChange(typed + char)}
+                            : (poolId) => {
+                                const index = slotIndexOfPoolId(poolId);
+                                if (index !== null) settle.onSettleAt(index);
+                            }}
                     />
                 )}
 

@@ -12,6 +12,7 @@ import {
     typeableCapacity,
     type CaretMode,
 } from '@/lib/letterPool/slotRules';
+import { reseatTyped } from '@/lib/letterPool/reseat';
 import { resolveTyping } from '@/lib/letterPool/readingRules';
 import type { PoolLetter } from '@/lib/letterPool/poolRules';
 import type { Slot } from '@/lib/letterPool/slotRules';
@@ -78,22 +79,47 @@ export function useSlotTyping({
 }: UseSlotTypingArgs) {
     const [typed, setTyped] = useState('');
 
-    // Clearing on a new word and on a recorded guess covers every reset: the
-    // parent's own `setInput('')` calls all happen at one of those two moments.
-    // A settled letter changes which slots are open, so the keystrokes typed
-    // against the old arrangement no longer mean what they meant. Clearing is
-    // the honest answer: re-mapping them would silently move letters the player
-    // is looking at, which is the jump `readingRules` documents at length.
     const guessCount = guesses.length;
-    const resetKey = `${targetId ?? ''}:${guessCount}:${settled?.length ?? 0}`;
-    const lastResetKey = useRef(resetKey);
-    if (lastResetKey.current !== resetKey) {
-        lastResetKey.current = resetKey;
-        if (typed !== '') setTyped('');
-    }
-
     const guessKey = guesses.join(',');
     const settledKey = settled?.join(',') ?? '';
+
+    /**
+     * A new word or a recorded guess clears the field; a settled letter does
+     * not.
+     *
+     * The two are different events and used to share one reset. A new word and
+     * a recorded guess are genuine restarts — the parent's own `setInput('')`
+     * calls happen at exactly those moments. A letter settling is not: the
+     * player is mid-word, looking at their own keystrokes, and wiping them
+     * loses work they did at the moment the game claimed to be helping. They
+     * are re-seated around the new letter instead, which costs exactly the one
+     * keystroke that was sitting in the slot it took. See `reseatTyped`.
+     */
+    const wordKey = `${targetId ?? ''}:${guessCount}`;
+    const held = useRef({ wordKey, settledKey, settled: settled ?? [] });
+
+    if (held.current.wordKey !== wordKey) {
+        held.current = { wordKey, settledKey, settled: settled ?? [] };
+        if (typed !== '') setTyped('');
+    } else if (held.current.settledKey !== settledKey) {
+        const before = held.current.settled;
+        held.current = { wordKey, settledKey, settled: settled ?? [] };
+
+        if (typed !== '' && text) {
+            // Read against the arrangement the keystrokes were typed into, not
+            // the one that has just replaced it.
+            const was = resolveTyping({
+                text, guesses, typed, mode, mask, settled: new Set(before),
+            });
+            const next = reseatTyped({
+                typed,
+                slots: was.slots,
+                reading: was.reading,
+                settled: settled ?? [],
+            });
+            if (next !== typed) setTyped(next);
+        }
+    }
     const model = useMemo(() => {
         if (!text) return null;
 

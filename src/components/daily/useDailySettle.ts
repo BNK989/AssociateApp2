@@ -5,6 +5,7 @@ import {
     nextSettleIndex,
     settleAllowance,
     settleArmed,
+    settleCandidates,
     settleCountdown,
     settlePressure,
     settlesDueBy,
@@ -205,31 +206,28 @@ export function useDailySettle({
     }, [running]);
 
     /**
-     * Places one letter, the one the policy says goes next.
+     * Places one letter and reports whether it went. Two callers, one move: the drip and an accepted offer let the policy
+     * choose, a tapped chip names its own position — which must still be one
+     * the drip would have chosen, so a tap cannot outrun the allowance.
      *
-     * Exposed as well as driven by the clock, because accepting an offer has to
-     * land a letter at once rather than after the first interval.
+     * The ceiling counts this hook's own launches as well as the word's:
+     * `settled_indices` is a round trip, so the prop under-reports between a
+     * landing and the board catching up.
      */
-    const settleOne = useCallback((source: 'auto' | 'offered') => {
+    const settleOne = useCallback((source: 'auto' | 'offered', at?: number) => {
         if (!targetMessage || !state || gameOver) return false;
 
-        // The ceiling, checked against this hook's own launch count as well as
-        // the word's.
-        //
-        // `settled_indices` is a round trip — the write re-renders the tree and
-        // the updated message arrives a commit later — so between a landing and
-        // the board catching up, the prop under-reports. Trusting it alone let
-        // the drip launch past the allowance in exactly that window, which on a
-        // tight allowance is the difference between leaving the player two
-        // letters and leaving them one.
         if (Math.max(placedHere.current, settled.length) >= settleAllowance(state.text, policy)) {
             return false;
         }
 
         // Through `withPending` so a letter still in the air can never be
         // chosen twice, whatever route reached here.
-        const slotIndex = nextSettleIndex(withPending(state, pendingIndex));
+        const pending = withPending(state, pendingIndex);
+
+        const slotIndex = at === undefined ? nextSettleIndex(pending) : at;
         if (slotIndex === null) return false;
+        if (at !== undefined && !settleCandidates(pending).includes(at)) return false;
 
         // Counted at launch, not at landing: the clock has to know a letter is
         // on its way or it would owe another on the very next tick and put two
@@ -240,6 +238,8 @@ export function useDailySettle({
         return true;
     }, [targetMessage, state, gameOver, pendingIndex, launch, settled.length, policy]);
 
+    /** The player tapping a loose letter: that one, where it belongs. */
+    const settleAt = useCallback((at: number) => settleOne('offered', at), [settleOne]);
     /**
      * The player taking the offer up.
      *
@@ -332,6 +332,7 @@ export function useDailySettle({
         running,
         accept,
         settleNow,
+        settleAt,
         settledIndices: settled,
         /** The letter in the air, which the composer flies and then reports back. */
         pendingIndex,

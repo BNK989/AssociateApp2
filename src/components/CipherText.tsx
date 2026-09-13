@@ -24,6 +24,17 @@ interface CipherTextProps {
     forceScramble?: number;
     guesses?: string[];
     /**
+     * Positions the settle drip has walked into place.
+     *
+     * Folded into the green set below rather than carried as a fourth state:
+     * `letter_feedback.md` is explicit that a settled letter is green in every
+     * sense the player is asked to learn, and the composer has always drawn it
+     * that way. The bubble did not, so the two surfaces disagreed about the same
+     * word — the strip read `PUL__Y` while the bubble above still showed nothing
+     * but cipher glyphs.
+     */
+    settled?: number[];
+    /**
      * Draw only what the line can say honestly. Defaults to the pool being on,
      * where letters with no confirmed place are shown in the composer's pool
      * rather than inside the word — see `knowledge base/letter_feedback.md`.
@@ -47,6 +58,7 @@ export function CipherText({
     hintLevel = 0,
     forceScramble,
     guesses = [],
+    settled,
     hideUnplaced = LETTER_POOL.ENABLED,
 }: CipherTextProps) {
     const dir = RTL_RANGE.test(text) ? 'rtl' : 'ltr';
@@ -57,13 +69,25 @@ export function CipherText({
     const activeCipher = cipherText || generatedCipher;
 
     const guessesKey = guesses.join(',');
-    const guessState = useMemo(
-        () => (visible ? { greenIndices: new Set<number>(), revealedChars: new Set<string>() }
-            : computeGuessState(text, guesses)),
-        // guessesKey stands in for the array identity, which changes every render.
+    const settledKey = settled?.join(',') ?? '';
+    const guessState = useMemo(() => {
+        if (visible) {
+            return { greenIndices: new Set<number>(), revealedChars: new Set<string>() };
+        }
+
+        const state = computeGuessState(text, guesses);
+        if (!settled?.length) return state;
+
+        // A settled letter is confirmed in place, which is what a green is.
+        // Merged here so both views get it from one place and neither has to
+        // learn a new state.
+        return {
+            revealedChars: state.revealedChars,
+            greenIndices: new Set([...state.greenIndices, ...settled]),
+        };
+        // The two keys stand in for the array identities, which change every render.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [text, guessesKey, visible],
-    );
+    }, [text, guessesKey, settledKey, visible]);
 
     const { display, scrambleItems } = useCipherAnimation({
         text,

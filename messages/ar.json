@@ -239,7 +239,6 @@
         "Stuck": {
             "stake_bonus": "حلٌّ واحد آخر ({solves}) مقابل ×{multiplier} نقطة.",
             "stake_words": "بقيت {count} كلمات في السلسلة.",
-            "place_title": "لديك {count} أحرف — اضغط على حرف لوضعه.",
             "other_end_title": "تعثرت في هذه؟",
             "other_end_action": "الطرف الآخر",
             "letter_title": "أتريد حرفًا؟",

@@ -239,7 +239,6 @@
         "Stuck": {
             "stake_bonus": "Encore {solves} trouvaille pour ×{multiplier} points.",
             "stake_words": "Il reste {count} mots dans la chaîne.",
-            "place_title": "Tu as {count} lettres en main — touche‑en une pour la placer.",
             "other_end_title": "Bloqué sur celui-ci ?",
             "other_end_action": "Autre bout",
             "letter_title": "Envie d’une lettre ?",
