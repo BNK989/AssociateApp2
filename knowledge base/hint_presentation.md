@@ -69,19 +69,72 @@ appear, in an amber box (`yellow-100` / `yellow-900`, with an `indigo` wait
 state) that belonged to no theme and to no other surface in the app.
 
 It now wears the brand accent — `bg-brand-subtle`, a `border-s-2` brand spine, a
-soft brand glow — and the text **decodes into place** out of `CIPHER_SIGNS`, the
-same alphabet the bubbles are masked with:
+soft brand glow — and the text **decodes into place** out of the same alphabet
+the bubbles are masked with:
 
-- `src/lib/clueDecode.ts` — the arithmetic. `decodeFrame(text, revealed, frame)`
-  returns one frame; `decodeStepMs(length)` shares a fixed ~900ms budget across
-  the clue so a long one never crawls. Code-point safe: the glyph alphabet
-  reaches into the alchemical block, where a sign is a surrogate pair.
+- `src/lib/clueDecode.ts` — the arithmetic. `splitClue` cuts the clue into
+  maskable words and the punctuation between them; `maskWord(word, revealed,
+  frame, offset)` returns one frame of one word; `decodeStepMs(length)` shares a
+  fixed ~900ms budget across the clue so a long one never crawls. Code-point
+  safe throughout: a clue may be Hebrew, Arabic or carry a surrogate pair.
 - `src/components/game/chat/ClueText.tsx` — the component. Reduced motion is
   settled during render, not by an effect, so it never flashes a masked frame
   first. The animated string is `aria-hidden`; the settled text is the label.
 - While a clue is still being fetched, `ClueSkeleton` holds its place with the
   same glyphs, never resolving, beside the word "Decoding". That replaces three
   bouncing dots captioned "Consulting AI".
+
+### The decode cannot move the text (2026-09-13)
+
+It used to. A cipher glyph is not the width of a letter — measured off the two
+fonts the app actually serves, Noto Sans Symbols 2's signs average **0.88em**
+against Rubik's lowercase **0.51em** — and the first version masked character
+for character, in the flow. So a masked clue ran about **1.7x** the width of the
+clue it was hiding. Measured in Chromium at a phone-width bubble, a 62-character
+clue opened **three lines tall and finished two**: the panel shed a line
+mid-sentence while the player was reading it, and the bubble above it resized to
+match.
+
+Two changes, and the second is the one that makes it exact:
+
+1. **The mask is shorter than what it hides.** `maskedLength` spends about three
+   glyphs on every five characters, so a masked word is the width of the word
+   rather than twice it. The signs come from `CLUE_SIGNS`, the subset of
+   `CIPHER_SIGNS` that is actually in the `symbols` block the app loads — the
+   other two thirds (alchemical, planetary, math) fall through to whatever the
+   device has, at whatever width that font uses, which is why the mask used to
+   churn sideways between frames as well.
+2. **Every word is laid out at the width of its finished text.** The real word
+   is always in the flow, `invisible` while it is masked, and the glyphs are
+   painted over it out of flow (`absolute inset-0`). Line breaks, line count and
+   panel height are therefore decided once, by the clue, and no frame of the
+   decode can change any of them.
+
+Verified in Chromium with the real fonts: across all 63 frames of that clue, not
+one of its 12 word boxes moves by a pixel, and a character decoded under the
+overlay sits at exactly the position it keeps once the overlay is gone.
+
+The placeholder came down from 22 glyphs to 10 in the same change. At ~0.88em
+each, 22 wrapped to two lines in a narrow bubble, so the panel opened tall on
+nothing and jumped again when the real clue replaced it.
+
+### The panel opens on a measured height (2026-09-13)
+
+`HintPanel` used to animate itself open with framer's `layout` prop, a
+`height: 'auto'` target and a `scale` from 0.95, all at once. `layout` animates a
+box by *projecting* it — scaling the element and counter-scaling only children
+that opt in — so the clue text squashed for the length of the transition, the
+brand border shimmered, and the second height change (placeholder → clue) landed
+unanimated because nothing re-ran the reveal.
+
+It measures instead: `useMeasuredHeight` watches the content with a
+`ResizeObserver` and the panel animates `height` to that number, through one
+ease that carries both the opening and every later change of content height.
+Nothing inside is ever transformed. The `pt-2` that separates the clue from the
+word moved *inside* the animated box — as an outside margin it was 8px of layout
+that appeared the instant the panel mounted — and the extra breathing room the
+bubble row takes while a clue is open (`my-2`) is now eased rather than switched
+on.
 
 The hint button's progress ring and the auto-hint countdown badge moved onto the
 same brand tokens at the same time; both were spelling purple out by hand.

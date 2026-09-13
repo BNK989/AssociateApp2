@@ -1,6 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useReducedMotion } from 'framer-motion';
-import { decodeFrame, decodeStepMs, decodeSteps, placeholderGlyphs } from '@/lib/clueDecode';
+import {
+    decodeStepMs,
+    decodeSteps,
+    maskWord,
+    placeholderGlyphs,
+    splitClue,
+} from '@/lib/clueDecode';
 
 /**
  * A clue arriving the way everything else on this board arrives: masked, then
@@ -12,12 +18,26 @@ import { decodeFrame, decodeStepMs, decodeSteps, placeholderGlyphs } from '@/lib
  * in front of help the player is waiting for, and help that makes you wait is
  * not help.
  *
+ * ## The text never moves while it decodes
+ *
+ * Each word is laid out **at the width of its own finished text**: the real
+ * word is always in the flow, hidden with `invisible` while it is still masked,
+ * and the glyphs are painted over it out of flow. So the line breaks, the line
+ * count and the height of the panel are all decided once, by the clue, and the
+ * decode cannot change any of them.
+ *
+ * It used to reflow the whole way down. A masked clue was about 1.7x the width
+ * of the clue it hid (see `clueDecode.ts` for the measurements), which on a
+ * phone meant two extra lines that were then dropped one at a time as the text
+ * resolved — the panel shrinking under the player while they read it.
+ *
  * The animated string is `aria-hidden`; the label carries the settled text, so
  * a screen reader is never read a wall of alchemical signs.
  */
 export function ClueText({ text }: { text: string }) {
     const reduced = Boolean(useReducedMotion());
     const steps = decodeSteps(text);
+    const segments = useMemo(() => splitClue(text), [text]);
 
     const [revealed, setRevealed] = useState(0);
     const [frame, setFrame] = useState(0);
@@ -40,13 +60,67 @@ export function ClueText({ text }: { text: string }) {
 
     return (
         <span aria-label={text}>
-            <span aria-hidden="true">{decodeFrame(text, legible, frame)}</span>
+            <span aria-hidden="true">
+                {segments.map((segment) => segment.kind === 'gap' ? (
+                    <span key={segment.start}>{segment.text}</span>
+                ) : (
+                    <ClueWord
+                        key={segment.start}
+                        word={segment.text}
+                        revealed={legible - segment.start}
+                        frame={frame}
+                        offset={segment.start}
+                    />
+                ))}
+            </span>
         </span>
     );
 }
 
-/** How many glyphs stand in for a clue still being fetched. */
-const PLACEHOLDER_LENGTH = 22;
+/**
+ * One word of the clue, in a box the size of the word.
+ *
+ * The mask sits in an absolutely positioned overlay rather than in the flow, so
+ * a frame whose glyphs run a few pixels over the word's width spills into the
+ * space beside it instead of pushing the rest of the line along. `inset-0`
+ * rather than a flex centring: the overlay then shares the box's line box, so
+ * the characters already decoded sit on exactly the baseline they will keep
+ * once the word finishes and the overlay goes away.
+ */
+function ClueWord({
+    word,
+    revealed,
+    frame,
+    offset,
+}: {
+    word: string;
+    revealed: number;
+    frame: number;
+    offset: number;
+}) {
+    const done = revealed >= Array.from(word).length;
+
+    return (
+        <span className="relative inline-block">
+            <span className={done ? undefined : 'invisible'}>{word}</span>
+
+            {!done && (
+                <span className="absolute inset-0 whitespace-nowrap">
+                    {maskWord(word, revealed, frame, offset)}
+                </span>
+            )}
+        </span>
+    );
+}
+
+/**
+ * How many glyphs stand in for a clue still being fetched.
+ *
+ * One short line, not the 22 glyphs it used to be: at ~0.88em each those ran
+ * to two lines in a narrow bubble, so the panel opened tall and then jumped
+ * again when the real clue replaced them.
+ */
+const PLACEHOLDER_LENGTH = 10;
 
 /** Frames per second of churn while waiting. Slow enough to read as breathing. */
 const PLACEHOLDER_STEP_MS = 90;
@@ -70,7 +144,7 @@ export function ClueSkeleton() {
     }, [reduced]);
 
     return (
-        <span aria-hidden="true" className="opacity-60">
+        <span aria-hidden="true" className="whitespace-nowrap opacity-60">
             {placeholderGlyphs(PLACEHOLDER_LENGTH, frame)}
         </span>
     );

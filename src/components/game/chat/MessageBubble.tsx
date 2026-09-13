@@ -134,7 +134,10 @@ export function MessageBubble({
                 <div
                     id={`msg-${message.id}`}
                     data-message-id={message.id}
-                    className={`flex items-end md:items-start gap-2 ${flags.isMe ? 'flex-row-reverse' : 'flex-row'} ${isShaking ? 'animate-shake' : ''} ${flags.hintDisplay === 'open' ? 'my-2' : ''}`}
+                    // The breathing room a clue earns is eased in, not switched
+                    // on: as a bare class it was 16px of layout appearing a
+                    // frame before the panel it makes room for.
+                    className={`flex items-end md:items-start gap-2 transition-[margin] duration-300 ease-out ${flags.isMe ? 'flex-row-reverse' : 'flex-row'} ${isShaking ? 'animate-shake' : ''} ${flags.hintDisplay === 'open' ? 'my-2' : ''}`}
                 >
                     <Avatar className="w-8 h-8">
                         <AvatarImage src={message.profiles?.avatar_url} />

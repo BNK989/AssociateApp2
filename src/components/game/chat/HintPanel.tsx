@@ -1,19 +1,14 @@
 import { useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ChevronDown, Lightbulb } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { HintDisplay } from './messageFlags';
 import { ClueSkeleton, ClueText } from './ClueText';
+import { useMeasuredHeight } from './useMeasuredHeight';
 
-const PANEL_REVEAL = {
-    layout: true,
-    initial: { opacity: 0, height: 0, scale: 0.95 },
-    animate: { opacity: 1, height: 'auto', scale: 1 },
-    transition: {
-        layout: { duration: 0.3, type: 'spring' as const, bounce: 0 },
-        opacity: { duration: 0.2 },
-    },
-};
+/** The panel's own opening, and every later change of its content's height. */
+const PANEL_EASE = [0.22, 0.61, 0.36, 1] as const;
+const PANEL_MS = 0.34;
 
 const DISCLOSURE_REVEAL = {
     initial: { opacity: 0, height: 0 },
@@ -46,32 +41,55 @@ export function HintPanel({ display, hint }: { display: HintDisplay; hint?: stri
     return <OpenHint hint={hint} />;
 }
 
-/** The clue while it is still the working surface for the active word. */
+/**
+ * The clue while it is still the working surface for the active word.
+ *
+ * The bubble grows around a measured height rather than around `height: 'auto'`
+ * under a `layout` animation. That pairing was doing three things at once — a
+ * spring on the layout projection, a tween on the height, and a `scale` from
+ * 0.95 — so the panel arrived squashed, shimmering along its border, and then
+ * jumped a second time, unanimated, when the clue replaced the placeholder.
+ * One measured number carries both changes now, and the content inside is never
+ * scaled.
+ *
+ * The `pt-2` that separates the panel from the word lives *inside* the animated
+ * box: as a margin on the outside it was 8px that appeared the instant the
+ * panel mounted, before the panel had any height to justify it.
+ */
 function OpenHint({ hint }: { hint?: string }) {
     const t = useTranslations('GameRoom.Chat');
+    const reduced = Boolean(useReducedMotion());
+    const { ref, height } = useMeasuredHeight<HTMLDivElement>();
 
     return (
         <motion.div
-            {...PANEL_REVEAL}
-            className="mt-2 overflow-hidden rounded-lg border border-brand/30 border-s-2 border-s-brand bg-brand-subtle px-2.5 py-2 text-xs font-medium text-brand-subtle-foreground shadow-[0_0_14px_-6px_var(--brand)]"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: height ?? 'auto' }}
+            transition={reduced ? { duration: 0 } : {
+                height: { duration: PANEL_MS, ease: PANEL_EASE },
+                opacity: { duration: 0.22, ease: 'easeOut' },
+            }}
+            className="overflow-hidden"
         >
-            <div className="flex items-start gap-2">
-                <span className="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-brand/15">
-                    <Lightbulb className="h-3 w-3" aria-hidden="true" />
-                </span>
+            <div ref={ref} className="pt-2">
+                <div className="flex items-start gap-2 rounded-lg border border-brand/30 border-s-2 border-s-brand bg-brand-subtle px-2.5 py-2 text-xs font-medium text-brand-subtle-foreground shadow-[0_0_14px_-6px_var(--brand)]">
+                    <span className="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-brand/15">
+                        <Lightbulb className="h-3 w-3" aria-hidden="true" />
+                    </span>
 
-                {hint ? (
-                    <span className="leading-snug">
-                        <ClueText text={hint} />
-                    </span>
-                ) : (
-                    <span className="flex items-baseline gap-2 leading-snug">
-                        <ClueSkeleton />
-                        <span className="text-[10px] uppercase tracking-wide opacity-70">
-                            {t('decoding_clue')}
+                    {hint ? (
+                        <span className="leading-snug">
+                            <ClueText text={hint} />
                         </span>
-                    </span>
-                )}
+                    ) : (
+                        <span className="flex items-baseline gap-2 leading-snug">
+                            <ClueSkeleton />
+                            <span className="text-[10px] uppercase tracking-wide opacity-70">
+                                {t('decoding_clue')}
+                            </span>
+                        </span>
+                    )}
+                </div>
             </div>
         </motion.div>
     );
