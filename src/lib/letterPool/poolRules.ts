@@ -261,7 +261,11 @@ export function placedIndices(
         placed.add(0);
     }
 
-    if (mask.hintLevel < 2) {
+    // The same question `readMaskTile` asks, and it has to get the same answer:
+    // a positional mask's letters are at their own index, so the strip fills
+    // them in. Keyed on `maskIsScrambled` rather than on the level, or the two
+    // disagree the moment the scramble is switched off.
+    if (!maskIsScrambled(mask.hintLevel)) {
         const cipherChars = [...mask.cipher];
         chars.forEach((char, index) => {
             if (isGapChar(char)) return;

@@ -33,13 +33,15 @@ export type MaskTile = {
  *
  * The rule the whole colour scheme rests on: a tile is `placed` only when its
  * slot is genuinely the letter's own. Letters guessed in position qualify, and
- * so does any letter the mask exposes below hint level 2, because those masks
- * are built position by position and are positionally honest.
+ * so does any letter a *positionally honest* mask exposes, because those masks
+ * are built position by position.
  *
- * From level 2 the mask is an *anagram* of the answer, so a letter in it
- * belongs to the word but its slot means nothing — `present` and displaced.
- * A letter that happens to land on its own index there is coincidence, not
- * information, so it is never promoted to `placed`.
+ * Whether a mask is honest is `maskIsScrambled`'s answer, never a comparison
+ * against the hint level. With `SCRAMBLE_MASK` off every level is positional,
+ * hint 2 included; with it on, level 2's mask is an *anagram* of the answer, so
+ * a letter in it belongs to the word but its slot means nothing — `present` and
+ * displaced. A letter that happens to land on its own index there is
+ * coincidence, not information, so it is never promoted to `placed`.
  *
  * Letters known only to be present are drawn at their true index and reported
  * as *not* displaced. That is the honest reading: the renderer really does put
@@ -76,9 +78,12 @@ export function readMaskTile(
 
         const isMaskLetter = maskChar !== ' ' && maskChar !== undefined && !isFillerChar(maskChar);
 
-        // Below hint 2 the mask is built position by position, so a letter it
-        // exposes genuinely belongs at that index and stays.
-        if (isMaskLetter && hintLevel < 2) {
+        // A positionally honest mask exposes a letter at its own index, so it
+        // belongs to the line and stays. Asked through `maskIsScrambled` rather
+        // than as `hintLevel < 2`: with the scramble off every level is
+        // positional, and the raw comparison glyphed out everything hint 2
+        // revealed — the reveal survived in `cipher_text` and reached nothing.
+        if (isMaskLetter && !maskIsScrambled(hintLevel)) {
             return { char: maskChar, state: 'placed', displaced: false };
         }
 

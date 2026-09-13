@@ -192,6 +192,28 @@ level 2 used to take every position away again and hand back an anagram — more
 information, less picture, and the exact moment players described the word
 getting away from them. It reveals in place now, so the ladder only ever adds.
 
+> **"Everywhere" was not everywhere, for one day.** The switch shipped with two
+> call sites still asking the old question as `hintLevel < 2` — `readMaskTile`'s
+> `hideUnplaced` branch, which is the only branch the word line uses, and
+> `placedIndices`, which is what fills the composer's strip. Both therefore read
+> a positional level-2 mask as an anagram: the line replaced each revealed
+> letter with a filler glyph, the strip declined to fill it in, and
+> `knownUnplacedIndices` — correctly gated on `maskIsScrambled` — did not pool
+> it either, because with the scramble off it is not pool material. Disclosed in
+> `cipher_text`, reaching nothing on screen. Hint 2 and hint 3 showed exactly
+> what hint 1 showed: the first letter and eleven glyphs.
+>
+> The settle drip's silence was the visible symptom, and it was the drip working
+> as designed — `settleCandidates` reads the pool, the pool was empty, so there
+> was nothing to offer and no button to offer it with.
+>
+> Fixed 2026-09-14; both sites now read `maskIsScrambled`. The lesson for the
+> next switch of this kind is in the suite that now guards it,
+> `src/lib/letterPool/positionalReveal.test.ts`: it **reads** the constant
+> rather than mocking it, because the nine suites over this surface each force
+> `SCRAMBLE_MASK: true` at module level and so tested only the world the game
+> does not ship. All 1275 tests were green throughout.
+
 Two things follow that are easy to miss:
 
 - **The reward grade changed its measure**, from points kept to help taken. With
