@@ -180,6 +180,18 @@ export function valueAfterHint(targetMessage: Message, effectiveLevel: number): 
     return calculateSolvePoints(targetMessage.content, effectiveLevel + 1, 0);
 }
 
+/**
+ * Whether a hint costs the player anything at all.
+ *
+ * Zero since hints went free on 2026-09-13. The tooltip used to read *benefit,
+ * price, what survives*; with no price the middle line is a promise of nothing
+ * and the last is the word's whole value, so both are dropped rather than
+ * quoted at zero. A game master who prices the ladder again gets them back.
+ */
+export function hintsAreFree(): boolean {
+    return HINT_COSTS.TIER_1 === 0 && HINT_COSTS.TIER_2 === 0 && HINT_COSTS.TIER_3 === 0;
+}
+
 /** Non-space character count, which is what the counter compares. */
 export function countMeaningfulChars(text: string): number {
     return text.replace(/\s/g, '').length;

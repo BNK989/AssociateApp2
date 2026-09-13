@@ -1,5 +1,5 @@
 import { calculateMessageValue } from '@/lib/gameLogic';
-import { STREAK_BONUS_AT } from '@/lib/gameConfig';
+import { MAX_HINT_LEVEL, STREAK_BONUS_AT } from '@/lib/gameConfig';
 
 /**
  * How well a word was solved, which is what the reward feedback is scaled to.
@@ -15,16 +15,6 @@ export type SolveTier = 'assisted' | 'solid' | 'clean';
 
 /** Ascending order, so a tier can be compared against a threshold. */
 export const SOLVE_TIERS: readonly SolveTier[] = ['assisted', 'solid', 'clean'] as const;
-
-/**
- * Below this fraction of the word's untouched value the solve reads as
- * assisted. The level-3 clue costs 40% on its own, so anyone who took it lands
- * here; the two cheaper tiers together cost 20% and do not.
- */
-const ASSISTED_BELOW = 0.5;
-
-/** At or above this fraction the player gave nothing away. */
-const CLEAN_AT = 0.95;
 
 /**
  * Highest streak step the feedback escalates to.
@@ -85,6 +75,20 @@ type SolveFeedbackArgs = {
     points: number;
     /** Solves in a row, counted *after* this one. */
     consecutive: number;
+    /**
+     * Hint level the word was solved at, and letters the drip placed.
+     *
+     * The tier reads *help taken*, not points kept. It read the ratio until
+     * hints went free on 2026-09-13, at which point every solve kept its whole
+     * value and every solve graded `clean` — the chime stopped distinguishing
+     * an unaided solve from one that leant on the clue, which is the single
+     * thing it exists to do.
+     *
+     * Reading the help directly is also the more honest measure, and always
+     * was: the ratio was only ever a proxy for it.
+     */
+    hintLevel?: number;
+    settled?: number;
 };
 
 /**
@@ -94,13 +98,24 @@ type SolveFeedbackArgs = {
  * starting word is solved for 0) grades as `assisted`, which is the quietest
  * feedback, rather than dividing by zero.
  */
-export function solveFeedback({ word, points, consecutive }: SolveFeedbackArgs): SolveFeedback {
+export function solveFeedback({
+    word, points, consecutive, hintLevel, settled,
+}: SolveFeedbackArgs): SolveFeedback {
     const max = maxSolvePoints(word);
-    const ratio = max > 0 ? points / max : 0;
 
-    let tier: SolveTier = 'solid';
-    if (ratio < ASSISTED_BELOW) tier = 'assisted';
-    else if (ratio >= CLEAN_AT) tier = 'clean';
+    // The free starting word is solved for nothing and must not sound like a
+    // triumph; everything else is graded on the help it took.
+    let tier: SolveTier;
+    if (max <= 0 || points <= 0) {
+        tier = 'assisted';
+    } else {
+        const help = (hintLevel ?? 0);
+        const placed = settled ?? 0;
+
+        if (help >= MAX_HINT_LEVEL) tier = 'assisted';
+        else if (help > 0 || placed > 0) tier = 'solid';
+        else tier = 'clean';
+    }
 
     const streakStep = streakStepFor(consecutive);
     const intensity = Math.min(1, TIER_INTENSITY[tier] + streakStep * STREAK_INTENSITY_STEP);

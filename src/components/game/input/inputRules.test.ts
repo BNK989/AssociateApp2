@@ -224,9 +224,18 @@ describe('valueAfterHint', () => {
         }
     });
 
-    it('falls as the player climbs the ladder', () => {
-        expect(valueAfterHint(word, 0)).toBeGreaterThan(valueAfterHint(word, 1));
-        expect(valueAfterHint(word, 1)).toBeGreaterThan(valueAfterHint(word, 2));
+    /**
+     * Flat since hints went free on 2026-09-13.
+     *
+     * It used to fall with every rung, which was the whole point of quoting it.
+     * With a free ladder the number is the word's value at every level, so the
+     * tooltip no longer quotes it at all — `hintsAreFree` is what decides that,
+     * and this is here so a game master who prices the ladder again finds the
+     * assertion waiting rather than discovering it in play.
+     */
+    it('no longer falls as the player climbs, because the ladder is free', () => {
+        expect(valueAfterHint(word, 0)).toBe(valueAfterHint(word, 1));
+        expect(valueAfterHint(word, 1)).toBe(valueAfterHint(word, 2));
     });
 
     it('leaves something on the table even at the last rung', () => {
@@ -235,7 +244,7 @@ describe('valueAfterHint', () => {
 
     it('quotes no streak bonus it cannot promise', () => {
         const value = calculateMessageValue(word.content);
-        expect(valueAfterHint(word, 0)).toBeLessThan(value);
+        expect(valueAfterHint(word, 0)).toBeLessThanOrEqual(value);
     });
 });
 

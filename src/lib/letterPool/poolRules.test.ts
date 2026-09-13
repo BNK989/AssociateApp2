@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it , vi } from 'vitest';
 import { CIPHER_SIGNS } from '@/lib/gameConfig';
 import {
     buildLetterPool,
@@ -16,6 +16,12 @@ import {
     resolvePlacements,
     typeableIndices,
 } from './slotRules';
+/** With the anagram on: it ships off, and these cases are about the anagram. */
+vi.mock('@/lib/gameConfig', async (importOriginal) => ({
+    ...await importOriginal<typeof import('@/lib/gameConfig')>(),
+    SCRAMBLE_MASK: true,
+    maskIsScrambled: (level: number) => level >= 2,
+}));
 
 const slots = (text: string, guesses: string[], typed = '', mode: 'skip' | 'full' = 'skip') =>
     buildSlots({ text, guesses, typed, mode });

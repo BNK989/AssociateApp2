@@ -1,9 +1,33 @@
-import { describe, expect, it, afterEach } from 'vitest';
+import { describe, expect, it, afterEach , vi } from 'vitest';
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { MAX_HINT_LEVEL, MAX_STRIKES } from '@/lib/daily/dailyScoring';
 import { DEFAULT_HINT_POLICY, type DailyHintPolicy, type StartLevelReach } from '@/lib/daily/hintPolicy';
 import { DEMO_WORDS } from './demoChain';
 import { useDemoGame } from './useDemoGame';
+
+/**
+ * With the anagram switched on, and the ladder priced.
+ *
+ * `SCRAMBLE_MASK` ships off — hint 2 reveals its letters in place now, so a
+ * suite written against the shuffled mask would quietly stop exercising
+ * anything rather than fail. The mechanic still exists behind the switch for a
+ * game master to turn back on, so these cases state the premise instead of
+ * inheriting it.
+ */
+vi.mock('@/lib/gameConfig', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@/lib/gameConfig')>();
+    return {
+        ...actual,
+        SCRAMBLE_MASK: true,
+        maskIsScrambled: (level: number) => level >= 2,
+        // Priced, too. The demo exists to show a game master what their
+        // settings do, and `chargeForStartLevel` does nothing observable while
+        // every tier is free — so these cases state the world in which the
+        // setting means something rather than asserting into a flat scale.
+        HINT_COSTS: { TIER_1: 0.10, TIER_2: 0.10, TIER_3: 0.40 },
+    };
+});
+
 
 afterEach(() => cleanup());
 

@@ -213,6 +213,11 @@ export function useDailyMoves({
                 word: targetMessage.content,
                 points,
                 consecutive: nextConsecutive,
+                // Graded on the help taken rather than the points kept: with a
+                // free ladder every solve keeps its whole value, so the ratio
+                // can no longer tell an unaided solve from an assisted one.
+                hintLevel: targetMessage.hint_level || 0,
+                settled: targetMessage.settled_indices?.length ?? 0,
             });
 
             playSolveSound?.(feedback);

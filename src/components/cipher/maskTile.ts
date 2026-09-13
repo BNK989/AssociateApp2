@@ -1,3 +1,4 @@
+import { maskIsScrambled } from '@/lib/gameConfig';
 import { isFillerChar, maskedGlyph } from './fillers';
 import type { GuessState } from './cipherRules';
 
@@ -96,7 +97,7 @@ export function readMaskTile(
     }
 
     if (maskChar !== ' ' && maskChar !== undefined && !isFillerChar(maskChar)) {
-        const scrambled = hintLevel >= 2;
+        const scrambled = maskIsScrambled(hintLevel);
         return {
             char: maskChar,
             state: scrambled ? 'present' : 'placed',

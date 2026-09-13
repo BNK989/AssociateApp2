@@ -1,3 +1,4 @@
+import { maskIsScrambled } from '@/lib/gameConfig';
 import { LETTER_POOL, MAX_HINT_LEVEL } from '@/lib/gameConfig';
 import type { GameState, Message } from '@/hooks/useGameLogic';
 
@@ -98,7 +99,7 @@ export function deriveMessageFlags({
     // With the pool on, the line holds only confirmed letters and filler, so a
     // reshuffle would move nothing. The button went with what it shuffled.
     const canShuffle = !LETTER_POOL.ENABLED
-        && message.hint_level >= 2 && !isVisible && !isRevealed;
+        && maskIsScrambled(message.hint_level) && !isVisible && !isRevealed;
 
     const isTarget = isSolving && targetMessageId === message.id;
     const stage: MessageStage = isTarget ? 'active' : isVisible ? 'settled' : 'upcoming';

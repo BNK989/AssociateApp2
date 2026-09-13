@@ -59,15 +59,56 @@ export const GAME_CONFIG = {
  * site is unchanged.
  */
 
-/** Fraction of a word's value forfeited at each hint tier, cumulatively. */
+/**
+ * Fraction of a word's value forfeited at each hint tier, cumulatively.
+ *
+ * **All zero since 2026-09-13: hints in the daily game are free.**
+ *
+ * Every offer used to be a request to spend points, which is why accepting one
+ * felt like an admission rather than like help — the game said "the player never
+ * asks" while pricing every rung as though they had. The daily is one puzzle
+ * everyone plays once; what a hint costs is not the score, it is the mark on the
+ * grid at the end. `dailyShare` carries that now, and carries it for every rung
+ * rather than only the clue.
+ *
+ * The constants survive at zero rather than being deleted because the classic
+ * game reads the same table (`classicRules`), and because a game master turning
+ * pricing back on should not need a deploy to do it.
+ */
 export const HINT_COSTS = {
-  TIER_1: 0.10, // 10%
-  TIER_2: 0.10, // Another 10%
-  TIER_3: 0.40, // 40%
+  TIER_1: 0,
+  TIER_2: 0,
+  TIER_3: 0,
 };
 
 /** Strikes before a word is retired unsolved. */
 export const MAX_STRIKES = 3;
+
+/**
+ * Whether hint level 2 shuffles what it reveals, or reveals it in place.
+ *
+ * **Off since 2026-09-13.** It was the one rung of the ladder that made a word
+ * *harder* to hold in your head: level 1 hands you the first letter in its
+ * place, and level 2 then took every position away again and handed back an
+ * anagram. More information, less picture — which is exactly the moment players
+ * described the word as getting away from them.
+ *
+ * The settle drip existed to sell those positions back one at a time, so an
+ * entire second mechanic was there to undo this one. With the scramble off, the
+ * ladder only ever adds to what the player can see, and the pool goes back to
+ * meaning what it says: letters your own wrong guesses proved are in the word,
+ * with no place yet.
+ *
+ * Read through `maskIsScrambled` rather than directly, so the question has one
+ * answer everywhere — the mask generator, the two views that draw it, the pool,
+ * and the legend that explains it all used to ask it separately.
+ */
+export const SCRAMBLE_MASK = false;
+
+/** Whether a mask at this hint level is an anagram rather than positional. */
+export function maskIsScrambled(hintLevel: number): boolean {
+    return SCRAMBLE_MASK && hintLevel >= 2;
+}
 
 /** Highest hint level; level 3 is the AI clue. */
 export const MAX_HINT_LEVEL = 3;

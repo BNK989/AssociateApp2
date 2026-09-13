@@ -4,7 +4,7 @@ import type { Message } from '@/hooks/useGameLogic';
 import { HintButton } from './HintButton';
 import { RevealButton } from './RevealButton';
 import { SettleButton } from './SettleButton';
-import { valueAfterHint, type HintTier } from './inputRules';
+import { hintsAreFree, valueAfterHint, type HintTier } from './inputRules';
 import type { NudgeStage } from './useHintNudge';
 import type { SettleControls } from './settleControls';
 
@@ -123,23 +123,30 @@ export function HintControls({
             <TooltipTrigger asChild>{hintButton}</TooltipTrigger>
             <TooltipContent side="top" align="start">
                 {/*
-                  * Benefit, price, then what survives — in that order. It used
-                  * to open with the price and close with "deducted from word
-                  * value", so the only two numbers a hesitating player read
-                  * were both losses.
+                  * Benefit, price, then what survives — in that order, and
+                  * only while there is a price. It used to open with the price
+                  * and close with "deducted from word value", so the only two
+                  * numbers a hesitating player read were both losses; with a
+                  * free ladder both lines would read as a loss of nothing,
+                  * which still frames the hint as a transaction. So the tooltip
+                  * says what the rung gives and stops.
                   */}
                 <div className="text-xs space-y-1">
                     <p className="font-bold">{tier ? t(tier.labelKey) : ''}</p>
-                    <p className="text-muted-foreground">
-                        {t('cost_pts', { cost: -(tier?.cost ?? 0) })}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground opacity-70">
-                        {t('still_worth', {
-                            points: targetMessage
-                                ? valueAfterHint(targetMessage, effectiveLevel)
-                                : 0,
-                        })}
-                    </p>
+                    {!hintsAreFree() && (
+                        <>
+                            <p className="text-muted-foreground">
+                                {t('cost_pts', { cost: -(tier?.cost ?? 0) })}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground opacity-70">
+                                {t('still_worth', {
+                                    points: targetMessage
+                                        ? valueAfterHint(targetMessage, effectiveLevel)
+                                        : 0,
+                                })}
+                            </p>
+                        </>
+                    )}
                 </div>
             </TooltipContent>
         </Tooltip>

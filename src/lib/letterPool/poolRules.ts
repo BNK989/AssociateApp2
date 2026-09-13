@@ -1,3 +1,4 @@
+import { maskIsScrambled } from '@/lib/gameConfig';
 import { computeGuessState, isFillerChar } from '@/components/cipher/cipherRules';
 
 /**
@@ -119,7 +120,7 @@ export function knownUnplacedIndices(
     // bought at level 2 would reveal nothing at all: its letters no longer
     // appear in the line, so the pool is the only place left for them to go.
     const fromMask: Record<string, number> = {};
-    if (mask && mask.hintLevel >= 2) {
+    if (mask && maskIsScrambled(mask.hintLevel)) {
         for (const char of [...mask.cipher]) {
             if (char === ' ' || isFillerChar(char)) continue;
             const lower = char.toLowerCase();

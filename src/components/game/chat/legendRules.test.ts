@@ -1,6 +1,21 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect , vi } from 'vitest';
 import { CIPHER_SIGNS } from '@/lib/gameConfig';
 import { DEFAULT_LEGEND_SAMPLES, hasColouredTiles, pickLegendSamples } from './legendRules';
+
+/**
+ * With the anagram switched on.
+ *
+ * `SCRAMBLE_MASK` ships off — hint 2 reveals its letters in place now, so a
+ * suite written against the shuffled mask would quietly stop exercising
+ * anything rather than fail. The mechanic still exists behind the switch for a
+ * game master to turn back on, so these cases state the premise instead of
+ * inheriting it.
+ */
+vi.mock('@/lib/gameConfig', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@/lib/gameConfig')>();
+    return { ...actual, SCRAMBLE_MASK: true, maskIsScrambled: (level: number) => level >= 2 };
+});
+
 
 /** A fully masked word: every position is filler, so nothing carries colour. */
 function maskFor(text: string): string {

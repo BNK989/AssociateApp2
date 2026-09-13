@@ -1,7 +1,22 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach , vi } from 'vitest';
 import { render, act, cleanup } from '@testing-library/react';
 import { CipherText } from './CipherText';
 import { CIPHER_SIGNS } from '@/lib/gameConfig';
+
+/**
+ * With the anagram switched on.
+ *
+ * `SCRAMBLE_MASK` ships off — hint 2 reveals its letters in place now, so a
+ * suite written against the shuffled mask would quietly stop exercising
+ * anything rather than fail. The mechanic still exists behind the switch for a
+ * game master to turn back on, so these cases state the premise instead of
+ * inheriting it.
+ */
+vi.mock('@/lib/gameConfig', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@/lib/gameConfig')>();
+    return { ...actual, SCRAMBLE_MASK: true, maskIsScrambled: (level: number) => level >= 2 };
+});
+
 
 afterEach(() => cleanup());
 

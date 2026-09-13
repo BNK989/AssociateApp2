@@ -50,7 +50,7 @@ is next, from one icon family, with no words and no locale text:
 | Rung | Glyph (lucide) | What it gives |
 | :--- | :--- | :--- |
 | 1 | `Ruler` | the word's length |
-| 2 | `Shuffle` | first letter + 25%, re-scrambled |
+| 2 | `Shuffle` | first letter + 66%, **in place** since 2026-09-13 |
 | 3 | `MessageSquareQuote` | a written clue |
 
 Under the `jump` progression there are no intermediate rungs to advertise, so no
@@ -59,7 +59,8 @@ glyph is drawn at all — unchanged behaviour, `getHintTier` still decides it.
 The tooltip reads **benefit, price, what survives**: the rung's label, then
 `{cost} pts`, then "Still worth N pts if you solve it" (`valueAfterHint`). It
 used to open with the price and close with "Deducted from word value", so both
-numbers a hesitating player read were losses.
+numbers a hesitating player read were losses. **Since hints went free it reads
+the label alone** — see below.
 
 ## How a clue arrives
 
@@ -109,17 +110,52 @@ offer bar's 14s and blind to strikes, so it is the one remaining timer that
 nothing else consults. If the pulsing reads as nagging across eight words, the
 fix is to align it with `FIRST_OFFER_MS` rather than to mute it.
 
+## The ladder is free, and the scramble is gone (2026-09-13)
+
+Both were open questions here for months and both were answered the same day,
+after live play turned up the complaint they were waiting for: *the player is
+forced into asking help and help again, making them feel like the game isn't
+flowing.*
+
+**Hints cost nothing.** Every tier in `HINT_COSTS` is zero, and so is a settled
+letter. Accepting an offer is no longer a transaction, so it cannot read as an
+admission — which is what the feature's own rule asked for and what its pricing
+kept contradicting. The constants survive at zero rather than being deleted: the
+classic game reads the same table, and a game master re-pricing the ladder
+should not need a deploy.
+
+The hint tooltip drops its price and its "still worth N pts" line while the
+ladder is free (`hintsAreFree`). Both would have read as a loss of nothing, which
+still frames a hint as a transaction.
+
+**The share grid is unchanged, deliberately.** It still marks the AI clue and
+still leaves the cheap rungs unmarked. Marking every rung was considered and
+rejected: with points gone, the grid is the only currency left, and spending it
+on the smallest nudge would put the punishment straight back.
+
+**Hint 2 no longer scrambles.** `SCRAMBLE_MASK` is off, read everywhere through
+`maskIsScrambled`. Level 1 hands the player the first letter in its place and
+level 2 used to take every position away again and hand back an anagram — more
+information, less picture, and the exact moment players described the word
+getting away from them. It reveals in place now, so the ladder only ever adds.
+
+Two things follow that are easy to miss:
+
+- **The reward grade changed its measure**, from points kept to help taken. With
+  a free ladder the ratio is always 1, so every solve graded `clean` and the
+  chime stopped saying anything. See `feedbackTiers`.
+- **The letter pool means something else now.** It used to hold what the anagram
+  had displaced; it holds letters the player's own wrong guesses proved are in
+  the word, with no place yet. The settle drip and the tap therefore become rare
+  rather than routine — the drip existed to undo the scramble, and the scramble
+  is gone.
+
 ## What is still open
 
-Three things this pass deliberately did **not** touch, because they change
-scoring or the shape of the run and are the game master's call:
-
-1. **The cliff between the clue and the Reveal.** Rung 3 costs 40% of the word;
-   after it there is nothing but Reveal at zero and a streak step. A player who
-   takes the clue and still cannot see the word gets no further rung.
-2. **Whether the ladder should be free in the daily game.** It is a puzzle
-   everyone plays once. The whole ladder priced at zero, with hints marked on
-   the shared grid instead, is a different game — arguably a friendlier one.
+1. **The cliff between the clue and the Reveal.** After rung 3 there is nothing
+   but Reveal and a streak step. A player who takes the clue and still cannot see
+   the word gets no further rung. Cheaper than it was — the clue is free now —
+   but the shape of the cliff is unchanged.
 3. ~~**The auto-hint default of 20s per rung.**~~ **Closed 2026-09-13.** The
    delay was never the problem; the clock was. `GAME_CONFIG.DEFAULT_AUTO_HINT_ENABLED`
    is now `false`, so the ladder is not handed out at all unless a game master

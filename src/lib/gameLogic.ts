@@ -1,4 +1,4 @@
-import { CIPHER_SIGNS, GAME_CONFIG, HINT_COSTS, MATCH_THRESHOLD as GAME_CONFIG_MATCH_THRESHOLD, MAX_STRIKES } from './gameConfig';
+import { CIPHER_SIGNS, GAME_CONFIG, HINT_COSTS, MATCH_THRESHOLD as GAME_CONFIG_MATCH_THRESHOLD, MAX_STRIKES, maskIsScrambled } from './gameConfig';
 
 // Re-exported so the ~20 existing import sites keep working; the definitions
 // now live in gameConfig.ts alongside the rest of the game's balance.
@@ -169,6 +169,15 @@ export const generateCipherString = (content: string, level: number, isDaily: bo
             revealedIndices.add(idx);
         }
 
+        // With the scramble off, the revealed set above is all level 2 means:
+        // those letters are drawn where they actually belong, and the positional
+        // path at the foot of this function does it. Level 2 then *adds* to the
+        // picture level 1 gave instead of taking it away — which is the whole
+        // reason the scramble went. See `SCRAMBLE_MASK`.
+        if (!maskIsScrambled(level)) {
+            return positionalMask(content, revealedIndices, length, length);
+        }
+
         // 2. Construct the bag of characters
         const charBag: string[] = [];
 
@@ -229,9 +238,28 @@ export const generateCipherString = (content: string, level: number, isDaily: bo
     // Ensure cipher length matches target for Level 1 match consistency
     if (level >= 1) targetLen = length;
 
+    return positionalMask(content, revealedIndices, length, targetLen);
+};
+
+/**
+ * A mask that keeps every revealed letter at its own index.
+ *
+ * The only shape the mask has since the scramble was switched off, and the one
+ * levels 0 and 1 always had: revealed letters sit where they belong, everything
+ * else is a filler glyph that is never the real letter. Shared so the level-2
+ * path and the level-0/1 path cannot drift into drawing the same thing twice.
+ */
+function positionalMask(
+    content: string,
+    revealedIndices: Set<number>,
+    length: number,
+    targetLen: number,
+): string {
     let result = '';
     for (let i = 0; i < targetLen; i++) {
-        if (i < length && revealedIndices.has(i)) {
+        if (i < length && content[i] === ' ') {
+            result += ' ';
+        } else if (i < length && revealedIndices.has(i)) {
             result += content[i];
         } else {
             let randomChar;
@@ -243,7 +271,7 @@ export const generateCipherString = (content: string, level: number, isDaily: bo
     }
 
     return result;
-};
+}
 
 export const getRevealedCount = (content: string, level: number): number => {
     const nonSpaceCount = content.split('').filter(c => c !== ' ').length;

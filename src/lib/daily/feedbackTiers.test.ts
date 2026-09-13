@@ -12,7 +12,10 @@ import {
 /** A solve of `word` at `hintLevel`, scored exactly as the game would score it. */
 function graded(word: string, hintLevel: number, consecutive = 0) {
     const points = calculateSolvePoints(word, hintLevel, consecutive);
-    return { points, feedback: solveFeedback({ word, points, consecutive: consecutive + 1 }) };
+    return {
+        points,
+        feedback: solveFeedback({ word, points, consecutive: consecutive + 1, hintLevel }),
+    };
 }
 
 describe('streakStepFor', () => {
@@ -52,8 +55,8 @@ describe('solveFeedback', () => {
         expect(graded('elephant', 0).feedback.tier).toBe('clean');
     });
 
-    // The two cheap tiers cost 20% between them, which must not be enough to
-    // demote a solve the player did most of the work on.
+    // The two cheap rungs are help, so they demote a solve — but only one step.
+    // The player still did most of the work.
     it('keeps the first two hint tiers at solid', () => {
         expect(graded('elephant', 1).feedback.tier).toBe('solid');
         expect(graded('elephant', 2).feedback.tier).toBe('solid');
@@ -64,9 +67,9 @@ describe('solveFeedback', () => {
     });
 
     /**
-     * The reason the grade is a ratio and not the raw points. Both of these are
-     * unaided solves and both must read as clean, even though one is worth
-     * nearly twice the other.
+     * Both of these are unaided solves and both must read as clean, even
+     * though one is worth nearly twice the other. The grade measures help
+     * taken, never the size of the prize.
      */
     it('does not reward a long word more than a short one', () => {
         const short = graded('cat', 0);

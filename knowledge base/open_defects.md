@@ -1,10 +1,8 @@
 # Open defects and open decisions
 
-> **Status 2026-09-13, later the same day.** §2, §3 and §4 are **done and in
-> production**. §1 is **partly** done — the misleading free prompt is gone and
-> the ladder is one offer shorter — but the three questions it turns on are
-> still Ben's to answer, and they are the ones that decide whether the loop
-> actually feels different. Read §1 first.
+> **Status: all four closed, 2026-09-13.** Ben answered §1's two open questions
+> with *yes to both* — hints in the daily game are free, and the scramble is
+> gone. See [hint_presentation.md](hint_presentation.md) for what that changed.
 
 Raised from live play on production, 2026-09-13, after the hint-pacing and
 tap-to-place changes shipped. Kept here rather than in a session's memory because
@@ -14,7 +12,7 @@ Ordered by how much they hurt.
 
 ---
 
-## 1. The loop feels like asking for hints, not playing — PART DONE
+## 1. The loop feels like asking for hints, not playing — DONE
 
 **Ben, after playing the shipped build:** *"it very much isn't a player 'fun'
 game — the player is forced into asking help and help again making them feel
@@ -52,10 +50,28 @@ cost points and a prompt implying otherwise would have been a lie. Every word is
 therefore one offer quieter. That is a real reduction in chatter and it was
 forced by §4 rather than chosen, so treat it as a start, not an answer.
 
-**Still open — and still Ben's call.** The three questions above stand. The
-biggest lever remains making the daily ladder free, which removes the "spending
-points on help" frame entirely; second is the anagram rung, which is the reason
-a word gets harder to hold in your head halfway through.
+**Answered: yes to both.**
+
+1. **The daily ladder is free.** Every hint tier is zero, and so is a settled
+   letter. There is no longer any such thing as spending points on help, so an
+   offer cannot read as a bill. The share grid still marks the AI clue and still
+   does *not* mark the cheap rungs — extending it to every rung would have put
+   the punishment straight back in a different currency, which is the opposite
+   of the point.
+2. **The scramble is gone.** Hint 2 reveals its letters where they belong. The
+   ladder now only ever adds to the picture, and the word never gets harder to
+   hold halfway through.
+
+Two consequences worth knowing:
+
+- **The reward grade changed its measure.** It read points-kept, which with a
+  free ladder is always the maximum, so every solve graded `clean` and the chime
+  stopped distinguishing anything. It reads help-taken now, which is what it was
+  always a proxy for.
+- **The pool means something different.** It used to fill with letters the
+  anagram had scrambled; now it fills with letters your own wrong guesses proved
+  are in the word but not where. That is the honest meaning, and it is what makes
+  the drip and the tap rare rather than routine.
 
 ---
 
