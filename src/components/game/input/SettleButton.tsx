@@ -9,7 +9,6 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SettleProgressRing } from './SettleProgressRing';
-import { SettleBadge } from './SettleBadge';
 
 /** Hold this long to open the menu instead of taking a letter. */
 const LONG_PRESS_MS = 500;
@@ -113,7 +112,13 @@ export function SettleButton({
                             e.preventDefault();
                             setIsMenuOpen(true);
                         }}
-                        aria-label={t('settle_place_letter')}
+                        // The count moved off the face and into here. As a badge
+                        // it read as a clock counting down — the one thing it
+                        // was not — but it is still the bound on the offer, so
+                        // it must not be lost to a screen reader as well.
+                        aria-label={running
+                            ? t('settle_next_in', { seconds: secondsLeft, count: lettersLeft })
+                            : t('settle_available', { count: lettersLeft })}
                         className="relative flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition-colors hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         {running && <SettleProgressRing progress={progress} />}
@@ -123,12 +128,6 @@ export function SettleButton({
                             aria-hidden="true"
                         />
                     </motion.button>
-
-                    <SettleBadge
-                        lettersLeft={lettersLeft}
-                        secondsLeft={secondsLeft}
-                        running={running}
-                    />
                 </div>
             </DropdownMenuTrigger>
 

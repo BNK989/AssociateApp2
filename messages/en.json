@@ -246,11 +246,12 @@
         "Stuck": {
             "stake_bonus": "{solves} more solve for ×{multiplier} points.",
             "stake_words": "{count} words left in the chain.",
+            "place_title": "You've got {count} letters in hand — tap one to place it.",
             "other_end_title": "Stuck on this one?",
             "other_end_action": "Other end",
             "letter_title": "Want a letter?",
             "letter_action": "Show one",
-            "settle_title": "Let the letters find their places?",
+            "settle_title": "Let the letters find their places? {count} left.",
             "settle_action": "Place them",
             "reveal_title": "Ready to move on?",
             "reveal_action": "Reveal it",
@@ -277,7 +278,8 @@
             "pool_note_short": "Found letters drift around the word. Type one to place it."
         },
         "Pool": {
-            "aria_label": "{count} found letters, in no particular order, not yet placed"
+            "aria_label": "{count} found letters, in no particular order, not yet placed",
+            "place_letter": "Place the letter {letter}"
         }
     },
     "HomePage": {

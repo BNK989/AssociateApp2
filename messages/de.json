@@ -239,11 +239,12 @@
         "Stuck": {
             "stake_bonus": "Noch {solves} Lösung für ×{multiplier} Punkte.",
             "stake_words": "Noch {count} Wörter in der Kette.",
+            "place_title": "Du hast {count} Buchstaben — tippe einen an, um ihn zu setzen.",
             "other_end_title": "Hier festgefahren?",
             "other_end_action": "Anderes Ende",
             "letter_title": "Einen Buchstaben?",
             "letter_action": "Zeig einen",
-            "settle_title": "Sollen die Buchstaben ihre Plätze finden?",
+            "settle_title": "Die Buchstaben ihren Platz finden lassen? Noch {count}.",
             "settle_action": "Platzieren",
             "reveal_title": "Weitergehen?",
             "reveal_action": "Aufdecken",
@@ -270,7 +271,8 @@
             "pool_note_short": "Gefundene Buchstaben schweben um das Wort. Tippe einen, um ihn zu setzen."
         },
         "Pool": {
-            "aria_label": "{count} gefundene Buchstaben in zufälliger Reihenfolge, noch nicht platziert"
+            "aria_label": "{count} gefundene Buchstaben in zufälliger Reihenfolge, noch nicht platziert",
+            "place_letter": "Buchstabe {letter} setzen"
         }
     },
     "HomePage": {

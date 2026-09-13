@@ -246,11 +246,12 @@
         "Stuck": {
             "stake_bonus": "עוד {solves} פתרונות ל-×{multiplier} נקודות.",
             "stake_words": "נשארו {count} מילים בשרשרת.",
+            "place_title": "יש לך {count} אותיות ביד — הקישי על אחת כדי למקם אותה.",
             "other_end_title": "נתקעת כאן?",
             "other_end_action": "הקצה השני",
             "letter_title": "רוצה אות?",
             "letter_action": "הראה אחת",
-            "settle_title": "שנניח לאותיות למצוא את מקומן?",
+            "settle_title": "לתת לאותיות למצוא את מקומן? נשארו {count}.",
             "settle_action": "מקמו אותן",
             "reveal_title": "להמשיך הלאה?",
             "reveal_action": "גלה",
@@ -277,7 +278,8 @@
             "pool_note_short": "האותיות שנמצאו מרחפות סביב המילה. הקלד אחת כדי לשבץ אותה."
         },
         "Pool": {
-            "aria_label": "{count} אותיות שנמצאו, בסדר אקראי, טרם שובצו"
+            "aria_label": "{count} אותיות שנמצאו, בסדר אקראי, טרם שובצו",
+            "place_letter": "מיקום האות {letter}"
         }
     },
     "HomePage": {

@@ -15,6 +15,10 @@ const base: StuckInput = {
     hintLevel: 0,
     canOpenOtherEnd: true,
     canSettle: false,
+    // Nothing loose by default, so the existing cases keep exercising the
+    // ladder rather than the free rung that now sits in front of it.
+    looseLetters: 0,
+    settleLettersLeft: 3,
     consecutive: 0,
     wordsLeft: 4,
     dismissed: false,
@@ -120,7 +124,7 @@ describe('the other end', () => {
 
         expect(at({ ...late, hintLevel: 1 })).toEqual({ kind: 'letter' });
         expect(at({ ...late, hintLevel: MAX_HINT_LEVEL, canSettle: true }))
-            .toEqual({ kind: 'settle' });
+            .toEqual({ kind: 'settle', lettersLeft: 3 });
     });
 });
 
@@ -133,7 +137,7 @@ describe('the settle rung', () => {
     };
 
     it('is offered once the ladder is spent and there is a letter to place', () => {
-        expect(at({ ...spent, canSettle: true })).toEqual({ kind: 'settle' });
+        expect(at({ ...spent, canSettle: true })).toEqual({ kind: 'settle', lettersLeft: 3 });
     });
 
     it('falls through to the reveal when there is nothing left to place', () => {
@@ -165,5 +169,51 @@ describe('the settle rung', () => {
 
     it('says nothing at all once the offer is waved away', () => {
         expect(at({ ...spent, canSettle: true, dismissed: true })).toBeNull();
+    });
+});
+
+describe('the place rung', () => {
+    const holding = { looseLetters: 3 };
+
+    it('points at the player\'s own letters before anything the game can give', () => {
+        expect(at({ ...holding, msOnWord: FIRST_OFFER_MS }))
+            .toEqual({ kind: 'place', lettersLeft: 3 });
+    });
+
+    it('falls back to the stake when there is nothing to point at', () => {
+        expect(at({ looseLetters: 0, msOnWord: FIRST_OFFER_MS }))
+            .toMatchObject({ kind: 'stake' });
+    });
+
+    it('respects the silence before the first offer', () => {
+        expect(at({ ...holding, msOnWord: FIRST_OFFER_MS - 1 })).toBeNull();
+    });
+
+    /**
+     * The whole shape of "tap first, assist later".
+     *
+     * The free rung lives in the early window only. Holding letters is not the
+     * same as being stuck — it is the state of being mid-thought — so the game
+     * says "these are yours to spend" and then gets out of the way. Past the
+     * window the priced ladder runs exactly as it would have.
+     */
+    it('gives way to the priced ladder rather than holding the slot', () => {
+        expect(at({ ...holding, msOnWord: SECOND_OFFER_MS })).toEqual({ kind: 'other_end' });
+        expect(at({ ...holding, msOnWord: SECOND_OFFER_MS, canOpenOtherEnd: false }))
+            .toEqual({ kind: 'letter' });
+    });
+
+    it('never blocks the reveal on a word with nothing left', () => {
+        expect(at({
+            ...holding,
+            msOnWord: THIRD_OFFER_MS,
+            hintLevel: MAX_HINT_LEVEL,
+            canOpenOtherEnd: false,
+            canSettle: false,
+        })).toEqual({ kind: 'reveal' });
+    });
+
+    it('stays quiet once the player has waved it away', () => {
+        expect(at({ ...holding, msOnWord: FIRST_OFFER_MS, dismissed: true })).toBeNull();
     });
 });

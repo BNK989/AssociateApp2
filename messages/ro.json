@@ -239,11 +239,12 @@
         "Stuck": {
             "stake_bonus": "Încă {solves} rezolvare pentru ×{multiplier} puncte.",
             "stake_words": "Au mai rămas {count} cuvinte în lanț.",
+            "place_title": "Ai {count} litere în mână — atinge una ca s-o plasezi.",
             "other_end_title": "Te-ai blocat aici?",
             "other_end_action": "Celălalt capăt",
             "letter_title": "Vrei o literă?",
             "letter_action": "Arată una",
-            "settle_title": "Lăsăm literele să-și găsească locul?",
+            "settle_title": "Lași literele să-și găsească locul? Au mai rămas {count}.",
             "settle_action": "Așază-le",
             "reveal_title": "Mergem mai departe?",
             "reveal_action": "Dezvăluie",
@@ -270,7 +271,8 @@
             "pool_note_short": "Literele găsite plutesc în jurul cuvântului. Tastează una ca s-o plasezi."
         },
         "Pool": {
-            "aria_label": "{count} litere găsite, în ordine aleatorie, încă neplasate"
+            "aria_label": "{count} litere găsite, în ordine aleatorie, încă neplasate",
+            "place_letter": "Plasează litera {letter}"
         }
     },
     "HomePage": {

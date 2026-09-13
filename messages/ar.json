@@ -239,11 +239,12 @@
         "Stuck": {
             "stake_bonus": "حلٌّ واحد آخر ({solves}) مقابل ×{multiplier} نقطة.",
             "stake_words": "بقيت {count} كلمات في السلسلة.",
+            "place_title": "لديك {count} أحرف — اضغط على حرف لوضعه.",
             "other_end_title": "تعثرت في هذه؟",
             "other_end_action": "الطرف الآخر",
             "letter_title": "أتريد حرفًا؟",
             "letter_action": "أظهر حرفًا",
-            "settle_title": "هل ندع الحروف تجد أماكنها؟",
+            "settle_title": "هل ندع الأحرف تجد أماكنها؟ بقي {count}.",
             "settle_action": "ضعها",
             "reveal_title": "ننتقل للتالية؟",
             "reveal_action": "اكشف",
@@ -270,7 +271,8 @@
             "pool_note_short": "الأحرف المكتشفة تحوم حول الكلمة. اكتب حرفًا لوضعه."
         },
         "Pool": {
-            "aria_label": "{count} أحرف مكتشفة بترتيب عشوائي، لم تُوضع بعد"
+            "aria_label": "{count} أحرف مكتشفة بترتيب عشوائي، لم تُوضع بعد",
+            "place_letter": "ضع الحرف {letter}"
         }
     },
     "HomePage": {

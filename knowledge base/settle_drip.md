@@ -70,13 +70,14 @@ at all.
 ## The player's experience
 
 1. They go quiet on a word. The hint ladder is spent. The composer's help button
-   becomes the settle button, badged with how many letters it can still place.
+   becomes the settle button. How many letters it can still place is said by
+   the offer bar and by the button's `aria-label`, not by a badge — see below.
 2. Either the stuck offer speaks — *"Let the letters find their places?"* — or
    they tap the button themselves.
 3. A letter lifts out of the halo, flies to its slot in the composer, and lands
    green.
 4. The ring around the button fills. When it is full, another letter flies.
-5. It stops at the ceiling, the badge reaches zero, and the button gives way to
+5. It stops at the ceiling, the count reaches zero, and the button gives way to
    the reveal — with letters still left for them to solve.
 
 They can decline the offer, and it stays declined for that word only. The button
@@ -122,11 +123,19 @@ randomness. The player cannot form a model, so they cannot rely on it:
   exploit. `AutoHintBadge` already makes exactly this argument about the
   auto-hint clock.
 - **It bounds the promise.** "Place them" does not say how many or how fast. The
-  ring says when; the badge says how many are left. The game must not imply that
+  ring says when; the count says how many are left. The game must not imply that
   letters keep coming, because the allowance stops well short of the answer.
-- **It marks the end honestly.** When the badge reaches zero the button becomes
+- **It marks the end honestly.** When the count reaches zero the button becomes
   the reveal, and the player watched that coming instead of discovering it when
   the letters silently stopped.
+
+> **The badge came off the button on 2026-09-13.** A bare number in a circle on
+> a game screen reads as a clock, and this one never moved, so it read as a
+> broken one — the first thing it was asked about in QA was why it was not
+> counting down. Everything above still holds; the count simply says its piece
+> in words instead, in the settle offer (`settle_title` carries `{count}`) and
+> in the button's own `aria-label`. What is lost is the at-a-glance bound, which
+> was never legible enough to be worth the misreading.
 
 **The ring fills; it does not drain.** `HintProgressRing` drains, because that
 clock counts down to a hint that will cost points — running out. This one brings
@@ -374,7 +383,7 @@ exists.
 | [`poolRules.ts`](../src/lib/letterPool/poolRules.ts) | `placedIndices` / `knownUnplacedIndices` — settled counts as placed |
 | [`useSettlePlacement.ts`](../src/components/daily/useSettlePlacement.ts) | The two-phase write, so the letter can be seen to fly |
 | [`HintControls.tsx`](../src/components/game/input/HintControls.tsx) | Which control stands in the composer's help slot |
-| [`SettleButton.tsx`](../src/components/game/input/SettleButton.tsx) | The button, its ring and its badge |
+| [`SettleButton.tsx`](../src/components/game/input/SettleButton.tsx) | The button and its ring; the count is in its `aria-label` |
 | [`SettleSection.tsx`](../src/components/admin/gameSettings/SettleSection.tsx) | The panel |
 | `gameConfig.ts` → `SETTLE` | The compiled floor |
 

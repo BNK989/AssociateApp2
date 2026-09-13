@@ -23,6 +23,20 @@ type LetterHaloProps = {
     hidden: Set<string>;
     /** The target bubble. The halo is portalled into it, so it moves with it. */
     anchor: HTMLElement | null;
+    /**
+     * Places this letter at the caret, as though the player had typed it.
+     *
+     * Deliberately *not* "put this letter where it belongs". That is what the
+     * settle drip sells, and a free tap that dropped a letter into its true
+     * slot would hand over the answer's shape for nothing. A tap is a
+     * keystroke: the player still chooses where the letter goes and can still
+     * be wrong. What it saves them is hunting for the key — which on a phone,
+     * with the letters sitting right there, was the whole friction.
+     *
+     * Absent when the word is not this player's to answer, which is also what
+     * keeps the chips inert on someone else's turn in a room.
+     */
+    onPlace?: (char: string) => void;
 };
 
 /**
@@ -44,7 +58,7 @@ type LetterHaloProps = {
  * the same moment. Two halves of one event, told in two places, with nothing
  * for the browser to get wrong.
  */
-export function LetterHalo({ placements, hidden, anchor }: LetterHaloProps) {
+export function LetterHalo({ placements, hidden, anchor, onPlace }: LetterHaloProps) {
     const t = useTranslations('GameRoom.Pool');
     const reduced = Boolean(useReducedMotion());
 
@@ -91,33 +105,80 @@ export function LetterHalo({ placements, hidden, anchor }: LetterHaloProps) {
                                 ? { duration: 0 }
                                 : { ...SPAWN_SPRING, delay: arrival.delayOf(placement.id) }}
                         >
-                            <span
-                                // Measured by the flight, which needs to find
-                                // this exact chip from outside the component.
-                                id={`halo-${placement.id}`}
-                                // Everything the chip looks like lives in
-                                // `.halo-letter`, because the face, the cast
-                                // shadow and the lit edge are one object and
-                                // splitting them across two files is how they
-                                // drift apart.
-                                className={drifting ? 'halo-letter' : 'halo-letter halo-still'}
-                                style={{
-                                    '--pool-tilt': `${placement.tilt}deg`,
-                                    '--pool-phase': `-${placement.phase.toFixed(2)}s`,
-                                    fontSize: `calc(1.05rem * ${placement.scale.toFixed(2)})`,
-                                    // Hidden, not removed: it still has to be
-                                    // measurable, and it is where the letter
-                                    // comes back to.
-                                    visibility: hidden.has(placement.id) ? 'hidden' : 'visible',
-                                } as React.CSSProperties}
-                            >
-                                {placement.char}
-                            </span>
+                            <Chip
+                                placement={placement}
+                                drifting={drifting}
+                                hidden={hidden.has(placement.id)}
+                                onPlace={onPlace}
+                            />
                         </motion.div>
                 ))}
             </AnimatePresence>
         </div>,
         anchor,
+    );
+}
+
+type ChipProps = {
+    placement: HaloPlacement;
+    drifting: boolean;
+    hidden: boolean;
+    onPlace?: (char: string) => void;
+};
+
+/**
+ * One loose letter, tappable when the word is the player's to answer.
+ *
+ * A real button rather than a span with a handler, so it is reachable by
+ * keyboard and announced as an action. That matters more here than usual: the
+ * halo is the only place these letters exist on screen, and until now the only
+ * way to spend one was to find the same key on a keyboard.
+ *
+ * The layer above is `pointer-events-none` so the message list still scrolls
+ * everywhere the chips are not; the button turns them back on for itself alone.
+ */
+function Chip({ placement, drifting, hidden, onPlace }: ChipProps) {
+    const t = useTranslations('GameRoom.Pool');
+
+    const face = (
+        <span
+            // Measured by the flight, which needs to find this exact chip from
+            // outside the component.
+            id={`halo-${placement.id}`}
+            // Everything the chip looks like lives in `.halo-letter`, because
+            // the face, the cast shadow and the lit edge are one object and
+            // splitting them across two files is how they drift apart.
+            className={drifting ? 'halo-letter' : 'halo-letter halo-still'}
+            style={{
+                '--pool-tilt': `${placement.tilt}deg`,
+                '--pool-phase': `-${placement.phase.toFixed(2)}s`,
+                fontSize: `calc(1.05rem * ${placement.scale.toFixed(2)})`,
+                // Hidden, not removed: it still has to be measurable, and it is
+                // where the letter comes back to.
+                visibility: hidden ? 'hidden' : 'visible',
+            } as React.CSSProperties}
+        >
+            {placement.char}
+        </span>
+    );
+
+    if (!onPlace) return face;
+
+    return (
+        <button
+            type="button"
+            // Keeps the mobile keyboard up, exactly as the composer's own
+            // controls do. Losing it on a tap would cost more than the tap saves.
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => onPlace(placement.char)}
+            aria-label={t('place_letter', { letter: placement.char.toUpperCase() })}
+            // A hidden chip is one already in flight or already placed; it must
+            // stay measurable but must not be tappable twice.
+            disabled={hidden}
+            className="pointer-events-auto cursor-pointer rounded-full border-0 bg-transparent p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+            {face}
+        </button>
     );
 }
 

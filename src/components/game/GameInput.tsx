@@ -246,6 +246,12 @@ export function GameInput({
                         placements={haloPlacements}
                         hidden={flight.hidden}
                         anchor={haloAnchor}
+                        // A tap is a keystroke, so it goes through exactly the
+                        // path a typed letter does — nothing here knows where
+                        // the letter belongs, and that is the point.
+                        onPlace={controlsDisabled
+                            ? undefined
+                            : (char) => onTypedChange(typed + char)}
                     />
                 )}
 

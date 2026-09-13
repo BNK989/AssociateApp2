@@ -543,6 +543,29 @@ edge; they say nothing about two edges meeting. Left overlapping, a bottom chip
 and a trailing chip sat on top of each other in the corner — which is why the
 test measures every pair across the whole halo rather than per edge.
 
+### Tapping a loose letter places it
+
+The chips are buttons (2026-09-13). A tap inserts that character **at the
+caret**, going through the exact path a keystroke does — the composer's typing
+model does the placing, the matching and the flight, and nothing new decides
+anything.
+
+The restraint is the whole design: a tap is *not* "put this letter where it
+belongs". The pool knows each letter's true index — the ids are positions in the
+answer — so a free tap that dropped a letter into its own slot would hand over
+the answer's shape for nothing, which is precisely what the settle drip charges
+5% a letter for. The player still chooses the slot and can still be wrong. What
+the tap saves them is hunting for the key, which on a phone with the letters
+sitting right there was the entire friction.
+
+`onPlace` is absent when the word is not this player's to answer, which is also
+what keeps the chips inert on someone else's turn in a room. A chip that is
+hidden — already placed, or mid-flight — is `disabled`, so it cannot be spent
+twice while it is still on screen for the flight to measure.
+
+Nothing pointed at this, so the **`place` offer** was added to the stuck ladder
+in front of everything priced: see [hint_presentation.md](hint_presentation.md).
+
 ### The halo is solved against a roster, not against the pool
 
 Bands are shares of an edge, handed out by position in the list `layoutHalo` is

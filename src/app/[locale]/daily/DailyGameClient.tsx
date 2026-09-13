@@ -205,6 +205,7 @@ function DailyGameBoard({
             : -1,
         canOpenOtherEnd: game.canOpenOtherEnd,
         canSettle: game.canSettle,
+        settleLettersLeft: game.settle.lettersLeft,
         consecutive: game.consecutive,
         gameOver: game.gameOver,
         openOtherEnd: game.openOtherEnd,

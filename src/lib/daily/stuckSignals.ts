@@ -23,6 +23,20 @@ import { solvesUntilBonus } from './streakRules';
 export type StuckOffer =
     /** No action — a reason to keep going. Shown first, and often alone. */
     | { kind: 'stake'; solvesToBonus: number; wordsLeft: number }
+    /**
+     * Use the letters you are already holding.
+     *
+     * The cheapest rung there is, and the only one that costs nothing at all:
+     * it asks the player to spend what the game has *already* given them. It
+     * exists because the loose letters became tappable and nothing said so —
+     * but it earns its place beyond discoverability, because it is the one
+     * offer whose answer is "you can do this", not "here is more help".
+     *
+     * Deliberately in the early window only, ahead of everything priced. A
+     * player with letters in hand is not stuck yet, and the first thing said to
+     * them should not be an offer to do it for them.
+     */
+    | { kind: 'place'; lettersLeft: number }
     /** Enter the chain from its first word and guess forward. */
     | { kind: 'other_end' }
     /** Take the next rung of the ladder, offered rather than requested. */
@@ -36,7 +50,7 @@ export type StuckOffer =
      * So it is not a cheaper grade of the hints before it — it is the only
      * offer left that can still end in the player solving the word themselves.
      */
-    | { kind: 'settle' }
+    | { kind: 'settle'; lettersLeft: number }
     /** Show the word and move on. Last, and only once nothing else is left. */
     | { kind: 'reveal' };
 
@@ -94,6 +108,15 @@ export type StuckInput = {
      * reveal exactly as it did before this existed.
      */
     canSettle: boolean;
+    /**
+     * Loose letters the player could place themselves right now.
+     *
+     * The halo's own chips. Zero means there is nothing to point at, and the
+     * early window falls back to the stake.
+     */
+    looseLetters: number;
+    /** Letters the drip may still place, for the settle offer's own copy. */
+    settleLettersLeft: number;
     /** Solves in a row, for working out how close the bonus is. */
     consecutive: number;
     /** Guessable words still in play, including this one. */
@@ -134,6 +157,13 @@ export function stuckOffer(input: StuckInput): StuckOffer | null {
     if (elapsed < FIRST_OFFER_MS) return null;
 
     if (elapsed < SECOND_OFFER_MS) {
+        // Their own letters before anything the game can hand over. A player
+        // holding letters is not stuck, they are mid-thought, and the useful
+        // thing to say is that the next move is already theirs to make.
+        if (input.looseLetters > 0) {
+            return { kind: 'place', lettersLeft: input.looseLetters };
+        }
+
         return {
             kind: 'stake',
             solvesToBonus: solvesUntilBonus(input.consecutive),
@@ -144,7 +174,7 @@ export function stuckOffer(input: StuckInput): StuckOffer | null {
     if (elapsed < THIRD_OFFER_MS && input.canOpenOtherEnd) return { kind: 'other_end' };
 
     if (input.hintLevel < MAX_HINT_LEVEL) return { kind: 'letter' };
-    if (input.canSettle) return { kind: 'settle' };
+    if (input.canSettle) return { kind: 'settle', lettersLeft: input.settleLettersLeft };
 
     // Back to the other end once the ladder is spent. A word the player can
     // still come at from the far side beats retiring it unsolved, so this sits

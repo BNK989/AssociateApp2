@@ -51,9 +51,17 @@ function stakeMessage(offer: Extract<Offer, { kind: 'stake' }>): Message {
 }
 
 export function messageFor(offer: Offer): Message {
-    return offer.kind === 'stake'
-        ? stakeMessage(offer)
-        : { key: `${offer.kind}_title`, values: {} };
+    if (offer.kind === 'stake') return stakeMessage(offer);
+
+    // The two offers that name a count. `place` counts the player's own loose
+    // letters, `settle` counts what the drip may still do for them — and the
+    // settle count is here because it used to be a badge on the button, where
+    // a bare number read as a clock.
+    if (offer.kind === 'place' || offer.kind === 'settle') {
+        return { key: `${offer.kind}_title`, values: { count: offer.lettersLeft } };
+    }
+
+    return { key: `${offer.kind}_title`, values: {} };
 }
 
 type StuckOfferBarProps = {

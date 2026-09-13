@@ -239,11 +239,12 @@
         "Stuck": {
             "stake_bonus": "{solves} acierto más para ×{multiplier} puntos.",
             "stake_words": "Quedan {count} palabras en la cadena.",
+            "place_title": "Tienes {count} letras — toca una para colocarla.",
             "other_end_title": "¿Atascado con esta?",
             "other_end_action": "Otro extremo",
             "letter_title": "¿Quieres una letra?",
             "letter_action": "Muéstrame una",
-            "settle_title": "¿Dejamos que las letras encuentren su sitio?",
+            "settle_title": "¿Dejar que las letras encuentren su sitio? Quedan {count}.",
             "settle_action": "Colocarlas",
             "reveal_title": "¿Seguimos adelante?",
             "reveal_action": "Revelar",
@@ -270,7 +271,8 @@
             "pool_note_short": "Las letras halladas flotan alrededor de la palabra. Escribe una para colocarla."
         },
         "Pool": {
-            "aria_label": "{count} letras halladas, en orden aleatorio, aún sin colocar"
+            "aria_label": "{count} letras halladas, en orden aleatorio, aún sin colocar",
+            "place_letter": "Colocar la letra {letter}"
         }
     },
     "HomePage": {

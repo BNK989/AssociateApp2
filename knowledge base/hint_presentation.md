@@ -10,9 +10,10 @@ nothing here changes a single point of scoring.
 
 Once the ladder is spent the composer's help button is no longer the eye. While
 the settle drip has a letter left to give it draws the **settle button**
-instead — badged with how many letters remain, ringed with a countdown to the
-next one — and the reveal moves into its long-press menu until the letters run
-out.
+instead — ringed with a countdown to the next letter — and the reveal moves into
+its long-press menu until the letters run out. How many letters remain is said
+by the offer bar and the button's `aria-label`; it was a badge on the button
+until 2026-09-13, when it turned out to read as a stopped clock.
 
 > hint → hint → hint → **letter, letter, letter** → reveal
 
@@ -169,6 +170,26 @@ actually reach anybody:
    holds that slot for a 50s window, after which the ladder continues to the
    rungs that address the word in front of them — and reappears below the
    ladder, ahead of the reveal, so the route is never lost.
+
+## Tap first, assist later (2026-09-13)
+
+The ladder gained a free rung in front of everything priced. Between the first
+offer and the second, a player holding loose letters is told so —
+`{ kind: 'place' }`, the count of their own chips, no button — instead of the
+stake. A player with letters in hand is not stuck, they are mid-thought, and the
+first thing said to them should not be an offer to do it for them.
+
+It carries no action because its action is already on screen: the halo chips are
+tappable now (see [letter_feedback.md](letter_feedback.md)), and a button would
+have to choose a letter and a slot on the player's behalf — the one choice the
+free rung exists to leave with them.
+
+It holds the early window only. Past `SECOND_OFFER_MS` the priced ladder runs
+exactly as before, which is what stops it becoming the blocker `other_end` was.
+
+The settle rung now carries `lettersLeft`, because the badge that used to state
+that bound came off the button the same day — see
+[settle_drip.md](settle_drip.md).
 
 What this is *not*: a re-pricing. Tiers are still 10/10/40 and the scramble is
 still the middle rung. Those change the scoring maths and the shape of a run,

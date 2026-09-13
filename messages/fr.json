@@ -239,11 +239,12 @@
         "Stuck": {
             "stake_bonus": "Encore {solves} trouvaille pour ×{multiplier} points.",
             "stake_words": "Il reste {count} mots dans la chaîne.",
+            "place_title": "Tu as {count} lettres en main — touche‑en une pour la placer.",
             "other_end_title": "Bloqué sur celui-ci ?",
             "other_end_action": "Autre bout",
             "letter_title": "Envie d’une lettre ?",
             "letter_action": "En montrer une",
-            "settle_title": "Laisser les lettres trouver leur place ?",
+            "settle_title": "Laisser les lettres trouver leur place ? Il en reste {count}.",
             "settle_action": "Les placer",
             "reveal_title": "On passe à la suite ?",
             "reveal_action": "Révéler",
@@ -270,7 +271,8 @@
             "pool_note_short": "Les lettres trouvées flottent autour du mot. Tapez-en une pour la placer."
         },
         "Pool": {
-            "aria_label": "{count} lettres trouvées, dans un ordre aléatoire, pas encore placées"
+            "aria_label": "{count} lettres trouvées, dans un ordre aléatoire, pas encore placées",
+            "place_letter": "Placer la lettre {letter}"
         }
     },
     "HomePage": {
