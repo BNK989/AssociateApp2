@@ -258,8 +258,22 @@ a file that has grown past it needs splitting, not pinning.
 
 **Other open items:**
 
-`npm run lint` reports **0 errors, 74 warnings** (measured 2026-09-12). Every
+`npm run lint` reports **0 errors, 85 warnings** (measured 2026-09-13). Every
 rule in this document is enforced and green.
+
+> It was briefly **3 errors**, all `max-lines`, all in test files that grew past
+> the cap during the letter-pool work: `poolRules.test.ts` (389),
+> `useDailySettle.test.tsx` (370) and `settleRules.test.ts` (362). Split on
+> 2026-09-13 along the seams they had already grown — the strip's cases moved to
+> `slotRules.test.ts` where the module they test lives, the drip's optional
+> letter-opening to `settleOpening.test.ts`, and the hook's modes to
+> `useDailySettleModes.test.tsx` over a shared `useDailySettle.harness.tsx`. The
+> warning count rose with the file count, which is the unused-import tail of the
+> same split.
+>
+> Worth noting how they got there: a test file is where a rule is easiest to
+> justify breaking and hardest to notice breaking. Nothing gates on it but lint,
+> and lint is not run on every change.
 
 | Count | Rule | Severity | Note |
 | ---: | :--- | :--- | :--- |
@@ -268,8 +282,8 @@ rule in this document is enforced and green.
 | 0 | `no-console` | error | cleared 2026-08-21 |
 | 0 | `prefer-const`, `ban-ts-comment`, `no-require-imports`, `react/no-unescaped-entities`, `react-hooks/immutability`, `react-hooks/purity` | error | cleared 2026-08-21 |
 | 23 | `react-hooks/set-state-in-effect` | **warn** | deliberate, see below |
-| 38 | `@typescript-eslint/no-unused-vars` | warn | |
-| 7 | `react-hooks/exhaustive-deps` | warn | |
+| 50 | `@typescript-eslint/no-unused-vars` | warn | |
+| 9 | `react-hooks/exhaustive-deps` | warn | |
 | 3 | `@next/next/no-img-element` | warn | |
 
 ### `react-hooks/set-state-in-effect` is warn, not error
