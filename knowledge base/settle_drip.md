@@ -283,7 +283,8 @@ plus a handful of settled letters crosses zero on plausible settings, so
 
 `/admin/game-settings` → *Letters walking into place*. Key `settle` in
 `game_settings`; migration
-`supabase/migrations/20260913120000_seed_settle_settings.sql`.
+`supabase/migrations/20260913120000_seed_settle_settings.sql`, **applied to
+production 2026-09-13** at revision 1 with an empty value. The panel saves.
 
 | Setting | Default | Notes |
 | :--- | :--- | :--- |

@@ -363,18 +363,25 @@ in Hebrew/Arabic (§13).
   `20260822090000_lock_down_function_execute.sql`,
   `20260822090100_pin_function_search_path.sql`,
   `20260822090200_document_api_usage_rls.sql`,
-  `20260822140000_create_game_settings.sql`,
   `20260823090000_add_settings_revision_to_daily_results.sql`,
   `20260907120000_seed_daily_feedback_settings.sql`,
   `20260911120000_seed_letter_pool_settings.sql`,
-  `20260912120000_add_guesses_to_messages.sql` and
-  `20260913120000_seed_settle_settings.sql`.
+  `20260912120000_add_guesses_to_messages.sql`.
+
+  **`20260822140000_create_game_settings.sql` came off this list on 2026-09-13**:
+  `to_regclass('public.game_settings')` answers on production, so the table is
+  there and the entry was simply wrong. Treat the rest of this list as claims to
+  verify rather than facts — it has now been wrong about one of them, and the
+  other two seed rows have never been checked at all. One query settles them:
+  `select key, revision from public.game_settings order by key;` — a row for
+  `daily_feedback` or `letter_pool` means that seed has run.
+
   For the first, deploy the app first — it removes the EXECUTE grant the
   pre-deploy code relied on for `distribute_game_points`. See
   [knowledge base/database_security.md](knowledge%20base/database_security.md).
   `20260823090000_add_settings_revision_to_daily_results.sql` and
   `20260911120000_seed_letter_pool_settings.sql` are additive and independent of
-  the others; until they are applied the game runs on compiled defaults and
+  the others; until they are applied (see the verification query above) the game runs on compiled defaults and
   results record without attribution, both of which are logged with the filename
   to apply. See
   [knowledge base/game_master_guide.md](knowledge%20base/game_master_guide.md).
@@ -385,12 +392,20 @@ in Hebrew/Arabic (§13).
   apply, so the word can still be lost rather than the whole update failing.
   The daily game is unaffected; it keeps its guesses in client state.
 
-  `20260913120000_seed_settle_settings.sql` seeds the `settle` row and, like the
-  other seeds, depends on `20260822140000_create_game_settings.sql` having run
-  first. It is the least urgent of the set: the compiled default in
-  `SETTLE` is `offered`, so the settle drip works without it and the migration
-  only buys the ability to tune the pacing and ceilings without a deploy. See
+  **`20260913120000_seed_settle_settings.sql` is applied** (2026-09-13), which
+  also confirms `20260822140000_create_game_settings.sql` had already run on
+  production despite both being listed here — this list has been wrong about
+  that one. The `settle` row exists at revision 1 with an empty value, so the
+  drip runs on the compiled `SETTLE` defaults and `/admin/game-settings` can now
+  save pacing changes without a deploy. See
   [knowledge base/settle_drip.md](knowledge%20base/settle_drip.md).
+
+  It was applied **by hand in the SQL editor**, not through `db push`, so remote
+  migration history has no row for it. Harmless in this one case — the file is a
+  single `insert ... on conflict (key) do nothing`, so a later `db push` that
+  re-applies it does nothing — but it is one more entry in the drift below.
+  `supabase migration repair --status applied 20260913120000` records it,
+  whenever someone next has the CLI to hand.
 
   The `seed_daily_feedback_settings` one seeds the `daily_feedback` row and depends on
   `20260822140000_create_game_settings.sql` having run first; until then reward
