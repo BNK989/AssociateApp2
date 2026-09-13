@@ -9,10 +9,10 @@ import {
     longestGroupLength,
     normaliseTyped,
     resolvePlacements,
-    resolveTyping,
     typeableCapacity,
     type CaretMode,
 } from '@/lib/letterPool/slotRules';
+import { resolveTyping } from '@/lib/letterPool/readingRules';
 
 type UseSlotTypingArgs = {
     /** The answer being solved. Absent when there is nothing to solve. */

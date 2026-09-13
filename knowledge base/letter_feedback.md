@@ -672,8 +672,8 @@ Skipping confirmed letters was silently modal. A player who typed the answer out
 in full — much the commoner instinct — got it shifted by a letter, and on a word
 like OOZE the strip filled with `Oooz` and then shook at them. The fix is not to
 pick a side but to stop needing one: `resolveTyping` in
-[`slotRules.ts`](../src/lib/letterPool/slotRules.ts) reads the keystrokes two
-ways at once and lets them rule each other out.
+[`readingRules.ts`](../src/lib/letterPool/readingRules.ts) reads the keystrokes
+two ways at once and lets them rule each other out.
 
 - **gaps** — each character goes to the next *open* slot. Dies by overflowing.
 - **whole** — each character goes to the next slot of any kind, so one landing on
@@ -690,22 +690,44 @@ the two readings fail in different ways.
 | SAMPLE | `S_m___` | `aple` | complete | dies on `a`≠`S` | **gaps** |
 | HARMONY | `HAR_O__` | `harmony` | overflows | complete | **whole** |
 | OOZE | `O___` | `ooze` | overflows | complete | **whole** |
-| OOZE | `O___` | `oze` | complete | unfinished | **gaps** |
+| OOZE | `O___` | `oze` | complete | unfinished | **whole** (see below) |
 
-Where both survive, the one that fills every slot wins. Where neither is
-finished, *whole* is preferred: the player has matched a letter they were given,
-and typing the answer as they would say it is the commoner habit.
+**It is read over the keystrokes, not over the final string.** The reading
+starts as *whole* and changes only at a keystroke that makes the current reading
+impossible. One still alive is never abandoned, because abandoning it re-arranges
+letters the player is looking at.
+
+That last rule is the fix for a production report on 2026-09-13, and it replaced
+a "whichever reading fills the strip wins" tiebreak that caused it. With `PU___Y`
+up for PULLEY, the third keystroke of `pulley` fills the three open slots under
+*gaps*, so the strip jumped to `PUPULY` — every letter but the typed one moving,
+mid-word, on a correct keystroke, and a complete nonsense word that Send would
+have submitted for a strike. It fired for anyone typing a word out in full as
+soon as they had typed as many letters as there were open slots, which on a word
+with several confirmed letters is long before they are finished:
+
+| Typed | Before | Now |
+| :--- | :--- | :--- |
+| `pu` | `PU___Y` | `PU___Y` |
+| `pul` | `PUPULY` | `PUL__Y` |
+| `pull` | `PULL_Y` | `PULL_Y` |
+| `pug` (a typo) | `PUPUGY` | `PUG__Y` |
 
 **The one rough edge, stated plainly.** A word whose first letter repeats —
-OOZE, LLAMA, AARDVARK — is the only shape where neither reading can be ruled out
-early, because the first keystroke is consistent with both. Someone who *skips*
-on such a word sees *whole*'s arrangement while typing, and the strip settles to
-*gaps* on their last keystroke. Preferring *gaps* instead would move that jump
-onto every player who types a word out in full, which is far the worse trade.
+OOZE, LLAMA, AARDVARK — is the shape where neither reading can be ruled out at
+all: `oze` is a finished *gaps* reading and an unfinished *whole* one, and
+nothing the player can see separates them. *whole* holds, so someone who skips
+on such a word is left one cell short and has to clear the field and type the
+word out. That is a dead end they can see and back out of; the jump was not, and
+it hit every player rather than the handful on a doubled first letter.
 
 If neither reading survives — a typo over a confirmed letter — *whole* is shown
 with the disagreement marked, because someone who has mistyped is better served
 seeing where than seeing nothing.
+
+The reading lives in [`readingRules.ts`](../src/lib/letterPool/readingRules.ts),
+split out of `slotRules` when this landed: `slotRules` knows how to draw an
+arrangement, `readingRules` decides which one to draw.
 
 A confirmed letter that the player merely retypes keeps **the game's** casing
 rather than theirs. Otherwise typing LLAMA out in full assembled as `llama`.
