@@ -11,9 +11,18 @@ import {
 
 const T0 = 1_000_000;
 
+/**
+ * A policy for the tests below, with the clock explicitly on.
+ *
+ * The compiled default is off — `stuckSignals.ts` states the rule that nothing
+ * priced lands unasked — so the schedule arithmetic has to say it is testing
+ * the automatic case rather than inheriting it, or the suite silently stops
+ * exercising anything.
+ */
 function policy(overrides: Partial<DailyHintPolicy> = {}): DailyHintPolicy {
     return {
         ...DEFAULT_HINT_POLICY,
+        autoEnabled: true,
         rungs: [
             { auto: true, delaySeconds: 15 },
             { auto: true, delaySeconds: 30 },

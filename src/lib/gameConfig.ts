@@ -24,7 +24,20 @@ export const GAME_CONFIG = {
   DAILY_GAME_ANIMATE_START_MESSAGE: true,
   PERCENT_REVEALED_SHUFFLE_HINT: 0.66,
   // Auto Hint Defaults
-  DEFAULT_AUTO_HINT_ENABLED: true,
+  //
+  // Off by default since 2026-09-13. `stuckSignals.ts` states the rule the
+  // whole stuck-player effort rests on — *the game offers, the player never
+  // asks* — and the auto-hint clock did neither: it took the rung on the
+  // player's behalf and charged full price for it. On the old defaults a
+  // player who simply thought about a word for a minute was walked to level 3,
+  // docked 60% of the word, and given a permanent yellow square on the share
+  // grid, none of which they asked for. Thinking time is not a hint request.
+  //
+  // Nothing is removed by this. The manual hint button reaches every rung, and
+  // the offer bar proposes the same ones a few seconds later; the difference is
+  // that the player now accepts them. A game master who wants the old pacing
+  // turns `autoEnabled` back on at /admin/game-settings.
+  DEFAULT_AUTO_HINT_ENABLED: false,
   // Seconds of thinking time before the next hint level is offered. Short
   // values hand the answer over before a player has engaged with the word;
   // there is always a manual hint button for anyone who wants one sooner.

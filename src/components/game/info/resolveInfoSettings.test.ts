@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { GAME_CONFIG } from '@/lib/gameConfig';
 import { DEFAULT_HINT_POLICY } from '@/lib/daily/hintPolicy';
-import { resolveInfoSettings } from './resolveInfoSettings';
+import { resolveInfoSettings, settingsPatch } from './resolveInfoSettings';
 
 describe('resolveInfoSettings', () => {
     it('falls back to the configured defaults for an empty blob', () => {
@@ -99,5 +99,43 @@ describe('resolveInfoSettings', () => {
         it('keeps an explicit zero delay against a non-zero policy', () => {
             expect(resolveInfoSettings({ auto_hint_duration: 0 }, policy).duration).toBe(0);
         });
+    });
+});
+
+describe('settingsPatch', () => {
+    const held = { autoHintEnabled: true, duration: 20, volume: 0.5 };
+
+    /**
+     * The bug this function exists for: the screen seeds its controls from the
+     * policy, so writing everything it holds on close stored a preference the
+     * player never expressed — and a stored preference outranks both the
+     * compiled default and the game master's policy from then on.
+     */
+    it('writes no auto-hint preference for a player who only looked', () => {
+        const patch = settingsPatch({ ...held, autoHintTouched: false });
+
+        expect(patch).not.toHaveProperty('auto_hint_enabled');
+        expect(patch).not.toHaveProperty('auto_hint_duration');
+    });
+
+    it('writes both auto-hint keys once the player has moved the controls', () => {
+        expect(settingsPatch({ ...held, autoHintTouched: true })).toEqual({
+            auto_hint_enabled: true,
+            auto_hint_duration: 20,
+            audio_volume: 0.5,
+        });
+    });
+
+    it('records a deliberate opt-out rather than reading it as untouched', () => {
+        // Turning auto-hint off is exactly as much of a choice as turning it
+        // on, and `false` must not be mistaken for the absence of an answer.
+        expect(settingsPatch({ ...held, autoHintEnabled: false, autoHintTouched: true }))
+            .toMatchObject({ auto_hint_enabled: false });
+    });
+
+    // Absent volume already means full, so a stored 1 says what silence says.
+    it('always writes the volume, which pins nothing', () => {
+        expect(settingsPatch({ ...held, autoHintTouched: false }))
+            .toEqual({ audio_volume: 0.5 });
     });
 });

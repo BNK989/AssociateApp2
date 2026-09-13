@@ -8,7 +8,7 @@ import { createLogger } from '@/lib/logger';
 import { useAuth } from '@/context/AuthProvider';
 import type { ProfileSettings } from '@/types/app';
 import type { SolveTier } from '@/lib/daily/feedbackTiers';
-import { resolveInfoSettings } from './resolveInfoSettings';
+import { resolveInfoSettings, settingsPatch } from './resolveInfoSettings';
 
 const log = createLogger('game/info');
 
@@ -70,6 +70,14 @@ export function useInfoSettings({
     const [updating, setUpdating] = useState(false);
     const [autoHintEnabled, setAutoHintEnabled] = useState(policy.autoEnabled);
     const [duration, setDuration] = useState(policy.rungs[0].delaySeconds);
+    /**
+     * Whether the player has actually moved the auto-hint controls.
+     *
+     * Without it, closing the screen writes back the values it was seeded with,
+     * which turns a default into a stored preference nobody expressed. See
+     * `settingsPatch`.
+     */
+    const [autoHintTouched, setAutoHintTouched] = useState(false);
     const [audioEnabled, setAudioEnabled] = useState(true);
     const [volume, setVolume] = useState(1);
 
@@ -122,17 +130,14 @@ export function useInfoSettings({
     const updateAutoHint = useCallback((enabled: boolean, newDuration: number) => {
         setAutoHintEnabled(enabled);
         setDuration(newDuration);
+        setAutoHintTouched(true);
         onAutoHintChange?.(enabled, newDuration);
     }, [onAutoHintChange]);
 
     /** Persists what the screen holds. Called when the info screen closes. */
     const save = useCallback(
-        () => persist({
-            auto_hint_enabled: autoHintEnabled,
-            auto_hint_duration: duration,
-            audio_volume: volume,
-        }),
-        [persist, autoHintEnabled, duration, volume],
+        () => persist(settingsPatch({ autoHintTouched, autoHintEnabled, duration, volume })),
+        [persist, autoHintTouched, autoHintEnabled, duration, volume],
     );
 
     const toggleAudio = useCallback(async (checked: boolean) => {

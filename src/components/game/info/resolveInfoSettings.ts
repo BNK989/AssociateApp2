@@ -45,6 +45,49 @@ export function resolveInfoSettings(
     };
 }
 
+export type InfoSettingsPatch = {
+    /** Whether the player actually moved the auto-hint controls this session. */
+    autoHintTouched: boolean;
+    autoHintEnabled: boolean;
+    duration: number;
+    volume: number;
+};
+
+/**
+ * What closing the info screen writes back.
+ *
+ * The auto-hint keys are included **only when the player moved them**, which is
+ * the whole point of this function. The screen seeds its controls from the
+ * policy when nothing is stored (see `resolveInfoSettings` above), so writing
+ * everything it holds on close manufactured a preference out of a default:
+ * opening settings once, ever, and closing it pinned that player to whatever
+ * `autoEnabled` happened to be that day. From then on neither a new compiled
+ * default nor a game master's saved policy could move them, because
+ * `resolveHintPolicy` rightly treats a stored player preference as deliberate.
+ *
+ * It could not be seen from the settings screen either — it renders the same
+ * either way — which is how it survived until the auto-hint default changed and
+ * the change failed to reach anyone who had ever opened the panel.
+ *
+ * Volume is always written: absent means full, so a stored 1 says exactly what
+ * silence says and pins nothing.
+ */
+export function settingsPatch({
+    autoHintTouched,
+    autoHintEnabled,
+    duration,
+    volume,
+}: InfoSettingsPatch): ProfileSettings {
+    const patch: ProfileSettings = { audio_volume: volume };
+
+    if (autoHintTouched) {
+        patch.auto_hint_enabled = autoHintEnabled;
+        patch.auto_hint_duration = duration;
+    }
+
+    return patch;
+}
+
 /** Keeps a stored volume inside 0-1, treating anything unusable as full. */
 function clampVolume(value: number | undefined): number {
     if (typeof value !== 'number' || !Number.isFinite(value)) return 1;

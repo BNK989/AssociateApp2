@@ -5,9 +5,11 @@ import { HintTimeline } from './HintTimeline';
 
 afterEach(() => cleanup());
 
+/** With the clock on: a timeline of automatic reveals needs some to draw. */
 function policy(overrides: Partial<DailyHintPolicy>): DailyHintPolicy {
     return {
         ...DEFAULT_HINT_POLICY,
+        autoEnabled: true,
         rungs: [
             { auto: true, delaySeconds: 20 },
             { auto: true, delaySeconds: 20 },

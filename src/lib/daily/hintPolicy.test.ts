@@ -14,9 +14,19 @@ import {
     type GameMasterHintSettings,
 } from './hintPolicy';
 
+/**
+ * A policy for the tests below, with the clock explicitly on.
+ *
+ * `autoEnabled` is stated here rather than inherited from the defaults because
+ * these cases are about *when* an automatic reveal lands, which is only a
+ * question worth asking once something automatic is going to happen. The
+ * compiled default is off, and a suite that leant on it would have gone quietly
+ * vacuous the day it changed rather than failing.
+ */
 function policy(overrides: Partial<DailyHintPolicy> = {}): DailyHintPolicy {
     return {
         ...DEFAULT_HINT_POLICY,
+        autoEnabled: true,
         rungs: DEFAULT_HINT_POLICY.rungs.map((r) => ({ ...r })) as DailyHintPolicy['rungs'],
         ...overrides,
     };

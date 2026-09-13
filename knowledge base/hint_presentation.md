@@ -96,10 +96,17 @@ that never escalates. The route out for a player who really is stuck is the
 offer bar (`StuckOffer`), which speaks in words, carries the action, and can be
 dismissed.
 
-In the daily game the nudge is suppressed whenever the auto-hint clock is
-running, which is almost always — so the offer bar is effectively the only thing
-that speaks there. That is deliberate, and it is why the bar is the place to
-change the game's tone toward a stuck player, not the button.
+The nudge is suppressed whenever the auto-hint clock is running. That used to
+mean "almost always" in the daily game, so the offer bar was effectively the
+only thing that spoke there — but the auto-hint clock is **off by default since
+2026-09-13**, so in the daily game the nudge now does fire, at 8s, on every
+word. It is the quiet half of the pair: the button saying it is there, with the
+offer bar six seconds later saying it in words.
+
+Worth a QA eye. Eight seconds is its own wall-clock constant, unrelated to the
+offer bar's 14s and blind to strikes, so it is the one remaining timer that
+nothing else consults. If the pulsing reads as nagging across eight words, the
+fix is to align it with `FIRST_OFFER_MS` rather than to mute it.
 
 ## What is still open
 
@@ -112,7 +119,58 @@ scoring or the shape of the run and are the game master's call:
 2. **Whether the ladder should be free in the daily game.** It is a puzzle
    everyone plays once. The whole ladder priced at zero, with hints marked on
    the shared grid instead, is a different game — arguably a friendlier one.
-3. **The auto-hint default of 20s per rung.** It is short. It means the daily
-   game hands out the ladder whether or not the player wanted it, which makes
-   the manual button an accelerator rather than a choice, and makes the nudge
-   unreachable.
+3. ~~**The auto-hint default of 20s per rung.**~~ **Closed 2026-09-13.** The
+   delay was never the problem; the clock was. `GAME_CONFIG.DEFAULT_AUTO_HINT_ENABLED`
+   is now `false`, so the ladder is not handed out at all unless a game master
+   or the player asks for it. The 20s figure survives as the delay used *when*
+   someone turns the clock back on.
+
+## Nothing priced lands unasked (2026-09-13)
+
+`stuckSignals.ts` has always stated the rule the stuck-player work rests on —
+*the game offers, the player never asks* — and `useAutoHint` obeyed neither
+half: it took the rung itself and charged full price. On the old defaults a
+player who merely thought about a word for a minute reached level 3, lost 60% of
+the word, and earned a permanent yellow square on the share grid. Thinking time
+was being read as a hint request.
+
+Three changes carry it, and the second two are the ones that make the first
+actually reach anybody:
+
+1. **`DEFAULT_AUTO_HINT_ENABLED: false`** in `gameConfig.ts`. With it off,
+   `autoRevealDelay` returns null, `revealSchedule` returns null, and
+   `useAutoHint` never fires — which also takes the countdown ring off the hint
+   button, since `isActive` needs a schedule with a span. Nothing is removed:
+   the manual button reaches every rung and the offer bar proposes the same ones
+   a few seconds later, for the player to accept.
+
+2. **The info screen stops manufacturing preferences.** `useInfoSettings.save()`
+   used to write `auto_hint_enabled` on every close, seeded from the policy when
+   nothing was stored — so opening Settings once, ever, pinned that player to
+   whatever the default was that day, and `resolveHintPolicy` then rightly
+   treated it as a deliberate choice that outranks both the compiled default and
+   the game master's policy. The keys are now written only when the player
+   actually moves the controls (`settingsPatch` in `resolveInfoSettings.ts`).
+
+   **This does not reach back in time.** Anyone who has opened the info screen
+   before today still carries `auto_hint_enabled: true`, and still gets the old
+   pacing. Two ways to clear it, both the game master's call: set the policy at
+   `/admin/game-settings` with `scope: 'force'`, which overrides stored player
+   preferences wholesale; or drop the manufactured key —
+   `update public.profiles set settings = settings - 'auto_hint_enabled';` —
+   which cannot distinguish a deliberate opt-in from a manufactured one, so it
+   resets everybody to the default.
+
+3. **`THIRD_OFFER_MS` in `stuckSignals.ts`.** Without this, turning the clock
+   off strands a stuck player: `other_end` held the escalation slot for as long
+   as the chain could still be entered from its far side, and with nothing
+   handing out the ladder any more, a player who declined to leave the word
+   would be shown the same lateral move forever and never offered a hint. It now
+   holds that slot for a 50s window, after which the ladder continues to the
+   rungs that address the word in front of them — and reappears below the
+   ladder, ahead of the reveal, so the route is never lost.
+
+What this is *not*: a re-pricing. Tiers are still 10/10/40 and the scramble is
+still the middle rung. Those change the scoring maths and the shape of a run,
+and they need `20260823090000_add_settings_revision_to_daily_results.sql`
+applied first or old and new scores silently stop being comparable.

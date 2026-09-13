@@ -4,6 +4,7 @@ import {
     FIRST_OFFER_MS,
     SECOND_OFFER_MS,
     STRIKE_WORTH_MS,
+    THIRD_OFFER_MS,
     stuckOffer,
     type StuckInput,
 } from './stuckSignals';
@@ -74,6 +75,52 @@ describe('stuckOffer', () => {
 
     it('stays quiet once the player has waved it away', () => {
         expect(at({ msOnWord: SECOND_OFFER_MS, dismissed: true })).toBeNull();
+    });
+});
+
+describe('the other end', () => {
+    it('holds the escalation slot only for its window', () => {
+        expect(at({ msOnWord: THIRD_OFFER_MS - 1 })).toEqual({ kind: 'other_end' });
+        expect(at({ msOnWord: THIRD_OFFER_MS })).toEqual({ kind: 'letter' });
+    });
+
+    /**
+     * The regression this window exists to prevent.
+     *
+     * With the auto-hint clock off, nothing hands out the ladder on its own. A
+     * player who stays on the word and declines to go elsewhere would otherwise
+     * be shown the same lateral move for as long as they sat there, and never
+     * be offered help with the word actually in front of them.
+     */
+    it('lets a player who will not leave the word still reach the ladder', () => {
+        const staying = { canOpenOtherEnd: true, hintLevel: 0 };
+
+        expect(at({ ...staying, msOnWord: SECOND_OFFER_MS })).toEqual({ kind: 'other_end' });
+        expect(at({ ...staying, msOnWord: THIRD_OFFER_MS })).toEqual({ kind: 'letter' });
+    });
+
+    it('lets wrong guesses buy their way past the window too', () => {
+        expect(at({ msOnWord: THIRD_OFFER_MS - STRIKE_WORTH_MS, strikes: 1 }))
+            .toEqual({ kind: 'letter' });
+    });
+
+    it('comes back below the ladder rather than being lost', () => {
+        // Passed over further up, but a word the player can still come at from
+        // the far side beats retiring it unsolved.
+        expect(at({
+            msOnWord: THIRD_OFFER_MS,
+            hintLevel: MAX_HINT_LEVEL,
+            canSettle: false,
+            canOpenOtherEnd: true,
+        })).toEqual({ kind: 'other_end' });
+    });
+
+    it('still yields to the rungs that address this word', () => {
+        const late = { msOnWord: THIRD_OFFER_MS, canOpenOtherEnd: true };
+
+        expect(at({ ...late, hintLevel: 1 })).toEqual({ kind: 'letter' });
+        expect(at({ ...late, hintLevel: MAX_HINT_LEVEL, canSettle: true }))
+            .toEqual({ kind: 'settle' });
     });
 });
 

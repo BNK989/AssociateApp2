@@ -55,6 +55,22 @@ export const FIRST_OFFER_MS = 14_000;
 export const SECOND_OFFER_MS = 30_000;
 
 /**
+ * Dwell time after which the other end stops holding the escalation slot.
+ *
+ * `other_end` is a lateral move, not a rung: it hands the player a different
+ * word rather than help with this one, and it is offered first only because it
+ * gives nothing about this word away. That was harmless while the auto-hint
+ * clock was handing out the ladder regardless — and a silent trap the moment it
+ * was switched off, because a player who simply declines to leave the word
+ * would sit on a repeating "other end" and never be offered a hint at all.
+ *
+ * So it gets one window rather than the slot. Past this the ladder continues to
+ * the rungs that actually address the word in front of the player, and the
+ * route to the other end survives below the ladder and on the hint menu.
+ */
+export const THIRD_OFFER_MS = 50_000;
+
+/**
  * A wrong guess is worth this much dwell time.
  *
  * Someone who has guessed and missed is further into being stuck than someone
@@ -102,6 +118,11 @@ function pressure({ msOnWord, strikes }: StuckInput): number {
  * when it has nothing to give: no point offering a route into the chain's other
  * end once it is open, or a letter once the ladder is spent.
  *
+ * The one rung that does not hold its place is `other_end`, which gets a window
+ * rather than the slot — see `THIRD_OFFER_MS`. Everything behind it addresses
+ * the word the player is actually looking at, and a player who declines to
+ * leave that word must still be able to reach them.
+ *
  * `settle` sits second-to-last on purpose. It is the most expensive offer that
  * still ends in a solve, so it must be exhausted before the reveal — which
  * ends in no solve at all — is ever put to the player.
@@ -120,9 +141,15 @@ export function stuckOffer(input: StuckInput): StuckOffer | null {
         };
     }
 
-    if (input.canOpenOtherEnd) return { kind: 'other_end' };
+    if (elapsed < THIRD_OFFER_MS && input.canOpenOtherEnd) return { kind: 'other_end' };
+
     if (input.hintLevel < MAX_HINT_LEVEL) return { kind: 'letter' };
     if (input.canSettle) return { kind: 'settle' };
+
+    // Back to the other end once the ladder is spent. A word the player can
+    // still come at from the far side beats retiring it unsolved, so this sits
+    // ahead of the reveal even though it was passed over further up.
+    if (input.canOpenOtherEnd) return { kind: 'other_end' };
 
     return { kind: 'reveal' };
 }

@@ -302,7 +302,8 @@ type DailyHintPolicy = {
   startLevel: number;                                 // 0-3
   startLevelAppliesTo: StartLevelReach;               // see below
   chargeForStartLevel: boolean;
-  autoEnabled: boolean;
+  autoEnabled: boolean;                               // compiled default: false
+
   rungs: [HintRung, HintRung, HintRung];              // to L1, L2, L3
   progression: 'ladder' | 'jump';
   stagger: 'per-rung' | 'cumulative';
@@ -313,6 +314,16 @@ type HintRung = { auto: boolean; delaySeconds: number };  // 0-600
 
 type StartLevelReach = 'first-word' | 'every-word' | 'every-word-on-arrival';
 ```
+
+**`autoEnabled` ships off (2026-09-13).** The game no longer climbs the ladder
+on the player's behalf, because doing so took the rung *and* charged for it —
+see [hint_presentation.md](hint_presentation.md). Turning it back on here
+restores the old pacing, and the rung delays are what it uses when you do.
+
+Note the reach of `scope` when you change it: a player who opened the info
+screen before 2026-09-13 has `auto_hint_enabled` stored whether they chose it or
+not, and at `scope: 'default'` that stored value beats your policy. Use
+`scope: 'force'` if a change has to reach everyone.
 
 `startLevelAppliesTo` is read by two functions, and the split is the whole
 implementation of `every-word-on-arrival`:
