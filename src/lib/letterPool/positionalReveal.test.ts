@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { maskIsScrambled } from '@/lib/gameConfig';
+import { maskGivesPosition } from '@/lib/gameConfig';
 import { generateCipherString } from '@/lib/gameLogic';
 import { computeGuessState } from '@/components/cipher/cipherRules';
 import { readMaskTile } from '@/components/cipher/maskTile';
@@ -13,15 +13,22 @@ import { knownUnplacedIndices, placedIndices } from './poolRules';
  * level, so the whole mask/pool/settle path was only ever exercised in the
  * world the game does not ship. That is how a hint 2 that revealed nothing got
  * through green: `readMaskTile` and `placedIndices` both still asked
- * `hintLevel < 2` instead of `maskIsScrambled`, so with the scramble off the
- * mask's letters were glyphed out of the line, left out of the strip, and never
- * pooled either. Revealed in `cipher_text`, reaching nothing on screen.
+ * `hintLevel < 2` instead of the config, so with the scramble off the mask's
+ * letters were glyphed out of the line, left out of the strip, and never pooled
+ * either. Revealed in `cipher_text`, reaching nothing on screen.
  *
- * So these cases **read** the switch rather than setting it. Every assertion
- * below holds under either setting; only the route the letters take changes —
- * into the line when the mask is honest, into the pool when it is an anagram.
- * Flip `SCRAMBLE_MASK` and this suite keeps testing the shipped game instead of
- * quietly going vacuous.
+ * **And then this suite blessed the overcorrection.** The fix routed those
+ * letters into the line as greens and the case below asserted, in as many
+ * words, that `pool` was empty — so the halo went dark, two thirds of every
+ * word was handed over pre-placed, and the suite was green the whole way. The
+ * assertion was not wrong about the code; it was wrong about the game. A test
+ * that pins "the pool stays empty" cannot fail when the pool is the feature.
+ *
+ * So the cases below key on `maskGivesPosition`, which is the question that
+ * actually decides the route, and the one route that must never be empty —
+ * letters reaching the player — is asserted on both sides of it. See
+ * `maskWithholdsPosition.test.ts` for the same thing read against the shipped
+ * config with nothing mocked at all.
  */
 
 const WORD = 'clotheslines';
@@ -59,21 +66,22 @@ describe('hint 2 discloses letters, whatever shape the mask has', () => {
         expect(disclosedAt(2)).toBeGreaterThan(disclosedAt(1));
     });
 
-    it('routes them into the line when the mask is positional, the pool when it is not', () => {
+    it('routes them into the line when the mask gives position, the pool when it withholds it', () => {
         const mask = maskAt(2);
         const line = drawnInLine(mask.cipher, 2, NO_GUESSES);
         const pool = knownUnplacedIndices(WORD, NO_GUESSES, mask);
 
-        if (maskIsScrambled(2)) {
-            // An anagram's slots mean nothing, so nothing but the bought first
-            // letter may be drawn in place.
+        if (maskGivesPosition(2)) {
+            // Every letter the mask exposes arrives with its place, so the line
+            // carries all of them and nothing is adrift.
+            expect(line.length).toBeGreaterThan(1);
+            expect(pool).toEqual([]);
+        } else {
+            // The mask withholds position, so nothing but the first letter hint
+            // 1 bought may be drawn in place — the rest are letters without
+            // homes, which is what the halo is.
             expect(line).toEqual([0]);
             expect(pool.length).toBeGreaterThan(1);
-        } else {
-            expect(line.length).toBeGreaterThan(1);
-            // Nothing is adrift: a positional mask hands over position too, so
-            // every letter it exposes has a place and the pool stays empty.
-            expect(pool).toEqual([]);
         }
     });
 

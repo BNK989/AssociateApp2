@@ -39,32 +39,53 @@ It also **self-gated** on that rule: with an empty pool there was nothing to
 place, so the drip could not fire before the player had been given something to
 work with.
 
-### What the scramble going did to that rule (2026-09-14)
+### The empty pool, misdiagnosed and then fixed properly (2026-09-13)
 
-The self-gate stopped being a safety property and became the whole story. With
-`SCRAMBLE_MASK` off, the pool holds only what the player's own wrong guesses
-proved — so on a word they have not guessed at it is empty, and at the clue,
-where the drip is supposed to be the last rung before giving up, it had nothing
-to give. No candidates, therefore no offer, no button, and the ladder fell from
-the clue straight to the **Reveal**, which is the one move that ends in no solve
-at all. Reported from live play as *"why no floating letters at this stage?
-should be auto given but i don't even get a button"*.
+For one day the self-gate stopped being a safety property and looked like the
+whole story. On a word the player had not guessed at the pool was empty, so at
+the clue — where the drip is supposed to be the last rung before giving up — it
+had nothing to give. No candidates, therefore no offer, no button, and the ladder
+fell from the clue straight to the **Reveal**, which is the one move that ends in
+no solve at all. Reported from live play as *"why no floating letters at this
+stage? should be auto given but i don't even get a button"*.
 
-So the rule now has a level attached to it, `revealFromHintLevel`:
+The reading at the time was that `SCRAMBLE_MASK` going off had left the pool
+holding only what a player's own wrong guesses proved, and that the drip should
+therefore be allowed to **open** letters as well as place them. A level was
+attached to the rule (`revealFromHintLevel`, defaulting to the clue) and the
+mechanic shipped.
 
-> **Below it, unchanged: positions only, out of the pool, nothing new. At and
-> above it the drip may also *open* a letter the player has not seen.**
+**That was a fix to the wrong layer.** The pool was empty because a *bug* was
+draining it: `readMaskTile` and `placedIndices` were asking `maskIsScrambled`
+where they meant `maskGivesPosition`, so every letter hint 2 disclosed was being
+drawn in the word line as a green instead of pooled. The report was accurate and
+the diagnosis was not. Two things followed from getting it wrong:
 
-Three things keep that from becoming a fourth hint:
+- The drip was made to compensate for a broken mechanic rather than to complement
+  a working one — an entire second system maintaining the first one's symptom.
+- It made the giveaway **worse**. A letter the drip *opens* has no place either,
+  so it landed green, handing over a position for a letter the player had never
+  even been shown.
 
-- **It is the clue level by default**, so the ladder is spent before it applies.
-  A drip that opens letters earlier is a shortcut past the hints.
-- **The pool is spent first.** A loose letter costs the player only its
-  position, so every one of them goes before anything new is opened.
-- **Both ceilings still bind** — at most half the word, never the last two
-  letters, never the first one (hint 1 bought that).
+With the disclosure route fixed (see
+[letter_feedback.md](letter_feedback.md), *Which route a revealed letter takes*)
+the pool is full again from hint 2, the drip has candidates without inventing
+any, and the founding rule stands unamended:
 
-`null` restores the original pool-only rule for a game master who wants it.
+> **The drip gives away positions, never new letters.** Everything it places was
+> already visible in the pool.
+
+`revealFromHintLevel` **remains as a game-master setting and defaults to `null`**
+— pool-only, the original rule. Turning it on is still coherent (below the level,
+positions only; at and above it the drip may also open an unseen letter) and
+three things keep it from becoming a fourth hint: the level should be the clue so
+the ladder is spent first, the pool is always spent before anything new is
+opened, and both ceilings bind — at most half the word, never the last two
+letters, never the first one.
+
+Set it to a level only on evidence that the pool is genuinely empty at the clue.
+The suites that cover it now state that premise explicitly rather than inheriting
+it from the default, so they cannot go quiet when the default moves.
 
 ---
 
@@ -326,7 +347,7 @@ production 2026-09-13** at revision 1 with an empty value. The panel saves.
 | :--- | :--- | :--- |
 | `mode` | `offered` | `offered` \| `auto` \| `off` |
 | `armFromHintLevel` | `2` | Below this the rung does not exist |
-| `revealFromHintLevel` | `3` | From here it may open unseen letters; `null` = pool only |
+| `revealFromHintLevel` | `null` | From here it may open unseen letters; `null` (the default) = pool only |
 | `firstDelayMs` | `20000` | `auto` only |
 | `intervalMs` | `15000` | The pace the player actually feels |
 | `strikeCreditMs` | `12000` | `auto` only; mirrors `STRIKE_WORTH_MS` |

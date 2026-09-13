@@ -117,22 +117,21 @@ describe('availability', () => {
         expect(view.result.current.available).toBe(false);
     });
 
-    it('is available at the clue with an empty pool, which is the common case', () => {
-        // The rung had gone missing in exactly this state: at the clue, on a
-        // word the player never guessed at, there was no pool and therefore no
-        // offer — and the ladder fell through to the reveal.
+    it('is available at the clue with an empty pool when a game master allows it', () => {
+        // Opening unseen letters is off in the shipped policy, so this states
+        // the premise. See `settleRules.test.ts` for why it is off.
         const { view } = setup({
             message: word({ hint_level: MAX_HINT_LEVEL, cipher_text: undefined }),
+            policy: policy({ revealFromHintLevel: MAX_HINT_LEVEL }),
         });
 
         expect(view.result.current.available).toBe(true);
         expect(view.result.current.lettersLeft).toBeGreaterThan(0);
     });
 
-    it('honours a game master who turns the opening off', () => {
+    it('is pool-only at the clue by default, which is what ships', () => {
         const { view } = setup({
             message: word({ hint_level: MAX_HINT_LEVEL, cipher_text: undefined }),
-            policy: policy({ revealFromHintLevel: null }),
         });
 
         expect(view.result.current.available).toBe(false);
@@ -141,6 +140,7 @@ describe('availability', () => {
     it('places an opened letter when the player accepts it', () => {
         const { view, patchTarget, land } = setup({
             message: word({ hint_level: MAX_HINT_LEVEL, cipher_text: undefined }),
+            policy: policy({ revealFromHintLevel: MAX_HINT_LEVEL }),
         });
 
         act(() => view.result.current.accept());

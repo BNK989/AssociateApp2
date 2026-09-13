@@ -56,9 +56,12 @@ describe('parseSettlePolicy', () => {
 
     it('stores null as the pool-only rule rather than reading it as absent', () => {
         // The one field where null is a value: it means "positions only, never
-        // new letters", which is not the compiled default and so cannot be
-        // expressed by leaving the key out.
+        // new letters". Both halves are asserted against literals rather than
+        // against the default, so this keeps testing the round trip whichever
+        // way the compiled default goes — it was written when the default was a
+        // level, and read as vacuous the moment the default became null.
         expect(parseSettlePolicy({ revealFromHintLevel: null }).revealFromHintLevel).toBeNull();
+        expect(parseSettlePolicy({ revealFromHintLevel: 2 }).revealFromHintLevel).toBe(2);
         expect(parseSettlePolicy({}).revealFromHintLevel)
             .toBe(DEFAULT_SETTLE_POLICY.revealFromHintLevel);
     });

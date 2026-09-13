@@ -207,15 +207,24 @@ describe('nextSettleIndex', () => {
 });
 
 describe('at the clue, the drip may open a letter as well as place one', () => {
-    // The rung had quietly stopped existing. With the scramble gone the pool
-    // holds only what a wrong guess proved, so a player who reached the clue
-    // without guessing had no pool, no candidates, no offer and no button — and
-    // the ladder fell from the clue straight to the Reveal.
+    // A game-master option, and **off by default** — `revealFromHintLevel` is
+    // null in the compiled policy, so every case here states the premise rather
+    // than inheriting it.
+    //
+    // It shipped on for a day on the reasoning that the pool was empty at the
+    // clue, so the rung had quietly stopped existing. The emptiness was real and
+    // the diagnosis was wrong: hint 2's letters were being drawn in the line as
+    // greens instead of pooled, because `readMaskTile` and `placedIndices` were
+    // asking `maskIsScrambled` where they meant `maskGivesPosition`. Opening
+    // unseen letters was a second mechanic compensating for the first being
+    // broken, and it made the giveaway worse. See `MASK_WITHHOLDS_POSITION_FROM`.
+    const opens = policy({ revealFromHintLevel: MAX_HINT_LEVEL });
+
     const atClue = {
         text: 'STARLING',
         guesses: [],
         settled: [],
-        policy: policy(),
+        policy: opens,
         hintLevel: MAX_HINT_LEVEL,
     };
 
@@ -259,14 +268,14 @@ describe('at the clue, the drip may open a letter as well as place one', () => {
         expect(nextSettleIndex(spent)).toBeNull();
     });
 
-    it('stays pool-only when a game master turns the reveal off', () => {
-        const poolOnly = policy({ revealFromHintLevel: null });
-        expect(canSettle({ ...atClue, policy: poolOnly })).toBe(false);
+    it('is pool-only by default, which is what ships', () => {
+        expect(policy().revealFromHintLevel).toBeNull();
+        expect(canSettle({ ...atClue, policy: policy() })).toBe(false);
     });
 
     it('is the level, not the arming, that decides it', () => {
-        expect(revealsUnseen(2, policy())).toBe(false);
-        expect(revealsUnseen(MAX_HINT_LEVEL, policy())).toBe(true);
+        expect(revealsUnseen(2, opens)).toBe(false);
+        expect(revealsUnseen(MAX_HINT_LEVEL, opens)).toBe(true);
         expect(revealsUnseen(MAX_HINT_LEVEL, policy({ revealFromHintLevel: null }))).toBe(false);
         expect(revealsUnseen(1, policy({ revealFromHintLevel: 1 }))).toBe(true);
     });

@@ -85,7 +85,7 @@ export const HINT_COSTS = {
 export const MAX_STRIKES = 3;
 
 /**
- * Whether hint level 2 shuffles what it reveals, or reveals it in place.
+ * Whether hint level 2 shuffles the word line, or leaves it in reading order.
  *
  * **Off since 2026-09-13.** It was the one rung of the ladder that made a word
  * *harder* to hold in your head: level 1 hands you the first letter in its
@@ -93,11 +93,10 @@ export const MAX_STRIKES = 3;
  * anagram. More information, less picture — which is exactly the moment players
  * described the word as getting away from them.
  *
- * The settle drip existed to sell those positions back one at a time, so an
- * entire second mechanic was there to undo this one. With the scramble off, the
- * ladder only ever adds to what the player can see, and the pool goes back to
- * meaning what it says: letters your own wrong guesses proved are in the word,
- * with no place yet.
+ * This governs the **line's order and nothing else**. Whether the mask's
+ * letters may be read as being at their true index is a separate question with
+ * a separate answer — `maskGivesPosition` below — and conflating the two is
+ * what broke the halo. See that comment.
  *
  * Read through `maskIsScrambled` rather than directly, so the question has one
  * answer everywhere — the mask generator, the two views that draw it, the pool,
@@ -108,6 +107,60 @@ export const SCRAMBLE_MASK = false;
 /** Whether a mask at this hint level is an anagram rather than positional. */
 export function maskIsScrambled(hintLevel: number): boolean {
     return SCRAMBLE_MASK && hintLevel >= 2;
+}
+
+/**
+ * Earliest hint level whose mask hands over **letters without their places**.
+ *
+ * This is the predicate the letter pool turns on, and it is the difference
+ * between the two things a hint can give a player:
+ *
+ * - Below it, a revealed letter arrives *with* its position. It is green, it is
+ *   drawn in the word line, and the composer's strip fills it in.
+ * - At it and above, a revealed letter arrives as a letter only. It has no
+ *   confirmed place, so it is orange, it hangs in the halo around the bubble,
+ *   and the player is the one who decides where it goes.
+ *
+ * ### Why this is not `maskIsScrambled`
+ *
+ * It was, until 2026-09-13, and that is the whole defect. Both questions were
+ * answered by one flag because while the mask *was* an anagram they happened to
+ * coincide: scrambling the line was how the positions were destroyed, so
+ * "shuffled" and "positionless" were the same fact.
+ *
+ * Switching `SCRAMBLE_MASK` off separated them and nothing noticed. Every
+ * consumer kept asking `maskIsScrambled`, which now answers `false` at every
+ * level, so:
+ *
+ * - `placedIndices` marked **every non-filler character in the mask** as
+ *   confirmed-in-place, and
+ * - `knownUnplacedIndices` stopped building a mask budget at all, so no letter
+ *   the mask disclosed could ever reach the pool.
+ *
+ * Between them that is the halo's entire supply. Hint 2 went from handing the
+ * player two thirds of a word's letters to place, to handing them two thirds of
+ * the word already placed — green, in order, in the line. The mechanic did not
+ * break; it was starved and then its absence was designed around. `SETTLE`'s
+ * `REVEAL_FROM_HINT_LEVEL` was added because "the pool is usually empty, so the
+ * drip never fires", which was a true observation of a bug treated as a fact of
+ * the game.
+ *
+ * ### The mask still carries the positions
+ *
+ * `generateCipherString` builds a positional mask at every level now, so
+ * `cipher_text` holds the revealed letters at their true indices even though
+ * nothing draws them there. That is not a leak worth solving: the client is
+ * handed `message.content` — the answer itself, in full — because that is what
+ * the composer matches typing against. The mask was never the thing keeping the
+ * answer secret.
+ *
+ * `null` puts every level back to positional, which is the pre-pool game.
+ */
+export const MASK_WITHHOLDS_POSITION_FROM = 2 as number | null;
+
+/** Whether a mask at this level may be read as being at its true index. */
+export function maskGivesPosition(hintLevel: number): boolean {
+    return MASK_WITHHOLDS_POSITION_FROM === null || hintLevel < MASK_WITHHOLDS_POSITION_FROM;
 }
 
 /** Highest hint level; level 3 is the AI clue. */
@@ -195,26 +248,30 @@ export const SETTLE = {
      * Hint level from which the drip may place a letter the player has *not*
      * been shown, rather than only one already hanging around the word.
      *
-     * The drip's founding rule was that it gives away positions and never new
-     * letters, which was exactly right while hint 2 was an anagram: the pool
-     * was full, and what the player lacked was where those letters went. With
-     * `SCRAMBLE_MASK` off the pool is usually empty, so that rule quietly
-     * became "the drip never fires": a player at the clue with no wrong guesses
-     * behind them had no pool, therefore no candidates, therefore no offer and
-     * no button — the ladder fell straight through to the Reveal, which is the
-     * one move that ends in no solve at all.
+     * The drip's founding rule is that it gives away positions and never new
+     * letters: the pool is full, and what the player lacks is where those
+     * letters go.
      *
-     * So from this level the drip may open a letter as well as place one. It is
-     * the clue level rather than lower because the rung must stay the *last*
-     * one before giving up: below it the player still has ladder left, and a
-     * drip that hands out unseen letters earlier is a shortcut past the hints.
+     * **Back to `null` on 2026-09-13.** It was briefly `MAX_HINT_LEVEL`, on the
+     * reasoning that with `SCRAMBLE_MASK` off "the pool is usually empty, so
+     * that rule quietly became 'the drip never fires'". The observation was
+     * real and the diagnosis was wrong: the pool was empty because
+     * `maskGivesPosition` did not exist yet and every letter hint 2 disclosed
+     * was being drawn in the line as a green instead of pooled. So this setting
+     * was a second mechanic built to compensate for the first one being broken,
+     * and it made the symptom worse — a letter the drip *opens* has no place
+     * either, so it landed green and gave away a position the player had not
+     * even been shown the letter for.
      *
-     * `null` restores the pool-only rule.
+     * With the disclosure route fixed the pool is full again from hint 2 and
+     * the drip has candidates without inventing any, so the founding rule
+     * stands. Set this to a level again only on evidence that the pool is
+     * genuinely empty at the clue.
      *
      * The two floors below still bind, so this can never solve the word — at
      * most half of it, and never the last two letters.
      */
-    REVEAL_FROM_HINT_LEVEL: MAX_HINT_LEVEL as number | null,
+    REVEAL_FROM_HINT_LEVEL: null as number | null,
     /** Which letter goes next. See `orderCandidates`. */
     ORDER: 'seeded',
     /** Fraction of the word's base value forfeited per settled letter. */

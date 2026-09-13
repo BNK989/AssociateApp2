@@ -1,4 +1,4 @@
-import { maskIsScrambled } from '@/lib/gameConfig';
+import { maskGivesPosition } from '@/lib/gameConfig';
 import { computeGuessState, isFillerChar } from '@/components/cipher/cipherRules';
 
 /**
@@ -148,11 +148,19 @@ export function knownUnplacedIndices(
     const placed = placedIndices(text, guesses, mask, settled);
     const chars = [...text];
 
-    // What the anagram mask exposes, as a budget to spend. Without this a hint
-    // bought at level 2 would reveal nothing at all: its letters no longer
-    // appear in the line, so the pool is the only place left for them to go.
+    // What the mask exposes, as a budget to spend. Without this a hint bought at
+    // level 2 would reveal nothing at all: its letters are not drawn in the line
+    // either, so the pool is the only place left for them to go.
+    //
+    // Keyed on `maskGivesPosition`, never on the level or on `maskIsScrambled`.
+    // Asking whether the mask is *shuffled* is what emptied the halo: with
+    // `SCRAMBLE_MASK` off that answers `false` at every level, this budget was
+    // never built, and every letter a hint disclosed went green in the line
+    // instead. The question is whether the mask withholds *position*, which an
+    // in-order mask does just as well as an anagram — nothing has to draw its
+    // letters where it happens to put them.
     const fromMask: Record<string, number> = {};
-    if (mask && maskIsScrambled(mask.hintLevel)) {
+    if (mask && !maskGivesPosition(mask.hintLevel)) {
         for (const char of [...mask.cipher]) {
             if (char === ' ' || isFillerChar(char)) continue;
             const lower = char.toLowerCase();
@@ -160,12 +168,21 @@ export function knownUnplacedIndices(
         }
     }
 
-    // A letter the drip has settled has left the pool for a slot, but it is
-    // still one of the letters the mask was showing — so it spends its budget
-    // on the way out. Without this the word line would appear to gain a letter
-    // every time one settled.
-    for (const index of settled ?? []) {
+    // A letter that already has a place has left the pool for a slot, but it is
+    // still one of the letters the mask was showing — so it spends its budget on
+    // the way out. Without this the word would appear to gain a letter every
+    // time one was placed.
+    //
+    // Spent over every placed index rather than only the settled ones, which it
+    // used to be. An in-order mask holds the first letter hint 1 bought at its
+    // own index, so that letter is both green in the line *and* counted in the
+    // budget above; an anagram excluded it from its bag and never had to care.
+    // Left unspent, a word with two of that letter pooled the second one on a
+    // mask that had only ever shown the first.
+    for (const index of placed) {
         const lower = chars[index]?.toLowerCase();
+        // A guessed letter is not spending mask budget in the first place: the
+        // loop below only draws on the budget for letters no guess revealed.
         if (lower === undefined || revealedChars.has(lower)) continue;
         if ((fromMask[lower] || 0) > 0) fromMask[lower] -= 1;
     }
@@ -294,10 +311,11 @@ export function placedIndices(
     }
 
     // The same question `readMaskTile` asks, and it has to get the same answer:
-    // a positional mask's letters are at their own index, so the strip fills
-    // them in. Keyed on `maskIsScrambled` rather than on the level, or the two
-    // disagree the moment the scramble is switched off.
-    if (!maskIsScrambled(mask.hintLevel)) {
+    // a mask that hands over position puts its letters at their own index, so
+    // the strip fills them in. Keyed on `maskGivesPosition` rather than on the
+    // level or on `maskIsScrambled` — the latter is what turned every letter
+    // hint 2 disclosed into a green in the line and left the halo with nothing.
+    if (maskGivesPosition(mask.hintLevel)) {
         const cipherChars = [...mask.cipher];
         chars.forEach((char, index) => {
             if (isGapChar(char)) return;

@@ -1,4 +1,4 @@
-import { maskIsScrambled } from '@/lib/gameConfig';
+import { maskGivesPosition, maskIsScrambled } from '@/lib/gameConfig';
 import { isFillerChar, maskedGlyph } from './fillers';
 import type { GuessState } from './cipherRules';
 
@@ -33,15 +33,17 @@ export type MaskTile = {
  *
  * The rule the whole colour scheme rests on: a tile is `placed` only when its
  * slot is genuinely the letter's own. Letters guessed in position qualify, and
- * so does any letter a *positionally honest* mask exposes, because those masks
- * are built position by position.
+ * so does any letter a mask that *hands over position* exposes.
  *
- * Whether a mask is honest is `maskIsScrambled`'s answer, never a comparison
- * against the hint level. With `SCRAMBLE_MASK` off every level is positional,
- * hint 2 included; with it on, level 2's mask is an *anagram* of the answer, so
- * a letter in it belongs to the word but its slot means nothing — `present` and
- * displaced. A letter that happens to land on its own index there is
- * coincidence, not information, so it is never promoted to `placed`.
+ * Which masks those are is `maskGivesPosition`'s answer, never a comparison
+ * against the hint level and — the trap this file fell into — never
+ * `maskIsScrambled`. Those are two questions: one asks whether the line is
+ * drawn in the answer's order, the other whether a letter in the mask may be
+ * read as being at its own index. They coincided only while hint 2's mask was
+ * an anagram, because shuffling was *how* the position was withheld. With
+ * `SCRAMBLE_MASK` off the mask is in order at every level and still withholds
+ * position from hint 2 — the letters it discloses belong in the halo, not here.
+ * Reading the shuffle flag instead drew all of them in the line as greens.
  *
  * Letters known only to be present are drawn at their true index and reported
  * as *not* displaced. That is the honest reading: the renderer really does put
@@ -78,18 +80,22 @@ export function readMaskTile(
 
         const isMaskLetter = maskChar !== ' ' && maskChar !== undefined && !isFillerChar(maskChar);
 
-        // A positionally honest mask exposes a letter at its own index, so it
-        // belongs to the line and stays. Asked through `maskIsScrambled` rather
-        // than as `hintLevel < 2`: with the scramble off every level is
-        // positional, and the raw comparison glyphed out everything hint 2
-        // revealed — the reveal survived in `cipher_text` and reached nothing.
-        if (isMaskLetter && !maskIsScrambled(hintLevel)) {
+        // A mask that hands over position exposes a letter at its own index, so
+        // it belongs to the line and stays. Asked through `maskGivesPosition`,
+        // which is a different question from whether the mask is *shuffled*:
+        // asking `maskIsScrambled` here is what put every letter hint 2
+        // disclosed into the line as a green and left the halo empty. An
+        // in-order mask withholds position perfectly well — nothing obliges
+        // this reader to draw its letters where the mask happens to hold them.
+        if (isMaskLetter && maskGivesPosition(hintLevel)) {
             return { char: maskChar, state: 'placed', displaced: false };
         }
 
-        // Anything else is unplaced: filler is already filler, and a letter from
-        // an anagram mask is replaced by filler so no real glyph leaks through
-        // wearing filler's colour. Keyed to the index so it never flickers.
+        // Anything else is unplaced: filler is already filler, and a letter the
+        // mask is holding without its position is replaced by filler so no real
+        // glyph leaks through wearing filler's colour — the letter itself is in
+        // the halo, which is the only place it can be shown without asserting a
+        // position it does not have. Keyed to the index so it never flickers.
         return {
             char: isMaskLetter ? maskedGlyph(index) : maskChar,
             state: 'unknown',
@@ -102,10 +108,15 @@ export function readMaskTile(
     }
 
     if (maskChar !== ' ' && maskChar !== undefined && !isFillerChar(maskChar)) {
+        // Only the shuffled line reaches here, and there a slot really is a lie,
+        // so `maskIsScrambled` is the right question for `displaced`. What the
+        // letter *means* is still `maskGivesPosition`'s to answer, or this view
+        // would call a letter placed that the pool is simultaneously holding as
+        // adrift.
         const scrambled = maskIsScrambled(hintLevel);
         return {
             char: maskChar,
-            state: scrambled ? 'present' : 'placed',
+            state: maskGivesPosition(hintLevel) ? 'placed' : 'present',
             displaced: scrambled,
         };
     }

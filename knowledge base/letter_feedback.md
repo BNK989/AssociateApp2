@@ -44,11 +44,44 @@ This binds the pool as a *collection*, not only its tiles. A row in the answer's
 order claims a great deal about position no matter what each tile says — see
 *The pool had an order* below.
 
-Below hint level 2 the mask is built position by position, so revealed letters
-sit where they belong. From hint level 2 the mask is an *anagram* of the answer
-and order stops carrying information. The legend says which applies
-(`ordered_note` / `shuffled_note`), and the drifting animation marks the tiles
-whose slots are meaningless.
+### Which route a revealed letter takes
+
+A hint can give the player two different things, and the whole colour scheme
+turns on keeping them apart:
+
+| The hint gives | Route | Colour |
+| :--- | :--- | :--- |
+| a letter **and** its position | the word line | green |
+| a letter **only** | the halo | orange |
+
+`maskGivesPosition(hintLevel)` (`gameConfig.ts`) is the one answer to which
+applies, and `MASK_WITHHOLDS_POSITION_FROM` is the level it changes at — **2**.
+So hint 1 sells the first letter *in place*, and hint 2 sells two thirds of the
+word's letters *without* their places, which is what the halo is for. The legend
+says which applies (`ordered_note` / `shuffled_note`), and the drifting
+animation marks the tiles whose slots are meaningless.
+
+> **This is not the same question as `maskIsScrambled`**, and conflating the two
+> emptied the halo for a day (2026-09-13). While hint 2's mask was an anagram
+> they coincided, because shuffling the line was *how* the position was
+> withheld. `SCRAMBLE_MASK` going off separated them and every consumer kept
+> asking the shuffle flag — which now answers `false` at every level. So
+> `placedIndices` counted every non-filler character of the mask as
+> confirmed-in-place and `knownUnplacedIndices` stopped building a mask budget
+> at all. Between them that is the halo's entire hint-fed supply: hint 2 went
+> from handing over letters to place, to handing over `s t a _ l i _ g` already
+> placed, in order, in green.
+>
+> The mask is still built **in reading order** at every level — nothing draws
+> its letters where it holds them, which is all that withholding position
+> requires. `cipher_text` therefore carries positions the board does not use,
+> and that is not a leak worth closing: the client is handed `message.content`,
+> the answer in full, because the composer matches typing against it.
+>
+> Guarded by `letterPool/maskWithholdsPosition.test.ts`, which asks whether the
+> halo has anything in it **against the shipped config with nothing mocked**.
+> That case did not exist, which is the actual reason this shipped — see
+> *Testing* below.
 
 **Motion means one thing: this slot is not the letter's own.** Anything settled
 is drawn still, so stillness is what marks a position as trustworthy. Green
@@ -300,13 +333,17 @@ Two consequences follow:
   with nothing loose left in the line, every slot means something. `CipherText`
   passes `scrambling: false`, `messageFlags.canShuffle` is off, and the shuffle
   button went with the thing it shuffled.
-- **A hint's letters had to find a new home.** From hint 2 the mask is an
-  anagram, and hiding it from the line would have made a purchased hint reveal
+- **A hint's letters had to find a new home.** From hint 2 the mask withholds
+  position, and hiding it from the line would have made a purchased hint reveal
   *nothing*. `buildLetterPool` therefore drains the mask into the pool, spending
-  a per-letter budget so it shows no more of a letter than the mask exposes.
-  Below hint 2 the mask is positional, so `placedIndices` counts its reveals as
-  confirmed and the strip fills them in rather than asking the player to retype
-  a letter the board already shows as settled.
+  a per-letter budget so it shows no more of a letter than the mask exposes. The
+  budget is also spent down for every **placed** index, not only the settled
+  ones: an in-order mask holds hint 1's first letter at its own index, so that
+  letter is green in the line *and* counted in the budget, and a word with two
+  of it would otherwise pool the second on a mask that only ever showed the
+  first. Below hint 2 the mask hands over position too, so `placedIndices`
+  counts its reveals as confirmed and the strip fills them in rather than asking
+  the player to retype a letter the board already shows as settled.
 
 Matching changed with it. `checkAnswer` (`lib/letterPool/answerCheck.ts`) is the
 one place all three solve paths ask, and once the strip supplies the shape the
@@ -837,3 +874,46 @@ is less personal than it was.
   which is subtle. The word-level rule is still stated in the legend, so the
   information is available, just not per tile.
 - `CipherText.test.tsx` drives real timers and takes ~7s for four tests.
+
+---
+
+## Testing: how an empty halo stayed green for a day
+
+Worth writing down, because the code was never the hard part here.
+
+Ten suites over this surface open with
+
+```ts
+vi.mock('@/lib/gameConfig', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@/lib/gameConfig')>();
+    return { ...actual, SCRAMBLE_MASK: true, maskIsScrambled: (l: number) => l >= 2 };
+});
+```
+
+They do it for an honest reason — the anagram is still reachable behind the
+switch, and a suite written against it would go vacuous rather than fail. But
+`SCRAMBLE_MASK: true` was *also* the only way anyone had to get a populated pool
+to assert against. So every test that knew what the halo was for described a
+game that does not ship, and the shipped game's halo was not covered by anything.
+
+`letterPool/positionalReveal.test.ts` was written to close exactly that gap, and
+then it made the hole bigger: it asserted `expect(pool).toEqual([])` at hint 2,
+with the comment *"a positional mask hands over position too, so every letter it
+exposes has a place and the pool stays empty"*. True of the code as written.
+Wrong about the game. **A test that pins a feature's absence cannot fail when the
+feature disappears.**
+
+The symptom was also reported from live play and misdiagnosed once already — see
+[settle_drip.md](settle_drip.md), *"why no floating letters at this stage?"* —
+and answered by building a second mechanic (`revealFromHintLevel`) to compensate
+for the first one being broken. That mechanic is now off by default again.
+
+Two rules came out of it:
+
+1. **A suite that mocks a config flag must not be the only coverage of the
+   surface that flag governs.** `maskWithholdsPosition.test.ts` mocks nothing and
+   asks the player's question directly: at hint 2, does the halo have letters in
+   it, and is the word line still mostly hidden?
+2. **Assert what must be present, not only what must be absent.** Every
+   disclosure test now checks the route a letter *takes*, and both branches
+   assert a non-empty destination.

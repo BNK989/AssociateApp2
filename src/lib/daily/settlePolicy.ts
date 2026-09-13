@@ -120,6 +120,30 @@ function parseEnum<T extends string>(raw: unknown, allowed: readonly T[], fallba
  * spelled-out copy of the defaults, which is why the seeded row is `{}` — it
  * cannot drift from `gameConfig.ts` the way a duplicated default would.
  */
+/**
+ * The reveal level, where `null` is a value and an absent key is not.
+ *
+ * `null` means the pool-only rule — the drip gives away positions and never new
+ * letters — and it is the compiled default, so it has to survive a round trip
+ * rather than being read as "nothing stored, use the default" and coming back
+ * as a level.
+ *
+ * Separated out because the shared `clampNumber` path cannot express it: it
+ * folds absent, null and garbage into one fallback, and the fallback had to be
+ * spelled `?? MAX_HINT_LEVEL` to satisfy the number type. That turned a missing
+ * key into "open letters at the clue" and a nonsense one into the same, which is
+ * the opposite of the default it was meant to fall back to.
+ */
+function parseRevealLevel(value: unknown): number | null {
+    if (value === null) return null;
+    if (value === undefined) return DEFAULT_SETTLE_POLICY.revealFromHintLevel;
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+        return DEFAULT_SETTLE_POLICY.revealFromHintLevel;
+    }
+
+    return Math.round(Math.min(MAX_HINT_LEVEL, Math.max(0, value)));
+}
+
 export function parseSettlePolicy(value: unknown): SettlePolicy {
     if (!isRecord(value)) return { ...DEFAULT_SETTLE_POLICY };
 
@@ -128,17 +152,7 @@ export function parseSettlePolicy(value: unknown): SettlePolicy {
         armFromHintLevel: Math.round(clampNumber(
             value.armFromHintLevel, 0, MAX_HINT_LEVEL, DEFAULT_SETTLE_POLICY.armFromHintLevel,
         )),
-        // The one field where `null` is a value rather than an absence: it
-        // stores the pool-only rule, which is not the compiled default, so it
-        // cannot be expressed by leaving the key out.
-        revealFromHintLevel: value.revealFromHintLevel === null
-            ? null
-            : Math.round(clampNumber(
-                value.revealFromHintLevel,
-                0,
-                MAX_HINT_LEVEL,
-                DEFAULT_SETTLE_POLICY.revealFromHintLevel ?? MAX_HINT_LEVEL,
-            )),
+        revealFromHintLevel: parseRevealLevel(value.revealFromHintLevel),
         firstDelayMs: Math.round(clampNumber(
             value.firstDelayMs, 0, MAX_SETTLE_DELAY_MS, DEFAULT_SETTLE_POLICY.firstDelayMs,
         )),
