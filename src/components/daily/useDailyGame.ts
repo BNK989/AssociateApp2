@@ -10,9 +10,11 @@ import { clearDailyGame } from '@/lib/daily/dailyStorage';
 import { startLevelFor, type DailyHintPolicy } from '@/lib/daily/hintPolicy';
 import { solveFeedback } from '@/lib/daily/feedbackTiers';
 import { streakAfterSolve, streakAfterUnsolved } from '@/lib/daily/streakRules';
+import type { SettlePolicy } from '@/lib/daily/settlePolicy';
 import { useChainClues } from './useChainClues';
 import { useDailyPersistence } from './useDailyPersistence';
 import { useDailyHintReveal } from './useDailyHintReveal';
+import { useDailySettle } from './useDailySettle';
 import { useDailyMoves, RESOLVE_DELAY_MS } from './useDailyMoves';
 import { useMoveFeedback } from './useMoveFeedback';
 import type { WordOutcome } from '@/lib/daily/dailyResults';
@@ -24,6 +26,8 @@ type UseDailyGameArgs = {
     date: string;
     /** Game-master hint policy in force for this play. */
     policy: DailyHintPolicy;
+    /** Game-master settle policy: how found letters walk into place. */
+    settlePolicy: SettlePolicy;
     /** Revision of the policy, recorded with the save and with every result. */
     settingsRevision: number;
     hints?: string[] | null;
@@ -46,6 +50,8 @@ type UseDailyGameArgs = {
         consecutive: number;
         /** Whether the hint ladder was spent by the time the word left. */
         hintsExhausted: boolean;
+        /** Letters the settle drip placed on this word before it left the board. */
+        settled: number;
         completed: boolean;
     }) => void;
     /** Reward chime and haptics for a correct guess, graded by how it was earned. */
@@ -61,6 +67,15 @@ type UseDailyGameArgs = {
     }) => void;
     /** Fires when the player enters the chain from its start. */
     onOtherEndOpened?: (args: { message: Message; index: number; remaining: number }) => void;
+    /** Fires once per letter the settle drip walks into place. */
+    onSettled?: (args: {
+        message: Message;
+        index: number;
+        slotIndex: number;
+        settledCount: number;
+        allowance: number;
+        source: 'auto' | 'offered';
+    }) => void;
     /** Fires on every wrong guess, with how close it was and what it cost. */
     onMissed?: (args: {
         message: Message;
@@ -82,6 +97,7 @@ export function useDailyGame({
     words,
     date,
     policy,
+    settlePolicy,
     settingsRevision,
     hints,
     connectionScores,
@@ -92,6 +108,7 @@ export function useDailyGame({
     onHintRevealed,
     onMissed,
     onOtherEndOpened,
+    onSettled,
 }: UseDailyGameArgs) {
     const t = useTranslations('GameRoom.Chat');
 
@@ -188,6 +205,7 @@ export function useDailyGame({
             word: message.content,
             outcome: report.outcome,
             hintLevel: message.hint_level || 0,
+            settled: (message.settled_indices || []).length,
             hintsExhausted: (message.hint_level || 0) >= MAX_HINT_LEVEL,
             strikes: report.strikes ?? message.strikes ?? 0,
             points: report.points,
@@ -204,6 +222,7 @@ export function useDailyGame({
         gameOver,
         words,
         policy,
+        settlePolicy,
         score,
         consecutive,
         setScore,
@@ -233,6 +252,23 @@ export function useDailyGame({
         patchTarget,
         indexOfMessage,
         onRevealed: onHintRevealed,
+    });
+
+    /**
+     * Found letters walking into place, for a player who has run out of ladder.
+     *
+     * Mounted here rather than in the board because it writes to the message
+     * through `patchTarget`, and that is the one path every mutation goes
+     * through — a settled letter has to run the arrival pass like any other
+     * change or the board and the policy drift apart.
+     */
+    const settle = useDailySettle({
+        targetMessage,
+        policy: settlePolicy,
+        gameOver,
+        patchTarget,
+        indexOfMessage,
+        onSettled,
     });
 
     const reset = useCallback(() => {
@@ -279,6 +315,10 @@ export function useDailyGame({
         canOpenOtherEnd: canOpenOtherEnd(messages),
         otherEndOpen: isOtherEndOpen(messages),
         revealHint,
+        /** Whether the stuck ladder may offer the settle rung on this word. */
+        canSettle: settle.available,
+        startSettle: settle.accept,
+        settledIndices: settle.settledIndices,
         reset,
         forceGameOver,
         solveStartWord,

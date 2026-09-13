@@ -1,11 +1,13 @@
 import { GameSettingsForm } from '@/components/admin/gameSettings/GameSettingsForm';
 import { FeedbackSection } from '@/components/admin/gameSettings/FeedbackSection';
 import { LetterPoolSection } from '@/components/admin/gameSettings/LetterPoolSection';
+import { SettleSection } from '@/components/admin/gameSettings/SettleSection';
 import { OutcomesPanel } from '@/components/admin/gameSettings/OutcomesPanel';
 import {
     getDailyFeedbackSettings,
     getDailyHintSettings,
     getLetterPoolSettings,
+    getSettleSettings,
     NO_REVISION,
 } from '@/lib/gameSettings/server';
 
@@ -19,10 +21,11 @@ export const dynamic = 'force-dynamic';
  * layout, which answers `notFound()` for everyone else.
  */
 export default async function GameSettingsPage() {
-    const [settings, feedback, letterPool] = await Promise.all([
+    const [settings, feedback, letterPool, settle] = await Promise.all([
         getDailyHintSettings(),
         getDailyFeedbackSettings(),
         getLetterPoolSettings(),
+        getSettleSettings(),
     ]);
 
     return (
@@ -30,9 +33,9 @@ export default async function GameSettingsPage() {
             <div>
                 <h2 className="text-3xl font-bold tracking-tight">Game Settings</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                    How the daily game hands out hints, how rewarding a correct guess feels, and
-                    how the answer box takes typing.
-                    Changes take effect on the next page load — no deploy needed.
+                    How the daily game hands out hints, how rewarding a correct guess feels, how
+                    the answer box takes typing, and what a stuck player is offered before the
+                    reveal. Changes take effect on the next page load — no deploy needed.
                 </p>
             </div>
 
@@ -46,6 +49,8 @@ export default async function GameSettingsPage() {
             <FeedbackSection policy={feedback.policy} revision={feedback.revision} />
 
             <LetterPoolSection policy={letterPool.policy} revision={letterPool.revision} />
+
+            <SettleSection policy={settle.policy} revision={settle.revision} />
 
             <OutcomesPanel currentRevision={settings.revision} />
         </div>

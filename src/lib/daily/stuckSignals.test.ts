@@ -13,6 +13,7 @@ const base: StuckInput = {
     strikes: 0,
     hintLevel: 0,
     canOpenOtherEnd: true,
+    canSettle: false,
     consecutive: 0,
     wordsLeft: 4,
     dismissed: false,
@@ -73,5 +74,49 @@ describe('stuckOffer', () => {
 
     it('stays quiet once the player has waved it away', () => {
         expect(at({ msOnWord: SECOND_OFFER_MS, dismissed: true })).toBeNull();
+    });
+});
+
+describe('the settle rung', () => {
+    /** Past every threshold, with the ladder spent and the other end already in. */
+    const spent = {
+        msOnWord: SECOND_OFFER_MS,
+        hintLevel: MAX_HINT_LEVEL,
+        canOpenOtherEnd: false,
+    };
+
+    it('is offered once the ladder is spent and there is a letter to place', () => {
+        expect(at({ ...spent, canSettle: true })).toEqual({ kind: 'settle' });
+    });
+
+    it('falls through to the reveal when there is nothing left to place', () => {
+        // The pre-settle behaviour, unchanged: with an empty pool or a spent
+        // allowance the rung collapses rather than appearing with nothing
+        // behind it.
+        expect(at({ ...spent, canSettle: false })).toEqual({ kind: 'reveal' });
+    });
+
+    it('never pre-empts a hint the player has not taken yet', () => {
+        // The rung is the last one before the reveal, not a shortcut past the
+        // ladder — so a word with rungs left gets the letter offer even when
+        // the drip has candidates waiting.
+        expect(at({ ...spent, hintLevel: 1, canSettle: true })).toEqual({ kind: 'letter' });
+    });
+
+    it('never pre-empts the other end, which costs the player less', () => {
+        expect(at({ ...spent, canOpenOtherEnd: true, canSettle: true }))
+            .toEqual({ kind: 'other_end' });
+    });
+
+    it('comes before the reveal, because it is the last offer that ends in a solve', () => {
+        expect(at({ ...spent, canSettle: true })).not.toEqual({ kind: 'reveal' });
+    });
+
+    it('stays silent on a word the player has only just reached', () => {
+        expect(at({ ...spent, msOnWord: 0, canSettle: true })).toBeNull();
+    });
+
+    it('says nothing at all once the offer is waved away', () => {
+        expect(at({ ...spent, canSettle: true, dismissed: true })).toBeNull();
     });
 });

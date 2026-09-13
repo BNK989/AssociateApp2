@@ -247,6 +247,8 @@
             "other_end_action": "הקצה השני",
             "letter_title": "רוצה אות?",
             "letter_action": "הראה אחת",
+            "settle_title": "שנניח לאותיות למצוא את מקומן?",
+            "settle_action": "מקמו אותן",
             "reveal_title": "להמשיך הלאה?",
             "reveal_action": "גלה",
             "reopen": "הצג שוב את ההצעה",

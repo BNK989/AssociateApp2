@@ -240,6 +240,8 @@
             "other_end_action": "Celălalt capăt",
             "letter_title": "Vrei o literă?",
             "letter_action": "Arată una",
+            "settle_title": "Lăsăm literele să-și găsească locul?",
+            "settle_action": "Așază-le",
             "reveal_title": "Mergem mai departe?",
             "reveal_action": "Dezvăluie",
             "reopen": "Arată din nou oferta",

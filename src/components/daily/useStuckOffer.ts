@@ -24,6 +24,8 @@ type UseStuckOfferArgs = {
     strikes: number;
     hintLevel: number;
     canOpenOtherEnd: boolean;
+    /** Whether the settle drip has a letter left to place on this word. */
+    canSettle: boolean;
     consecutive: number;
     wordsLeft: number;
     /** Suppresses everything — game over, or the board not ready. */
@@ -35,6 +37,7 @@ export function useStuckOffer({
     strikes,
     hintLevel,
     canOpenOtherEnd,
+    canSettle,
     consecutive,
     wordsLeft,
     paused,
@@ -73,11 +76,15 @@ export function useStuckOffer({
             strikes,
             hintLevel,
             canOpenOtherEnd,
+            canSettle,
             consecutive,
             wordsLeft,
             dismissed,
         });
-    }, [paused, targetId, msOnWord, strikes, hintLevel, canOpenOtherEnd, consecutive, wordsLeft, dismissed]);
+    }, [
+        paused, targetId, msOnWord, strikes, hintLevel,
+        canOpenOtherEnd, canSettle, consecutive, wordsLeft, dismissed,
+    ]);
 
     /**
      * Silences the offer for this word.

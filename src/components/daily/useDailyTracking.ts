@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type { WordOutcome } from '@/lib/daily/dailyResults';
 import type { MissBand } from '@/lib/daily/guessFeedback';
+import { typeableCapacity } from '@/lib/letterPool/slotRules';
 import {
     wordContext,
     type HintSource,
+    type SettleSource,
     type UserType,
     type WordSnapshot,
 } from '@/lib/daily/dailyAnalytics';
 import { useDailyAnalytics } from './useDailyAnalytics';
+import { useOfferTracking } from './useOfferTracking';
 
 /**
  * Everything the daily game tells PostHog, in one place.
@@ -43,6 +46,8 @@ export type FinishedWord = {
     ms: number;
     /** Whether the ladder was spent before the player revealed it. */
     hintsExhausted: boolean;
+    /** Letters the settle drip placed on this word before it left the board. */
+    settled: number;
 };
 
 export function useDailyTracking({
@@ -59,7 +64,17 @@ export function useDailyTracking({
         words_total: wordsTotal,
     });
 
-    const totals = useRef({ solved: 0, revealed: 0, hints: 0, openedOtherEnd: false });
+    const totals = useRef({ solved: 0, revealed: 0, hints: 0, settled: 0, openedOtherEnd: false });
+
+    /**
+     * When the last letter settled, so a solve can say how long after it came.
+     *
+     * A timestamp rather than a duration, and cleared on every new word: the
+     * gap between the letter landing and the solve is the only evidence that
+     * the letter did the work, and a stale reading from the previous word would
+     * be worse than none.
+     */
+    const lastSettleAt = useRef<number | null>(null);
 
     /**
      * Whether the chain has been opened from its start.
@@ -93,7 +108,11 @@ export function useDailyTracking({
 
     const trackWordFinished = useCallback((word: FinishedWord) => {
         const shared = contextFor(
-            { hint_level: word.hintLevel, strikes: word.strikes },
+            {
+                hint_level: word.hintLevel,
+                strikes: word.strikes,
+                settled_indices: settledStub(word.settled),
+            },
             word.index,
             word.ms,
         );
@@ -128,10 +147,16 @@ export function useDailyTracking({
      */
     const trackWordSolved = useCallback((args: FinishedWord & { word: string }) => {
         const shared = contextFor(
-            { hint_level: args.hintLevel, strikes: args.strikes },
+            {
+                hint_level: args.hintLevel,
+                strikes: args.strikes,
+                settled_indices: settledStub(args.settled),
+            },
             args.index,
             args.ms,
         );
+
+        const since = lastSettleAt.current;
 
         track('daily_word_solved', {
             ...shared,
@@ -139,8 +164,44 @@ export function useDailyTracking({
             score_gained: args.points,
             total_score: args.totalScore,
             consecutive: args.consecutive,
+            ms_since_last_settle: since === null ? null : Math.round(Date.now() - since),
         });
     }, [track, contextFor]);
+
+    /**
+     * One settled letter.
+     *
+     * The ordinal is taken from the caller's count rather than from a tally
+     * here, because the drip is the only thing that knows whether a letter
+     * actually landed — a tally kept on this side would drift the moment a
+     * placement was refused by the ceiling.
+     */
+    const trackLetterSettled = useCallback((args: {
+        word: WordSnapshot & { content: string };
+        index: number;
+        ms: number;
+        slotIndex: number;
+        settledCount: number;
+        allowance: number;
+        source: SettleSource;
+    }) => {
+        totals.current.settled += 1;
+        lastSettleAt.current = Date.now();
+
+        track('daily_letter_settled', {
+            ...contextFor(args.word, args.index, args.ms),
+            source: args.source,
+            settle_ordinal: args.settledCount,
+            slot_index: args.slotIndex,
+            allowance: args.allowance,
+            letters_total: typeableCapacity(args.word.content),
+        });
+    }, [track, contextFor]);
+
+    /** A new word: the settle clock starts over, so a stale gap cannot leak. */
+    const resetSettleClock = useCallback(() => {
+        lastSettleAt.current = null;
+    }, []);
 
     const trackHint = useCallback((
         word: WordSnapshot,
@@ -182,62 +243,6 @@ export function useDailyTracking({
         });
     }, [track, contextFor]);
 
-    /**
-     * One shown event per offer per word.
-     *
-     * The offer is re-decided on a timer, so the component would otherwise
-     * report it on every tick and drown the taken/dismissed ratios that are the
-     * only reason to collect it.
-     */
-    const shownRef = useRef(new Set<string>());
-    const trackOfferShown = useCallback((
-        word: WordSnapshot,
-        index: number,
-        ms: number,
-        offer: string,
-    ) => {
-        const seen = `${index}:${offer}`;
-        if (shownRef.current.has(seen)) return;
-        shownRef.current.add(seen);
-
-        track('daily_stuck_offer_shown', { ...contextFor(word, index, ms), offer });
-    }, [track, contextFor]);
-
-    /**
-     * A collapsed offer the player opened back up.
-     *
-     * The one number that says whether stepping aside worked. An offer that
-     * collapses and is never touched again is indistinguishable from one that
-     * was dismissed, except that the player never had to say so — so without
-     * this the chip could be dead furniture and nothing would show it.
-     */
-    const trackOfferReopened = useCallback((
-        word: WordSnapshot,
-        index: number,
-        ms: number,
-        offer: string,
-    ) => {
-        track('daily_stuck_offer_reopened', { ...contextFor(word, index, ms), offer });
-    }, [track, contextFor]);
-
-    const trackOfferTaken = useCallback((
-        word: WordSnapshot,
-        index: number,
-        ms: number,
-        offer: string,
-    ) => {
-        track('daily_stuck_offer_taken', { ...contextFor(word, index, ms), offer });
-    }, [track, contextFor]);
-
-    const trackOfferDismissed = useCallback((
-        word: WordSnapshot,
-        index: number,
-        ms: number,
-        offer: string,
-    ) => {
-        track('daily_stuck_offer_dismissed', { ...contextFor(word, index, ms), offer });
-    }, [track, contextFor]);
-
     const trackCompleted = useCallback((
         finalScore: number,
         endedOn: WordOutcome,
@@ -251,6 +256,7 @@ export function useDailyTracking({
             hints_taken: totals.current.hints,
             words_revealed: totals.current.revealed,
             opened_other_end: totals.current.openedOtherEnd,
+            letters_settled_total: totals.current.settled,
         });
     }, [track]);
 
@@ -261,16 +267,17 @@ export function useDailyTracking({
         });
     }, [track]);
 
+    const offers = useOfferTracking(track, contextFor);
+
     return {
         trackWordFinished,
         trackWordSolved,
+        trackLetterSettled,
+        resetSettleClock,
         trackHint,
         trackMiss,
         trackOtherEndOpened,
-        trackOfferShown,
-        trackOfferReopened,
-        trackOfferTaken,
-        trackOfferDismissed,
+        ...offers,
         setOtherEndOpen,
         trackCompleted,
         trackChainRevealed,
@@ -278,3 +285,16 @@ export function useDailyTracking({
 }
 
 export type DailyTracking = ReturnType<typeof useDailyTracking>;
+
+/**
+ * A count of settled letters, in the shape `wordContext` reads.
+ *
+ * A finished word arrives as a count rather than as the message it came from —
+ * the board has already let it go — and `wordContext` deliberately takes the
+ * indices so that no call site can report a length it worked out for itself.
+ * An array of the right length is the honest bridge: the property derived from
+ * it is identical, and there is still exactly one place that derives it.
+ */
+function settledStub(count: number): number[] {
+    return new Array(Math.max(0, count)).fill(0);
+}

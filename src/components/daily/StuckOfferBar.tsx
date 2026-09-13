@@ -1,5 +1,7 @@
 import { motion } from 'framer-motion';
-import { ArrowRight, Lightbulb, Split, Eye, X, type LucideIcon } from 'lucide-react';
+import {
+    ArrowRight, AlignHorizontalDistributeCenter, Lightbulb, Split, Eye, X, type LucideIcon,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { STREAK_MULTIPLIER } from '@/lib/gameConfig';
 import type { StuckOffer as Offer, StuckOfferKind } from '@/lib/daily/stuckSignals';
@@ -22,6 +24,11 @@ import type { StuckOffer as Offer, StuckOfferKind } from '@/lib/daily/stuckSigna
 export const ACTION_ICONS: Partial<Record<StuckOfferKind, LucideIcon>> = {
     other_end: Split,
     letter: Lightbulb,
+    // Letters lining up into their slots, which is literally what the offer
+    // does. Deliberately not another lightbulb: the drip is a different kind of
+    // help from the hint above it, and an icon the player has already learned
+    // to read as "hint" would say it is more of the same.
+    settle: AlignHorizontalDistributeCenter,
     reveal: Eye,
 };
 

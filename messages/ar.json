@@ -240,6 +240,8 @@
             "other_end_action": "الطرف الآخر",
             "letter_title": "أتريد حرفًا؟",
             "letter_action": "أظهر حرفًا",
+            "settle_title": "هل ندع الحروف تجد أماكنها؟",
+            "settle_action": "ضعها",
             "reveal_title": "ننتقل للتالية؟",
             "reveal_action": "اكشف",
             "reopen": "أظهر العرض مجددًا",

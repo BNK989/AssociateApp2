@@ -240,6 +240,8 @@
             "other_end_action": "Anderes Ende",
             "letter_title": "Einen Buchstaben?",
             "letter_action": "Zeig einen",
+            "settle_title": "Sollen die Buchstaben ihre Plätze finden?",
+            "settle_action": "Platzieren",
             "reveal_title": "Weitergehen?",
             "reveal_action": "Aufdecken",
             "reopen": "Angebot wieder einblenden",

@@ -86,6 +86,71 @@ export const LETTER_POOL = {
     CARET_SKIPS_GREENS: true,
 } as const;
 
+/**
+ * The settle drip: found letters walking into place when a player is stuck.
+ *
+ * The rung between "take a hint" and "show me the word". The hint ladder ends
+ * at the AI clue, and a player who has the anagram and the clue and still
+ * cannot see it has exactly one button left, which scores zero. This sells
+ * position back one letter at a time instead, so a word that was heading for a
+ * reveal can still be solved by the player.
+ *
+ * It is deliberately the inverse of hint level 2: that level *destroys*
+ * positional information by turning the mask into an anagram, and this gives it
+ * back. Which is why it sits after the ladder rather than inside it -- it is a
+ * different kind of information, not a cheaper grade of the same one.
+ *
+ * Compiled floor beneath `game_settings.settle`, in the same shape as every
+ * other game-master control: an unreachable settings table plays exactly this.
+ */
+export const SETTLE = {
+    /**
+     * `offered` speaks first and waits to be accepted, which is the rule the
+     * rest of the stuck machinery already follows -- a hint you request is an
+     * admission, the same hint arriving as an offer is the game being generous.
+     * `auto` lands letters unasked once the dwell clock runs out. `off` removes
+     * the rung entirely and the ladder falls through to the reveal as before.
+     */
+    MODE: 'offered',
+    /**
+     * Earliest hint level the drip exists on.
+     *
+     * Two reasons it is 2 rather than 0. Below level 2 the pool is usually
+     * empty -- nothing has been found, so there is nothing to place -- and the
+     * rung is meant to be the last one before the reveal, not a shortcut past
+     * the ladder.
+     */
+    ARM_FROM_HINT_LEVEL: 2,
+    /** Dwell on the word before the first letter lands. `auto` mode only. */
+    FIRST_DELAY_MS: 20_000,
+    /** Gap between letters. This is the "slowly" in the whole idea. */
+    INTERVAL_MS: 15_000,
+    /** A wrong guess is worth this much dwell, as it is to the stuck offer. */
+    STRIKE_CREDIT_MS: 12_000,
+    /** Ceiling on the share of a word the drip may place. */
+    MAX_FRACTION: 0.5,
+    /**
+     * Letters that must be left for the player, whatever the fraction says.
+     *
+     * Both floors are needed and neither subsumes the other: half of an
+     * eleven-letter word leaves five, half of a four-letter word leaves two.
+     * This is the one that stops the game solving the puzzle on short words.
+     */
+    MIN_UNSETTLED: 2,
+    /** Which letter goes next. See `orderCandidates`. */
+    ORDER: 'seeded',
+    /** Fraction of the word's base value forfeited per settled letter. */
+    COST_PER_LETTER: 0.05,
+    /**
+     * Floor on what a solve can be worth, as a fraction of base.
+     *
+     * A settled solve must stay strictly better than a reveal, which scores
+     * nothing -- otherwise the rung argues for the very move it exists to
+     * prevent. The floor is what guarantees that however the costs are tuned.
+     */
+    MIN_SCORE_FRACTION: 0.1,
+} as const;
+
 export const CIPHER_SIGNS = [...'⊗⊕⊖⊙⊚⊛⊠⌖⌂⌁⌇⌖⌂⌁🜁🜂🜄🜃🜁🜄🜂◆◇▲▼○●⬡⬢⬟░▲●★☆☉✵✶∝∞∧∨∩∪∴∵∶∷✷✸✹✺✱✲✢✣✤✥✦❈❉❊❋❀❁❂❃❖❘❙❚✦✧✩✪✫✬✭✮✯♃♄♅♆♇☉☾☽☿🜚🜛🜜🜝🜞🜟🜓🜔🜕🜖🜗🜘🜌🜅🜆🜇🜈🜉🜊🜋🜍🜎🜏🜐🜑'];
 
 export const GAME_MODES = [

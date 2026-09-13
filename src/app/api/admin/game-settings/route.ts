@@ -4,13 +4,16 @@ import { createLogger } from '@/lib/logger';
 import { DEFAULT_HINT_POLICY, parseHintPolicy } from '@/lib/daily/hintPolicy';
 import { DEFAULT_FEEDBACK_POLICY, parseFeedbackPolicy } from '@/lib/daily/feedbackPolicy';
 import { DEFAULT_LETTER_POOL_POLICY, parseLetterPoolPolicy } from '@/lib/daily/letterPoolPolicy';
+import { DEFAULT_SETTLE_POLICY, parseSettlePolicy } from '@/lib/daily/settlePolicy';
 import {
     DAILY_FEEDBACK_KEY,
     DAILY_HINT_POLICY_KEY,
     getDailyFeedbackSettings,
     getDailyHintSettings,
     getLetterPoolSettings,
+    getSettleSettings,
     LETTER_POOL_KEY,
+    SETTLE_KEY,
 } from '@/lib/gameSettings/server';
 import { writeSetting } from '@/lib/gameSettings/writeSetting';
 
@@ -49,6 +52,14 @@ const KEYS = {
         codeDefault: DEFAULT_LETTER_POOL_POLICY,
         hasScope: false,
     },
+    // No scope: a player who wants no help declines the offer, which is the
+    // point of offering rather than imposing, so there is nothing for `force`
+    // to override.
+    [SETTLE_KEY]: {
+        parse: parseSettlePolicy,
+        codeDefault: DEFAULT_SETTLE_POLICY,
+        hasScope: false,
+    },
 } as const;
 
 type SettingsKey = keyof typeof KEYS;
@@ -62,7 +73,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /**
- * Reads both settings keys for the admin panel.
+ * Reads every settings key for the admin panel.
  *
  * Returns the compiled defaults alongside each stored value so the panel can
  * show, per field, what the code would do if the setting were cleared — which
@@ -76,10 +87,11 @@ export async function GET() {
         return NextResponse.json({ error: auth.reason }, { status: auth.status });
     }
 
-    const [hints, feedback, letterPool] = await Promise.all([
+    const [hints, feedback, letterPool, settle] = await Promise.all([
         getDailyHintSettings(),
         getDailyFeedbackSettings(),
         getLetterPoolSettings(),
+        getSettleSettings(),
     ]);
 
     return NextResponse.json({
@@ -99,6 +111,12 @@ export async function GET() {
             policy: letterPool.policy,
             revision: letterPool.revision,
             codeDefault: DEFAULT_LETTER_POOL_POLICY,
+        },
+        settle: {
+            key: SETTLE_KEY,
+            policy: settle.policy,
+            revision: settle.revision,
+            codeDefault: DEFAULT_SETTLE_POLICY,
         },
     });
 }

@@ -13,6 +13,7 @@ Three states, and each says exactly one thing:
 | Tile | Means | Underline | Where it appears |
 | :--- | :--- | :--- | :--- |
 | **Green** (`--tile-placed`) | Confirmed in place. The letter belongs exactly here. | Solid | The word line, and the composer's strip |
+
 | **Orange** (`--tile-present`) | Found, but with no confirmed place. | — | **The halo only** — around the word, never inside the word line, and never in the answer's order |
 | **Grey** (`--tile-unknown`) | Still hidden. A filler glyph, not a letter. | None | The word line |
 
@@ -25,6 +26,13 @@ The underline is a **second channel**, carrying the same three states with no
 reference to hue. Green and orange converge under deuteranopia and hue used to
 be the only thing separating them (WCAG 1.4.1); the states now survive
 greyscale, a colour filter, or a screenshot.
+
+> **A letter the settle drip placed is green**, with nothing to distinguish it
+> from one the player earned. The drip walks found letters into their real
+> positions for a player who has run out of hint ladder, and "confirmed in
+> place" is exactly what it establishes — so it is the same state, not a fourth
+> one. The player is never shown a tally of how much help they took. See
+> [settle_drip.md](settle_drip.md).
 
 The invariant everything else follows from:
 

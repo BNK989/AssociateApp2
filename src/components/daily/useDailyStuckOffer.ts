@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { Message } from '@/hooks/useGameLogic';
 import { wordsInPlay } from '@/lib/daily/chainFronts';
+import type { WordSnapshot } from '@/lib/daily/dailyAnalytics';
 import type { StuckOfferKind } from '@/lib/daily/stuckSignals';
 import { useStuckOffer } from './useStuckOffer';
 
@@ -18,6 +19,8 @@ type Actions = {
     openOtherEnd: () => void;
     revealHint: () => void;
     revealWord: () => void;
+    /** Starts the settle drip. The first letter lands on acceptance. */
+    startSettle: () => void;
 };
 
 type UseDailyStuckOfferArgs = Actions & {
@@ -25,12 +28,14 @@ type UseDailyStuckOfferArgs = Actions & {
     targetMessage?: Message;
     targetIndex: number;
     canOpenOtherEnd: boolean;
+    /** Whether the drip has a letter left to place; decided by `settleRules`. */
+    canSettle: boolean;
     consecutive: number;
     gameOver: boolean;
     /** Reports an offer's life: shown, reopened, taken, or waved away. */
     trackOffer: (
         event: 'shown' | 'reopened' | 'taken' | 'dismissed',
-        word: { hint_level?: number | null; strikes?: number | null },
+        word: WordSnapshot,
         index: number,
         offer: string,
     ) => void;
@@ -41,11 +46,13 @@ export function useDailyStuckOffer({
     targetMessage,
     targetIndex,
     canOpenOtherEnd,
+    canSettle,
     consecutive,
     gameOver,
     openOtherEnd,
     revealHint,
     revealWord,
+    startSettle,
     trackOffer,
 }: UseDailyStuckOfferArgs) {
     const wordsLeft = useMemo(() => wordsInPlay(messages).length, [messages]);
@@ -55,6 +62,7 @@ export function useDailyStuckOffer({
         strikes: targetMessage?.strikes ?? 0,
         hintLevel: targetMessage?.hint_level ?? 0,
         canOpenOtherEnd,
+        canSettle,
         consecutive,
         wordsLeft,
         paused: gameOver || !targetMessage,
@@ -85,8 +93,9 @@ export function useDailyStuckOffer({
 
         if (kind === 'other_end') openOtherEnd();
         else if (kind === 'letter') revealHint();
+        else if (kind === 'settle') startSettle();
         else if (kind === 'reveal') revealWord();
-    }, [report, accept, openOtherEnd, revealHint, revealWord]);
+    }, [report, accept, openOtherEnd, revealHint, revealWord, startSettle]);
 
     /**
      * The player pulling a collapsed offer back open.

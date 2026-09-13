@@ -32,6 +32,15 @@ export type UserType = 'registered' | 'guest';
 export type HintSource = 'auto' | 'manual';
 
 /**
+ * How a settled letter was triggered.
+ *
+ * `offered` means the player accepted the stuck offer; `auto` means the drip
+ * placed it unasked. The two are the arms of the question the mode setting
+ * exists to answer, so they must never be collapsed into one value.
+ */
+export type SettleSource = 'auto' | 'offered';
+
+/**
  * Context stamped onto every daily event.
  *
  * `puzzle_number` is derived rather than passed: it is the number players see
@@ -64,6 +73,17 @@ export type WordContext = {
     other_end_open: boolean;
     /** Active milliseconds the player has spent on this word. */
     ms_on_word: number;
+    /**
+     * Letters the settle drip had walked into place by this point.
+     *
+     * On the *shared* context rather than on the settle events alone, and that
+     * is the whole reason the mechanic is measurable. The question it has to
+     * answer is `P(solve | n letters settled)`, which is a ratio between
+     * `daily_word_solved` and `daily_word_revealed` — so a property present on
+     * one and absent from the other could not be broken down across them, which
+     * is exactly the divergence this module exists to prevent.
+     */
+    letters_settled: number;
 };
 
 export type DailyEventProps = {
@@ -75,6 +95,17 @@ export type DailyEventProps = {
         score_gained: number;
         total_score: number;
         consecutive: number;
+        /**
+         * Time from the last settled letter to the solve, or null if none
+         * settled.
+         *
+         * The causal signal, and it is nearly free to collect. A letter landing
+         * shortly before a solve is evidence that the letter *caused* it; a
+         * solve minutes later is a player who got there on their own. Only the
+         * distribution can tell those apart, and `letters_settled` alone
+         * cannot — it counts letters that may have done nothing.
+         */
+        ms_since_last_settle: number | null;
     };
 
     /**
@@ -93,6 +124,27 @@ export type DailyEventProps = {
 
     /** A word ran out of strikes. */
     daily_word_struck_out: WordContext & { total_score: number };
+
+    /**
+     * One found letter walked into place.
+     *
+     * The drip's granular record, and the only place its shape is visible:
+     * `settle_ordinal` against `letters_total` is the conversion curve this was
+     * built to draw, and `allowance` is what says whether the ceiling or the
+     * empty pool stopped it. Without the allowance a drip that ran out of
+     * candidates looks identical to one the game master capped.
+     */
+    daily_letter_settled: WordContext & {
+        source: SettleSource;
+        /** Which letter this was on the word: 1st, 2nd, 3rd. */
+        settle_ordinal: number;
+        /** Position in the answer the letter took. */
+        slot_index: number;
+        /** The most that may ever settle on this word, under the live policy. */
+        allowance: number;
+        /** Typeable length of the answer, so the ordinal can be read as a share. */
+        letters_total: number;
+    };
 
     /**
      * The player entered the chain from its first word to guess forward.
@@ -135,6 +187,8 @@ export type DailyEventProps = {
         words_revealed: number;
         /** Whether the player worked the chain from both ends. */
         opened_other_end: boolean;
+        /** Letters the settle drip placed across the whole run. */
+        letters_settled_total: number;
     };
 
     /**
@@ -203,6 +257,8 @@ export function dailyEvent<N extends DailyEventName>(
 export type WordSnapshot = {
     hint_level?: number | null;
     strikes?: number | null;
+    /** Positions the settle drip has placed, as stored on the message. */
+    settled_indices?: number[] | null;
 };
 
 /**
@@ -226,5 +282,6 @@ export function wordContext(
         strikes: word.strikes ?? 0,
         other_end_open: otherEndOpen,
         ms_on_word: Math.round(msOnWord),
+        letters_settled: word.settled_indices?.length ?? 0,
     };
 }

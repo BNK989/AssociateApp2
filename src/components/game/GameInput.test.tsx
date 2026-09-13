@@ -70,6 +70,10 @@ vi.mock('@/lib/gameConfig', () => ({
     // Reached through the colour key's default sample tile, not by the input itself.
     CIPHER_SIGNS: [...'⊗⊕⊖'],
     LETTER_POOL: { ENABLED: true, CARET_SKIPS_GREENS: true },
+    // Read by `calculateSolvePoints` for the settle deduction and its floor.
+    // Only the two values scoring touches are needed here; the pacing and
+    // ordering constants belong to the drip, which this component never runs.
+    SETTLE: { COST_PER_LETTER: 0.05, MIN_SCORE_FRACTION: 0.1 },
 }));
 
 vi.mock('@/lib/gameLogic', () => ({

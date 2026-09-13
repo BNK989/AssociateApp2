@@ -9,6 +9,7 @@ import { LETTER_POOL } from '@/lib/gameConfig';
 import { LOCAL_USER_ID } from '@/lib/daily/dailyMessages';
 import { calculateSolvePoints, MAX_STRIKES } from '@/lib/daily/dailyScoring';
 import { startLevelFor, type DailyHintPolicy } from '@/lib/daily/hintPolicy';
+import type { SettlePolicy } from '@/lib/daily/settlePolicy';
 import { solveFeedback } from '@/lib/daily/feedbackTiers';
 import { streakAfterSolve, streakAfterUnsolved } from '@/lib/daily/streakRules';
 import { canOpenOtherEnd, wordsInPlay } from '@/lib/daily/chainFronts';
@@ -51,6 +52,8 @@ type UseDailyMovesArgs = {
     gameOver: boolean;
     words: string[];
     policy: DailyHintPolicy;
+    /** Read only for its cost per settled letter; the drip itself lives elsewhere. */
+    settlePolicy: SettlePolicy;
     score: number;
     consecutive: number;
     setScore: (score: number) => void;
@@ -84,6 +87,7 @@ export function useDailyMoves({
     gameOver,
     words,
     policy,
+    settlePolicy,
     score,
     consecutive,
     setScore,
@@ -188,6 +192,12 @@ export function useDailyMoves({
                 {
                     startLevel: startLevelFor(policy, indexOfMessage(targetMessage.id), words.length),
                     chargeForStartLevel: policy.chargeForStartLevel,
+                    // Letters the drip walked into place are charged for like a
+                    // hint tier, because that is what they are. The floor in
+                    // `calculateSolvePoints` is what keeps this solve worth
+                    // strictly more than the reveal it replaced.
+                    settled: (targetMessage.settled_indices || []).length,
+                    settleCostPerLetter: settlePolicy.costPerLetter,
                 },
             );
             const totalScore = score + points;
@@ -219,7 +229,8 @@ export function useDailyMoves({
     }, [
         targetMessage, gameOver, consecutive, score, patchTarget, flashSolved,
         shakeWord, finishWord, reportWord, onCompleted, setScore, setConsecutive,
-        setInput, indexOfMessage, playSolveSound, playMissSound, onMissed, t, policy, words.length,
+        setInput, indexOfMessage, playSolveSound, playMissSound, onMissed, t, policy,
+        settlePolicy.costPerLetter, words.length,
     ]);
 
     /**

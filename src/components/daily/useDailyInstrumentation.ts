@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { Message } from '@/hooks/useGameLogic';
 import type { WordOutcome } from '@/lib/daily/dailyResults';
-import type { HintSource } from '@/lib/daily/dailyAnalytics';
+import type { HintSource, WordSnapshot } from '@/lib/daily/dailyAnalytics';
 import type { MissBand } from '@/lib/daily/guessFeedback';
 import type { RecordWordArgs } from './useDailyResults';
 import type { DailyTracking } from './useDailyTracking';
@@ -67,6 +67,7 @@ export function useDailyInstrumentation({
             remaining: number;
             consecutive: number;
             hintsExhausted: boolean;
+            settled: number;
             completed: boolean;
         }) => {
             const ms = recordWordRef.current?.(args) ?? 0;
@@ -134,6 +135,25 @@ export function useDailyInstrumentation({
                 args.remaining,
             );
         },
+
+        onSettled: (args: {
+            message: Message;
+            index: number;
+            slotIndex: number;
+            settledCount: number;
+            allowance: number;
+            source: 'auto' | 'offered';
+        }) => {
+            trackingRef.current.trackLetterSettled({
+                word: args.message,
+                index: args.index,
+                ms: elapsedRef.current?.() ?? 0,
+                slotIndex: args.slotIndex,
+                settledCount: args.settledCount,
+                allowance: args.allowance,
+                source: args.source,
+            });
+        },
     }), [guessableWords, showProgressCue, showMissCue]);
 
     /**
@@ -161,7 +181,7 @@ export function useDailyInstrumentation({
      */
     const trackOffer = useCallback((
         event: 'shown' | 'reopened' | 'taken' | 'dismissed',
-        word: { hint_level?: number | null; strikes?: number | null },
+        word: WordSnapshot,
         index: number,
         offer: string,
     ) => {

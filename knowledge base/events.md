@@ -71,9 +71,18 @@ events about the same word describe it identically — asserted in
 ### Context on every *word-level* event
 
 `word_index` (position in the chain, the same index the results table uses),
-`hint_level`, `strikes`, `other_end_open`, and `ms_on_word` — active time on
-the word, taken from the same reading the results table stores, so a PostHog
-dashboard and the `daily_results` row can never disagree about one duration.
+`hint_level`, `strikes`, `other_end_open`, `letters_settled`, and `ms_on_word`
+— active time on the word, taken from the same reading the results table
+stores, so a PostHog dashboard and the `daily_results` row can never disagree
+about one duration.
+
+`letters_settled` counts the letters the settle drip walked into place. It is
+on the shared context for the same reason `other_end_open` is, and the reason
+bites harder here: the question the mechanic exists to answer is
+`P(solve | n settled)`, which is a *ratio between* `daily_word_solved` and
+`daily_word_revealed`. A property present on one and missing from the other
+could not be broken down across them. See
+[settle_drip.md](settle_drip.md).
 
 `other_end_open` is on every word-level event rather than only the one that
 opens it, because the question the mechanic has to answer is what happens to
@@ -92,8 +101,14 @@ game has.
 Fired when a word leaves the board solved.
 
 - **Properties**: word context, plus `word`, `score_gained`, `total_score`,
-  `consecutive`.
+  `consecutive`, `ms_since_last_settle`.
 - The answer itself only ever leaves the client for a word already off the board.
+- `ms_since_last_settle` is the gap between the last settled letter and the
+  solve, or null if none settled. It is the settle drip's causal signal: a
+  letter landing shortly before a solve is evidence the letter *caused* it,
+  where a solve minutes later is a player who got there on their own.
+  `letters_settled` alone cannot tell those apart, because it counts letters
+  that may have done nothing.
 
 ### 6a. `daily_word_revealed`
 Fired when the player asks to see a word rather than keep guessing.
@@ -157,7 +172,27 @@ one that was never needed. It can fire more than once per word and is not
 deduplicated, since a player opening the same offer twice is itself the signal.
 
 - **Properties**: word context, plus `offer` (`stake` | `other_end` | `letter`
-  | `reveal`).
+  | `settle` | `reveal`).
+- `settle` is the settle drip, offered second-to-last: it is the most expensive
+  offer that still ends in a *solve*, so it is exhausted before the reveal —
+  which ends in no solve at all — is ever put to the player. It reuses this
+  event family rather than getting its own, because comparing offers against
+  each other is the entire reason the family exists.
+
+### 6g. `daily_letter_settled`
+Fired once per letter the settle drip walks into place.
+
+- **Properties**: word context, plus `source` (`auto` | `offered`),
+  `settle_ordinal` (which letter this was on the word: 1st, 2nd, 3rd),
+  `slot_index`, `allowance`, `letters_total`.
+- `settle_ordinal` against `letters_total` is the conversion curve the mechanic
+  was built to draw.
+- `allowance` is what distinguishes a drip that hit its configured ceiling from
+  one that simply ran out of candidates — only letters already in the pool may
+  be placed, so a word with little found stops early. Without it the two look
+  identical in the data.
+- `source` is the arm of the mode experiment (`offered` waits to be accepted,
+  `auto` places unasked) and must never be collapsed into one value.
 
 ### 7. `daily_game_completed`
 Fired when the last word leaves the board — however it left.
@@ -167,7 +202,8 @@ ending on a reveal or a third strike were never counted.
 
 - **Properties**: `final_score`, `ended_on` (`solved` \| `gave_up` \|
   `struck_out`), `words_solved`, `outcome_tier` (`perfect` \| `strong` \|
-  `partial` \| `blank`), `hints_taken`, `words_revealed`, `opened_other_end`.
+  `partial` \| `blank`), `hints_taken`, `words_revealed`, `opened_other_end`,
+  `letters_settled_total`.
 - `outcome_tier` is read off the share grid, so the event, the end screen and
   the squares a player pastes into a chat cannot disagree.
 

@@ -27,6 +27,16 @@ export type StuckOffer =
     | { kind: 'other_end' }
     /** Take the next rung of the ladder, offered rather than requested. */
     | { kind: 'letter' }
+    /**
+     * Let the found letters walk into place, one at a time.
+     *
+     * The rung the ladder was missing. Everything above it hands over more
+     * *letters*; this hands over their *positions*, which is the one thing hint
+     * level 2 deliberately took away when it turned the mask into an anagram.
+     * So it is not a cheaper grade of the hints before it — it is the only
+     * offer left that can still end in the player solving the word themselves.
+     */
+    | { kind: 'settle' }
     /** Show the word and move on. Last, and only once nothing else is left. */
     | { kind: 'reveal' };
 
@@ -59,6 +69,15 @@ export type StuckInput = {
     hintLevel: number;
     /** Whether the chain can still be entered from its first word. */
     canOpenOtherEnd: boolean;
+    /**
+     * Whether the settle drip has a letter left to place on this word.
+     *
+     * Decided by `settleRules`, not here: the offer must never appear with
+     * nothing behind it, and the question of what may settle is the drip's to
+     * answer. False collapses the rung and the ladder falls through to the
+     * reveal exactly as it did before this existed.
+     */
+    canSettle: boolean;
     /** Solves in a row, for working out how close the bonus is. */
     consecutive: number;
     /** Guessable words still in play, including this one. */
@@ -82,6 +101,10 @@ function pressure({ msOnWord, strikes }: StuckInput): number {
  * The order escalates from cheapest to most expensive, and each rung is skipped
  * when it has nothing to give: no point offering a route into the chain's other
  * end once it is open, or a letter once the ladder is spent.
+ *
+ * `settle` sits second-to-last on purpose. It is the most expensive offer that
+ * still ends in a solve, so it must be exhausted before the reveal — which
+ * ends in no solve at all — is ever put to the player.
  */
 export function stuckOffer(input: StuckInput): StuckOffer | null {
     if (input.dismissed) return null;
@@ -99,6 +122,7 @@ export function stuckOffer(input: StuckInput): StuckOffer | null {
 
     if (input.canOpenOtherEnd) return { kind: 'other_end' };
     if (input.hintLevel < MAX_HINT_LEVEL) return { kind: 'letter' };
+    if (input.canSettle) return { kind: 'settle' };
 
     return { kind: 'reveal' };
 }

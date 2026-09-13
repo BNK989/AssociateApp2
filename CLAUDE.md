@@ -366,8 +366,9 @@ in Hebrew/Arabic (§13).
   `20260822140000_create_game_settings.sql`,
   `20260823090000_add_settings_revision_to_daily_results.sql`,
   `20260907120000_seed_daily_feedback_settings.sql`,
-  `20260911120000_seed_letter_pool_settings.sql` and
-  `20260912120000_add_guesses_to_messages.sql`.
+  `20260911120000_seed_letter_pool_settings.sql`,
+  `20260912120000_add_guesses_to_messages.sql` and
+  `20260913120000_seed_settle_settings.sql`.
   For the first, deploy the app first — it removes the EXECUTE grant the
   pre-deploy code relied on for `distribute_game_points`. See
   [knowledge base/database_security.md](knowledge%20base/database_security.md).
@@ -383,6 +384,13 @@ in Hebrew/Arabic (§13).
   the strike alone and logs `[api/game/action] wrong_guess` with the filename to
   apply, so the word can still be lost rather than the whole update failing.
   The daily game is unaffected; it keeps its guesses in client state.
+
+  `20260913120000_seed_settle_settings.sql` seeds the `settle` row and, like the
+  other seeds, depends on `20260822140000_create_game_settings.sql` having run
+  first. It is the least urgent of the set: the compiled default in
+  `SETTLE` is `offered`, so the settle drip works without it and the migration
+  only buys the ability to tune the pacing and ceilings without a deploy. See
+  [knowledge base/settle_drip.md](knowledge%20base/settle_drip.md).
 
   The `seed_daily_feedback_settings` one seeds the `daily_feedback` row and depends on
   `20260822140000_create_game_settings.sql` having run first; until then reward

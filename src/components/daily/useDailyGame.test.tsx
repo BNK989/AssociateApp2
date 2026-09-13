@@ -10,6 +10,7 @@ vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 
 import { useDailyGame } from './useDailyGame';
 import { DEFAULT_HINT_POLICY } from '@/lib/daily/hintPolicy';
+import { DEFAULT_SETTLE_POLICY } from '@/lib/daily/settlePolicy';
 import { MAX_STRIKES } from '@/lib/daily/dailyScoring';
 
 const WORDS = ['alpha', 'beta', 'gamma'];
@@ -23,6 +24,7 @@ function setup(overrides: Overrides = {}) {
         words: WORDS,
         date: DATE,
         policy: DEFAULT_HINT_POLICY,
+        settlePolicy: DEFAULT_SETTLE_POLICY,
         settingsRevision: 1,
         ...overrides,
     }));

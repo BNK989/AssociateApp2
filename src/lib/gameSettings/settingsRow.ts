@@ -13,6 +13,11 @@ import {
     parseLetterPoolPolicy,
     type LetterPoolPolicy,
 } from '@/lib/daily/letterPoolPolicy';
+import {
+    DEFAULT_SETTLE_POLICY,
+    parseSettlePolicy,
+    type SettlePolicy,
+} from '@/lib/daily/settlePolicy';
 
 // Re-exported so callers of this module do not need to know where the error
 // codes live; the definition is shared with the daily-results write path.
@@ -144,6 +149,47 @@ export function letterPoolFromRow(row: SettingsRow | null | undefined): LetterPo
 
     return {
         policy: parseLetterPoolPolicy(row.value),
+        revision: typeof row.revision === 'number' && Number.isFinite(row.revision)
+            ? row.revision
+            : NO_REVISION,
+    };
+}
+
+/* ------------------------------------------------------------------ *
+ * Settle drip
+ * ------------------------------------------------------------------ */
+
+export type SettleSettings = {
+    policy: SettlePolicy;
+    /** The configuration's revision, so a change can be attributed. */
+    revision: number;
+};
+
+/**
+ * What the drip falls back to when the row is absent or unreadable.
+ *
+ * Same floor rule as the other keys, and it matters more here than most: the
+ * compiled default is `offered`, so a database that never gets this migration
+ * still has the rung. A fallback of `off` would have made the whole mechanic
+ * silently conditional on a migration nobody remembered to apply.
+ */
+export const FALLBACK_SETTLE_SETTINGS: SettleSettings = {
+    policy: DEFAULT_SETTLE_POLICY,
+    revision: NO_REVISION,
+};
+
+/**
+ * Narrows a row into the drip's settings.
+ *
+ * No scope. There is no per-player preference for `force` to override — a
+ * player who wants no help simply declines the offer, which is the whole point
+ * of offering rather than imposing.
+ */
+export function settleFromRow(row: SettingsRow | null | undefined): SettleSettings {
+    if (!row) return FALLBACK_SETTLE_SETTINGS;
+
+    return {
+        policy: parseSettlePolicy(row.value),
         revision: typeof row.revision === 'number' && Number.isFinite(row.revision)
             ? row.revision
             : NO_REVISION,

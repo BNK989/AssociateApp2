@@ -91,6 +91,11 @@ export type BuildSlotsArgs = {
     placements?: Map<string, number>;
     /** The server's mask, which can confirm positions of its own. */
     mask?: MaskState;
+    /**
+     * Positions the settle drip has placed. Filled in and skipped exactly as a
+     * green is, because that is what they are — see `placedIndices`.
+     */
+    settled?: ReadonlySet<number>;
 };
 
 /**
@@ -101,8 +106,10 @@ export type BuildSlotsArgs = {
  * typeable indices in order — so in `skip` mode the third character typed lands
  * in the third *open* slot, not the third slot.
  */
-export function buildSlots({ text, guesses, typed, mode, placements, mask }: BuildSlotsArgs): Slot[] {
-    const placed = placedIndices(text, guesses, mask);
+export function buildSlots({
+    text, guesses, typed, mode, placements, mask, settled,
+}: BuildSlotsArgs): Slot[] {
+    const placed = placedIndices(text, guesses, mask, settled);
     const chars = [...text];
     const typeable = typeableIndices(text, placed, mode);
     const typedChars = [...typed];

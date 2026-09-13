@@ -32,6 +32,8 @@ no cron wait.
 | :--- | :--- | :--- |
 | Game-master hint policy | `game_settings` table, key `daily_hint_policy` | **Yes** — the admin page |
 | Game-master reward feel | `game_settings` table, key `daily_feedback` | **Yes** — the admin page |
+| Game-master composer rule | `game_settings` table, key `letter_pool` | **Yes** — the admin page |
+| Game-master settle drip | `game_settings` table, key `settle` | **Yes** — the admin page |
 | Player preference | `profiles.settings` / localStorage | By the player, in the info screen |
 | Experiment start level | PostHog `dailygame-auto-hint-level` | Yes — the PostHog console, but see below |
 | Compiled default | [`src/lib/gameConfig.ts`](../src/lib/gameConfig.ts) | No — needs a deploy |

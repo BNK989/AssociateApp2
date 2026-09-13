@@ -26,6 +26,14 @@ type UseSlotTypingArgs = {
      * word line.
      */
     mask?: MaskState;
+    /**
+     * Positions the settle drip has placed on this word.
+     *
+     * Arrives as an array rather than a set because it lives on the message and
+     * is persisted with it; the memo below turns it into the set the rules want,
+     * keyed on its contents so a new letter landing re-solves the strip.
+     */
+    settled?: number[];
     /** Identifies the word, so the strip clears when a new one comes up. */
     targetId: string | undefined;
     /**
@@ -51,13 +59,19 @@ type UseSlotTypingArgs = {
  * here has to fire, sequence or clean up an animation — a letter that is placed
  * twice is simply placed twice, and the flight follows.
  */
-export function useSlotTyping({ text, guesses, mode, mask, targetId, setInput }: UseSlotTypingArgs) {
+export function useSlotTyping({
+    text, guesses, mode, mask, settled, targetId, setInput,
+}: UseSlotTypingArgs) {
     const [typed, setTyped] = useState('');
 
     // Clearing on a new word and on a recorded guess covers every reset: the
     // parent's own `setInput('')` calls all happen at one of those two moments.
+    // A settled letter changes which slots are open, so the keystrokes typed
+    // against the old arrangement no longer mean what they meant. Clearing is
+    // the honest answer: re-mapping them would silently move letters the player
+    // is looking at, which is the jump `readingRules` documents at length.
     const guessCount = guesses.length;
-    const resetKey = `${targetId ?? ''}:${guessCount}`;
+    const resetKey = `${targetId ?? ''}:${guessCount}:${settled?.length ?? 0}`;
     const lastResetKey = useRef(resetKey);
     if (lastResetKey.current !== resetKey) {
         lastResetKey.current = resetKey;
@@ -65,14 +79,18 @@ export function useSlotTyping({ text, guesses, mode, mask, targetId, setInput }:
     }
 
     const guessKey = guesses.join(',');
+    const settledKey = settled?.join(',') ?? '';
     const model = useMemo(() => {
         if (!text) return null;
 
-        const pool = buildLetterPool(text, guesses, [], mask, `pool-${targetId ?? 'word'}`);
+        const placedBySettle = new Set(settled ?? []);
+        const pool = buildLetterPool(
+            text, guesses, [], mask, `pool-${targetId ?? 'word'}`, placedBySettle,
+        );
 
         // Which habit the player is typing in, decided from the keystrokes
         // rather than from a mode they were never told they were in.
-        const typing = resolveTyping({ text, guesses, typed, mode, mask });
+        const typing = resolveTyping({ text, guesses, typed, mode, mask, settled: placedBySettle });
         const placements = resolvePlacements(pool, typing.slots);
 
         // Re-read under the settled reading so the cells know which letters came
@@ -84,6 +102,7 @@ export function useSlotTyping({ text, guesses, mode, mask, targetId, setInput }:
             mode: typing.reading === 'whole' ? 'full' : 'skip',
             placements,
             mask,
+            settled: placedBySettle,
         });
         const groups = groupSlots(slots);
 
@@ -101,9 +120,10 @@ export function useSlotTyping({ text, guesses, mode, mask, targetId, setInput }:
             // whole-word reading could never be reached to be evaluated.
             capacity: typeableCapacity(text),
         };
-        // guessKey stands in for the array, whose identity changes every render.
+        // guessKey and settledKey stand in for the arrays, whose identities
+        // change every render.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [text, guessKey, typed, mode, mask?.cipher, mask?.hintLevel, targetId]);
+    }, [text, guessKey, settledKey, typed, mode, mask?.cipher, mask?.hintLevel, targetId]);
 
     // The parent submits `input`, so it carries the assembled answer rather
     // than the keystrokes: in skip mode those are only the gaps between greens.

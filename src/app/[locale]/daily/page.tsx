@@ -7,6 +7,7 @@ import {
     getDailyFeedbackSettings,
     getDailyHintSettings,
     getLetterPoolSettings,
+    getSettleSettings,
 } from '@/lib/gameSettings/server';
 import { defaultLocale, isSupportedLocale } from '@/i18n/locales';
 import type { TranslatedGameData } from '@/lib/dailyTranslation';
@@ -139,10 +140,11 @@ export default async function DailyGamePage({
     // the right reward feel — from the first paint. Resolving either on the
     // client would show the defaults first and then rewrite the board
     // underneath the player.
-    const [hintSettings, feedbackSettings, letterPoolSettings] = await Promise.all([
+    const [hintSettings, feedbackSettings, letterPoolSettings, settleSettings] = await Promise.all([
         getDailyHintSettings(),
         getDailyFeedbackSettings(),
         getLetterPoolSettings(),
+        getSettleSettings(),
     ]);
 
     return (
@@ -155,6 +157,7 @@ export default async function DailyGamePage({
             hintSettings={hintSettings}
             feedbackSettings={feedbackSettings}
             letterPoolSettings={letterPoolSettings}
+            settleSettings={settleSettings}
         />
     );
 }

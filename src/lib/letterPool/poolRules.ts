@@ -78,10 +78,42 @@ export function buildLetterPool(
     previous: PoolLetter[] = [],
     mask?: MaskState,
     idPrefix = 'pool',
+    settled?: ReadonlySet<number>,
 ): PoolLetter[] {
-    const { revealedChars } = computeGuessState(text, guesses);
-    const placed = placedIndices(text, guesses, mask);
     const held = new Map(previous.map((letter) => [letter.id, letter]));
+    const chars = [...text];
+
+    const found = knownUnplacedIndices(text, guesses, mask, settled).map((index) => {
+        const id = `${idPrefix}-${index}`;
+        return { id, char: chars[index], slotIndex: held.get(id)?.slotIndex ?? null };
+    });
+
+    return scramblePool(found);
+}
+
+/**
+ * Positions whose letter the player knows but has no place for — the pool, as
+ * indices into the answer rather than as tiles.
+ *
+ * Extracted from `buildLetterPool` because the settle drip needs exactly this
+ * set and must not re-derive it: the drip places a letter the player can
+ * already see, so "what is in the pool" and "what may settle" have to be one
+ * answer. A second copy of the mask budget would drift, and the failure would
+ * be the drip placing a letter the player was never shown.
+ *
+ * Returned in **text order**, which is the answer's order. That is safe only
+ * because every caller re-orders before showing anything: the pool scrambles
+ * it, and the drip orders it by policy. Nothing may render this list as it is.
+ */
+export function knownUnplacedIndices(
+    text: string,
+    guesses: string[],
+    mask?: MaskState,
+    settled?: ReadonlySet<number>,
+): number[] {
+    const { revealedChars } = computeGuessState(text, guesses);
+    const placed = placedIndices(text, guesses, mask, settled);
+    const chars = [...text];
 
     // What the anagram mask exposes, as a budget to spend. Without this a hint
     // bought at level 2 would reveal nothing at all: its letters no longer
@@ -95,7 +127,17 @@ export function buildLetterPool(
         }
     }
 
-    const found = [...text].flatMap((char, index) => {
+    // A letter the drip has settled has left the pool for a slot, but it is
+    // still one of the letters the mask was showing — so it spends its budget
+    // on the way out. Without this the word line would appear to gain a letter
+    // every time one settled.
+    for (const index of settled ?? []) {
+        const lower = chars[index]?.toLowerCase();
+        if (lower === undefined || revealedChars.has(lower)) continue;
+        if ((fromMask[lower] || 0) > 0) fromMask[lower] -= 1;
+    }
+
+    return chars.flatMap((char, index) => {
         if (placed.has(index) || isGapChar(char)) return [];
 
         const lower = char.toLowerCase();
@@ -108,12 +150,10 @@ export function buildLetterPool(
             fromMask[lower] -= 1;
         }
 
-        const id = `${idPrefix}-${index}`;
-        return [{ id, char, slotIndex: held.get(id)?.slotIndex ?? null }];
+        return [index];
     });
-
-    return scramblePool(found);
 }
+
 
 /**
  * A tile's seed, derived from its own id. Its place in the pool, its tilt, its
@@ -194,9 +234,22 @@ export interface MaskState {
  * must fill them in rather than ask the player to type a letter the board is
  * showing them as settled.
  */
-export function placedIndices(text: string, guesses: string[], mask?: MaskState): Set<number> {
+export function placedIndices(
+    text: string,
+    guesses: string[],
+    mask?: MaskState,
+    settled?: ReadonlySet<number>,
+): Set<number> {
     const { greenIndices } = computeGuessState(text, guesses);
     const placed = new Set(greenIndices);
+
+    // The settle drip's letters. Green in every sense the player is asked to
+    // learn — confirmed, in place, still — and deliberately not distinguished
+    // from an earned green anywhere on screen. The three-state rule in
+    // `knowledge base/letter_feedback.md` is what makes the board readable at
+    // all, and a fourth state for "the game put this here" would cost more
+    // than it told anyone.
+    for (const index of settled ?? []) placed.add(index);
 
     if (!mask) return placed;
 

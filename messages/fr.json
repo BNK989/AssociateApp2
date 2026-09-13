@@ -240,6 +240,8 @@
             "other_end_action": "Autre bout",
             "letter_title": "Envie d’une lettre ?",
             "letter_action": "En montrer une",
+            "settle_title": "Laisser les lettres trouver leur place ?",
+            "settle_action": "Les placer",
             "reveal_title": "On passe à la suite ?",
             "reveal_action": "Révéler",
             "reopen": "Afficher à nouveau la proposition",

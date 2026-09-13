@@ -29,11 +29,13 @@ import { useExperimentStartLevel } from '@/components/daily/useExperimentStartLe
 import { useMissCue } from '@/components/daily/useMissCue';
 import { useProgressCue } from '@/components/daily/useProgressCue';
 import { useStartWordAnimation } from '@/components/daily/useStartWordAnimation';
+import { useScrollToTarget } from '@/components/daily/useScrollToTarget';
 import { useRewardFeedback } from '@/hooks/useRewardFeedback';
 import type {
     DailyFeedbackSettings,
     DailyHintSettings,
     LetterPoolSettings,
+    SettleSettings,
 } from '@/lib/gameSettings/settingsRow';
 
 type DailyGameClientProps = {
@@ -48,6 +50,8 @@ type DailyGameClientProps = {
     feedbackSettings: DailyFeedbackSettings;
     /** Game-master composer policy, resolved on the server for the same reason. */
     letterPoolSettings: LetterPoolSettings;
+    /** Game-master settle policy: how found letters walk into place when stuck. */
+    settleSettings: SettleSettings;
 };
 
 export default function DailyGameClient(props: DailyGameClientProps) {
@@ -67,6 +71,7 @@ function DailyGameBoard({
     hintSettings,
     feedbackSettings,
     letterPoolSettings,
+    settleSettings,
 }: DailyGameClientProps) {
     const router = useRouter();
     const { user: authUser, session, loading: authLoading } = useAuth();
@@ -111,6 +116,7 @@ function DailyGameBoard({
         words: dailyWords,
         date,
         policy: settings.policy,
+        settlePolicy: settleSettings.policy,
         settingsRevision: hintSettings.revision,
         hints: initialHints,
         connectionScores: initialConnectionScores,
@@ -198,11 +204,13 @@ function DailyGameBoard({
             ? game.messages.findIndex((m) => m.id === game.targetMessage!.id)
             : -1,
         canOpenOtherEnd: game.canOpenOtherEnd,
+        canSettle: game.canSettle,
         consecutive: game.consecutive,
         gameOver: game.gameOver,
         openOtherEnd: game.openOtherEnd,
         revealHint: askForHint,
         revealWord: game.revealWord,
+        startSettle: game.startSettle,
         trackOffer,
     });
 
@@ -220,17 +228,7 @@ function DailyGameBoard({
         onSolved: game.solveStartWord,
     });
 
-    // Keep the word being guessed centred as the chain advances.
-    useEffect(() => {
-        if (!game.targetMessage) return;
-        const id = game.targetMessage.id;
-
-        const timer = setTimeout(() => {
-            document.getElementById(`msg-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 100);
-
-        return () => clearTimeout(timer);
-    }, [game.targetMessage]);
+    useScrollToTarget(game.targetMessage);
 
     const gameState = useMemo(
         () => buildDailyGameState(dailyWords.length, game.consecutive, game.gameOver),
@@ -316,6 +314,7 @@ function DailyGameBoard({
                 onGetHint={askForHint}
                 isEmpty={false}
                 caretSkipsGreens={letterPoolSettings.policy.caretSkipsGreens}
+                settledIndices={game.settledIndices}
                 isSinglePlayer
                 onReveal={game.revealWord}
                 canOpenOtherEnd={game.canOpenOtherEnd}

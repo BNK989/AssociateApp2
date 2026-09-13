@@ -59,6 +59,16 @@ type GameInputProps = {
      * the settings table is unreachable.
      */
     caretSkipsGreens?: boolean;
+    /**
+     * Positions the settle drip has walked into place on the current word.
+     *
+     * Handed straight to the strip, which treats them as greens. Nothing here
+     * draws them differently: a settled letter shrinks out of the halo and its
+     * cell pops, which is the same two-halves-of-one-event the composer already
+     * tells for a typed placement — so the player reads it as a letter finding
+     * its home rather than as a new kind of tile.
+     */
+    settledIndices?: number[];
 };
 
 /**
@@ -91,6 +101,7 @@ export function GameInput({
     onToggleHintPause,
     onOpenSettings,
     caretSkipsGreens = LETTER_POOL.CARET_SKIPS_GREENS,
+    settledIndices,
 }: GameInputProps) {
     const t = useTranslations('GameRoom.Input');
 
@@ -142,6 +153,7 @@ export function GameInput({
         mask: targetMessage?.cipher_text
             ? { cipher: targetMessage.cipher_text, hintLevel: targetMessage.hint_level || 0 }
             : undefined,
+        settled: settledIndices,
         targetId: targetMessage?.id,
         setInput,
     });

@@ -40,6 +40,18 @@ export type Message = {
      * one letter at a time toward the answer.
      */
     near_misses?: number;
+    /**
+     * Positions the settle drip has walked into place (daily game only).
+     *
+     * Indices into `content`, by code point. They read as ordinary greens
+     * everywhere on screen — the player is never told which of their confirmed
+     * letters they earned — and are kept separately only because scoring has to
+     * charge for them and the analytics have to count them.
+     *
+     * Client state, like the rest of the daily board: it is persisted to
+     * localStorage with the snapshot and never written to a table.
+     */
+    settled_indices?: number[];
 };
 
 export type GameState = {

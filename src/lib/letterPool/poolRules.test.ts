@@ -3,6 +3,7 @@ import { CIPHER_SIGNS } from '@/lib/gameConfig';
 import {
     buildLetterPool,
     isGapChar,
+    knownUnplacedIndices,
     nextPoolMatch,
     placedIndices,
     type PoolLetter,

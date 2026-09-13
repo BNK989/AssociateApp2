@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { GAME_CONFIG } from '@/lib/gameConfig';
+import { GAME_CONFIG, SETTLE } from '@/lib/gameConfig';
 import { calculateMessageValue, HINT_COSTS } from '@/lib/gameLogic';
 import {
     calculateSolvePoints,
@@ -50,6 +50,68 @@ describe('calculateSolvePoints', () => {
 
     it('always returns a whole number', () => {
         expect(Number.isInteger(calculateSolvePoints(WORD, 2, 4))).toBe(true);
+    });
+
+    describe('settled letters', () => {
+        it('charges for each letter the drip walked into place', () => {
+            const base = calculateMessageValue(WORD);
+
+            expect(calculateSolvePoints(WORD, 0, 0, { settled: 2, settleCostPerLetter: 0.05 }))
+                .toBe(Math.floor(base * (1 - 0.1)));
+        });
+
+        it('charges nothing when no letter settled, so nothing changes for anyone else', () => {
+            expect(calculateSolvePoints(WORD, 2, 0, { settled: 0 }))
+                .toBe(calculateSolvePoints(WORD, 2, 0));
+        });
+
+        it('stacks on top of the hint tiers rather than replacing them', () => {
+            const withHints = calculateSolvePoints(WORD, 2, 0);
+            const withBoth = calculateSolvePoints(WORD, 2, 0, { settled: 1 });
+
+            expect(withBoth).toBeLessThan(withHints);
+        });
+
+        /**
+         * The floor is the rung's whole economic argument. A settled solve has
+         * to stay strictly better than the reveal it replaced, which scores
+         * zero — otherwise the mechanic built to stop players giving up would,
+         * at the far end of its own cost curve, make giving up the better move.
+         */
+        it('never lets a solve fall to nothing, however much was settled', () => {
+            const ruinous = calculateSolvePoints(WORD, MAX_HINT_LEVEL, 0, {
+                settled: 20,
+                settleCostPerLetter: 0.5,
+            });
+
+            expect(ruinous).toBeGreaterThan(0);
+            expect(ruinous).toBe(
+                Math.floor(calculateMessageValue(WORD) * SETTLE.MIN_SCORE_FRACTION),
+            );
+        });
+
+        it('beats revealing the word in the worst case the drip can reach', () => {
+            // Every hint taken, the allowance spent, the costliest setting.
+            const worst = calculateSolvePoints(WORD, MAX_HINT_LEVEL, 0, {
+                settled: 4,
+                settleCostPerLetter: 0.2,
+            });
+
+            // A revealed word scores zero and costs a streak step.
+            expect(worst).toBeGreaterThan(0);
+        });
+
+        it('ignores a negative count rather than paying the player for it', () => {
+            expect(calculateSolvePoints(WORD, 0, 0, { settled: -5 }))
+                .toBe(calculateMessageValue(WORD));
+        });
+
+        it('falls back to the compiled cost when the policy does not supply one', () => {
+            const base = calculateMessageValue(WORD);
+
+            expect(calculateSolvePoints(WORD, 0, 0, { settled: 1 }))
+                .toBe(Math.floor(base * (1 - SETTLE.COST_PER_LETTER)));
+        });
     });
 });
 

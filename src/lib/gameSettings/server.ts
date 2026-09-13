@@ -7,12 +7,15 @@ import {
     FALLBACK_LETTER_POOL_SETTINGS,
     feedbackFromRow,
     isMissingTable,
+    FALLBACK_SETTLE_SETTINGS,
     letterPoolFromRow,
     settingsFromRow,
+    settleFromRow,
     type DailyFeedbackSettings,
     type DailyHintSettings,
     type LetterPoolSettings,
     type SettingsRow,
+    type SettleSettings,
 } from './settingsRow';
 
 // Server-only: this reads the game_settings table on the server and is imported
@@ -26,6 +29,7 @@ export const GAME_SETTINGS_TAG = 'game-settings';
 export const DAILY_HINT_POLICY_KEY = 'daily_hint_policy';
 export const DAILY_FEEDBACK_KEY = 'daily_feedback';
 export const LETTER_POOL_KEY = 'letter_pool';
+export const SETTLE_KEY = 'settle';
 
 /** The migration that creates the table, named in the log when it is missing. */
 const SETTINGS_MIGRATION = 'supabase/migrations/20260822140000_create_game_settings.sql';
@@ -41,10 +45,12 @@ export {
     FALLBACK_DAILY_FEEDBACK_SETTINGS,
     FALLBACK_DAILY_HINT_SETTINGS,
     FALLBACK_LETTER_POOL_SETTINGS,
+    FALLBACK_SETTLE_SETTINGS,
     NO_REVISION,
     type DailyFeedbackSettings,
     type DailyHintSettings,
     type LetterPoolSettings,
+    type SettleSettings,
 } from './settingsRow';
 
 /**
@@ -192,5 +198,36 @@ async function readLetterPoolSettings(): Promise<LetterPoolSettings> {
 export const getLetterPoolSettings = unstable_cache(
     readLetterPoolSettings,
     ['letter-pool-settings'],
+    { tags: [GAME_SETTINGS_TAG], revalidate: REVALIDATE_SECONDS },
+);
+
+async function readSettleSettings(): Promise<SettleSettings> {
+    const row = await readSettingsRow(SETTLE_KEY);
+    if (!row) return FALLBACK_SETTLE_SETTINGS;
+
+    const settings = settleFromRow(row);
+
+    log.debug('read', 'Settle policy loaded', {
+        key: SETTLE_KEY,
+        revision: settings.revision,
+        mode: settings.policy.mode,
+        arm_from_hint_level: settings.policy.armFromHintLevel,
+        interval_ms: settings.policy.intervalMs,
+        max_fraction: settings.policy.maxFraction,
+        order: settings.policy.order,
+    });
+
+    return settings;
+}
+
+/**
+ * How the settle drip behaves, cached across requests.
+ *
+ * Shares the other keys' cache tag, so one admin save revalidates every panel
+ * on the page and they cannot disagree about which revision is live.
+ */
+export const getSettleSettings = unstable_cache(
+    readSettleSettings,
+    ['settle-settings'],
     { tags: [GAME_SETTINGS_TAG], revalidate: REVALIDATE_SECONDS },
 );

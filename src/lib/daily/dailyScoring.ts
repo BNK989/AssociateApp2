@@ -6,6 +6,7 @@ import {
     MATCH_THRESHOLD,
     MAX_HINT_LEVEL,
     MAX_STRIKES,
+    SETTLE,
     STREAK_BONUS_AT,
     STREAK_MULTIPLIER,
 } from '@/lib/gameConfig';
@@ -36,6 +37,10 @@ export type SolveScoringOptions = {
      * being comparable with every score recorded before the change.
      */
     chargeForStartLevel?: boolean;
+    /** Letters the settle drip placed for the player on this word. */
+    settled?: number;
+    /** Fraction of base value each settled letter costs; from the settle policy. */
+    settleCostPerLetter?: number;
 };
 
 /**
@@ -43,7 +48,8 @@ export type SolveScoringOptions = {
  *
  * Base value comes from the word itself, then each hint tier the player passed
  * through subtracts its cost — cumulatively, so someone who took all three
- * keeps only a small fraction. A streak multiplies whatever is left.
+ * keeps only a small fraction. Letters the settle drip placed cost their own
+ * share on top. A streak multiplies whatever is left.
  *
  * Tiers at or below `startLevel` are skipped when the policy says free hints
  * are free.
@@ -54,7 +60,12 @@ export function calculateSolvePoints(
     consecutive: number,
     options: SolveScoringOptions = {},
 ): number {
-    const { startLevel = 0, chargeForStartLevel = true } = options;
+    const {
+        startLevel = 0,
+        chargeForStartLevel = true,
+        settled = 0,
+        settleCostPerLetter = SETTLE.COST_PER_LETTER,
+    } = options;
     const base = calculateMessageValue(word);
 
     let deduction = 0;
@@ -64,9 +75,24 @@ export function calculateSolvePoints(
         deduction += HINT_COSTS[TIER_KEYS[tier - 1]];
     }
 
+    deduction += Math.max(0, settled) * settleCostPerLetter;
+
     const streakBonus = consecutive >= STREAK_BONUS_AT ? STREAK_MULTIPLIER : 1;
 
-    return Math.floor(base * (1 - deduction) * streakBonus);
+    return Math.floor(base * remainingValue(deduction) * streakBonus);
+}
+
+/**
+ * What survives the deductions, floored.
+ *
+ * The floor is load-bearing rather than defensive. A settled solve has to stay
+ * strictly better than a reveal, which scores nothing — otherwise the rung
+ * built to stop players giving up would, at the far end of its own cost curve,
+ * make giving up the rational move. Three hint tiers plus a handful of settled
+ * letters can cross zero on the defaults, so this is reachable, not theoretical.
+ */
+function remainingValue(deduction: number): number {
+    return Math.max(SETTLE.MIN_SCORE_FRACTION, 1 - deduction);
 }
 
 type NextHintArgs = {

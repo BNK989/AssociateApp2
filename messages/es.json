@@ -240,6 +240,8 @@
             "other_end_action": "Otro extremo",
             "letter_title": "¿Quieres una letra?",
             "letter_action": "Muéstrame una",
+            "settle_title": "¿Dejamos que las letras encuentren su sitio?",
+            "settle_action": "Colocarlas",
             "reveal_title": "¿Seguimos adelante?",
             "reveal_action": "Revelar",
             "reopen": "Volver a mostrar la oferta",

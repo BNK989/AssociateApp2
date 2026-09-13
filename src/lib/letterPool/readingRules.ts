@@ -80,9 +80,9 @@ function firstEmpty(slots: Slot[]): number | null {
  * better served seeing where than seeing nothing.
  */
 export function resolveTyping(
-    { text, guesses, typed, mode, mask }: Omit<BuildSlotsArgs, 'placements'>,
+    { text, guesses, typed, mode, mask, settled }: Omit<BuildSlotsArgs, 'placements'>,
 ): Typing {
-    const build = (as: CaretMode) => buildSlots({ text, guesses, typed, mode: as, mask });
+    const build = (as: CaretMode) => buildSlots({ text, guesses, typed, mode: as, mask, settled });
 
     const whole = build('full');
 
@@ -101,7 +101,7 @@ export function resolveTyping(
     const chosen = readKeystrokes({
         typedLength: [...typed].length,
         capacity: typeableCapacity(text),
-        openCount: typeableIndices(text, placedIndices(text, guesses, mask), 'skip').length,
+        openCount: typeableIndices(text, placedIndices(text, guesses, mask, settled), 'skip').length,
         conflictAt: firstConflictPosition(text, whole),
     });
 
