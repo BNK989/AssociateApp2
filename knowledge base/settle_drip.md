@@ -41,17 +41,99 @@ something to work with.
 
 ---
 
+## Where it sits in the hint flow
+
+**This is the part that makes the mechanic reach anyone.** The composer has
+always replaced the hint button with the eye the moment the ladder ran out — so
+the one permanent control in front of a stuck player said *give up*, and the
+drip was only ever offered transiently, in a bar that appeared after half a
+minute of silence and could be dismissed. A player who waved that away, or never
+waited long enough to see it, met the old cliff exactly as before.
+
+The ladder now runs all the way down in the composer itself:
+
+> hint → hint → hint → **letter, letter, letter** → reveal
+
+`HintControls` owns that one decision. At max hints it draws the
+**settle button** while the drip has anything left, and the reveal only once it
+does not. The reveal has not gone anywhere — it is in the long-press menu, where
+it already was — it is simply no longer the *first* thing offered to someone who
+is stuck, and it comes back as the button the moment the letters run out.
+
+Tapping the settle button takes a letter immediately, which is the same move the
+hint button makes against its own countdown: a clock the player can always
+pre-empt. It is also how a player who never saw the stuck offer starts the drip
+at all.
+
+---
+
 ## The player's experience
 
-1. They go quiet on a word. The hint ladder is spent.
-2. The stuck offer says *"Let the letters find their places?"* with a
-   **Place them** button.
-3. They accept. One letter leaves the halo and its slot in the composer fills
-   in, green.
-4. Every `intervalMs` after that, another.
-5. It stops at the ceiling, with letters still left for them to solve.
+1. They go quiet on a word. The hint ladder is spent. The composer's help button
+   becomes the settle button, badged with how many letters it can still place.
+2. Either the stuck offer speaks — *"Let the letters find their places?"* — or
+   they tap the button themselves.
+3. A letter lifts out of the halo, flies to its slot in the composer, and lands
+   green.
+4. The ring around the button fills. When it is full, another letter flies.
+5. It stops at the ceiling, the badge reaches zero, and the button gives way to
+   the reveal — with letters still left for them to solve.
 
-They can also decline, and the offer stays declined for that word only.
+They can decline the offer, and it stays declined for that word only. The button
+remains either way.
+
+---
+
+## The two animations, and why they are not decoration
+
+### The letter has to be seen to travel
+
+Without the flight, the chip vanishes from the halo and, separately, a green
+letter appears in the composer — two events about 200px apart, in two different
+scroll contexts, with nothing linking them. Three things break:
+
+- **Provenance.** The player has to *infer* that those are the same letter. But
+  identity is the entire informational payload here: the drip gives away
+  position, not letters, and "*this* letter you already had belongs *there*" is
+  the whole sentence. Leaving the subject of that sentence to inference gives
+  away the value of the rung.
+- **Agency.** An unprompted change that simply appears reads as a glitch or a
+  state reset. Motion with a source and a destination reads as an *actor*. That
+  is the difference between "the board changed" and "the game gave me
+  something", and the second one is what makes an offered hint feel generous
+  rather than remedial.
+- **Attention.** The player is looking at the word bubble, where they are
+  thinking — not at the composer. A letter that appears silently in the strip
+  can be missed outright: they spent points on it and never saw it. The flight
+  drags the gaze from the bubble to the strip, which is also where they need to
+  be looking to type the rest.
+
+### The wait has to be visible
+
+Without a countdown, a letter every fifteen seconds is indistinguishable from
+randomness. The player cannot form a model, so they cannot rely on it:
+
+- **Unpredictable help is not felt as help.** The reason to stay on the word is
+  that *something is arriving*. A player who does not know that has no reason.
+- **It converts dead time into anticipation.** Fifteen seconds of nothing is
+  fifteen seconds to consider closing the tab; fifteen seconds of a visibly
+  filling ring is fifteen seconds of "wait for it". Same interval, opposite
+  feeling — and that is the entire psychological mechanism the rung exists to
+  exploit. `AutoHintBadge` already makes exactly this argument about the
+  auto-hint clock.
+- **It bounds the promise.** "Place them" does not say how many or how fast. The
+  ring says when; the badge says how many are left. The game must not imply that
+  letters keep coming, because the allowance stops well short of the answer.
+- **It marks the end honestly.** When the badge reaches zero the button becomes
+  the reveal, and the player watched that coming instead of discovering it when
+  the letters silently stopped.
+
+**The ring fills; it does not drain.** `HintProgressRing` drains, because that
+clock counts down to a hint that will cost points — running out. This one brings
+a letter. Filling is what says *arriving* rather than *expiring*, and the
+direction is the message. It is also drawn in `--tile-present`, the orange of a
+found-but-unplaced letter, which is precisely what it is counting down to
+placing.
 
 ### A settled letter is a green letter
 
@@ -64,13 +146,32 @@ player earned.
 That is a deliberate kindness as well as a simplification. The player is never
 shown a running tally of how much help they took.
 
-### How it looks
+### How the flight works
 
-The chip shrinks away where it hangs in the halo and the slot cell pops at the
-same moment — the same *two halves of one event* the composer already tells for
-a typed placement (see `poolMotion.ts`, rule 4). There is no directed flight
-between the two yet; that is a known follow-up, not a design decision. Under
-`prefers-reduced-motion` the letter simply appears.
+Settling is **two-phase**, and the phases are not ceremony — they are what makes
+the animation possible at all. The moment a letter is written into
+`settled_indices` it counts as placed, which takes it out of the pool, which
+unmounts its halo chip; and a chip that has unmounted has no rectangle to fly
+from.
+
+So the letter is *announced* first and *written* second:
+
+1. `useSettlePlacement` sets `pendingIndex`. Nothing is written.
+2. `useSlotTyping` keeps that letter in the pool and binds it to the slot it is
+   heading for — which is exactly the state a letter the **player typed** is in.
+3. `useLetterFlights` sees a pool id arrive in a slot and launches, with no idea
+   the game rather than the player put it there. No new animation code.
+4. The flight lands, `onLanded` fires, and the letter is written.
+
+Everything else reads an announced letter as not settled yet, so the ceiling,
+the candidate list, the score and the analytics all count it once — at the
+moment it arrives, never the moment it set off. **A flight that never lands
+therefore costs the player nothing.**
+
+A 700ms backstop commits anyway if no flight ever runs or finishes:
+`prefers-reduced-motion`, a chip or cell that could not be measured, or a scroll
+mid-flight, which lands every flight at once on purpose. It is comfortably past
+`MAX_MS` in `flightPath`, so it never pre-empts a real landing.
 
 ---
 
@@ -270,6 +371,9 @@ exists.
 | [`useDailySettle.ts`](../src/components/daily/useDailySettle.ts) | The clock, and nothing else |
 | [`stuckSignals.ts`](../src/lib/daily/stuckSignals.ts) | Where the rung sits in the ladder |
 | [`poolRules.ts`](../src/lib/letterPool/poolRules.ts) | `placedIndices` / `knownUnplacedIndices` — settled counts as placed |
+| [`useSettlePlacement.ts`](../src/components/daily/useSettlePlacement.ts) | The two-phase write, so the letter can be seen to fly |
+| [`HintControls.tsx`](../src/components/game/input/HintControls.tsx) | Which control stands in the composer's help slot |
+| [`SettleButton.tsx`](../src/components/game/input/SettleButton.tsx) | The button, its ring and its badge |
 | [`SettleSection.tsx`](../src/components/admin/gameSettings/SettleSection.tsx) | The panel |
 | `gameConfig.ts` → `SETTLE` | The compiled floor |
 
@@ -282,13 +386,12 @@ failure would be the drip placing a letter the player was never shown.
 
 ## Known gaps
 
-- **No directed flight.** The chip fades where it hangs and the cell pops.
-  `useLetterFlights` already measures halo → slot for typed placements, but
-  driving it from the drip needs a two-phase commit (announce, fly, then write
-  `settled_indices`), which is its own change.
-- **No distinct landing cue.** A settled letter animates exactly like a typed
-  one. It should read as *the game acting* — slower, with a glow — and does not
-  yet.
+- **A settled letter animates exactly like a typed one.** Same flight, same
+  spring. It arguably should read as *the game acting* rather than as a
+  keystroke — slower, with a glow on the cell. Left alone deliberately for now:
+  the shared motion is what makes the gesture legible at all (the player has
+  already learned what that flight means), and differentiating it is a tuning
+  question better answered after a QA pass than guessed at.
 - **No sound.** The reward-feedback policy has solve and miss tones; a settle
   has none.
 - **Client-side only.** `settled_indices` lives on the message and is persisted

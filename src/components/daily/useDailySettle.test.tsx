@@ -54,10 +54,31 @@ function setup(over: {
     /** Re-renders with whatever `patchTarget` last wrote, as the board would. */
     const flush = () => view.rerender({ message });
 
-    return { view, patchTarget, onSettled, flush, current: () => message };
+    /** Lands whatever is in the air, as the composer's flight does. */
+    const land = () => {
+        if (view.result.current.pendingIndex !== null) {
+            act(() => view.result.current.onLanded());
+        }
+    };
+
+    /** Advances the clock, then lets any letter it launched finish its flight. */
+    const step = (ms: number) => {
+        advance(ms);
+        land();
+    };
+
+    return { view, patchTarget, onSettled, flush, land, step, current: () => message };
 }
 
 const advance = (ms: number) => act(() => { vi.advanceTimersByTime(ms); });
+
+/**
+ * Past the commit backstop in `useSettlePlacement`, so a letter that was
+ * announced is written even though no flight ever ran. Only used by the test
+ * that covers the backstop itself; everything else lands the flight explicitly,
+ * because that is the path a real player takes.
+ */
+const COMMIT_FALLBACK_MS = 700;
 
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());
@@ -98,43 +119,54 @@ describe('offered mode', () => {
         expect(patchTarget).not.toHaveBeenCalled();
     });
 
-    it('lands a letter the moment the offer is accepted', () => {
+    it('puts a letter in the air the moment the offer is accepted', () => {
         // Accepting has to feel like a reward, not the start of a wait.
         const { view, patchTarget } = setup();
 
         act(() => view.result.current.accept());
+
+        // Announced, not yet written: the composer needs the letter still in
+        // the pool to have something to fly.
+        expect(view.result.current.pendingIndex).not.toBeNull();
+        expect(patchTarget).not.toHaveBeenCalled();
+
+        act(() => view.result.current.onLanded());
 
         expect(patchTarget).toHaveBeenCalledTimes(1);
         expect(patchTarget.mock.calls[0][1].settled_indices).toHaveLength(1);
     });
 
     it('then drips one letter per interval', () => {
-        const { view, patchTarget, flush } = setup({ policy: policy({ intervalMs: 10_000 }) });
+        const { view, patchTarget, flush, land, step } = setup({
+            policy: policy({ intervalMs: 10_000 }),
+        });
 
         act(() => view.result.current.accept());
+        land();
         flush();
         expect(patchTarget).toHaveBeenCalledTimes(1);
 
-        advance(10_000);
+        step(10_000);
         flush();
         expect(patchTarget).toHaveBeenCalledTimes(2);
 
-        advance(10_000);
+        step(10_000);
         flush();
         expect(patchTarget).toHaveBeenCalledTimes(3);
     });
 
     it('stops at the allowance rather than finishing the word', () => {
         // STARLING is eight letters; half, leaving at least two, is four.
-        const { view, patchTarget, flush, current } = setup({
+        const { view, patchTarget, flush, land, step, current } = setup({
             policy: policy({ intervalMs: 1_000 }),
         });
 
         act(() => view.result.current.accept());
+        land();
         flush();
 
         for (let i = 0; i < 20; i += 1) {
-            advance(1_000);
+            step(1_000);
             flush();
         }
 
@@ -143,12 +175,15 @@ describe('offered mode', () => {
     });
 
     it('leaves letters for the player to solve', () => {
-        const { view, flush, current } = setup({ policy: policy({ intervalMs: 1_000 }) });
+        const { view, flush, land, step, current } = setup({
+            policy: policy({ intervalMs: 1_000 }),
+        });
 
         act(() => view.result.current.accept());
+        land();
         flush();
         for (let i = 0; i < 20; i += 1) {
-            advance(1_000);
+            step(1_000);
             flush();
         }
 
@@ -157,12 +192,15 @@ describe('offered mode', () => {
     });
 
     it('never places the same position twice', () => {
-        const { view, flush, current } = setup({ policy: policy({ intervalMs: 1_000 }) });
+        const { view, flush, land, step, current } = setup({
+            policy: policy({ intervalMs: 1_000 }),
+        });
 
         act(() => view.result.current.accept());
+        land();
         flush();
         for (let i = 0; i < 10; i += 1) {
-            advance(1_000);
+            step(1_000);
             flush();
         }
 
@@ -175,45 +213,76 @@ describe('auto mode', () => {
     const auto = policy({ mode: 'auto', firstDelayMs: 20_000, intervalMs: 10_000 });
 
     it('waits out the first delay before placing anything', () => {
-        const { patchTarget } = setup({ policy: auto });
+        const { view, patchTarget } = setup({ policy: auto });
 
         advance(19_000);
-        expect(patchTarget).not.toHaveBeenCalled();
+        expect(view.result.current.pendingIndex).toBeNull();
 
         advance(2_000);
+        expect(view.result.current.pendingIndex).not.toBeNull();
+
+        advance(COMMIT_FALLBACK_MS);
         expect(patchTarget).toHaveBeenCalledTimes(1);
     });
 
     it('credits a wrong guess as dwell, so a player who missed waits less', () => {
-        const { patchTarget } = setup({
+        const { patchTarget, step } = setup({
             message: word({ strikes: 1 }),
             policy: policy({ ...auto, strikeCreditMs: 15_000 }),
         });
 
         // 5s on the word plus 15s of credit clears the 20s first delay.
-        advance(6_000);
+        step(6_000);
         expect(patchTarget).toHaveBeenCalledTimes(1);
     });
 
-    it('places one letter per tick even when several are owed', () => {
+    it('drains a backlog one letter at a time rather than in a batch', () => {
         // A player returning to a long-backgrounded tab watches the letters
-        // arrive rather than finding the work already done.
-        const { patchTarget, flush } = setup({ policy: auto });
+        // arrive rather than finding the work already done. Each one has to
+        // wait for the one before it to land, so the writes step up by one and
+        // never jump.
+        const { patchTarget, flush, step } = setup({ policy: auto });
 
-        advance(120_000);
-        expect(patchTarget).toHaveBeenCalledTimes(1);
+        for (let i = 0; i < 12; i += 1) {
+            step(10_000);
+            flush();
+        }
 
-        flush();
-        advance(1_000);
-        expect(patchTarget).toHaveBeenCalledTimes(2);
+        patchTarget.mock.calls.forEach((call, i) => {
+            expect(call[1].settled_indices).toHaveLength(i + 1);
+        });
+
+        // And the ceiling still binds, however much time was owed.
+        expect(patchTarget.mock.calls.length).toBeLessThanOrEqual(4);
+        expect(patchTarget.mock.calls.length).toBeGreaterThan(1);
+    });
+
+    it('never puts a second letter in the air while one is still flying', () => {
+        // Two letters mid-flight would land on top of each other, and the
+        // ceiling would be spent before either was written down.
+        const { view, patchTarget } = setup({ policy: auto });
+
+        advance(21_000);
+        expect(view.result.current.pendingIndex).not.toBeNull();
+
+        const airborne = view.result.current.pendingIndex;
+        advance(COMMIT_FALLBACK_MS - 100);
+
+        expect(view.result.current.pendingIndex).toBe(airborne);
+        expect(patchTarget).not.toHaveBeenCalled();
     });
 });
 
 describe('reporting', () => {
-    it('announces each letter with the count and the ceiling', () => {
+    it('announces each letter with the count and the ceiling, once it lands', () => {
         const { view, onSettled } = setup();
 
         act(() => view.result.current.accept());
+        // Nothing is reported while the letter is in the air: a flight that
+        // never arrives must cost the player nothing.
+        expect(onSettled).not.toHaveBeenCalled();
+
+        act(() => view.result.current.onLanded());
 
         expect(onSettled).toHaveBeenCalledWith(expect.objectContaining({
             index: 1,
@@ -224,11 +293,11 @@ describe('reporting', () => {
     });
 
     it('reports auto placements as auto, which is the arm of the experiment', () => {
-        const { onSettled } = setup({
+        const { onSettled, step } = setup({
             policy: policy({ mode: 'auto', firstDelayMs: 1_000 }),
         });
 
-        advance(2_000);
+        step(2_000);
         expect(onSettled).toHaveBeenCalledWith(expect.objectContaining({ source: 'auto' }));
     });
 });

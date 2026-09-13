@@ -5,6 +5,21 @@ they cost, who may change them — live in
 [game_master_guide.md](game_master_guide.md) and `src/lib/daily/hintPolicy.ts`;
 nothing here changes a single point of scoring.
 
+
+## The settle rung, at the end of the ladder
+
+Once the ladder is spent the composer's help button is no longer the eye. While
+the settle drip has a letter left to give it draws the **settle button**
+instead — badged with how many letters remain, ringed with a countdown to the
+next one — and the reveal moves into its long-press menu until the letters run
+out.
+
+> hint → hint → hint → **letter, letter, letter** → reveal
+
+`HintControls` owns that choice, and it is the only place that makes it. Full
+reasoning, pacing and game-master controls: [settle_drip.md](settle_drip.md).
+
+
 ## The rule this surface is held to
 
 `stuckSignals.ts` states it for the offer bar and it now governs the whole

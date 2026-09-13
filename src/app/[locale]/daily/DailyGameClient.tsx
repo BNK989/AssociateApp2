@@ -315,6 +315,7 @@ function DailyGameBoard({
                 isEmpty={false}
                 caretSkipsGreens={letterPoolSettings.policy.caretSkipsGreens}
                 settledIndices={game.settledIndices}
+                settle={game.settle}
                 isSinglePlayer
                 onReveal={game.revealWord}
                 canOpenOtherEnd={game.canOpenOtherEnd}

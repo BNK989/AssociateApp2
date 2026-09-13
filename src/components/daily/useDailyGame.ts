@@ -319,6 +319,23 @@ export function useDailyGame({
         canSettle: settle.available,
         startSettle: settle.accept,
         settledIndices: settle.settledIndices,
+        /**
+         * The drip as the composer wants it, in one object.
+         *
+         * Shaped to `GameInput`'s prop rather than spread across seven fields,
+         * so the board hands it over whole and neither end can drift from the
+         * other by forgetting one.
+         */
+        settle: {
+            available: settle.available,
+            running: settle.running,
+            lettersLeft: settle.lettersLeft,
+            secondsLeft: settle.secondsLeft,
+            progress: settle.progress,
+            pendingIndex: settle.pendingIndex,
+            onSettleNow: settle.settleNow,
+            onLanded: settle.onLanded,
+        },
         reset,
         forceGameOver,
         solveStartWord,

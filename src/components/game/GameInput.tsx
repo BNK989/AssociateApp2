@@ -3,7 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import type { User } from '@supabase/supabase-js';
 import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import type { GameState, Message, Player } from '@/hooks/useGameLogic';
 import { MAX_HINT_LEVEL } from '@/lib/daily/dailyScoring';
 import { LETTER_POOL } from '@/lib/gameConfig';
@@ -12,15 +12,15 @@ import { LetterHalo, useHaloAnchor } from '@/components/game/pool/LetterHalo';
 import { LetterFlight } from '@/components/game/pool/LetterFlight';
 import { useLetterFlights } from '@/components/game/pool/useLetterFlights';
 import { useSlotTyping } from './input/useSlotTyping';
+import type { SettleControls } from './input/settleControls';
 import { RevealButton } from './input/RevealButton';
-import { HintButton } from './input/HintButton';
+import { HintControls } from './input/HintControls';
 import { MessageInput } from './input/MessageInput';
 import {
     getEffectiveHintLevel,
     getHintTier,
     getTurnState,
     isSubmitDisabled,
-    valueAfterHint,
 } from './input/inputRules';
 import { useHintNudge } from './input/useHintNudge';
 import { useHintTooltip } from './input/useHintTooltip';
@@ -69,6 +69,13 @@ type GameInputProps = {
      * its home rather than as a new kind of tile.
      */
     settledIndices?: number[];
+    /**
+     * The settle drip, when the game mode has one.
+     *
+     * Absent in a multiplayer room, which has no drip: the composer then falls
+     * back to the reveal at max hints exactly as it always did.
+     */
+    settle?: SettleControls;
 };
 
 /**
@@ -102,6 +109,7 @@ export function GameInput({
     onOpenSettings,
     caretSkipsGreens = LETTER_POOL.CARET_SKIPS_GREENS,
     settledIndices,
+    settle,
 }: GameInputProps) {
     const t = useTranslations('GameRoom.Input');
 
@@ -154,6 +162,7 @@ export function GameInput({
             ? { cipher: targetMessage.cipher_text, hintLevel: targetMessage.hint_level || 0 }
             : undefined,
         settled: settledIndices,
+        pendingSettle: settle?.pendingIndex ?? null,
         targetId: targetMessage?.id,
         setInput,
     });
@@ -183,6 +192,20 @@ export function GameInput({
         reduced: reducedMotion,
     });
 
+    /**
+     * Lands a flight, and reports the settle drip's own letter home.
+     *
+     * The drip holds its letter in the air until this fires, so the write that
+     * makes it real happens exactly when the player sees it arrive. Recognised
+     * by pool id, because a flight key is that id plus a sequence number — the
+     * player may well be typing while a settled letter is still travelling.
+     */
+    const flyingId = model?.flyingId ?? null;
+    const onFlightLand = (key: string) => {
+        flight.land(key);
+        if (flyingId && key.startsWith(`${flyingId}-`)) settle?.onLanded();
+    };
+
     // Matches `CipherText`, so the strip and the word above it never disagree
     // about which way the answer reads.
     const dir = targetMessage && /[֐-׿]/.test(targetMessage.content) ? 'rtl' : 'ltr';
@@ -192,26 +215,6 @@ export function GameInput({
         && !isMaxHints
         && (targetMessage?.hint_level || 0) === 2
         && Boolean(user?.is_anonymous);
-
-    const hintButton = (
-        <HintButton
-            tier={tier}
-            disabled={controlsDisabled}
-            sending={sending}
-            nudgeStage={nudgeStage}
-            isAutoHintActive={isAutoHintActive && !isMaxHints}
-            autoHintProgress={autoHintProgress}
-            autoHintSecondsLeft={autoHintSecondsLeft}
-            isHintPaused={isHintPaused}
-            onGetHint={onGetHint}
-            onToggleHintPause={onToggleHintPause}
-            onReveal={onReveal}
-            canOpenOtherEnd={canOpenOtherEnd}
-            onOpenOtherEnd={onOpenOtherEnd}
-            onOpenSettings={onOpenSettings}
-            onInteract={tooltip.markInteracted}
-        />
-    );
 
     return (
         <div
@@ -228,7 +231,7 @@ export function GameInput({
                     />
                 )}
 
-                <LetterFlight flights={flight.flights} onLand={flight.land} />
+                <LetterFlight flights={flight.flights} onLand={onFlightLand} />
 
                 <div className="flex gap-2 items-center relative">
                     <AnimatePresence>
@@ -256,41 +259,27 @@ export function GameInput({
                     </AnimatePresence>
 
                     {showHintControls && (
-                        isMaxHints ? (
-                            <RevealButton
-                                id="hint-button-trigger"
-                                disabled={controlsDisabled}
-                                onReveal={onReveal}
-                            />
-                        ) : tooltip.hasSeen ? (
-                            hintButton
-                        ) : (
-                            <Tooltip open={tooltip.isOpen} onOpenChange={tooltip.setIsOpen}>
-                                <TooltipTrigger asChild>{hintButton}</TooltipTrigger>
-                                <TooltipContent side="top" align="start">
-                                    {/*
-                                      * Benefit, price, then what survives — in
-                                      * that order. It used to open with the
-                                      * price and close with "deducted from word
-                                      * value", so the only two numbers a
-                                      * hesitating player read were both losses.
-                                      */}
-                                    <div className="text-xs space-y-1">
-                                        <p className="font-bold">{tier ? t(tier.labelKey) : ''}</p>
-                                        <p className="text-muted-foreground">
-                                            {t('cost_pts', { cost: -(tier?.cost ?? 0) })}
-                                        </p>
-                                        <p className="text-[10px] text-muted-foreground opacity-70">
-                                            {t('still_worth', {
-                                                points: targetMessage
-                                                    ? valueAfterHint(targetMessage, effectiveLevel)
-                                                    : 0,
-                                            })}
-                                        </p>
-                                    </div>
-                                </TooltipContent>
-                            </Tooltip>
-                        )
+                        <HintControls
+                            tier={tier}
+                            targetMessage={targetMessage}
+                            effectiveLevel={effectiveLevel}
+                            isMaxHints={isMaxHints}
+                            disabled={controlsDisabled}
+                            sending={sending}
+                            nudgeStage={nudgeStage}
+                            isAutoHintActive={isAutoHintActive && !isMaxHints}
+                            autoHintProgress={autoHintProgress}
+                            autoHintSecondsLeft={autoHintSecondsLeft}
+                            isHintPaused={isHintPaused}
+                            settle={settle}
+                            tooltip={tooltip}
+                            onGetHint={onGetHint}
+                            onToggleHintPause={onToggleHintPause}
+                            onReveal={onReveal}
+                            canOpenOtherEnd={canOpenOtherEnd}
+                            onOpenOtherEnd={onOpenOtherEnd}
+                            onOpenSettings={onOpenSettings}
+                        />
                     )}
 
                     {showGuestReveal && (

@@ -128,3 +128,73 @@ describe('useSlotTyping — resets', () => {
         expect(result.current.typed).toBe('');
     });
 });
+
+describe('useSlotTyping — a letter the settle drip is flying in', () => {
+    /**
+     * The binding that makes the animation possible at all.
+     *
+     * A settled letter counts as placed, which takes it out of the pool and
+     * unmounts its halo chip — and a chip that has unmounted has no rectangle
+     * to fly from. So while a letter is in the air it is bound here instead:
+     * still in the pool, but claiming its slot, which is exactly the state a
+     * letter the *player* typed is in. `useLetterFlights` cannot tell the two
+     * apart, and that is the point.
+     */
+    const flying = (index: number) => setup({
+        text: 'Harmony',
+        guesses: ['harpoon'],
+        pendingSettle: index,
+    });
+
+    // HARMONY against "harpoon": h, a, r and o land in place, so the one
+    // letter found-but-unplaced is the N at index 5. That is the only position
+    // the drip could ever choose here.
+    const FLYING_INDEX = 5;
+    const FLYING_ID = `pool-msg1-${FLYING_INDEX}`;
+
+    it('keeps the flying letter in the pool, so it still has a chip to leave from', () => {
+        const { result } = flying(FLYING_INDEX);
+        const ids = result.current.model!.pool.map((letter) => letter.id);
+
+        expect(ids).toContain(FLYING_ID);
+    });
+
+    it('binds it to the slot it is heading for, which is what launches the flight', () => {
+        const { result } = flying(FLYING_INDEX);
+
+        expect(result.current.model!.placements.get(FLYING_ID)).toBe(FLYING_INDEX);
+        expect(result.current.model!.placed.has(FLYING_ID)).toBe(true);
+        expect(result.current.model!.flyingId).toBe(FLYING_ID);
+    });
+
+    it('fills the cell it is flying to, so the letter has somewhere to land', () => {
+        const { result } = flying(FLYING_INDEX);
+        const slot = result.current.model!.slots.find((cell) => cell.index === FLYING_INDEX);
+
+        expect(slot?.char?.toLowerCase()).toBe('n');
+        expect(slot?.poolId).toBe(FLYING_ID);
+    });
+
+    it('does nothing when the pool has no letter for that position', () => {
+        // The board moved underneath the flight. Drawing a letter the pool
+        // cannot account for is the one outcome worth refusing outright.
+        const { result } = setup({
+            text: 'Harmony',
+            guesses: [],
+            pendingSettle: FLYING_INDEX,
+        });
+
+        expect(result.current.model!.flyingId).toBeNull();
+    });
+
+    it('leaves the rest of the strip alone', () => {
+        // It fills a slot that was open and touches nothing else — the reading
+        // of what the player typed must not shift underneath them.
+        const plain = setup({ text: 'Harmony', guesses: ['harpoon'] });
+        const withFlight = flying(FLYING_INDEX);
+
+        expect(withFlight.result.current.model!.groups.length)
+            .toBe(plain.result.current.model!.groups.length);
+    });
+});
+

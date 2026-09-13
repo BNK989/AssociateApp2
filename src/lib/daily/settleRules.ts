@@ -179,3 +179,44 @@ export function settlesDueBy(pressureMs: number, policy: SettlePolicy): number {
     if (pressureMs < policy.firstDelayMs) return 0;
     return 1 + Math.floor((pressureMs - policy.firstDelayMs) / policy.intervalMs);
 }
+
+/**
+ * Where the wait stands: how long until the next letter, and how far through.
+ *
+ * Exported so the composer can draw the countdown without re-deriving the
+ * schedule. That matters more than saving a few lines — the ring and the letter
+ * have to agree to the tick, or the player watches a ring hit zero and nothing
+ * happen, which reads as the game stalling rather than as help arriving.
+ *
+ * The percentage counts *up* toward the next letter, so a full ring means one
+ * is landing. The auto-hint ring drains instead, and the difference is
+ * deliberate: that clock is the game taking something away from the score, this
+ * one is the game bringing something. Same vocabulary, opposite direction.
+ */
+export function settleCountdown(
+    pressureMs: number,
+    policy: SettlePolicy,
+    /** `offered` skips the first delay: the player has already been given one. */
+    started: boolean,
+): { msUntilNext: number; progressPercent: number } {
+    const firstDelay = started ? 0 : policy.firstDelayMs;
+
+    if (pressureMs < firstDelay) {
+        return {
+            msUntilNext: firstDelay - pressureMs,
+            progressPercent: clampPercent((pressureMs / firstDelay) * 100),
+        };
+    }
+
+    const since = (pressureMs - firstDelay) % policy.intervalMs;
+
+    return {
+        msUntilNext: policy.intervalMs - since,
+        progressPercent: clampPercent((since / policy.intervalMs) * 100),
+    };
+}
+
+function clampPercent(value: number): number {
+    if (!Number.isFinite(value)) return 0;
+    return Math.max(0, Math.min(100, value));
+}

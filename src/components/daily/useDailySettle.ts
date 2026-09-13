@@ -1,17 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Message } from '@/hooks/useGameLogic';
-import { createLogger } from '@/lib/logger';
 import {
     canSettle,
     nextSettleIndex,
     settleAllowance,
     settleArmed,
+    settleCountdown,
     settlePressure,
     settlesDueBy,
 } from '@/lib/daily/settleRules';
 import type { SettlePolicy } from '@/lib/daily/settlePolicy';
-
-const log = createLogger('daily/settle');
+import { useSettlePlacement } from './useSettlePlacement';
 
 /**
  * How often the drip re-decides. Well under the smallest sensible interval, and
@@ -19,7 +18,7 @@ const log = createLogger('daily/settle');
  * depends on strikes as well as time, so re-deciding on a tick is simpler than
  * rescheduling on every input change.
  */
-const TICK_MS = 1000;
+const TICK_MS = 250;
 
 type UseDailySettleArgs = {
     targetMessage?: Message;
@@ -63,6 +62,12 @@ type UseDailySettleArgs = {
  * instant they accept: accepting has to feel like a reward, not the start of a
  * wait.
  */
+/** The drip's state as the ceiling sees it: the airborne letter counts. */
+function withPending<T extends { settled: readonly number[] }>(state: T, pending: number | null): T {
+    if (pending === null) return state;
+    return { ...state, settled: [...state.settled, pending] };
+}
+
 export function useDailySettle({
     targetMessage,
     policy,
@@ -114,19 +119,37 @@ export function useDailySettle({
      */
     const placedHere = useRef(0);
 
-    // A new word is a fresh start: the clock goes back to zero and the player's
-    // acceptance does not carry over. Accepting on one word is not consent for
-    // the game to place letters on every word after it.
-    if (clock.wordId !== targetId) {
-        setClock({ wordId: targetId, accepted: false, pressureMs: 0 });
-        placedHere.current = 0;
-        startedAt.current = 0;
-    }
-
     const settled = useMemo(
         () => targetMessage?.settled_indices ?? [],
         [targetMessage?.settled_indices],
     );
+
+    const {
+        pendingIndex,
+        launch,
+        commit: commitPending,
+        clear: clearPending,
+    } = useSettlePlacement({
+        targetMessage,
+        policy,
+        settled,
+        hintLevel,
+        patchTarget,
+        indexOfMessage,
+        onSettled,
+    });
+
+    // A new word is a fresh start: the clock goes back to zero, the player's
+    // acceptance does not carry over, and any letter still in the air is
+    // forgotten rather than written onto a word it does not belong to.
+    // Accepting on one word is not consent for the game to place letters on
+    // every word after it.
+    if (clock.wordId !== targetId) {
+        setClock({ wordId: targetId, accepted: false, pressureMs: 0 });
+        placedHere.current = 0;
+        startedAt.current = 0;
+        clearPending();
+    }
 
     const state = useMemo(
         () => (targetMessage
@@ -155,7 +178,11 @@ export function useDailySettle({
         state
         && !gameOver
         && settleArmed(hintLevel, policy)
-        && canSettle(state),
+        // The letter in the air counts against the ceiling even though it is
+        // not written down yet. Without it `canSettle` would hand out one more
+        // than the allowance every time a flight was running, and the last word
+        // of a tight allowance would come out a letter short for the player.
+        && canSettle(withPending(state, pendingIndex)),
     );
 
     // The clock runs only where it means something: after acceptance in
@@ -186,38 +213,32 @@ export function useDailySettle({
     const settleOne = useCallback((source: 'auto' | 'offered') => {
         if (!targetMessage || !state || gameOver) return false;
 
-        const slotIndex = nextSettleIndex(state);
+        // The ceiling, checked against this hook's own launch count as well as
+        // the word's.
+        //
+        // `settled_indices` is a round trip — the write re-renders the tree and
+        // the updated message arrives a commit later — so between a landing and
+        // the board catching up, the prop under-reports. Trusting it alone let
+        // the drip launch past the allowance in exactly that window, which on a
+        // tight allowance is the difference between leaving the player two
+        // letters and leaving them one.
+        if (Math.max(placedHere.current, settled.length) >= settleAllowance(state.text, policy)) {
+            return false;
+        }
+
+        // Through `withPending` so a letter still in the air can never be
+        // chosen twice, whatever route reached here.
+        const slotIndex = nextSettleIndex(withPending(state, pendingIndex));
         if (slotIndex === null) return false;
 
-        const next = [...settled, slotIndex];
-        const allowance = settleAllowance(targetMessage.content, policy);
+        // Counted at launch, not at landing: the clock has to know a letter is
+        // on its way or it would owe another on the very next tick and put two
+        // in the air for one interval.
         placedHere.current += 1;
-
-        patchTarget(targetMessage.id, { settled_indices: next });
-
-        log.debug('place', 'A found letter walked into place', {
-            word_index: indexOfMessage(targetMessage.id),
-            slot_index: slotIndex,
-            settled: next.length,
-            allowance,
-            hint_level: hintLevel,
-            source,
-        });
-
-        onSettled?.({
-            message: targetMessage,
-            index: indexOfMessage(targetMessage.id),
-            slotIndex,
-            settledCount: next.length,
-            allowance,
-            source,
-        });
+        launch(slotIndex, source);
 
         return true;
-    }, [
-        targetMessage, state, gameOver, settled, policy,
-        patchTarget, indexOfMessage, hintLevel, onSettled,
-    ]);
+    }, [targetMessage, state, gameOver, pendingIndex, launch, settled.length, policy]);
 
     /**
      * The player taking the offer up.
@@ -233,6 +254,31 @@ export function useDailySettle({
         setClock((prev) => ({ ...prev, accepted: true, pressureMs: 0 }));
         settleOne('offered');
     }, [clock.accepted, available, settleOne]);
+
+    /**
+     * The player asking for the next letter now rather than waiting it out.
+     *
+     * The manual counterpart of the drip, and the same move the hint button
+     * makes against the ladder — a countdown the player can always pre-empt. It
+     * restarts the interval from this moment, so taking one early does not make
+     * the next one arrive early too.
+     *
+     * It is also how the drip starts at all from the composer: a player who
+     * never saw the stuck offer, or waved it away, still has the button.
+     */
+    const settleNow = useCallback(() => {
+        if (!available || pendingIndex !== null) return;
+
+        if (!clock.accepted) {
+            accept();
+            return;
+        }
+
+        startedAt.current = Date.now();
+        setClock((prev) => ({ ...prev, pressureMs: 0 }));
+        placedHere.current = 0;
+        settleOne('offered');
+    }, [available, pendingIndex, clock.accepted, accept, settleOne]);
 
     /**
      * How many letters should have been placed on this word by now.
@@ -267,11 +313,17 @@ export function useDailySettle({
     // work already done. Keyed on `pressureMs` so a backlog drains a letter a
     // tick; in steady state the tick that changes `owed` is the one that places.
     useEffect(() => {
-        if (!running || owed <= placedHere.current) return;
+        if (!running || pendingIndex !== null || owed <= placedHere.current) return;
         place.current(policy.mode === 'auto' ? 'auto' : 'offered');
         // Driven by the clock alone; `place` is a ref for the reason above.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [running, owed, clock.pressureMs, policy.mode]);
+    }, [running, owed, clock.pressureMs, policy.mode, pendingIndex]);
+
+    const countdown = settleCountdown(
+        settlePressure({ msOnWord: clock.pressureMs, strikes }, policy),
+        policy,
+        clock.accepted || placedHere.current > 0,
+    );
 
     return {
         /** Whether the stuck ladder may offer this rung on the current word. */
@@ -279,6 +331,17 @@ export function useDailySettle({
         /** Whether letters are currently landing on this word. */
         running,
         accept,
+        settleNow,
         settledIndices: settled,
+        /** The letter in the air, which the composer flies and then reports back. */
+        pendingIndex,
+        onLanded: commitPending,
+        /** 0–100 toward the next letter. Counts *up*: a full ring is a landing. */
+        progress: running ? countdown.progressPercent : 0,
+        secondsLeft: running ? Math.max(0, Math.ceil(countdown.msUntilNext / 1000)) : 0,
+        /** Letters the drip may still place on this word, the airborne one included. */
+        lettersLeft: state
+            ? Math.max(0, settleAllowance(state.text, policy) - settled.length)
+            : 0,
     };
 }

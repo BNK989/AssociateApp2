@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
     canSettle,
+    settleCountdown,
     nextSettleIndex,
     orderCandidates,
     settleAllowance,
@@ -218,5 +219,45 @@ describe('settlePressure and settlesDueBy', () => {
         // the same count as one that ticked the whole way through.
         const p = policy({ firstDelayMs: 20_000, intervalMs: 15_000 });
         expect(settlesDueBy(320_000, p)).toBe(21);
+    });
+});
+
+describe('settleCountdown', () => {
+    const p = policy({ firstDelayMs: 20_000, intervalMs: 10_000 });
+
+    it('counts toward the first letter before it has landed', () => {
+        expect(settleCountdown(5_000, p, false)).toEqual({
+            msUntilNext: 15_000,
+            progressPercent: 25,
+        });
+    });
+
+    it('skips the first delay once the drip has started', () => {
+        // In `offered` mode the player has already been given a letter, so the
+        // wait they are watching is the interval, not the opening delay.
+        expect(settleCountdown(0, p, true)).toEqual({
+            msUntilNext: 10_000,
+            progressPercent: 0,
+        });
+    });
+
+    it('counts up, so a full ring means a letter is landing', () => {
+        // The opposite direction from the auto-hint ring, which drains. That
+        // clock takes points away; this one brings a letter.
+        expect(settleCountdown(9_000, p, true).progressPercent).toBe(90);
+    });
+
+    it('restarts at every interval boundary', () => {
+        expect(settleCountdown(10_000, p, true).progressPercent).toBe(0);
+        expect(settleCountdown(15_000, p, true).progressPercent).toBe(50);
+        expect(settleCountdown(20_000, p, true).progressPercent).toBe(0);
+    });
+
+    it('stays inside 0–100 whatever it is handed', () => {
+        for (const ms of [-1, 0, 1e9, NaN]) {
+            const { progressPercent } = settleCountdown(ms, p, true);
+            expect(progressPercent).toBeGreaterThanOrEqual(0);
+            expect(progressPercent).toBeLessThanOrEqual(100);
+        }
     });
 });

@@ -13,6 +13,8 @@ import {
     type CaretMode,
 } from '@/lib/letterPool/slotRules';
 import { resolveTyping } from '@/lib/letterPool/readingRules';
+import type { PoolLetter } from '@/lib/letterPool/poolRules';
+import type { Slot } from '@/lib/letterPool/slotRules';
 
 type UseSlotTypingArgs = {
     /** The answer being solved. Absent when there is nothing to solve. */
@@ -34,6 +36,18 @@ type UseSlotTypingArgs = {
      * keyed on its contents so a new letter landing re-solves the strip.
      */
     settled?: number[];
+    /**
+     * The position a settling letter is flying to, while it is in the air.
+     *
+     * Deliberately *not* in `settled`. A settled letter counts as placed, which
+     * takes it out of the pool and unmounts its halo chip — and a chip that has
+     * unmounted has no rectangle to fly from. Binding it here instead keeps the
+     * letter in the pool and hands its slot to `resolvePlacements`, which is
+     * exactly the state a typed placement is in: `useLetterFlights` sees a pool
+     * id arrive in a slot and launches, with no idea the game rather than the
+     * player put it there.
+     */
+    pendingSettle?: number | null;
     /** Identifies the word, so the strip clears when a new one comes up. */
     targetId: string | undefined;
     /**
@@ -60,7 +74,7 @@ type UseSlotTypingArgs = {
  * twice is simply placed twice, and the flight follows.
  */
 export function useSlotTyping({
-    text, guesses, mode, mask, settled, targetId, setInput,
+    text, guesses, mode, mask, settled, pendingSettle, targetId, setInput,
 }: UseSlotTypingArgs) {
     const [typed, setTyped] = useState('');
 
@@ -104,6 +118,13 @@ export function useSlotTyping({
             mask,
             settled: placedBySettle,
         });
+        // The letter in the air, bound to the slot it is heading for. Done after
+        // the strip is built so it cannot disturb the reading of what the
+        // player typed: it fills a slot that was open and touches nothing else.
+        const flying = pendingSettle != null
+            ? bindPending(slots, placements, pool, pendingSettle, `pool-${targetId ?? 'word'}`)
+            : null;
+
         const groups = groupSlots(slots);
 
         return {
@@ -114,6 +135,8 @@ export function useSlotTyping({
             reading: typing.reading,
             longest: longestGroupLength(groups),
             placed: new Set<string>(placements.keys()),
+            /** Pool id of the letter in the air, if any. */
+            flyingId: flying,
             caretIndex: typing.caretIndex,
             attempt: typing.attempt,
             // The field accepts as much as the longer reading can hold, or the
@@ -123,7 +146,10 @@ export function useSlotTyping({
         // guessKey and settledKey stand in for the arrays, whose identities
         // change every render.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [text, guessKey, settledKey, typed, mode, mask?.cipher, mask?.hintLevel, targetId]);
+    }, [
+        text, guessKey, settledKey, pendingSettle, typed,
+        mode, mask?.cipher, mask?.hintLevel, targetId,
+    ]);
 
     // The parent submits `input`, so it carries the assembled answer rather
     // than the keystrokes: in skip mode those are only the gaps between greens.
@@ -151,4 +177,36 @@ export function useSlotTyping({
     };
 
     return { typed, onTypedChange, normalise, model };
+}
+
+/**
+ * Binds a settling letter to the slot it is flying to, in place.
+ *
+ * Mutates the arrays it is handed, which are freshly built one line above and
+ * belong to nobody else yet. Returns the pool id so the composer can recognise
+ * that letter's flight and report the landing back.
+ *
+ * Nothing happens if the pool has no letter for that position: the drip only
+ * ever chooses from the pool, so that means the board moved underneath the
+ * flight, and drawing a letter the pool cannot account for is the one outcome
+ * worth refusing outright.
+ */
+function bindPending(
+    slots: Slot[],
+    placements: Map<string, number>,
+    pool: PoolLetter[],
+    index: number,
+    idPrefix: string,
+): string | null {
+    const poolId = `${idPrefix}-${index}`;
+    const letter = pool.find((entry) => entry.id === poolId);
+    const slot = slots.find((entry) => entry.index === index);
+
+    if (!letter || !slot || slot.kind !== 'open') return null;
+
+    placements.set(poolId, index);
+    slot.char = letter.char;
+    slot.poolId = poolId;
+
+    return poolId;
 }
