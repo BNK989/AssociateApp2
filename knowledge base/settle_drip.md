@@ -111,9 +111,11 @@ at all.
    the offer bar and by the button's `aria-label`, not by a badge — see below.
 2. Either the stuck offer speaks — *"Let the letters find their places?"* — or
    they tap the button themselves. One rung earlier, at hint level 2 with the
-   letters loose, the offer is a fork instead: *"Pick your help: a written clue,
-   or N letters finding their places"*, two buttons, each quoting its price when
-   `showPrices` is on. Picking the clue reads the clue; picking the letters
+   letters loose, the offer is a fork instead: *"Stuck? Grab one:"*, two
+   buttons, *Read the clue* and *Place letters*, each quoting its price when
+   `showPrices` is on. The title is three words on purpose — the buttons carry
+   the sentence, and a longer prompt (it used to spell out both forks) read as
+   a paragraph to get past rather than a hand to take. Picking the clue reads the clue; picking the letters
    starts the drip. Neither closes the other — it is an order, not a trade.
 3. A letter lifts out of the halo, flies to its slot in the composer, and lands
    green.

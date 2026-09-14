@@ -58,9 +58,10 @@ export function messageFor(offer: Offer): Message {
     if (offer.kind === 'stake') return stakeMessage(offer);
 
     // The settle count is here because it used to be a badge on the button,
-    // where a bare number read as a clock.
-    if (offer.kind === 'settle' || offer.kind === 'choice') {
-        return { key: `${offer.kind}_title`, values: { count: offer.lettersLeft } };
+    // where a bare number read as a clock. The choice does without: its title
+    // is three words on purpose, so the two buttons carry the sentence.
+    if (offer.kind === 'settle') {
+        return { key: 'settle_title', values: { count: offer.lettersLeft } };
     }
 
     return { key: `${offer.kind}_title`, values: {} };

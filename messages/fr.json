@@ -245,7 +245,7 @@
             "letter_action": "En montrer une",
             "settle_title": "Laisser les lettres trouver leur place ? Il en reste {count}.",
             "settle_action": "Les placer",
-            "choice_title": "Bloqué ? Choisis ton aide : un indice à lire, ou {count} lettres qui trouvent leur place.",
+            "choice_title": "Bloqué ? Prends-en un :",
             "choice_clue": "Lire l'indice",
             "choice_place": "Placer les lettres",
             "price": "−{points} pts",

@@ -218,7 +218,7 @@ describe('StuckOffer — the choice at hint level 2', () => {
     it('puts both routes in front of the player, and a way to wave them off', () => {
         render(<StuckOffer offer={choice} onAct={noop} onDismiss={noop} />);
 
-        expect(screen.getByText(/choice_title:\{"count":3\}/)).toBeTruthy();
+        expect(screen.getByText(/^choice_title/)).toBeTruthy();
         expect(screen.getAllByRole('button')).toHaveLength(3); // clue, place, dismiss
     });
 
@@ -246,11 +246,12 @@ describe('StuckOffer — the choice at hint level 2', () => {
 
     // The chip carries the bar's sentence as its tooltip. It used to format the
     // key bare, which for a counted title threw on every render of the chip.
-    it('keeps the count when it steps aside to a chip', () => {
-        render(<StuckOffer offer={choice} onAct={noop} onDismiss={noop} />);
+    it('keeps a counted title whole when it steps aside to a chip', () => {
+        const settle = { kind: 'settle', lettersLeft: 3 } as const;
+        render(<StuckOffer offer={settle} onAct={noop} onDismiss={noop} />);
         wait(COLLAPSE_AFTER_MS);
 
-        expect(screen.getByLabelText('reopen').getAttribute('title')).toBe('choice_title:{"count":3}');
+        expect(screen.getByLabelText('reopen').getAttribute('title')).toBe('settle_title:{"count":3}');
     });
 
     // "0 pts" reads as a bug, not as generosity.

@@ -245,7 +245,7 @@
             "letter_action": "Zeig einen",
             "settle_title": "Die Buchstaben ihren Platz finden lassen? Noch {count}.",
             "settle_action": "Platzieren",
-            "choice_title": "Festgefahren? Wähl deine Hilfe: ein Hinweis zum Lesen oder {count} Buchstaben, die ihren Platz finden.",
+            "choice_title": "Festgefahren? Nimm dir eins:",
             "choice_clue": "Hinweis lesen",
             "choice_place": "Buchstaben setzen",
             "price": "−{points} Pkt.",

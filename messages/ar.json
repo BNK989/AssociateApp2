@@ -245,7 +245,7 @@
             "letter_action": "أظهر حرفًا",
             "settle_title": "هل ندع الأحرف تجد أماكنها؟ بقي {count}.",
             "settle_action": "ضعها",
-            "choice_title": "محتار؟ اختر مساعدتك: تلميح مكتوب، أو {count} حروف تجد مكانها.",
+            "choice_title": "علقت؟ اختر واحدة:",
             "choice_clue": "اقرأ التلميح",
             "choice_place": "ضع الحروف",
             "price": "−{points} نقطة",

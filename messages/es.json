@@ -245,7 +245,7 @@
             "letter_action": "Muéstrame una",
             "settle_title": "¿Dejar que las letras encuentren su sitio? Quedan {count}.",
             "settle_action": "Colocarlas",
-            "choice_title": "¿Atascado? Elige tu ayuda: una pista escrita o {count} letras que encuentran su sitio.",
+            "choice_title": "¿Atascado? Elige uno:",
             "choice_clue": "Leer la pista",
             "choice_place": "Colocar letras",
             "price": "−{points} pts",
