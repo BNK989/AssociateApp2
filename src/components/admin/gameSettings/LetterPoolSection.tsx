@@ -24,9 +24,9 @@ export function LetterPoolSection({ form }: LetterPoolSectionProps) {
 
     return (
         <section className="rounded-lg border border-border bg-background p-5">
-            <h2 className="mb-1 text-base font-semibold text-foreground">
+            <h4 className="mb-1 text-base font-semibold text-foreground">
                 How the answer box takes typing
-            </h2>
+            </h4>
             <p className="mb-2 text-xs text-muted-foreground">
                 Found letters sit in a pool above the answer box, where their order cannot be
                 mistaken for their position. The box itself shows one slot per letter, with

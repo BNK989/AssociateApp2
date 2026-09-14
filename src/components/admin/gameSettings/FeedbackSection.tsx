@@ -60,9 +60,9 @@ export function FeedbackSection({ form }: FeedbackSectionProps) {
 
     return (
         <section className="rounded-lg border border-border bg-background p-5">
-            <h2 className="mb-1 text-base font-semibold text-foreground">
+            <h4 className="mb-1 text-base font-semibold text-foreground">
                 How a correct guess feels
-            </h2>
+            </h4>
             <p className="mb-2 text-xs text-muted-foreground">
                 Solves are graded on the share of the word&apos;s value the player kept, so a long
                 word is not automatically a bigger reward. A player who has muted the game stays

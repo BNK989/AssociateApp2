@@ -33,7 +33,7 @@ export function DemoGame({ policies }: { policies: DemoPolicies }) {
     return (
         <section className="rounded-lg border border-border bg-background p-5">
             <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-base font-semibold text-foreground">Try it</h2>
+                <h3 className="text-base font-semibold text-foreground">Try it</h3>
 
                 <Button variant="outline" size="sm" onClick={() => setRun((prev) => prev + 1)}>
                     <RotateCcw className="me-2 h-4 w-4" />

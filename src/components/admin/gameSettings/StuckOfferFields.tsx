@@ -19,9 +19,9 @@ type StuckOfferFieldsProps = {
 export function StuckOfferFields({ policy, setField }: StuckOfferFieldsProps) {
     return (
         <>
-            <h3 className="mt-4 text-sm font-semibold text-foreground">
+            <h5 className="mt-4 text-sm font-semibold text-foreground">
                 When the game speaks up
-            </h3>
+            </h5>
             <p className="mb-1 text-xs text-muted-foreground">
                 The bar under the board that appears once a player has gone quiet on a word.
                 It opens with a reason to keep going, then escalates to a route: a letter, the

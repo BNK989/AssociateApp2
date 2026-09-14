@@ -35,9 +35,9 @@ export function SettleSection({ form }: SettleSectionProps) {
 
     return (
         <section className="rounded-lg border border-border bg-background p-5">
-            <h2 className="mb-1 text-base font-semibold text-foreground">
+            <h4 className="mb-1 text-base font-semibold text-foreground">
                 Letters walking into place
-            </h2>
+            </h4>
             <p className="mb-2 text-xs text-muted-foreground">
                 The rung between the last hint and giving up. Found letters — the ones hanging
                 around the word with no place yet — walk into their real positions one at a time,
@@ -54,7 +54,7 @@ export function SettleSection({ form }: SettleSectionProps) {
 
             <StuckOfferFields policy={p} setField={form.setField} />
 
-            <h3 className="mt-6 text-sm font-semibold text-foreground">The drip</h3>
+            <h5 className="mt-6 text-sm font-semibold text-foreground">The drip</h5>
 
             <SettleField
                 label="How it starts"

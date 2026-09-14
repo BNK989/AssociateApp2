@@ -125,9 +125,9 @@ export function ChoiceForkFields({ policy, setField }: ChoiceForkFieldsProps) {
 
     return (
         <>
-            <h3 className="mt-6 text-sm font-semibold text-foreground">
+            <h5 className="mt-6 text-sm font-semibold text-foreground">
                 Where the game asks instead
-            </h3>
+            </h5>
             <p className="mb-1 text-xs text-muted-foreground">
                 One rung of the ladder can put two or more moves side by side and let the player
                 pick, rather than handing the next one over. The same help either way — what the

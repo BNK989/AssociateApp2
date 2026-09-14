@@ -36,7 +36,7 @@ function SettingField({ label, hint, control }: Field) {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
     return (
         <section className="rounded-lg border border-border bg-background p-5">
-            <h2 className="mb-1 text-base font-semibold text-foreground">{title}</h2>
+            <h4 className="mb-1 text-base font-semibold text-foreground">{title}</h4>
             <div>{children}</div>
         </section>
     );
@@ -70,25 +70,6 @@ export function GameSettingsForm({ form, usingFallback }: GameSettingsFormProps)
                     </div>
                 </div>
             )}
-
-            <Section title="Who these apply to">
-                <SettingField
-                    label="Scope"
-                    hint="Default seeds only players who have never touched their own hint settings. Force overrides everyone — including you, which is what you want while balancing."
-                    control={(
-                        <Select
-                            value={form.scope}
-                            onValueChange={(v) => form.setScope(v as GameSettingsScope)}
-                        >
-                            <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="default">Default (new players)</SelectItem>
-                                <SelectItem value="force">Force (everyone)</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    )}
-                />
-            </Section>
 
             <Section title="How words open">
                 <SettingField
@@ -208,9 +189,31 @@ export function GameSettingsForm({ form, usingFallback }: GameSettingsFormProps)
                 </div>
             </Section>
 
-            <Section title="Games already in progress">
+            {/* Last rather than first. Both fields decide who a change reaches and
+                when, which is not a question a game master can answer before they
+                have made one — and a scope dropdown at the top of the page asked
+                exactly that. They stay inside this form because the hint policy's
+                single save is what writes them. */}
+            <Section title="Who these reach, and when">
                 <SettingField
-                    label="When these settings change"
+                    label="Scope"
+                    hint="Default seeds only players who have never touched their own hint settings. Force overrides everyone — including you, which is what you want while balancing."
+                    control={(
+                        <Select
+                            value={form.scope}
+                            onValueChange={(v) => form.setScope(v as GameSettingsScope)}
+                        >
+                            <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="default">Default (new players)</SelectItem>
+                                <SelectItem value="force">Force (everyone)</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    )}
+                />
+
+                <SettingField
+                    label="Games already in progress"
                     hint="Keep leaves anyone mid-game alone, so a change lands tomorrow. Restart discards their progress so it takes effect at once."
                     control={(
                         <Select

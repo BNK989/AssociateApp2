@@ -29,9 +29,11 @@ export default async function GameSettingsPage() {
             <div>
                 <h2 className="text-3xl font-bold tracking-tight">Game Settings</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                    How the daily game hands out hints, how rewarding a correct guess feels, how
-                    the answer box takes typing, and what a stuck player is offered before the
-                    reveal. Changes take effect on the next page load — no deploy needed.
+                    Grouped by when the player meets them: what the daily game gives away while a
+                    word is unsolved, how the answer box takes typing, what a stuck player is
+                    offered before the reveal, and how rewarding a correct guess feels. Changes
+                    take effect on the next page load — no deploy needed. The board on the right
+                    plays whatever is in the form, saved or not.
                 </p>
             </div>
 

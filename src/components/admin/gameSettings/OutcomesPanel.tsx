@@ -27,7 +27,7 @@ function seconds(ms: number): string {
 /**
  * How each configuration has actually played.
  *
- * The panel above changes the rules; this says whether the change helped. Rows
+ * The groups above change the rules; this says whether the change helped. Rows
  * are one per revision, newest first, so a change is judged against the one
  * before it rather than against a date range that mixes both.
  */
@@ -59,7 +59,7 @@ export function OutcomesPanel({ currentRevision }: { currentRevision: number }) 
     return (
         <section className="rounded-lg border border-border bg-background p-5">
             <div className="mb-1 flex items-center justify-between gap-4">
-                <h2 className="text-base font-semibold text-foreground">How it has played</h2>
+                <h4 className="text-base font-semibold text-foreground">How it has played</h4>
                 <Button variant="ghost" size="sm" onClick={load} disabled={loading}>
                     <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                     <span className="sr-only">Refresh</span>

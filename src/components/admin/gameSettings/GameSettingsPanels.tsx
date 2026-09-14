@@ -9,6 +9,7 @@ import { FeedbackSection } from './FeedbackSection';
 import { LetterPoolSection } from './LetterPoolSection';
 import { SettleSection } from './SettleSection';
 import { OutcomesPanel } from './OutcomesPanel';
+import { SettingsGroup } from './SettingsGroup';
 import { DemoGame } from './demo/DemoGame';
 import { useGameSettingsForm, type GameSettingsScope } from './useGameSettingsForm';
 import { useFeedbackSettingsForm } from './useFeedbackSettingsForm';
@@ -58,12 +59,29 @@ export function GameSettingsPanels(
 
     return (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
-            <div className="min-w-0 space-y-6">
-                <GameSettingsForm form={hintForm} usingFallback={usingFallback} />
-                <FeedbackSection form={feedbackForm} />
-                <LetterPoolSection form={letterPoolForm} />
-                <SettleSection form={settleForm} />
-                <OutcomesPanel currentRevision={hintForm.revision} />
+            <div className="min-w-0 space-y-10">
+                <SettingsGroup
+                    title="While a word is unsolved"
+                    blurb="Everything between a word arriving and the player getting it: what the game gives away and when, how the answer box takes their typing, and what it says to someone who has stopped typing altogether."
+                >
+                    <GameSettingsForm form={hintForm} usingFallback={usingFallback} />
+                    <LetterPoolSection form={letterPoolForm} />
+                    <SettleSection form={settleForm} />
+                </SettingsGroup>
+
+                <SettingsGroup
+                    title="When a word lands"
+                    blurb="The half second after a correct guess. The chime, the burst and the shake say how well the player did before they have read a single number, so they are graded on the same scale the score is."
+                >
+                    <FeedbackSection form={feedbackForm} />
+                </SettingsGroup>
+
+                <SettingsGroup
+                    title="Afterwards"
+                    blurb="What these settings did once real players met them. Nothing here is editable — it is the record every change above is judged against."
+                >
+                    <OutcomesPanel currentRevision={hintForm.revision} />
+                </SettingsGroup>
             </div>
 
             {/* Pinned, because the point of it is to answer a question about the

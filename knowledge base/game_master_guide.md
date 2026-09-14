@@ -54,7 +54,28 @@ has to go, or the experiment has to move into the policy itself.
 
 ## 2. What you control
 
-The page has three panels. Everything in sections 2–6 below is the **hint
+The page is grouped by **when the player meets a setting**, not by which policy
+row stores it. Three rails run down the left-hand column, with the demo game
+(§3a) pinned beside them:
+
+| Group | The moment it owns | What is in it |
+| :--- | :--- | :--- |
+| **While a word is unsolved** | Everything between a word arriving and the player getting it | The hint ladder, the answer box, the drip and the stuck offer |
+| **When a word lands** | The half second after a correct guess | Reward feedback |
+| **Afterwards** | What these settings did once real players met them | *How it has played* (§6), read-only |
+
+Inside the first group the panels run in the order a player meets them: what the
+game gives away and when, then how the answer box takes their typing, then what
+it says to someone who has stopped typing altogether.
+
+The two administrative fields — **Scope** (§4) and **Games already in progress**
+(§5) — sit at the **foot of the hint form**, not at the head of the page. Both
+decide who a change reaches and when, which is not a question a game master can
+answer before they have made one, and a scope dropdown above the first setting
+asked exactly that. They stay inside that form because the hint policy's single
+save is what writes them.
+
+Everything in sections 2–6 below is the **hint
 policy** (key `daily_hint_policy`). *How a correct guess feels* is the
 **reward-feedback policy** (key `daily_feedback`): the solve chime, its streak
 pitch, the wrong-guess tone, the spark burst and the flourish scale. It has its
@@ -255,6 +276,9 @@ quota to show you what level 3 looks like.
 
 ## 4. Scope — read this before you tune anything
 
+The **Scope** select is the first field of *Who these reach, and when*, at the
+foot of the hint form (§2).
+
 **`default`** seeds only players who have never touched their own hint settings.
 **`force`** overrides everyone.
 
@@ -280,9 +304,10 @@ someone already mid-game — they finish the day on the configuration they
 started with. That is the `keep` setting, and it is why a change can look like
 it did nothing.
 
-Set **When these settings change → restart** if you want a change to land
-immediately. It discards in-progress games for anyone on an older revision.
-Fine while you have almost no players; rude once you do.
+Set **Games already in progress → Restart their game** — beside Scope at the
+foot of the hint form — if you want a change to land immediately. It discards
+in-progress games for anyone on an older revision. Fine while you have almost no
+players; rude once you do.
 
 ---
 
@@ -343,10 +368,37 @@ The same `settings_revision` is attached to the `daily_game_entered`,
 | Raising a word as the player reaches it | [`src/lib/daily/arrivalHints.ts`](../src/lib/daily/arrivalHints.ts) |
 | A hint level → the mask and clue it shows | [`src/lib/daily/hintVisuals.ts`](../src/lib/daily/hintVisuals.ts) |
 | The demo game | [`src/components/admin/gameSettings/demo/`](../src/components/admin/gameSettings/demo/) |
+| The page's groups and column layout | [`GameSettingsPanels.tsx`](../src/components/admin/gameSettings/GameSettingsPanels.tsx), [`SettingsGroup.tsx`](../src/components/admin/gameSettings/SettingsGroup.tsx) |
 | Scoring, including free hints | [`src/lib/daily/dailyScoring.ts`](../src/lib/daily/dailyScoring.ts) |
 
 Every pure module above has a colocated `.test.ts`. Behaviour changes go in the
 pure module with a test, not in the hook or component.
+
+### The page's shape
+
+`GameSettingsPanels.tsx` mounts all four form hooks, hands their drafts to the
+demo, and lays the page out as a two-column grid: the groups in the first
+column, the demo pinned (`lg:sticky`) in the second, because the point of the
+demo is to answer a question about the field being edited without scrolling away
+from that field.
+
+`SettingsGroup` is the rail: a heading naming the moment, one sentence of
+orientation, and the panels for it. Deliberately a rail rather than a box — the
+panels inside it are already boxes, and a box around boxes reads as another
+level of nesting to open.
+
+The headings nest rather than sitting flat, which they did not before the
+regroup:
+
+| Level | Who renders it |
+| :--- | :--- |
+| `h1` | *Associate Admin*, the admin layout |
+| `h2` | *Game Settings*, the page |
+| `h3` | A `SettingsGroup` rail — and *Try it*, its peer in the other column |
+| `h4` | A panel: *How words open*, *The automatic ladder*, *Letters walking into place*, *How it has played* |
+| `h5` | A subhead inside a panel: *The drip*, *When the game speaks up*, *Where the game asks instead* |
+
+A new panel picks its level from where it renders, not from how big it looks.
 
 ### The policy
 
@@ -432,7 +484,9 @@ back down.
    a per-field fallback), plus a test.
 2. Give `DEFAULT_HINT_POLICY` the value that preserves current behaviour.
 3. Consume it where the behaviour lives — the pure module, not the component.
-4. Add a control to `GameSettingsForm.tsx`.
+4. Add a control to `GameSettingsForm.tsx`, in the group whose moment the
+   setting belongs to (§2) rather than beside the settings that share its
+   policy row — the page is ordered by the player's path, not by storage.
 5. Check it is legible in the demo game (§3a). A setting the demo cannot show is
    a setting a game master cannot evaluate.
 6. Document it in §2 here.
