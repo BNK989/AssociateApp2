@@ -447,6 +447,23 @@ never the reverse.
 No new i18n keys: the two added buttons reuse `other_end_action` and
 `reveal_action`, which the ladder already says elsewhere with the same meaning.
 
+### Seeing it without waiting for it (2026-09-14)
+
+A composed fork is unreadable as a form. The demo board beside the panel mounts
+the shipped `StuckOffer` and the shipped drip, so the row a game master just
+composed appears as the bar the player will get, and the letters walk into place
+at the pace they just set.
+
+The one thing in the way was the clock: the fork is second-tier, twenty seconds
+of silence away. **Skip 10s ahead** in `DemoControls` credits `useStuckOffer`
+with dwell — the same currency a wrong guess pays in — so one press reaches the
+first offer and two reach the fork. The credit is held against the word it was
+granted on and falls away with it, which is why it is tagged state in `DemoBoard`
+rather than a reset in an effect. Nothing in `stuckSignals.ts` knows the demo
+exists; `creditMs` is added to `msOnWord` at the hook boundary.
+
+See [`game_master_guide.md`](game_master_guide.md) §3a.
+
 ---
 
 ## What to measure

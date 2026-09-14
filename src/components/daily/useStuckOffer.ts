@@ -39,6 +39,16 @@ type UseStuckOfferArgs = {
     timing: StuckTiming;
     /** The game master's fork: which rung asks, and what it asks with. */
     choice: ChoiceFork;
+    /**
+     * Dwell credited on top of the clock, in milliseconds.
+     *
+     * The same shape as the credit a wrong guess already buys, and it exists
+     * for the same reason: the ladder is driven by pressure rather than by
+     * wall-clock time, so pressure can be supplied. The admin demo board uses
+     * it to skip the wait instead of making a game master sit out twenty
+     * seconds of silence to see what they just configured. Zero in the game.
+     */
+    creditMs?: number;
 };
 
 export function useStuckOffer({
@@ -53,6 +63,7 @@ export function useStuckOffer({
     paused,
     timing,
     choice,
+    creditMs = 0,
 }: UseStuckOfferArgs) {
     const [msOnWord, setMsOnWord] = useState(0);
     const [dismissed, setDismissed] = useState(false);
@@ -84,7 +95,7 @@ export function useStuckOffer({
         if (paused || !targetId) return null;
 
         return stuckOffer({
-            msOnWord,
+            msOnWord: msOnWord + creditMs,
             strikes,
             hintLevel,
             canOpenOtherEnd,
@@ -99,7 +110,7 @@ export function useStuckOffer({
     }, [
         paused, targetId, msOnWord, strikes, hintLevel,
         canOpenOtherEnd, canSettle, settleLettersLeft,
-        consecutive, wordsLeft, dismissed, timing, choice,
+        consecutive, wordsLeft, dismissed, timing, choice, creditMs,
     ]);
 
     /**

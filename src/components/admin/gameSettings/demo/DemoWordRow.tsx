@@ -4,6 +4,9 @@ import { Check, Lightbulb, Play, X } from 'lucide-react';
 import type { Message } from '@/hooks/useGameLogic';
 import { CipherText } from '@/components/CipherText';
 import { MAX_STRIKES } from '@/lib/daily/dailyScoring';
+import { shouldBurst, type DailyFeedbackPolicy } from '@/lib/daily/feedbackPolicy';
+import { UNGRADED_FEEDBACK, type JustSolved } from '@/lib/daily/feedbackTiers';
+import { SolveBurst } from '@/components/game/chat/SolveBurst';
 
 const LEVEL_LABELS: Record<number, string> = {
     1: 'First letter',
@@ -17,6 +20,10 @@ type DemoWordRowProps = {
     isTarget: boolean;
     /** True while the last guess on this word was wrong. */
     isWrong: boolean;
+    /** The solve currently flashing, if it is this word's. */
+    justSolved: JustSolved | null;
+    /** The reward draft, which decides the flourish and whether sparks fly. */
+    feedbackPolicy: DailyFeedbackPolicy;
 };
 
 /**
@@ -25,15 +32,26 @@ type DemoWordRowProps = {
  * Uses the same `CipherText` the game does, which is the point of the demo:
  * "level 2 on every word" is a sentence, and this is what it actually looks
  * like on a board the game master has not reached the bottom of yet.
+ *
+ * It also carries the two things the real board only has because of where it
+ * puts a word. The `id` is what the letter halo portals into — the composer and
+ * the bubble are cousins, so the halo finds its anchor by element id — and the
+ * `SolveBurst` is rendered here because in the game it belongs to
+ * `MessageBubble`, which a row is standing in for.
  */
-export function DemoWordRow({ message, isTarget, isWrong }: DemoWordRowProps) {
+export function DemoWordRow(
+    { message, isTarget, isWrong, justSolved, feedbackPolicy }: DemoWordRowProps,
+) {
     const level = message.hint_level || 0;
     const strikes = message.strikes || 0;
     const struckOut = strikes >= MAX_STRIKES && !message.solved_by;
+    const flash = justSolved?.id === message.id ? justSolved : null;
+    const feedback = flash?.feedback ?? UNGRADED_FEEDBACK;
 
     return (
         <li
-            className={`rounded-lg border p-3 transition-colors ${isTarget
+            id={`msg-bubble-${message.id}`}
+            className={`relative rounded-lg border p-3 transition-colors ${isTarget
                 ? 'border-primary/60 bg-primary/5'
                 : 'border-border bg-background'
                 } ${isWrong ? 'animate-shake' : ''}`}
@@ -55,6 +73,7 @@ export function DemoWordRow({ message, isTarget, isWrong }: DemoWordRowProps) {
                     visible={message.is_solved}
                     hintLevel={level}
                     guesses={message.guesses}
+                    settled={message.settled_indices ?? undefined}
                     className="text-lg font-semibold tracking-wide"
                 />
 
@@ -78,6 +97,17 @@ export function DemoWordRow({ message, isTarget, isWrong }: DemoWordRowProps) {
                 <p className="mt-2 border-s-2 border-border ps-3 text-sm text-muted-foreground">
                     {message.ai_hint}
                 </p>
+            )}
+
+            {flash && flash.points > 0 && (
+                <SolveBurst
+                    points={flash.points}
+                    tier={feedback.tier}
+                    streakStep={feedback.streakStep}
+                    intensity={feedback.intensity}
+                    flourish={feedbackPolicy.flourish}
+                    withSparks={shouldBurst(feedbackPolicy, feedback.tier)}
+                />
             )}
         </li>
     );

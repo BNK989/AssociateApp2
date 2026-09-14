@@ -2,8 +2,12 @@ import { describe, expect, it, afterEach , vi } from 'vitest';
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { MAX_HINT_LEVEL, MAX_STRIKES } from '@/lib/daily/dailyScoring';
 import { DEFAULT_HINT_POLICY, type DailyHintPolicy, type StartLevelReach } from '@/lib/daily/hintPolicy';
+import { DEFAULT_FEEDBACK_POLICY } from '@/lib/daily/feedbackPolicy';
+import { DEFAULT_LETTER_POOL_POLICY } from '@/lib/daily/letterPoolPolicy';
+import { DEFAULT_SETTLE_POLICY, type SettlePolicy } from '@/lib/daily/settlePolicy';
 import { DEMO_WORDS } from './demoChain';
 import { useDemoGame } from './useDemoGame';
+import type { DemoPolicies } from './demoPolicies';
 
 /**
  * With the anagram switched on, and the ladder priced.
@@ -36,7 +40,7 @@ afterEach(() => cleanup());
  * against the real scheduler, and leaving it armed would make these assertions
  * race a timer rather than test the board.
  */
-function policy(overrides: Partial<DailyHintPolicy> = {}): DailyHintPolicy {
+function hintPolicy(overrides: Partial<DailyHintPolicy> = {}): DailyHintPolicy {
     return {
         ...DEFAULT_HINT_POLICY,
         rungs: DEFAULT_HINT_POLICY.rungs.map((r) => ({ ...r })) as DailyHintPolicy['rungs'],
@@ -45,7 +49,26 @@ function policy(overrides: Partial<DailyHintPolicy> = {}): DailyHintPolicy {
     };
 }
 
-function startingAt(startLevel: number, appliesTo: StartLevelReach): DailyHintPolicy {
+/**
+ * The four drafts the board plays by, with only the ladder varied.
+ *
+ * The other three are the shipped defaults unless a case says otherwise: the
+ * hook reads the settle policy for what the drip charges, and nothing at all
+ * from the feedback or letter-pool ones -- those reach the board, not the rules.
+ */
+function policy(
+    overrides: Partial<DailyHintPolicy> = {},
+    settle: Partial<SettlePolicy> = {},
+): DemoPolicies {
+    return {
+        hint: hintPolicy(overrides),
+        feedback: DEFAULT_FEEDBACK_POLICY,
+        letterPool: DEFAULT_LETTER_POOL_POLICY,
+        settle: { ...DEFAULT_SETTLE_POLICY, ...settle },
+    };
+}
+
+function startingAt(startLevel: number, appliesTo: StartLevelReach): DemoPolicies {
     return policy({ startLevel, startLevelAppliesTo: appliesTo });
 }
 
@@ -109,6 +132,22 @@ describe('useDemoGame', () => {
         solveTarget(free.result);
 
         expect(free.result.current.score).toBeGreaterThan(charged.result.current.score);
+    });
+
+    // The drip is a hint tier like any other, and the demo has to quote what the
+    // scoreboard will actually pay -- otherwise the one panel a game master uses
+    // to price the drip is the one place its price does not show.
+    it('charges for the letters the drip walked into place', () => {
+        const dear = renderHook(() => useDemoGame(policy({}, { costPerLetter: 0.30 })));
+        const free = renderHook(() => useDemoGame(policy({}, { costPerLetter: 0 })));
+
+        for (const hook of [dear, free]) {
+            const id = hook.result.current.targetMessage?.id ?? '';
+            act(() => hook.result.current.patchTarget(id, { settled_indices: [0, 1] }));
+            solveTarget(hook.result);
+        }
+
+        expect(free.result.current.score).toBeGreaterThan(dear.result.current.score);
     });
 
     it('takes a strike for a wrong guess', () => {

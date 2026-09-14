@@ -80,3 +80,6 @@ export function useLetterPoolSettingsForm(initial: { policy: LetterPoolPolicy; r
 
     return { policy, revision, saving, isDirty, setField, discard, replace, save };
 }
+
+/** The letter-pool panel's editing state, passed in from the shell. */
+export type LetterPoolSettingsFormState = ReturnType<typeof useLetterPoolSettingsForm>;

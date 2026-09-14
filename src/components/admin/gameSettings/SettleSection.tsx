@@ -11,14 +11,13 @@ import {
 } from '@/components/ui/select';
 import { MAX_HINT_LEVEL } from '@/lib/gameConfig';
 import { DEFAULT_SETTLE_POLICY, type SettlePolicy } from '@/lib/daily/settlePolicy';
-import { useSettleSettingsForm } from './useSettleSettingsForm';
+import type { SettleSettingsFormState } from './useSettleSettingsForm';
 import { SettlePreview } from './SettlePreview';
 import { SettleField, SecondsInput } from './SettleField';
 import { StuckOfferFields } from './StuckOfferFields';
 
 type SettleSectionProps = {
-    policy: SettlePolicy;
-    revision: number;
+    form: SettleSettingsFormState;
 };
 
 /**
@@ -30,8 +29,7 @@ type SettleSectionProps = {
  * `maxFraction` upward should be able to see, without arithmetic, that they are
  * approaching "the game solves it".
  */
-export function SettleSection({ policy, revision }: SettleSectionProps) {
-    const form = useSettleSettingsForm({ policy, revision });
+export function SettleSection({ form }: SettleSectionProps) {
     const p = form.policy;
     const off = p.mode === 'off';
 

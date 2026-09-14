@@ -137,3 +137,13 @@ function clampDelay(value: number): number {
     if (!Number.isFinite(value)) return 0;
     return Math.max(0, Math.min(MAX_RUNG_DELAY_SECONDS, Math.round(value)));
 }
+
+/**
+ * The panel's editing state, as a value that can be passed around.
+ *
+ * The shell mounts all four of these hooks so the demo can read every draft at
+ * once, and each section receives its own form rather than mounting the hook
+ * itself. Named here so the sections can type the prop without importing the
+ * hook they no longer call.
+ */
+export type GameSettingsFormState = ReturnType<typeof useGameSettingsForm>;

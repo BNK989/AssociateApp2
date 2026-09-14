@@ -3,8 +3,8 @@
 import { useMemo, useState } from 'react';
 import { RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { DailyHintPolicy } from '@/lib/daily/hintPolicy';
 import { DemoBoard } from './DemoBoard';
+import type { DemoPolicies } from './demoPolicies';
 
 /**
  * A playable daily game driven by the settings currently being edited.
@@ -15,16 +15,20 @@ import { DemoBoard } from './DemoBoard';
  * the player, what a start level of 3 gives away, what a solve is worth once
  * free hints stop being charged for.
  *
+ * All four drafts drive it, not just the ladder: the fork appears where the
+ * fork settings put it, the drip runs at the pace they set, the letter pool
+ * behaves as configured and a solve bursts the way the reward settings say.
+ *
  * It plays the draft, not what is saved, so a game master can try a change
  * before shipping it to anyone. Nothing here is persisted: no localStorage, no
  * result rows, no analytics.
  */
-export function DemoGame({ policy }: { policy: DailyHintPolicy }) {
+export function DemoGame({ policies }: { policies: DemoPolicies }) {
     const [run, setRun] = useState(0);
 
     // Remounting is the reset: it clears the board, the score and the hint
     // countdown together, which is exactly what changing a setting should do.
-    const policyKey = useMemo(() => JSON.stringify(policy), [policy]);
+    const policyKey = useMemo(() => JSON.stringify(policies), [policies]);
 
     return (
         <section className="rounded-lg border border-border bg-background p-5">
@@ -43,7 +47,7 @@ export function DemoGame({ policy }: { policy: DailyHintPolicy }) {
                 is recorded, and no player sees it.
             </p>
 
-            <DemoBoard key={`${policyKey}-${run}`} policy={policy} />
+            <DemoBoard key={`${policyKey}-${run}`} policies={policies} />
         </section>
     );
 }

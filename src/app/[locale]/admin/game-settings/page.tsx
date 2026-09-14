@@ -1,8 +1,4 @@
-import { GameSettingsForm } from '@/components/admin/gameSettings/GameSettingsForm';
-import { FeedbackSection } from '@/components/admin/gameSettings/FeedbackSection';
-import { LetterPoolSection } from '@/components/admin/gameSettings/LetterPoolSection';
-import { SettleSection } from '@/components/admin/gameSettings/SettleSection';
-import { OutcomesPanel } from '@/components/admin/gameSettings/OutcomesPanel';
+import { GameSettingsPanels } from '@/components/admin/gameSettings/GameSettingsPanels';
 import {
     getDailyFeedbackSettings,
     getDailyHintSettings,
@@ -39,20 +35,13 @@ export default async function GameSettingsPage() {
                 </p>
             </div>
 
-            <GameSettingsForm
-                policy={settings.policy}
-                scope={settings.scope}
-                revision={settings.revision}
+            <GameSettingsPanels
+                hint={settings}
+                feedback={feedback}
+                letterPool={letterPool}
+                settle={settle}
                 usingFallback={settings.revision === NO_REVISION}
             />
-
-            <FeedbackSection policy={feedback.policy} revision={feedback.revision} />
-
-            <LetterPoolSection policy={letterPool.policy} revision={letterPool.revision} />
-
-            <SettleSection policy={settle.policy} revision={settle.revision} />
-
-            <OutcomesPanel currentRevision={settings.revision} />
         </div>
     );
 }

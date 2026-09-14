@@ -78,3 +78,6 @@ export function useFeedbackSettingsForm(initial: { policy: DailyFeedbackPolicy; 
 
     return { policy, revision, saving, isDirty, setField, discard, replace, save };
 }
+
+/** The feedback panel's editing state, passed in from the shell. */
+export type FeedbackSettingsFormState = ReturnType<typeof useFeedbackSettingsForm>;

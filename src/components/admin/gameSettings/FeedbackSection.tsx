@@ -14,7 +14,7 @@ import {
 import { useRewardFeedback } from '@/hooks/useRewardFeedback';
 import { DEFAULT_FEEDBACK_POLICY, type DailyFeedbackPolicy } from '@/lib/daily/feedbackPolicy';
 import { SOLVE_TIERS, type SolveTier } from '@/lib/daily/feedbackTiers';
-import { useFeedbackSettingsForm } from './useFeedbackSettingsForm';
+import type { FeedbackSettingsFormState } from './useFeedbackSettingsForm';
 
 /** What each tier means, in the words a game master needs rather than in code. */
 const TIER_BLURB: Record<SolveTier, string> = {
@@ -27,8 +27,7 @@ const TIER_BLURB: Record<SolveTier, string> = {
 const PREVIEW_STREAKS = [0, 1, 3, 5];
 
 type FeedbackSectionProps = {
-    policy: DailyFeedbackPolicy;
-    revision: number;
+    form: FeedbackSettingsFormState;
 };
 
 function Field({ label, hint, control }: { label: string; hint: string; control: React.ReactNode }) {
@@ -51,8 +50,7 @@ function Field({ label, hint, control }: { label: string; hint: string; control:
  * every control here is one button away from being heard. Nothing reaches
  * players until Save.
  */
-export function FeedbackSection({ policy, revision }: FeedbackSectionProps) {
-    const form = useFeedbackSettingsForm({ policy, revision });
+export function FeedbackSection({ form }: FeedbackSectionProps) {
     const p = form.policy;
 
     // Previewing the draft means the volume and streak-pitch switches above are
@@ -211,8 +209,8 @@ export function FeedbackSection({ policy, revision }: FeedbackSectionProps) {
 
                 <p className="mt-3 text-xs text-muted-foreground">
                     The <code>+n</code> buttons play that tier as it sounds on a streak of that many
-                    rungs. Sparks and the &ldquo;+points&rdquo; animation are not previewed here —
-                    play the daily game to see those.
+                    rungs. Sparks and the &ldquo;+points&rdquo; animation come with the word rather
+                    than the button — solve one in the demo below to see them.
                 </p>
             </div>
 

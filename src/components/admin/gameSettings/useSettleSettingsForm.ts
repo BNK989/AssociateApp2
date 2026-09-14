@@ -84,3 +84,6 @@ export function useSettleSettingsForm(initial: { policy: SettlePolicy; revision:
 
     return { policy, revision, saving, isDirty, setField, discard, replace, save };
 }
+
+/** The settle panel's editing state, passed in from the shell. */
+export type SettleSettingsFormState = ReturnType<typeof useSettleSettingsForm>;

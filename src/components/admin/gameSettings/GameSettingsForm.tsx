@@ -11,10 +11,9 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { DEFAULT_HINT_POLICY, type DailyHintPolicy } from '@/lib/daily/hintPolicy';
-import { DemoGame } from './demo/DemoGame';
 import { HintRungRow } from './HintRungRow';
 import { HintTimeline } from './HintTimeline';
-import { useGameSettingsForm, type GameSettingsScope } from './useGameSettingsForm';
+import type { GameSettingsFormState, GameSettingsScope } from './useGameSettingsForm';
 
 type Field = {
     label: string;
@@ -44,15 +43,12 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 type GameSettingsFormProps = {
-    policy: DailyHintPolicy;
-    scope: GameSettingsScope;
-    revision: number;
+    form: GameSettingsFormState;
     /** True when the settings table has not been migrated yet. */
     usingFallback: boolean;
 };
 
-export function GameSettingsForm({ policy, scope, revision, usingFallback }: GameSettingsFormProps) {
-    const form = useGameSettingsForm({ policy, scope, revision });
+export function GameSettingsForm({ form, usingFallback }: GameSettingsFormProps) {
     const p = form.policy;
 
     return (
@@ -230,8 +226,6 @@ export function GameSettingsForm({ policy, scope, revision, usingFallback }: Gam
                     )}
                 />
             </Section>
-
-            <DemoGame policy={p} />
 
             <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
                 <Button onClick={form.save} disabled={!form.isDirty || form.saving}>

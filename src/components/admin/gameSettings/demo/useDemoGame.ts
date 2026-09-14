@@ -16,13 +16,41 @@ import {
     MAX_HINT_LEVEL,
     MAX_STRIKES,
 } from '@/lib/daily/dailyScoring';
-import { startLevelFor, type DailyHintPolicy } from '@/lib/daily/hintPolicy';
+import { startLevelFor } from '@/lib/daily/hintPolicy';
 import { hintLevelUpdates } from '@/lib/daily/hintVisuals';
+import { streakAfterSolve } from '@/lib/daily/streakRules';
 import { useAutoHint } from '@/components/daily/useAutoHint';
 import { DEMO_CLUES, DEMO_WORDS, demoClue } from './demoChain';
+import type { DemoPolicies } from './demoPolicies';
 
 const WORDS = [...DEMO_WORDS];
 const CLUES = [...DEMO_CLUES];
+
+/**
+ * What a solve is worth telling the board about.
+ *
+ * The grading itself belongs to `solveFeedback`, which lives with the rest of
+ * the reward rules; what this hook owes its caller is the handful of numbers
+ * that grading needs, at the moment the solve happened. Read back off state
+ * afterwards they would be a render late, and the burst would grade the word
+ * after the one that earned it.
+ */
+export type DemoSolve = {
+    /** The message the burst and the flash belong on. */
+    id: string;
+    word: string;
+    points: number;
+    /** Solves in a row after this one, which is what the streak step reads. */
+    consecutive: number;
+    hintLevel: number;
+    settled: number;
+};
+
+type DemoHandlers = {
+    onSolved?: (solve: DemoSolve) => void;
+    /** The message that was guessed at, so the board can shake that row. */
+    onMissed?: (id: string) => void;
+};
 
 /**
  * A playable daily game for the game-settings panel.
@@ -34,10 +62,13 @@ const CLUES = [...DEMO_CLUES];
  * the demo cannot tell the game master something the game will not.
  *
  * There is no restart here on purpose. The panel remounts this hook whenever
- * the draft policy changes, which resets the board and the countdown together;
+ * the draft policies change, which resets the board and the countdown together;
  * a reset path inside the hook would be a second way to do that, able to drift.
  */
-export function useDemoGame(policy: DailyHintPolicy) {
+export function useDemoGame(policies: DemoPolicies, handlers: DemoHandlers = {}) {
+    const policy = policies.hint;
+    const { onSolved, onMissed } = handlers;
+
     const [messages, setMessages] = useState<Message[]>(
         () => buildInitialMessages({ words: WORDS, policy, hints: CLUES }),
     );
@@ -78,7 +109,7 @@ export function useDemoGame(policy: DailyHintPolicy) {
 
         setGuess('');
 
-        // The demo plays by the daily game's rules, including its matching.
+        // The demo plays by the rules of the real game, including its matching.
         const isMatch = checkAnswer(word, targetMessage.content, {
             hintLevel: targetMessage.hint_level || 0, isSinglePlayer: true,
         });
@@ -94,6 +125,7 @@ export function useDemoGame(policy: DailyHintPolicy) {
                 is_solved: struckOut,
                 guesses: [...(targetMessage.guesses || []), word],
             });
+            onMissed?.(targetMessage.id);
 
             if (struckOut && countRemainingAfterSolve(messages, targetMessage.id) === 0) {
                 setGameOver(true);
@@ -103,6 +135,7 @@ export function useDemoGame(policy: DailyHintPolicy) {
 
         setWrongId(null);
 
+        const settled = (targetMessage.settled_indices || []).length;
         const points = calculateSolvePoints(
             targetMessage.content,
             targetMessage.hint_level,
@@ -110,13 +143,32 @@ export function useDemoGame(policy: DailyHintPolicy) {
             {
                 startLevel: startLevelFor(policy, indexOf(targetMessage.id), WORDS.length),
                 chargeForStartLevel: policy.chargeForStartLevel,
+                // Charged for exactly as `useDailyMoves` charges: letters the
+                // drip walked into place are a hint tier, and a demo that left
+                // them out would quote a better score than the game pays — for
+                // the very setting being edited.
+                settled,
+                settleCostPerLetter: policies.settle.costPerLetter,
+                clueCost: policies.settle.clueCost,
             },
         );
+        const nextConsecutive = streakAfterSolve(consecutive);
 
         setScore((prev) => prev + points);
-        setConsecutive((prev) => prev + 1);
+        setConsecutive(nextConsecutive);
         finish(targetMessage, points);
-    }, [guess, targetMessage, gameOver, consecutive, policy, indexOf, finish, patchTarget, messages]);
+        onSolved?.({
+            id: targetMessage.id,
+            word: targetMessage.content,
+            points,
+            consecutive: nextConsecutive,
+            hintLevel: targetMessage.hint_level || 0,
+            settled,
+        });
+    }, [
+        guess, targetMessage, gameOver, consecutive, policy, policies.settle,
+        indexOf, finish, patchTarget, messages, onSolved, onMissed,
+    ]);
 
     const revealHint = useCallback(() => {
         if (!targetMessage || gameOver) return;
@@ -140,6 +192,12 @@ export function useDemoGame(policy: DailyHintPolicy) {
         }));
     }, [targetMessage, gameOver, policy.progression, indexOf, patchTarget]);
 
+    /**
+     * Ends the word for nothing — which is both what the give-up button does
+     * and what the reveal at the bottom of the stuck ladder does. One function
+     * rather than two identical ones: the word is marked solved for zero
+     * points, so `CipherText` shows it and the chain moves on.
+     */
     const giveUp = useCallback(() => {
         if (!targetMessage || gameOver) return;
         setConsecutive(0);
@@ -153,6 +211,7 @@ export function useDemoGame(policy: DailyHintPolicy) {
         messages,
         targetMessage,
         score,
+        consecutive,
         gameOver,
         guess,
         setGuess,
@@ -161,5 +220,7 @@ export function useDemoGame(policy: DailyHintPolicy) {
         revealHint,
         giveUp,
         countdown,
+        patchTarget,
+        indexOf,
     };
 }

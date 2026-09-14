@@ -3,12 +3,11 @@
 import { RotateCcw, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { DEFAULT_LETTER_POOL_POLICY, type LetterPoolPolicy } from '@/lib/daily/letterPoolPolicy';
-import { useLetterPoolSettingsForm } from './useLetterPoolSettingsForm';
+import { DEFAULT_LETTER_POOL_POLICY } from '@/lib/daily/letterPoolPolicy';
+import type { LetterPoolSettingsFormState } from './useLetterPoolSettingsForm';
 
 type LetterPoolSectionProps = {
-    policy: LetterPoolPolicy;
-    revision: number;
+    form: LetterPoolSettingsFormState;
 };
 
 /**
@@ -20,8 +19,7 @@ type LetterPoolSectionProps = {
  * no route to a server-side setting; a half-applied switch would be worse than
  * none, so that stays a compiled constant.
  */
-export function LetterPoolSection({ policy, revision }: LetterPoolSectionProps) {
-    const form = useLetterPoolSettingsForm({ policy, revision });
+export function LetterPoolSection({ form }: LetterPoolSectionProps) {
     const skips = form.policy.caretSkipsGreens;
 
     return (
