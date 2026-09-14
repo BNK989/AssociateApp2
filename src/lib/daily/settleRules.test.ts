@@ -6,6 +6,7 @@ import {
     settleAllowance,
     settleCandidates,
     revealsUnseen,
+    withPending,
 } from './settleRules';
 import { MAX_HINT_LEVEL } from '@/lib/gameConfig';
 import { DEFAULT_SETTLE_POLICY, type SettlePolicy } from './settlePolicy';
@@ -265,5 +266,22 @@ describe('at the clue, the drip may open a letter as well as place one', () => {
         expect(revealsUnseen(MAX_HINT_LEVEL, policy({ revealFromHintLevel: MAX_HINT_LEVEL }))).toBe(true);
         expect(revealsUnseen(MAX_HINT_LEVEL, policy())).toBe(false);
         expect(revealsUnseen(1, policy({ revealFromHintLevel: 1 }))).toBe(true);
+    });
+});
+
+describe('withPending', () => {
+    const state = { settled: [0, 1] as readonly number[] };
+
+    it('leaves the state alone when nothing is in the air', () => {
+        expect(withPending(state, null)).toBe(state);
+    });
+
+    it('counts the airborne letter against the ceiling', () => {
+        expect(withPending(state, 4).settled).toEqual([0, 1, 4]);
+    });
+
+    it('does not touch the state it was handed', () => {
+        withPending(state, 4);
+        expect(state.settled).toEqual([0, 1]);
     });
 });

@@ -9,6 +9,7 @@ import {
     settleCountdown,
     settlePressure,
     settlesDueBy,
+    withPending,
 } from '@/lib/daily/settleRules';
 import type { SettlePolicy } from '@/lib/daily/settlePolicy';
 import { useSettlePlacement } from './useSettlePlacement';
@@ -63,12 +64,6 @@ type UseDailySettleArgs = {
  * instant they accept: accepting has to feel like a reward, not the start of a
  * wait.
  */
-/** The drip's state as the ceiling sees it: the airborne letter counts. */
-function withPending<T extends { settled: readonly number[] }>(state: T, pending: number | null): T {
-    if (pending === null) return state;
-    return { ...state, settled: [...state.settled, pending] };
-}
-
 export function useDailySettle({
     targetMessage,
     policy,
@@ -147,7 +142,9 @@ export function useDailySettle({
     // every word after it.
     if (clock.wordId !== targetId) {
         setClock({ wordId: targetId, accepted: false, pressureMs: 0 });
+        // eslint-disable-next-line react-hooks/refs -- reset during render, for the reason above
         placedHere.current = 0;
+        // eslint-disable-next-line react-hooks/refs -- reset during render, for the reason above
         startedAt.current = 0;
         clearPending();
     }
@@ -307,6 +304,7 @@ export function useDailySettle({
      * per tick: two letters for one tick, and more as the board got busier.
      */
     const place = useRef(settleOne);
+    // eslint-disable-next-line react-hooks/refs -- latest-value ref, for the reason above
     place.current = settleOne;
 
     // One letter per tick at most, however many are owed, so a player returning
@@ -317,12 +315,12 @@ export function useDailySettle({
         if (!running || pendingIndex !== null || owed <= placedHere.current) return;
         place.current(policy.mode === 'auto' ? 'auto' : 'offered');
         // Driven by the clock alone; `place` is a ref for the reason above.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [running, owed, clock.pressureMs, policy.mode, pendingIndex]);
 
     const countdown = settleCountdown(
         settlePressure({ msOnWord: clock.pressureMs, strikes }, policy),
         policy,
+        // eslint-disable-next-line react-hooks/refs -- the tally is the only record, see above
         clock.accepted || placedHere.current > 0,
     );
 

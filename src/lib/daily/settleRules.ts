@@ -224,6 +224,21 @@ export function nextSettleIndex(state: SettleState): number | null {
     return settleCandidates(state)[0] ?? null;
 }
 
+/**
+ * The drip's state as the ceiling sees it: a letter still in the air counts.
+ *
+ * Without it the ceiling would hand out one more than the allowance every time
+ * a flight was running, and the last word of a tight allowance would come out a
+ * letter short for the player.
+ */
+export function withPending<T extends { settled: readonly number[] }>(
+    state: T,
+    pending: number | null,
+): T {
+    if (pending === null) return state;
+    return { ...state, settled: [...state.settled, pending] };
+}
+
 /** Whether the drip has anything left to place on this word. */
 export function canSettle(state: SettleState): boolean {
     return nextSettleIndex(state) !== null;

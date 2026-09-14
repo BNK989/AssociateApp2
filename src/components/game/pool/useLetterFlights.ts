@@ -57,10 +57,13 @@ type Args = {
  */
 export function useLetterFlights({ placed, placements, letters, loose, reduced }: Args) {
     // Read inside the layout effect below, which must not re-run when the halo
-    // is re-solved — only when a letter actually moves.
+    // is re-solved — only when a letter actually moves. Writing them here is
+    // the latest-value pattern: the effect wants what was true at commit time.
     const halo = useRef(letters);
+    // eslint-disable-next-line react-hooks/refs -- latest-value ref, for the reason above
     halo.current = letters;
     const stillLoose = useRef(loose);
+    // eslint-disable-next-line react-hooks/refs -- latest-value ref, for the reason above
     stillLoose.current = loose;
     const [flights, setFlights] = useState<Flight[]>([]);
     const previous = useRef<{ placed: Set<string>; placements: Map<string, number> }>({
@@ -121,7 +124,6 @@ export function useLetterFlights({ placed, placements, letters, loose, reduced }
         if (launched.length > 0) setFlights((current) => [...current, ...launched]);
         // The halo is re-solved every render and read through a ref above; the
         // placement sets are what actually decide whether anything moved.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [placed, placements, reduced]);
 
     const land = useCallback((key: string) => {

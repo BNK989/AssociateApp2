@@ -258,7 +258,7 @@ a file that has grown past it needs splitting, not pinning.
 
 **Other open items:**
 
-`npm run lint` reports **0 errors, 74 warnings** (measured 2026-09-14). Every
+`npm run lint` reports **0 errors, 72 warnings** (measured 2026-09-14). Every
 rule in this document is enforced and green.
 
 > It was not green on 2026-09-13: three test suites had drifted over the §2 line
@@ -266,17 +266,23 @@ rule in this document is enforced and green.
 > and `max-lines` is an error. All three were split along their `describe`
 > boundaries on 2026-09-14. A suite is a file like any other — the cap applies.
 
+> The two unused `eslint-disable` directives measured the same day were not
+> unused: they named `react-hooks/exhaustive-deps`, which no longer fires there,
+> but their presence made the compiler lint skip the whole hook and swallow six
+> real `react-hooks/refs` errors with it. A disable that names the wrong rule is
+> worse than none. Retargeted per site on 2026-09-14, each with its reason.
+
 | Count | Rule | Severity | Note |
 | ---: | :--- | :--- | :--- |
 | 0 | `@typescript-eslint/no-explicit-any` | error | cleared 2026-08-21 |
 | 0 | `no-restricted-syntax` (RTL) | error | cleared 2026-08-21, 3 annotated exceptions |
 | 0 | `no-console` | error | cleared 2026-08-21 |
 | 0 | `prefer-const`, `ban-ts-comment`, `no-require-imports`, `react/no-unescaped-entities`, `react-hooks/immutability`, `react-hooks/purity` | error | cleared 2026-08-21 |
+| 0 | `react-hooks/refs` | error | 6 annotated per-site exceptions, see the note above |
 | 23 | `react-hooks/set-state-in-effect` | **warn** | deliberate, see below |
 | 39 | `@typescript-eslint/no-unused-vars` | warn | |
 | 7 | `react-hooks/exhaustive-deps` | warn | |
 | 3 | `@next/next/no-img-element` | warn | |
-| 2 | unused `eslint-disable` directive | warn | `useDailySettle.ts`, `useLetterFlights.ts` |
 
 ### `react-hooks/set-state-in-effect` is warn, not error
 
