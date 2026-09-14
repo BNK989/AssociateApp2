@@ -191,8 +191,36 @@ export const SETTLE = {
     FIRST_DELAY_MS: 20_000,
     /** Gap between letters. This is the "slowly" in the whole idea. */
     INTERVAL_MS: 15_000,
-    /** A wrong guess is worth this much dwell, as it is to the stuck offer. */
+    /**
+     * A wrong guess is worth this much dwell on the drip's own clock. The
+     * stuck offer's clock has its own credit, `STUCK_STRIKE_WORTH_MS` below.
+     */
     STRIKE_CREDIT_MS: 12_000,
+    /**
+     * Dwell on a word before the stuck offer says anything at all.
+     *
+     * Long enough that a player who is thinking productively is left alone --
+     * interrupting someone mid-deduction to ask if they are stuck is its own
+     * kind of insult -- and short enough to arrive before the tab closes. Was
+     * 14s until 2026-09-14, and brought forward because in live play the bar
+     * arrived after the player had stopped waiting for it. The hint button's
+     * nudge breathes at 8s; the bar follows two seconds behind it.
+     */
+    STUCK_FIRST_OFFER_MS: 10_000,
+    /**
+     * Dwell before the offer escalates from a reason to keep going to a route:
+     * a letter, the fork, the drip. Was 30s. Set equal to the first offer and
+     * the reason is skipped; the parser never lets it fall below.
+     */
+    STUCK_SECOND_OFFER_MS: 20_000,
+    /**
+     * A wrong guess is worth this much dwell on the stuck offer's clock.
+     *
+     * Someone who has guessed and missed is further into being stuck than
+     * someone who has merely been quiet. Kept under the first offer so a single
+     * miss does not summon the bar on its own; two do.
+     */
+    STUCK_STRIKE_WORTH_MS: 8_000,
     /** Ceiling on the share of a word the drip may place. */
     MAX_FRACTION: 0.5,
     /**

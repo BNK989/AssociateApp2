@@ -1,4 +1,4 @@
-import { MAX_HINT_LEVEL } from '@/lib/gameConfig';
+import { MAX_HINT_LEVEL, SETTLE } from '@/lib/gameConfig';
 import { solvesUntilBonus } from './streakRules';
 
 /** What each fork of the level-2 choice costs, in points. */
@@ -91,24 +91,31 @@ export type StuckOfferKind = StuckOffer['kind'];
 export type StuckAction = Exclude<StuckOfferKind, 'stake' | 'choice'> | 'clue' | 'place';
 
 /**
- * Dwell time before the game says anything at all.
+ * The clock the offer runs on.
  *
- * Long enough that a player who is thinking productively is left alone —
- * interrupting someone mid-deduction to ask if they are stuck is its own kind
- * of insult — and short enough to arrive before the tab closes.
+ * The compiled defaults are `SETTLE.STUCK_*`, with the reasoning on each; a
+ * game master tunes them at `/admin/game-settings`, and they reach the board
+ * through the settle policy. The named constants stay exported for the copy
+ * and the tests that quote them.
  */
-export const FIRST_OFFER_MS = 14_000;
+export type StuckTiming = {
+    /** Dwell before the game says anything at all. */
+    firstOfferMs: number;
+    /** Dwell before the offer escalates from a reason to a route. */
+    secondOfferMs: number;
+    /** What a wrong guess is worth in dwell. */
+    strikeWorthMs: number;
+};
 
-/** Dwell time before the offer escalates from a reason to a route. */
-export const SECOND_OFFER_MS = 30_000;
+export const FIRST_OFFER_MS = SETTLE.STUCK_FIRST_OFFER_MS;
+export const SECOND_OFFER_MS = SETTLE.STUCK_SECOND_OFFER_MS;
+export const STRIKE_WORTH_MS = SETTLE.STUCK_STRIKE_WORTH_MS;
 
-/**
- * A wrong guess is worth this much dwell time.
- *
- * Someone who has guessed and missed is further into being stuck than someone
- * who has merely been quiet, and should reach the useful offers sooner.
- */
-export const STRIKE_WORTH_MS = 12_000;
+export const DEFAULT_STUCK_TIMING: StuckTiming = {
+    firstOfferMs: FIRST_OFFER_MS,
+    secondOfferMs: SECOND_OFFER_MS,
+    strikeWorthMs: STRIKE_WORTH_MS,
+};
 
 export type StuckInput = {
     /** Active time on the current word. */
@@ -134,11 +141,13 @@ export type StuckInput = {
     wordsLeft: number;
     /** Set once the player waves an offer away, so it is not re-offered. */
     dismissed: boolean;
+    /** The game master's clock. Absent, the compiled defaults. */
+    timing?: StuckTiming;
 };
 
 /** Dwell time plus credit for wrong guesses. */
-function pressure({ msOnWord, strikes }: StuckInput): number {
-    return msOnWord + strikes * STRIKE_WORTH_MS;
+function pressure({ msOnWord, strikes }: StuckInput, timing: StuckTiming): number {
+    return msOnWord + strikes * timing.strikeWorthMs;
 }
 
 /**
@@ -168,10 +177,11 @@ function pressure({ msOnWord, strikes }: StuckInput): number {
 export function stuckOffer(input: StuckInput): StuckOffer | null {
     if (input.dismissed) return null;
 
-    const elapsed = pressure(input);
-    if (elapsed < FIRST_OFFER_MS) return null;
+    const timing = input.timing ?? DEFAULT_STUCK_TIMING;
+    const elapsed = pressure(input, timing);
+    if (elapsed < timing.firstOfferMs) return null;
 
-    if (elapsed < SECOND_OFFER_MS) {
+    if (elapsed < timing.secondOfferMs) {
         return {
             kind: 'stake',
             solvesToBonus: solvesUntilBonus(input.consecutive),

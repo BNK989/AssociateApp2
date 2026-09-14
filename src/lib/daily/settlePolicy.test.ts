@@ -82,6 +82,34 @@ describe('parseSettlePolicy', () => {
         expect(parseSettlePolicy({ showPrices: 'no' }).showPrices).toBe(DEFAULT_SETTLE_POLICY.showPrices);
     });
 
+    it('reads the stuck offer clock, clamped like the drip delays', () => {
+        const parsed = parseSettlePolicy({
+            stuckFirstOfferMs: 6_000,
+            stuckSecondOfferMs: 15_000,
+            stuckStrikeWorthMs: 4_000,
+        });
+
+        expect(parsed.stuckFirstOfferMs).toBe(6_000);
+        expect(parsed.stuckSecondOfferMs).toBe(15_000);
+        expect(parsed.stuckStrikeWorthMs).toBe(4_000);
+
+        expect(parseSettlePolicy({ stuckFirstOfferMs: -5 }).stuckFirstOfferMs).toBe(0);
+        expect(parseSettlePolicy({ stuckStrikeWorthMs: 1e9 }).stuckStrikeWorthMs)
+            .toBe(MAX_SETTLE_DELAY_MS);
+        expect(parseSettlePolicy({ stuckFirstOfferMs: 'soon' }).stuckFirstOfferMs)
+            .toBe(DEFAULT_SETTLE_POLICY.stuckFirstOfferMs);
+    });
+
+    it('never stores the route ahead of the reason', () => {
+        // A second offer below the first would put the ladder before the
+        // encouragement. It is lifted to meet the first, which skips the
+        // encouragement instead -- a legitimate setting in its own right.
+        const parsed = parseSettlePolicy({ stuckFirstOfferMs: 30_000, stuckSecondOfferMs: 5_000 });
+
+        expect(parsed.stuckSecondOfferMs).toBe(30_000);
+        expect(parseSettlePolicy({ stuckFirstOfferMs: 60_000 }).stuckSecondOfferMs).toBe(60_000);
+    });
+
     it('never throws, whatever is in the column', () => {
         expect(() => parseSettlePolicy({
             mode: {},

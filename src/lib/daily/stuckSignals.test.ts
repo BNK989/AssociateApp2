@@ -192,3 +192,39 @@ describe('choicePrices', () => {
         expect(choicePrices(17, { clueCost: 0, costPerLetter: 0 })).toEqual({ clue: 0, place: 0 });
     });
 });
+
+describe('the game master\'s clock', () => {
+    // Everything above runs on the compiled defaults, which is what a missing
+    // or empty settle row degrades to. A tuned row arrives as `timing`.
+    const timing = { firstOfferMs: 4_000, secondOfferMs: 9_000, strikeWorthMs: 3_000 };
+
+    it('speaks and escalates on the tuned thresholds rather than the compiled ones', () => {
+        expect(at({ timing, msOnWord: 3_999 })).toBeNull();
+        expect(at({ timing, msOnWord: 4_000 })).toMatchObject({ kind: 'stake' });
+        expect(at({ timing, msOnWord: 8_999 })).toMatchObject({ kind: 'stake' });
+        expect(at({ timing, msOnWord: 9_000 })).toEqual({ kind: 'letter' });
+    });
+
+    it('values a wrong guess at the tuned rate', () => {
+        expect(at({ timing, msOnWord: 1_000, strikes: 1 })).toMatchObject({ kind: 'stake' });
+        expect(at({ timing, msOnWord: 0, strikes: 3 })).toEqual({ kind: 'letter' });
+    });
+
+    it('skips the encouragement when both offers are set to the same moment', () => {
+        const noReason = { ...timing, secondOfferMs: timing.firstOfferMs };
+
+        expect(at({ timing: noReason, msOnWord: 3_999 })).toBeNull();
+        expect(at({ timing: noReason, msOnWord: 4_000 })).toEqual({ kind: 'letter' });
+    });
+
+    it('falls back to the compiled defaults when no clock is given', () => {
+        expect(at({ msOnWord: FIRST_OFFER_MS })).toMatchObject({ kind: 'stake' });
+        expect(at({ msOnWord: SECOND_OFFER_MS })).toEqual({ kind: 'letter' });
+    });
+
+    it('keeps a single wrong guess from summoning the bar on its own', () => {
+        // The compiled default is under the first offer on purpose; a game
+        // master can change that, but the shipped game should not do it.
+        expect(STRIKE_WORTH_MS).toBeLessThan(FIRST_OFFER_MS);
+    });
+});

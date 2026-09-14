@@ -73,6 +73,16 @@ export type SettlePolicy = {
     clueCost: number;
     /** Whether the fork at hint level 2 quotes each option's price. */
     showPrices: boolean;
+    /**
+     * The stuck offer's clock: dwell before the bar first speaks, dwell before
+     * it escalates from a reason to a route, and what a wrong guess is worth on
+     * it. Not the drip's clock -- the offer exists in every mode, `off`
+     * included -- but stored here because the offer is how the drip is reached,
+     * and the settle row already travels to the board.
+     */
+    stuckFirstOfferMs: number;
+    stuckSecondOfferMs: number;
+    stuckStrikeWorthMs: number;
 };
 
 /** The policy that reproduces the behaviour compiled into `gameConfig.ts`. */
@@ -89,6 +99,9 @@ export const DEFAULT_SETTLE_POLICY: SettlePolicy = {
     costPerLetter: SETTLE.COST_PER_LETTER,
     clueCost: SETTLE.CLUE_COST,
     showPrices: SETTLE.SHOW_PRICES,
+    stuckFirstOfferMs: SETTLE.STUCK_FIRST_OFFER_MS,
+    stuckSecondOfferMs: SETTLE.STUCK_SECOND_OFFER_MS,
+    stuckStrikeWorthMs: SETTLE.STUCK_STRIKE_WORTH_MS,
 };
 
 /**
@@ -143,6 +156,10 @@ function parseRevealLevel(raw: unknown): number | null {
 export function parseSettlePolicy(value: unknown): SettlePolicy {
     if (!isRecord(value)) return { ...DEFAULT_SETTLE_POLICY };
 
+    const stuckFirstOfferMs = Math.round(clampNumber(
+        value.stuckFirstOfferMs, 0, MAX_SETTLE_DELAY_MS, DEFAULT_SETTLE_POLICY.stuckFirstOfferMs,
+    ));
+
     return {
         mode: parseEnum(value.mode, SETTLE_MODES, DEFAULT_SETTLE_POLICY.mode),
         armFromHintLevel: Math.round(clampNumber(
@@ -173,5 +190,15 @@ export function parseSettlePolicy(value: unknown): SettlePolicy {
         showPrices: typeof value.showPrices === 'boolean'
             ? value.showPrices
             : DEFAULT_SETTLE_POLICY.showPrices,
+        stuckFirstOfferMs,
+        // The route cannot come before the reason: a second offer stored below
+        // the first is lifted to meet it, which skips the reason rather than
+        // reordering the ladder.
+        stuckSecondOfferMs: Math.max(stuckFirstOfferMs, Math.round(clampNumber(
+            value.stuckSecondOfferMs, 0, MAX_SETTLE_DELAY_MS, DEFAULT_SETTLE_POLICY.stuckSecondOfferMs,
+        ))),
+        stuckStrikeWorthMs: Math.round(clampNumber(
+            value.stuckStrikeWorthMs, 0, MAX_SETTLE_DELAY_MS, DEFAULT_SETTLE_POLICY.stuckStrikeWorthMs,
+        )),
     };
 }

@@ -15,6 +15,7 @@ import { DEFAULT_SETTLE_POLICY, type SettlePolicy } from '@/lib/daily/settlePoli
 import { useSettleSettingsForm } from './useSettleSettingsForm';
 import { SettlePreview } from './SettlePreview';
 import { SettleField, SecondsInput } from './SettleField';
+import { StuckOfferFields } from './StuckOfferFields';
 
 type SettleSectionProps = {
     policy: SettlePolicy;
@@ -50,8 +51,13 @@ export function SettleSection({ policy, revision }: SettleSectionProps) {
                 not been shown, because by then the only other thing left to offer is the reveal.
             </p>
             <p className="mb-2 text-xs text-muted-foreground">
-                Applies to the <strong>daily game</strong> only, like the panels above.
+                Applies to the <strong>daily game</strong> only, like the panels above. The stuck
+                offer that leads here is timed at the top; everything below it is the drip.
             </p>
+
+            <StuckOfferFields policy={p} setField={form.setField} />
+
+            <h3 className="mt-6 text-sm font-semibold text-foreground">The drip</h3>
 
             <SettleField
                 label="How it starts"

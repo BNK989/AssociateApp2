@@ -71,6 +71,13 @@ export function useDailyStuckOffer({
 }: UseDailyStuckOfferArgs) {
     const wordsLeft = useMemo(() => wordsInPlay(messages).length, [messages]);
 
+    // Memoised so the offer is not re-decided on every render of the board;
+    // the policy object itself is replaced only when the settings row changes.
+    const timing = useMemo(() => ({
+        firstOfferMs: settlePolicy.stuckFirstOfferMs,
+        secondOfferMs: settlePolicy.stuckSecondOfferMs,
+        strikeWorthMs: settlePolicy.stuckStrikeWorthMs,
+    }), [settlePolicy]);
 
     const { offer, dismiss, accept } = useStuckOffer({
         targetId: targetMessage?.id ?? null,
@@ -82,6 +89,7 @@ export function useDailyStuckOffer({
         consecutive,
         wordsLeft,
         paused: gameOver || !targetMessage,
+        timing,
     });
 
     // Reached through a ref so that reporting an offer cannot re-run on every

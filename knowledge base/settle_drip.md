@@ -111,11 +111,13 @@ at all.
    the offer bar and by the button's `aria-label`, not by a badge — see below.
 2. Either the stuck offer speaks — *"Let the letters find their places?"* — or
    they tap the button themselves. One rung earlier, at hint level 2 with the
-   letters loose, the offer is a fork instead: *"Stuck? Grab one:"*, two
-   buttons, *Read the clue* and *Place letters*, each quoting its price when
-   `showPrices` is on. The title is three words on purpose — the buttons carry
-   the sentence, and a longer prompt (it used to spell out both forks) read as
-   a paragraph to get past rather than a hand to take. Picking the clue reads the clue; picking the letters
+   letters loose, the offer is a fork instead: *"Grab one"*, two buttons,
+   *Show clue* and *Place letters*, each quoting its price when `showPrices`
+   is on. The title is two words on purpose — the buttons carry the sentence,
+   and a longer prompt (it used to spell out both forks) read as a paragraph
+   to get past rather than a hand to take. It used to open *"Stuck?"*, and
+   lost the word the same day: naming the state to a player who is in it is
+   not encouragement. Picking the clue shows the clue; picking the letters
    starts the drip. Neither closes the other — it is an order, not a trade.
 3. A letter lifts out of the halo, flies to its slot in the composer, and lands
    green.
@@ -355,13 +357,23 @@ production 2026-09-13** at revision 1 with an empty value. The panel saves.
 | `revealFromHintLevel` | `null` | Pool only. Set to `3` and from the clue it may also open unseen letters |
 | `firstDelayMs` | `20000` | `auto` only |
 | `intervalMs` | `15000` | The pace the player actually feels |
-| `strikeCreditMs` | `12000` | `auto` only; mirrors `STRIKE_WORTH_MS` |
+| `strikeCreditMs` | `12000` | `auto` only; the drip's own clock, not the offer's |
 | `maxFraction` | `0.5` | |
 | `minUnsettled` | `2` | |
 | `order` | `seeded` | |
 | `costPerLetter` | `0.05` | |
 | `clueCost` | `0.05` | Price of the written clue, by any route; not tied to `mode` |
 | `showPrices` | `true` | Whether the level-2 choice quotes each fork's price |
+| `stuckFirstOfferMs` | `10000` | Quiet before the stuck offer says anything. Every mode, `off` included |
+| `stuckSecondOfferMs` | `20000` | Quiet before it escalates from a reason to a route. Never stored below the first; equal skips the reason |
+| `stuckStrikeWorthMs` | `8000` | What a wrong guess is worth on the offer's clock. Under the first offer so one miss does not summon the bar |
+
+The three `stuck*` rows are the bar's clock, not the drip's, and sit at the top
+of the panel under **When the game speaks up**. They live on this row because
+the offer is how the drip is reached and the `settle` policy already travels to
+the board (`useDailyStuckOffer` → `useStuckOffer` → `stuckOffer`'s `timing`).
+Added 2026-09-14, when the bar's 14s / 30s / 12s were hard-coded in
+`stuckSignals.ts` and a game master asked where to change them.
 
 **`offered` is the default, and it is the one setting with a real argument
 behind it.** It is the rule the rest of the stuck machinery already follows: *a

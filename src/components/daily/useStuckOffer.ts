@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { stuckOffer, type StuckOffer } from '@/lib/daily/stuckSignals';
+import { stuckOffer, type StuckOffer, type StuckTiming } from '@/lib/daily/stuckSignals';
 
 /**
  * Watches for a player who has gone quiet on a word, and decides what to offer.
@@ -33,6 +33,8 @@ type UseStuckOfferArgs = {
     wordsLeft: number;
     /** Suppresses everything — game over, or the board not ready. */
     paused: boolean;
+    /** The game master's clock, from the settle policy. */
+    timing: StuckTiming;
 };
 
 export function useStuckOffer({
@@ -45,6 +47,7 @@ export function useStuckOffer({
     consecutive,
     wordsLeft,
     paused,
+    timing,
 }: UseStuckOfferArgs) {
     const [msOnWord, setMsOnWord] = useState(0);
     const [dismissed, setDismissed] = useState(false);
@@ -85,11 +88,12 @@ export function useStuckOffer({
             consecutive,
             wordsLeft,
             dismissed,
+            timing,
         });
     }, [
         paused, targetId, msOnWord, strikes, hintLevel,
         canOpenOtherEnd, canSettle, settleLettersLeft,
-        consecutive, wordsLeft, dismissed,
+        consecutive, wordsLeft, dismissed, timing,
     ]);
 
     /**

@@ -434,13 +434,22 @@ further into being stuck than one who has merely been quiet):
 
 | Pressure | Offer | Action |
 | :--- | :--- | :--- |
-| under 14s | — | silence |
-| 14–30s | `stake` | none — how close the streak bonus is, or how many words are left |
-| 30s+ | `letter` | next rung of the ladder |
-| 30s+, at hint level 2, letters loose | `choice` | two buttons: the written clue, or the drip placing the letters — the player picks |
-| 30s+, ladder spent, letters loose | `settle` | start the settle drip |
-| 30s+, every kind of help spent | `other_end` | open the chain from its start |
-| 30s+, nothing else left | `reveal` | show the word |
+| under 10s | — | silence |
+| 10–20s | `stake` | none — how close the streak bonus is, or how many words are left |
+| 20s+ | `letter` | next rung of the ladder |
+| 20s+, at hint level 2, letters loose | `choice` | two buttons: the written clue, or the drip placing the letters — the player picks |
+| 20s+, ladder spent, letters loose | `settle` | start the settle drip |
+| 20s+, every kind of help spent | `other_end` | open the chain from its start |
+| 20s+, nothing else left | `reveal` | show the word |
+
+The thresholds are the game master's, not the code's. The compiled defaults
+are `SETTLE.STUCK_FIRST_OFFER_MS` (10s), `SETTLE.STUCK_SECOND_OFFER_MS` (20s)
+and `SETTLE.STUCK_STRIKE_WORTH_MS` (8s per wrong guess) in `gameConfig.ts`;
+`/admin/game-settings` → *Letters walking into place* → *When the game speaks
+up* overrides them through the `settle` row, and `useDailyStuckOffer` hands the
+result to `stuckOffer` as `timing`. Until 2026-09-14 they were hard-coded at
+14s / 30s / 12s, and live play found the bar arriving after the player had
+stopped waiting for it.
 
 `other_end` is a way off the word, not help with it, and it waits below the
 ladder on purpose. Until 2026-09-14 it held the second offer outright, as the

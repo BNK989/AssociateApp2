@@ -162,12 +162,17 @@ mean "almost always" in the daily game, so the offer bar was effectively the
 only thing that spoke there — but the auto-hint clock is **off by default since
 2026-09-13**, so in the daily game the nudge now does fire, at 8s, on every
 word. It is the quiet half of the pair: the button saying it is there, with the
-offer bar six seconds later saying it in words.
+offer bar two seconds later saying it in words (it was six until 2026-09-14,
+when the bar's first offer came forward from 14s to 10s).
 
 Worth a QA eye. Eight seconds is its own wall-clock constant, unrelated to the
-offer bar's 14s and blind to strikes, so it is the one remaining timer that
-nothing else consults. If the pulsing reads as nagging across eight words, the
-fix is to align it with `FIRST_OFFER_MS` rather than to mute it.
+offer bar's clock and blind to strikes, so it is the one remaining timer that
+nothing else consults — and the one the game master cannot move: the bar's
+thresholds are now settings (see [settle_drip.md](settle_drip.md)), the nudge's
+is not. If a game master drags the first offer under 8s the bar will speak
+before the button breathes, which is harmless but reads oddly. If the pulsing
+reads as nagging across eight words, the fix is to drive it from the same
+setting rather than to mute it.
 
 ## The ladder is free, and the scramble is gone (2026-09-13)
 
@@ -334,8 +339,9 @@ tappable now (see [letter_feedback.md](letter_feedback.md)), and a button would
 have to choose a letter and a slot on the player's behalf — the one choice the
 free rung exists to leave with them.
 
-It holds the early window only. Past `SECOND_OFFER_MS` the priced ladder runs
-exactly as before, which is what stops it becoming the blocker `other_end` was.
+It holds the early window only. Past the second offer (`stuckSecondOfferMs`,
+20s by default) the priced ladder runs exactly as before, which is what stops
+it becoming the blocker `other_end` was.
 
 The settle rung now carries `lettersLeft`, because the badge that used to state
 that bound came off the button the same day — see

@@ -33,7 +33,7 @@ no cron wait.
 | Game-master hint policy | `game_settings` table, key `daily_hint_policy` | **Yes** — the admin page |
 | Game-master reward feel | `game_settings` table, key `daily_feedback` | **Yes** — the admin page |
 | Game-master composer rule | `game_settings` table, key `letter_pool` | **Yes** — the admin page |
-| Game-master settle drip, clue price, level-2 choice prices | `game_settings` table, key `settle` | **Yes** — the admin page |
+| Game-master settle drip, clue price, level-2 choice prices, stuck-offer timing | `game_settings` table, key `settle` | **Yes** — the admin page |
 | Player preference | `profiles.settings` / localStorage | By the player, in the info screen |
 | Experiment start level | PostHog `dailygame-auto-hint-level` | Yes — the PostHog console, but see below |
 | Compiled default | [`src/lib/gameConfig.ts`](../src/lib/gameConfig.ts) | No — needs a deploy |
@@ -109,6 +109,13 @@ quoting its price when **Show point costs on the stuck offer** is on (the last
 switch of the settle panel, above its preview). The clue's price is
 **The clue costs** in the settle section (5% of the word by default) and is
 charged however the player reaches level 3.
+
+When the stuck offer speaks at all is the settle panel's first group, **When
+the game speaks up**: **First offer after** (10s of quiet by default), **Help
+with the word after** (20s; the bar stops encouraging and offers a route) and
+**A wrong guess is worth** (8s of quiet per miss on this clock). They apply in
+every drip mode, *Off* included. Setting the second equal to the first skips the
+encouragement and goes straight to help; the panel never stores it lower.
 
 #### The three reaches
 
