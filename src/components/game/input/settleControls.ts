@@ -40,4 +40,13 @@ export type SettleControls = {
     onSettleAt: (slotIndex: number) => void;
     /** Called once the flight lands, which is when the letter is written. */
     onLanded: () => void;
+    /**
+     * What the written clue costs, as a fraction of the word's base value.
+     *
+     * A game-master setting that lives with the settle policy because it exists
+     * for the moment the clue is put beside the drip. It rides in here so the
+     * header button quotes the same price the stuck offer does; a room with no
+     * drip has no policy and the composer falls back to the compiled default.
+     */
+    clueCost: number;
 };

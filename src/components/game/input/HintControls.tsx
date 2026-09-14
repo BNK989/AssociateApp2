@@ -4,7 +4,7 @@ import type { Message } from '@/hooks/useGameLogic';
 import { HintButton } from './HintButton';
 import { RevealButton } from './RevealButton';
 import { SettleButton } from './SettleButton';
-import { hintsAreFree, valueAfterHint, type HintTier } from './inputRules';
+import { valueAfterHint, type HintTier } from './inputRules';
 import type { NudgeStage } from './useHintNudge';
 import type { SettleControls } from './settleControls';
 
@@ -17,6 +17,8 @@ type HintControlsProps = {
     effectiveLevel: number;
     /** The ladder is spent; only the drip and the reveal are left. */
     isMaxHints: boolean;
+    /** The settle policy's price for the written clue; see `SettleControls`. */
+    clueCost: number;
     disabled: boolean;
     sending: boolean;
     nudgeStage: NudgeStage;
@@ -57,6 +59,7 @@ export function HintControls({
     targetMessage,
     effectiveLevel,
     isMaxHints,
+    clueCost,
     disabled,
     sending,
     nudgeStage,
@@ -133,7 +136,7 @@ export function HintControls({
                   */}
                 <div className="text-xs space-y-1">
                     <p className="font-bold">{tier ? t(tier.labelKey) : ''}</p>
-                    {!hintsAreFree() && (
+                    {(tier?.cost ?? 0) > 0 && (
                         <>
                             <p className="text-muted-foreground">
                                 {t('cost_pts', { cost: -(tier?.cost ?? 0) })}
@@ -141,7 +144,7 @@ export function HintControls({
                             <p className="text-[10px] text-muted-foreground opacity-70">
                                 {t('still_worth', {
                                     points: targetMessage
-                                        ? valueAfterHint(targetMessage, effectiveLevel)
+                                        ? valueAfterHint(targetMessage, effectiveLevel, clueCost)
                                         : 0,
                                 })}
                             </p>

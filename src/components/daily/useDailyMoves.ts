@@ -198,6 +198,7 @@ export function useDailyMoves({
                     // strictly more than the reveal it replaced.
                     settled: (targetMessage.settled_indices || []).length,
                     settleCostPerLetter: settlePolicy.costPerLetter,
+                    clueCost: settlePolicy.clueCost,
                 },
             );
             const totalScore = score + points;
@@ -235,7 +236,7 @@ export function useDailyMoves({
         targetMessage, gameOver, consecutive, score, patchTarget, flashSolved,
         shakeWord, finishWord, reportWord, onCompleted, setScore, setConsecutive,
         setInput, indexOfMessage, playSolveSound, playMissSound, onMissed, t, policy,
-        settlePolicy.costPerLetter, words.length,
+        settlePolicy.costPerLetter, settlePolicy.clueCost, words.length,
     ]);
 
     /**

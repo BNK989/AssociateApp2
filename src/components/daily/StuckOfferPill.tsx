@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import type { StuckOffer as Offer } from '@/lib/daily/stuckSignals';
-import { ACTION_ICONS } from './StuckOfferBar';
+import { ACTION_ICONS, messageFor } from './StuckOfferBar';
 
 /**
  * The offer after it has stepped aside.
@@ -30,6 +30,10 @@ export function StuckOfferPill({ offer, onExpand }: StuckOfferPillProps) {
     const Icon = ACTION_ICONS[offer.kind];
     if (!Icon) return null;
 
+    // The same sentence the bar showed, count included: a title formatted
+    // without its `{count}` is a console error on every render of the chip.
+    const message = messageFor(offer);
+
     return (
         <motion.button
             type="button"
@@ -37,7 +41,7 @@ export function StuckOfferPill({ offer, onExpand }: StuckOfferPillProps) {
             onMouseDown={(e) => e.preventDefault()}
             onClick={onExpand}
             aria-label={t('reopen')}
-            title={t(`${offer.kind}_title`)}
+            title={t(message.key, message.values)}
             initial={{ opacity: 0, scale: 0.6 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.6 }}

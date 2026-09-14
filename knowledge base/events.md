@@ -172,7 +172,12 @@ one that was never needed. It can fire more than once per word and is not
 deduplicated, since a player opening the same offer twice is itself the signal.
 
 - **Properties**: word context, plus `offer` (`stake` | `other_end` | `letter`
-  | `settle` | `reveal`).
+  | `choice` | `settle` | `reveal`). On `taken`, the `choice` offer reports the
+  fork instead of the kind: `choice:clue` or `choice:place`, so the A/B the
+  offer was built for is one `GROUP BY` away.
+- `choice` is the fork at hint level 2 — the written clue or the drip placing
+  the loose letters, the player's pick. Order only: both stay available after
+  either is taken.
 - `settle` is the settle drip, offered second-to-last: it is the most expensive
   offer that still ends in a *solve*, so it is exhausted before the reveal —
   which ends in no solve at all — is ever put to the player. It reuses this

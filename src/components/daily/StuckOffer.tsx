@@ -1,5 +1,5 @@
 import { AnimatePresence } from 'framer-motion';
-import type { StuckOffer as Offer, StuckOfferKind } from '@/lib/daily/stuckSignals';
+import type { ChoicePrices, StuckAction, StuckOffer as Offer } from '@/lib/daily/stuckSignals';
 import { StuckOfferBar } from './StuckOfferBar';
 import { StuckOfferPill } from './StuckOfferPill';
 import { useOfferPhase } from './useOfferPhase';
@@ -23,13 +23,15 @@ import { useOfferPhase } from './useOfferPhase';
 
 type StuckOfferProps = {
     offer: Offer | null;
-    onAct: (kind: StuckOfferKind) => void;
+    onAct: (action: StuckAction) => void;
     onDismiss: () => void;
     /** Reports a chip the player opened back up. Optional: nothing breaks without it. */
     onReopen?: () => void;
+    /** What the level-2 choice's forks cost; absent hides the quote. */
+    prices?: ChoicePrices;
 };
 
-export function StuckOffer({ offer, onAct, onDismiss, onReopen }: StuckOfferProps) {
+export function StuckOffer({ offer, onAct, onDismiss, onReopen, prices }: StuckOfferProps) {
     const { phase, expand } = useOfferPhase(offer?.kind ?? null);
 
     const reopen = () => {
@@ -45,6 +47,7 @@ export function StuckOffer({ offer, onAct, onDismiss, onReopen }: StuckOfferProp
                     offer={offer}
                     onAct={onAct}
                     onDismiss={onDismiss}
+                    prices={prices}
                 />
             )}
 

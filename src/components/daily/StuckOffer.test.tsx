@@ -203,3 +203,62 @@ describe('StuckOffer — staying out of the way', () => {
         expect(screen.getByText(/other_end_title/)).toBeTruthy();
     });
 });
+
+/**
+ * The fork at hint level 2. The written clue and the loose letters walking
+ * into place are both still there afterwards; the choice is only which comes
+ * first, and the player makes it.
+ */
+describe('StuckOffer — the choice at hint level 2', () => {
+    const choice = { kind: 'choice', lettersLeft: 3 } as const;
+
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
+    it('puts both routes in front of the player, and a way to wave them off', () => {
+        render(<StuckOffer offer={choice} onAct={noop} onDismiss={noop} />);
+
+        expect(screen.getByText(/choice_title:\{"count":3\}/)).toBeTruthy();
+        expect(screen.getAllByRole('button')).toHaveLength(3); // clue, place, dismiss
+    });
+
+    it('says which route was taken', () => {
+        const onAct = vi.fn();
+        render(<StuckOffer offer={choice} onAct={onAct} onDismiss={noop} />);
+
+        screen.getByText(/choice_clue/).closest('button')!.click();
+        screen.getByText(/choice_place/).closest('button')!.click();
+
+        expect(onAct.mock.calls).toEqual([['clue'], ['place']]);
+    });
+
+    // The quote is a game-master switch. Off, the two routes stand alone.
+    it('quotes a price only when handed one', () => {
+        const { rerender } = render(<StuckOffer offer={choice} onAct={noop} onDismiss={noop} />);
+        expect(screen.queryByText(/price/)).toBeNull();
+
+        rerender(
+            <StuckOffer offer={choice} onAct={noop} onDismiss={noop} prices={{ clue: 2, place: 1 }} />,
+        );
+        expect(screen.getByText(/^price:\{"points":2\}/)).toBeTruthy();
+        expect(screen.getByText(/^price_each:\{"points":1\}/)).toBeTruthy();
+    });
+
+    // The chip carries the bar's sentence as its tooltip. It used to format the
+    // key bare, which for a counted title threw on every render of the chip.
+    it('keeps the count when it steps aside to a chip', () => {
+        render(<StuckOffer offer={choice} onAct={noop} onDismiss={noop} />);
+        wait(COLLAPSE_AFTER_MS);
+
+        expect(screen.getByLabelText('reopen').getAttribute('title')).toBe('choice_title:{"count":3}');
+    });
+
+    // "0 pts" reads as a bug, not as generosity.
+    it('says nothing about a free fork', () => {
+        render(
+            <StuckOffer offer={choice} onAct={noop} onDismiss={noop} prices={{ clue: 0, place: 1 }} />,
+        );
+        expect(screen.queryByText(/^price:/)).toBeNull();
+        expect(screen.getByText(/^price_each:/)).toBeTruthy();
+    });
+});

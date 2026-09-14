@@ -2,7 +2,9 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { Message } from '@/hooks/useGameLogic';
 import { wordsInPlay } from '@/lib/daily/chainFronts';
 import type { WordSnapshot } from '@/lib/daily/dailyAnalytics';
-import type { StuckOfferKind } from '@/lib/daily/stuckSignals';
+import type { SettlePolicy } from '@/lib/daily/settlePolicy';
+import { choicePrices, type StuckAction } from '@/lib/daily/stuckSignals';
+import { calculateMessageValue } from '@/lib/gameLogic';
 import { useStuckOffer } from './useStuckOffer';
 
 /**
@@ -13,6 +15,12 @@ import { useStuckOffer } from './useStuckOffer';
  * that "letter" means the hint ladder. The mapping from an offer to the action
  * behind it lives here and nowhere else, so an offer can never be shown with
  * nothing wired to it.
+ *
+ * The choice at hint level 2 is the one offer with two actions. `clue` is the
+ * hint ladder's next rung under another name and `place` starts the drip, so
+ * both are routed to the moves the `letter` and `settle` offers already use;
+ * the datalayer sees them as `choice:clue` and `choice:place`, which is what
+ * makes the A/B readable.
  */
 
 type Actions = {
@@ -34,6 +42,8 @@ type UseDailyStuckOfferArgs = Actions & {
     settleLettersLeft: number;
     consecutive: number;
     gameOver: boolean;
+    /** For the choice's price quote: the rates, and whether to quote at all. */
+    settlePolicy: SettlePolicy;
     /** Reports an offer's life: shown, reopened, taken, or waved away. */
     trackOffer: (
         event: 'shown' | 'reopened' | 'taken' | 'dismissed',
@@ -52,6 +62,7 @@ export function useDailyStuckOffer({
     settleLettersLeft,
     consecutive,
     gameOver,
+    settlePolicy,
     openOtherEnd,
     revealHint,
     revealWord,
@@ -92,15 +103,21 @@ export function useDailyStuckOffer({
         if (offer) report('shown', offer.kind);
     }, [offer, report]);
 
-    const onAct = useCallback((kind: StuckOfferKind) => {
-        report('taken', kind);
+    const offerKind = offer?.kind;
+    const onAct = useCallback((action: StuckAction) => {
+        report('taken', offerKind === 'choice' ? `choice:${action}` : action);
         accept();
 
-        if (kind === 'other_end') openOtherEnd();
-        else if (kind === 'letter') revealHint();
-        else if (kind === 'settle') startSettle();
-        else if (kind === 'reveal') revealWord();
-    }, [report, accept, openOtherEnd, revealHint, revealWord, startSettle]);
+        if (action === 'other_end') openOtherEnd();
+        else if (action === 'letter' || action === 'clue') revealHint();
+        else if (action === 'settle' || action === 'place') startSettle();
+        else if (action === 'reveal') revealWord();
+    }, [report, accept, offerKind, openOtherEnd, revealHint, revealWord, startSettle]);
+
+    const prices = useMemo(() => {
+        if (!settlePolicy.showPrices || offerKind !== 'choice' || !targetMessage) return undefined;
+        return choicePrices(calculateMessageValue(targetMessage.content), settlePolicy);
+    }, [settlePolicy, offerKind, targetMessage]);
 
     /**
      * The player pulling a collapsed offer back open.
@@ -118,5 +135,5 @@ export function useDailyStuckOffer({
         dismiss();
     }, [offer, report, dismiss]);
 
-    return { offer, onAct, onReopen, onDismiss };
+    return { offer, prices, onAct, onReopen, onDismiss };
 }

@@ -1,5 +1,5 @@
 import type { GameState, Message, Player } from '@/hooks/useGameLogic';
-import { GAME_CONFIG } from '@/lib/gameConfig';
+import { GAME_CONFIG, SETTLE } from '@/lib/gameConfig';
 import { calculateMessageValue, calculateRevealedPercentage, HINT_COSTS } from '@/lib/gameLogic';
 import { calculateSolvePoints, MAX_HINT_LEVEL } from '@/lib/daily/dailyScoring';
 import { DEFAULT_HINT_POLICY, type HintProgression } from '@/lib/daily/hintPolicy';
@@ -136,6 +136,7 @@ export function getHintTier(
     effectiveLevel: number,
     targetMessage?: Message,
     progression: HintProgression = DEFAULT_HINT_POLICY.progression,
+    clueCost: number = SETTLE.CLUE_COST,
 ): HintTier | null {
     if (!targetMessage || effectiveLevel >= MAX_HINT_LEVEL) return null;
 
@@ -158,8 +159,11 @@ export function getHintTier(
         };
     }
 
+    // The clue carries the settle policy's price on top of its tier, and the
+    // header button quotes it so it never charges silently for what the stuck
+    // offer prices out loud.
     return {
-        cost: Math.ceil(wordValue * HINT_COSTS.TIER_3),
+        cost: Math.ceil(wordValue * (HINT_COSTS.TIER_3 + clueCost)),
         labelKey: 'hint_clue',
         badge: revealsEverything ? null : 'clue',
     };
@@ -176,20 +180,12 @@ export function getHintTier(
  * Streak-free on purpose: a multiplier the player may or may not still hold by
  * the time they solve would make this a promise the game cannot keep.
  */
-export function valueAfterHint(targetMessage: Message, effectiveLevel: number): number {
-    return calculateSolvePoints(targetMessage.content, effectiveLevel + 1, 0);
-}
-
-/**
- * Whether a hint costs the player anything at all.
- *
- * Zero since hints went free on 2026-09-13. The tooltip used to read *benefit,
- * price, what survives*; with no price the middle line is a promise of nothing
- * and the last is the word's whole value, so both are dropped rather than
- * quoted at zero. A game master who prices the ladder again gets them back.
- */
-export function hintsAreFree(): boolean {
-    return HINT_COSTS.TIER_1 === 0 && HINT_COSTS.TIER_2 === 0 && HINT_COSTS.TIER_3 === 0;
+export function valueAfterHint(
+    targetMessage: Message,
+    effectiveLevel: number,
+    clueCost: number = SETTLE.CLUE_COST,
+): number {
+    return calculateSolvePoints(targetMessage.content, effectiveLevel + 1, 0, { clueCost });
 }
 
 /** Non-space character count, which is what the counter compares. */

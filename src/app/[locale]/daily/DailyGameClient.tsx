@@ -208,6 +208,7 @@ function DailyGameBoard({
         settleLettersLeft: game.settle.lettersLeft,
         consecutive: game.consecutive,
         gameOver: game.gameOver,
+        settlePolicy: settleSettings.policy,
         openOtherEnd: game.openOtherEnd,
         revealHint: askForHint,
         revealWord: game.revealWord,
@@ -296,7 +297,7 @@ function DailyGameBoard({
               * the page breaking rather than as the game offering something.
               */}
             <div className="relative shrink-0">
-            <StuckOffer offer={stuck.offer} onAct={stuck.onAct} onDismiss={stuck.onDismiss} onReopen={stuck.onReopen} />
+            <StuckOffer offer={stuck.offer} prices={stuck.prices} onAct={stuck.onAct} onDismiss={stuck.onDismiss} onReopen={stuck.onReopen} />
 
             <GameInput
                 game={gameState}

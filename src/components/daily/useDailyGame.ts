@@ -336,6 +336,7 @@ export function useDailyGame({
             onSettleNow: settle.settleNow,
             onSettleAt: settle.settleAt,
             onLanded: settle.onLanded,
+            clueCost: settlePolicy.clueCost,
         },
         reset,
         forceGameOver,

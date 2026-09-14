@@ -8,7 +8,7 @@ import {
     presentationFor,
 } from './offerPresentation';
 
-const ACTIONABLE: StuckOfferKind[] = ['other_end', 'letter', 'reveal'];
+const ACTIONABLE: StuckOfferKind[] = ['other_end', 'letter', 'choice', 'settle', 'reveal'];
 
 describe('offerPresentation', () => {
     // The remark has nothing to do with it, so leaving it on screen is only

@@ -25,8 +25,37 @@ describe('calculateSolvePoints', () => {
             Math.floor(base * (1 - HINT_COSTS.TIER_1 - HINT_COSTS.TIER_2)),
         );
         expect(calculateSolvePoints(WORD, 3, 0)).toBe(
-            Math.floor(base * (1 - HINT_COSTS.TIER_1 - HINT_COSTS.TIER_2 - HINT_COSTS.TIER_3)),
+            Math.floor(base * (1 - HINT_COSTS.TIER_1 - HINT_COSTS.TIER_2 - HINT_COSTS.TIER_3 - SETTLE.CLUE_COST)),
         );
+    });
+
+    describe('the written clue', () => {
+        const base = calculateMessageValue(WORD);
+        const tiers = HINT_COSTS.TIER_1 + HINT_COSTS.TIER_2 + HINT_COSTS.TIER_3;
+
+        it('costs its own share once the word reaches the clue, by any route', () => {
+            expect(calculateSolvePoints(WORD, 3, 0, { clueCost: 0.2 })).toBe(
+                Math.floor(base * (1 - tiers - 0.2)),
+            );
+        });
+
+        it('costs nothing below the clue', () => {
+            expect(calculateSolvePoints(WORD, 2, 0, { clueCost: 0.2 })).toBe(
+                Math.floor(base * (1 - HINT_COSTS.TIER_1 - HINT_COSTS.TIER_2)),
+            );
+        });
+
+        it('falls back to the compiled price when the policy does not supply one', () => {
+            expect(calculateSolvePoints(WORD, 3, 0)).toBe(
+                calculateSolvePoints(WORD, 3, 0, { clueCost: SETTLE.CLUE_COST }),
+            );
+        });
+
+        it('is free when the word opened at the clue and the policy does not charge', () => {
+            expect(calculateSolvePoints(WORD, 3, 0, {
+                startLevel: 3, chargeForStartLevel: false, clueCost: 0.2,
+            })).toBe(base);
+        });
     });
 
     it('leaves something on the table even with every hint taken', () => {

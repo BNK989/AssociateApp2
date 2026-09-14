@@ -1,6 +1,24 @@
 import { MAX_HINT_LEVEL } from '@/lib/gameConfig';
 import { solvesUntilBonus } from './streakRules';
 
+/** What each fork of the level-2 choice costs, in points. */
+export type ChoicePrices = { clue: number; place: number };
+
+/**
+ * Prices the two forks of the choice at the game master's rates, from a word's
+ * base value. Rounded up the way `calculateSolvePoints` rounds its deduction,
+ * so the offer quotes what the scoreboard will actually take.
+ */
+export function choicePrices(
+    wordValue: number,
+    rates: { clueCost: number; costPerLetter: number },
+): ChoicePrices {
+    return {
+        clue: Math.ceil(wordValue * rates.clueCost),
+        place: Math.ceil(wordValue * rates.costPerLetter),
+    };
+}
+
 /**
  * What the game says to a player who has gone quiet on a word.
  *
@@ -28,6 +46,18 @@ export type StuckOffer =
     /** Take the next rung of the ladder, offered rather than requested. */
     | { kind: 'letter' }
     /**
+     * The fork at hint level 2: the written clue, or the loose letters walking
+     * into place. The player picks.
+     *
+     * Order only. Both are still there afterwards, and both were reachable from
+     * the composer without it. What the fork adds is the asking: a player handed
+     * a decision between two kinds of help is being consulted, where the same
+     * two buttons in the header are waiting to be given in to. It exists at
+     * this one rung because it is the only rung where the two remaining kinds
+     * of help differ in kind — a sentence about the word, or its shape.
+     */
+    | { kind: 'choice'; lettersLeft: number }
+    /**
      * Let the found letters walk into place, one at a time.
      *
      * The rung the ladder was missing. Everything above it hands over more
@@ -41,6 +71,15 @@ export type StuckOffer =
     | { kind: 'reveal' };
 
 export type StuckOfferKind = StuckOffer['kind'];
+
+/**
+ * What a tap on an offer does.
+ *
+ * Most offers carry one action, named by their kind. The `choice` offer carries
+ * two, so its actions have names of their own: `clue` is the ladder's third
+ * rung, `place` starts the settle drip.
+ */
+export type StuckAction = Exclude<StuckOfferKind, 'stake' | 'choice'> | 'clue' | 'place';
 
 /**
  * Dwell time before the game says anything at all.
@@ -128,6 +167,10 @@ function pressure({ msOnWord, strikes }: StuckInput): number {
  * `settle` sits second-to-last on purpose. It is the most expensive offer that
  * still ends in a solve, so it must be exhausted before the reveal — which
  * ends in no solve at all — is ever put to the player.
+ *
+ * `choice` is the one place the ladder forks. One rung short of the clue, with
+ * letters loose in the pool, the two kinds of help left are different in kind,
+ * so the player is asked which they want rather than handed the next rung.
  */
 export function stuckOffer(input: StuckInput): StuckOffer | null {
     if (input.dismissed) return null;
@@ -145,6 +188,9 @@ export function stuckOffer(input: StuckInput): StuckOffer | null {
 
     if (elapsed < THIRD_OFFER_MS && input.canOpenOtherEnd) return { kind: 'other_end' };
 
+    if (input.hintLevel === MAX_HINT_LEVEL - 1 && input.canSettle) {
+        return { kind: 'choice', lettersLeft: input.settleLettersLeft };
+    }
     if (input.hintLevel < MAX_HINT_LEVEL) return { kind: 'letter' };
     if (input.canSettle) return { kind: 'settle', lettersLeft: input.settleLettersLeft };
 

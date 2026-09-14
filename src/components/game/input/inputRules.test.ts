@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { GameState, Message, Player } from '@/hooks/useGameLogic';
+import { SETTLE } from '@/lib/gameConfig';
 import { calculateMessageValue, HINT_COSTS } from '@/lib/gameLogic';
 import { calculateSolvePoints, getNextHintLevel } from '@/lib/daily/dailyScoring';
 import {
@@ -164,7 +165,17 @@ describe('getHintTier', () => {
     it('prices each tier off the word value', () => {
         expect(getHintTier(0, message, ladder)?.cost).toBe(Math.ceil(value * HINT_COSTS.TIER_1));
         expect(getHintTier(1, message, ladder)?.cost).toBe(Math.ceil(value * HINT_COSTS.TIER_2));
-        expect(getHintTier(2, message, ladder)?.cost).toBe(Math.ceil(value * HINT_COSTS.TIER_3));
+        expect(getHintTier(2, message, ladder)?.cost)
+            .toBe(Math.ceil(value * (HINT_COSTS.TIER_3 + SETTLE.CLUE_COST)));
+    });
+
+    // The header button and the stuck offer reach the same clue, so they must
+    // quote the same price. The button charging silently for what the offer
+    // prices out loud would be the one thing worse than either alone.
+    it("adds the settle policy's clue price to the last rung, and only there", () => {
+        expect(getHintTier(2, message, ladder, 0.2)?.cost)
+            .toBe(Math.ceil(value * (HINT_COSTS.TIER_3 + 0.2)));
+        expect(getHintTier(1, message, ladder, 0.2)?.cost).toBe(Math.ceil(value * HINT_COSTS.TIER_2));
     });
 
     it('labels each tier', () => {
@@ -225,17 +236,15 @@ describe('valueAfterHint', () => {
     });
 
     /**
-     * Flat since hints went free on 2026-09-13.
-     *
-     * It used to fall with every rung, which was the whole point of quoting it.
-     * With a free ladder the number is the word's value at every level, so the
-     * tooltip no longer quotes it at all — `hintsAreFree` is what decides that,
-     * and this is here so a game master who prices the ladder again finds the
-     * assertion waiting rather than discovering it in play.
+     * Flat across the free rungs since hints went free on 2026-09-13, then one
+     * step down at the clue, which carries the settle policy's price. The
+     * tooltip quotes the number only on a rung that costs something, so the
+     * first two say nothing and the clue says what the word is still worth.
      */
-    it('no longer falls as the player climbs, because the ladder is free', () => {
+    it('holds steady across the free rungs and dips only at the priced clue', () => {
         expect(valueAfterHint(word, 0)).toBe(valueAfterHint(word, 1));
-        expect(valueAfterHint(word, 1)).toBe(valueAfterHint(word, 2));
+        expect(valueAfterHint(word, 2)).toBeLessThan(valueAfterHint(word, 1));
+        expect(valueAfterHint(word, 2, 0)).toBe(valueAfterHint(word, 1));
     });
 
     it('leaves something on the table even at the last rung', () => {

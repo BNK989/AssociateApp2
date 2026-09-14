@@ -33,7 +33,7 @@ no cron wait.
 | Game-master hint policy | `game_settings` table, key `daily_hint_policy` | **Yes** — the admin page |
 | Game-master reward feel | `game_settings` table, key `daily_feedback` | **Yes** — the admin page |
 | Game-master composer rule | `game_settings` table, key `letter_pool` | **Yes** — the admin page |
-| Game-master settle drip | `game_settings` table, key `settle` | **Yes** — the admin page |
+| Game-master settle drip, clue price, level-2 choice prices | `game_settings` table, key `settle` | **Yes** — the admin page |
 | Player preference | `profiles.settings` / localStorage | By the player, in the info screen |
 | Experiment start level | PostHog `dailygame-auto-hint-level` | Yes — the PostHog console, but see below |
 | Compiled default | [`src/lib/gameConfig.ts`](../src/lib/gameConfig.ts) | No — needs a deploy |
@@ -102,6 +102,12 @@ loose in the pool with no positions (the line stays as level 1 left it) · **3**
 = the written AI clue, which usually gives the answer away. After the clue the
 settle drip and the tap place the loose letters; see
 [settle_drip.md](settle_drip.md).
+
+The header button walks these in order. The stuck offer, at level 2 with the
+letters loose, asks instead: the clue or the letters placed, two buttons, each
+quoting its price when **Show prices on the offer** is on. The clue's price is
+**The clue costs** in the settle section (5% of the word by default) and is
+charged however the player reaches level 3.
 
 #### The three reaches
 

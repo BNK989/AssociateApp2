@@ -2,6 +2,7 @@
 
 import { RotateCcw, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import {
     Select,
     SelectContent,
@@ -236,6 +237,39 @@ export function SettleSection({ policy, revision }: SettleSectionProps) {
                             <SelectItem value="0.2">20%</SelectItem>
                         </SelectContent>
                     </Select>
+                )}
+            />
+
+            <SettleField
+                label="The clue costs"
+                hint="Fraction of the word's value forfeited for reading the written clue, by any route: the header button and the level-2 choice both charge it. Kept small on purpose — the point is a player who takes help and keeps playing, not one who feels fined for it. Not tied to the drip switch, since the clue is on the ladder either way."
+                control={(
+                    <Select
+                        value={String(p.clueCost)}
+                        onValueChange={(v) => form.setField('clueCost', Number(v))}
+                    >
+                        <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="0">Nothing</SelectItem>
+                            <SelectItem value="0.05">5%</SelectItem>
+                            <SelectItem value="0.1">10%</SelectItem>
+                            <SelectItem value="0.2">20%</SelectItem>
+                        </SelectContent>
+                    </Select>
+                )}
+            />
+
+            <SettleField
+                label="Show prices on the offer"
+                hint="Whether the level-2 choice quotes what each fork costs next to its button. Off, the player picks between the clue and placing letters without seeing a number; the scoreboard charges the same either way."
+                disabled={off}
+                control={(
+                    <Switch
+                        checked={p.showPrices}
+                        onCheckedChange={(c) => form.setField('showPrices', c)}
+                        disabled={off}
+                        aria-label="Show prices on the offer"
+                    />
                 )}
             />
 

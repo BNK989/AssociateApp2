@@ -71,6 +71,17 @@ describe('parseSettlePolicy', () => {
             .toBe(DEFAULT_SETTLE_POLICY.revealFromHintLevel);
     });
 
+    it('clamps the clue price to a share of the word', () => {
+        expect(parseSettlePolicy({ clueCost: -1 }).clueCost).toBe(0);
+        expect(parseSettlePolicy({ clueCost: 3 }).clueCost).toBe(1);
+        expect(parseSettlePolicy({ clueCost: 'free' }).clueCost).toBe(DEFAULT_SETTLE_POLICY.clueCost);
+    });
+
+    it('reads the price switch as a boolean and nothing else', () => {
+        expect(parseSettlePolicy({ showPrices: false }).showPrices).toBe(false);
+        expect(parseSettlePolicy({ showPrices: 'no' }).showPrices).toBe(DEFAULT_SETTLE_POLICY.showPrices);
+    });
+
     it('never throws, whatever is in the column', () => {
         expect(() => parseSettlePolicy({
             mode: {},
@@ -79,6 +90,8 @@ describe('parseSettlePolicy', () => {
             minUnsettled: Infinity,
             order: 42,
             costPerLetter: null,
+            clueCost: [],
+            showPrices: 1,
         })).not.toThrow();
 
         expect(parseSettlePolicy({ intervalMs: NaN })).toEqual(DEFAULT_SETTLE_POLICY);

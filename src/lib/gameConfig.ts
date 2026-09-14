@@ -227,6 +227,20 @@ export const SETTLE = {
     /** Fraction of the word's base value forfeited per settled letter. */
     COST_PER_LETTER: 0.05,
     /**
+     * Fraction of the word's base value the written clue costs, on top of
+     * `HINT_COSTS.TIER_3`.
+     *
+     * Priced here rather than in `HINT_COSTS` because it exists for the stuck
+     * offer's fork at hint level 2, where the clue and the drip are put side by
+     * side and a free clue would make the drip strictly worse. It is charged by
+     * whichever route reaches the clue, the header button included — the
+     * offer is a way of asking, not a separate shop. Kept small on purpose: the
+     * point is a price the player does not mind paying, not a deterrent.
+     */
+    CLUE_COST: 0.05,
+    /** Whether the fork at hint level 2 quotes each option's price. */
+    SHOW_PRICES: true,
+    /**
      * Floor on what a solve can be worth, as a fraction of base.
      *
      * A settled solve must stay strictly better than a reveal, which scores

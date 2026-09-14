@@ -5,6 +5,7 @@ import {
     SECOND_OFFER_MS,
     STRIKE_WORTH_MS,
     THIRD_OFFER_MS,
+    choicePrices,
     stuckOffer,
     type StuckInput,
 } from './stuckSignals';
@@ -169,3 +170,42 @@ describe('the settle rung', () => {
     });
 });
 
+describe('the choice at hint level 2', () => {
+    /** Past the other end's window, one rung short of the clue. */
+    const fork = { msOnWord: SECOND_OFFER_MS, hintLevel: MAX_HINT_LEVEL - 1, canOpenOtherEnd: false };
+
+    // The two kinds of help left differ in kind — a sentence about the word,
+    // or its shape — so the player is consulted rather than handed the rung.
+    it('asks the player to pick when both the clue and the drip are on the table', () => {
+        expect(at({ ...fork, canSettle: true })).toEqual({ kind: 'choice', lettersLeft: 3 });
+    });
+
+    it('offers the rung alone when there is nothing to place', () => {
+        // The choice needs two real options. Alone, the clue is offered as a
+        // letter has always been, so an empty pool never shows a dead button.
+        expect(at({ ...fork, canSettle: false })).toEqual({ kind: 'letter' });
+    });
+
+    it('is the only rung that forks', () => {
+        expect(at({ ...fork, hintLevel: 1, canSettle: true })).toEqual({ kind: 'letter' });
+        expect(at({ ...fork, hintLevel: MAX_HINT_LEVEL, canSettle: true }))
+            .toEqual({ kind: 'settle', lettersLeft: 3 });
+    });
+
+    it('still waits its turn behind the other end', () => {
+        expect(at({ ...fork, canSettle: true, canOpenOtherEnd: true })).toEqual({ kind: 'other_end' });
+        expect(at({ ...fork, canSettle: true, canOpenOtherEnd: true, msOnWord: THIRD_OFFER_MS }))
+            .toEqual({ kind: 'choice', lettersLeft: 3 });
+    });
+});
+
+
+describe('choicePrices', () => {
+    it('quotes each fork at its own rate, rounded up like the deduction', () => {
+        expect(choicePrices(17, { clueCost: 0.05, costPerLetter: 0.1 })).toEqual({ clue: 1, place: 2 });
+    });
+
+    it('quotes nothing for a free fork', () => {
+        expect(choicePrices(17, { clueCost: 0, costPerLetter: 0 })).toEqual({ clue: 0, place: 0 });
+    });
+});

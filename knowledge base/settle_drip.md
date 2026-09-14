@@ -110,7 +110,11 @@ at all.
    becomes the settle button. How many letters it can still place is said by
    the offer bar and by the button's `aria-label`, not by a badge — see below.
 2. Either the stuck offer speaks — *"Let the letters find their places?"* — or
-   they tap the button themselves.
+   they tap the button themselves. One rung earlier, at hint level 2 with the
+   letters loose, the offer is a fork instead: *"Pick your help: a written clue,
+   or N letters finding their places"*, two buttons, each quoting its price when
+   `showPrices` is on. Picking the clue reads the clue; picking the letters
+   starts the drip. Neither closes the other — it is an order, not a trade.
 3. A letter lifts out of the halo, flies to its slot in the composer, and lands
    green.
 4. The ring around the button fills. When it is full, another letter flies.
@@ -316,6 +320,16 @@ work already done.
 Each settled letter costs `costPerLetter` of the word's base value, deducted
 alongside the hint tiers in `calculateSolvePoints`.
 
+The written clue costs `clueCost` of the base value, charged once on reaching
+hint level 3 **by any route** — the header button, the level-2 choice, or the
+auto-hint — with the same start-level exemption the tiers use: a game that
+*opens* at the clue is not charged for it unless `chargeForStartLevel` is on.
+It is kept small (5% shipped) on purpose: the fork it prices is there to keep
+a stuck player playing, and a price that stings would argue for closing the
+tab. The header's tooltip and the level-2 offer both quote it from the same
+`choicePrices`, so the number the player reads is the number the scoreboard
+takes. Zero is a valid setting and hides the quote.
+
 **There is a floor, and it is load-bearing rather than defensive.** A settled
 solve has to stay strictly better than the reveal it replaced, which scores
 **zero** — otherwise the rung built to stop players giving up would, at the far
@@ -344,6 +358,8 @@ production 2026-09-13** at revision 1 with an empty value. The panel saves.
 | `minUnsettled` | `2` | |
 | `order` | `seeded` | |
 | `costPerLetter` | `0.05` | |
+| `clueCost` | `0.05` | Price of the written clue, by any route; not tied to `mode` |
+| `showPrices` | `true` | Whether the level-2 choice quotes each fork's price |
 
 **`offered` is the default, and it is the one setting with a real argument
 behind it.** It is the rule the rest of the stuck machinery already follows: *a

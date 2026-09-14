@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import type { GameState, Message, Player } from '@/hooks/useGameLogic';
 import { MAX_HINT_LEVEL } from '@/lib/daily/dailyScoring';
-import { LETTER_POOL } from '@/lib/gameConfig';
+import { LETTER_POOL, SETTLE } from '@/lib/gameConfig';
 import type { PoolLetter } from '@/lib/letterPool/poolRules';
 import { LetterHalo, useHaloAnchor } from '@/components/game/pool/LetterHalo';
 import { LetterFlight } from '@/components/game/pool/LetterFlight';
@@ -128,7 +128,8 @@ export function GameInput({
 
     const effectiveLevel = getEffectiveHintLevel(targetMessage);
     const isMaxHints = effectiveLevel >= MAX_HINT_LEVEL;
-    const tier = getHintTier(effectiveLevel, targetMessage);
+    const clueCost = settle?.clueCost ?? SETTLE.CLUE_COST;
+    const tier = getHintTier(effectiveLevel, targetMessage, undefined, clueCost);
 
     const canAnswer = turn.isMyTurn || turn.isFreeForAll;
     const controlsDisabled = !canAnswer || sending;
@@ -275,6 +276,7 @@ export function GameInput({
                             tier={tier}
                             targetMessage={targetMessage}
                             effectiveLevel={effectiveLevel}
+                            clueCost={clueCost}
                             isMaxHints={isMaxHints}
                             disabled={controlsDisabled}
                             sending={sending}

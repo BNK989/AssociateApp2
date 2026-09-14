@@ -41,6 +41,15 @@ export type SolveScoringOptions = {
     settled?: number;
     /** Fraction of base value each settled letter costs; from the settle policy. */
     settleCostPerLetter?: number;
+    /**
+     * What the written clue costs on top of its tier; from the settle policy.
+     *
+     * Charged once the word reaches `MAX_HINT_LEVEL` by any route, so the clue
+     * the stuck offer puts beside the drip and the one behind the header
+     * button carry the same price. Skipped, like the tiers, when the word
+     * opened at that level and the policy does not charge for it.
+     */
+    clueCost?: number;
 };
 
 /**
@@ -65,6 +74,7 @@ export function calculateSolvePoints(
         chargeForStartLevel = true,
         settled = 0,
         settleCostPerLetter = SETTLE.COST_PER_LETTER,
+        clueCost = SETTLE.CLUE_COST,
     } = options;
     const base = calculateMessageValue(word);
 
@@ -74,6 +84,10 @@ export function calculateSolvePoints(
         if (!chargeForStartLevel && tier <= startLevel) continue;
         deduction += HINT_COSTS[TIER_KEYS[tier - 1]];
     }
+
+    const clueTaken = hintLevel >= MAX_HINT_LEVEL;
+    const clueGiven = !chargeForStartLevel && startLevel >= MAX_HINT_LEVEL;
+    if (clueTaken && !clueGiven) deduction += clueCost;
 
     deduction += Math.max(0, settled) * settleCostPerLetter;
 

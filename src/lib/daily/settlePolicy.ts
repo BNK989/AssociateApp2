@@ -69,6 +69,10 @@ export type SettlePolicy = {
     order: SettleOrder;
     /** Fraction of base value forfeited per settled letter. */
     costPerLetter: number;
+    /** Fraction of base value the written clue costs, on top of `HINT_COSTS.TIER_3`. */
+    clueCost: number;
+    /** Whether the fork at hint level 2 quotes each option's price. */
+    showPrices: boolean;
 };
 
 /** The policy that reproduces the behaviour compiled into `gameConfig.ts`. */
@@ -83,6 +87,8 @@ export const DEFAULT_SETTLE_POLICY: SettlePolicy = {
     minUnsettled: SETTLE.MIN_UNSETTLED,
     order: SETTLE.ORDER as SettleOrder,
     costPerLetter: SETTLE.COST_PER_LETTER,
+    clueCost: SETTLE.CLUE_COST,
+    showPrices: SETTLE.SHOW_PRICES,
 };
 
 /**
@@ -163,5 +169,9 @@ export function parseSettlePolicy(value: unknown): SettlePolicy {
         )),
         order: parseEnum(value.order, SETTLE_ORDERS, DEFAULT_SETTLE_POLICY.order),
         costPerLetter: clampNumber(value.costPerLetter, 0, 1, DEFAULT_SETTLE_POLICY.costPerLetter),
+        clueCost: clampNumber(value.clueCost, 0, 1, DEFAULT_SETTLE_POLICY.clueCost),
+        showPrices: typeof value.showPrices === 'boolean'
+            ? value.showPrices
+            : DEFAULT_SETTLE_POLICY.showPrices,
     };
 }

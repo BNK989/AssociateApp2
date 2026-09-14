@@ -438,7 +438,20 @@ further into being stuck than one who has merely been quiet):
 | 14–30s | `stake` | none — how close the streak bonus is, or how many words are left |
 | 30s+ | `other_end` | open the chain from its start |
 | 30s+, other end spent | `letter` | next rung of the ladder |
+| 30s+, at hint level 2, letters loose | `choice` | two buttons: the written clue, or the drip placing the letters — the player picks |
+| 30s+, ladder spent, letters loose | `settle` | start the settle drip |
 | 30s+, nothing else left | `reveal` | show the word |
+
+`choice` is the one offer with two actions instead of one, and it exists at the
+one rung where the two remaining kinds of help differ in kind: a sentence about
+the word, or its shape. It is **order only** — neither fork is exclusive, both
+remain reachable afterwards, and the header button walks the ladder linearly
+regardless. What it adds is the asking. `taken` reports which fork was picked as
+`choice:clue` or `choice:place`. When the game master's `showPrices` is on, each
+button quotes its cost (`choicePrices` in `stuckSignals.ts`: the clue at
+`clueCost`, each placed letter at `costPerLetter`, both of the word's base
+value, rounded up as the scoreboard rounds); a fork that costs nothing shows no
+number. See [settle_drip.md](settle_drip.md#scoring).
 
 Silence is the common case and deliberately so — an offer that appears on every
 word stops being read by the third one, which is exactly when it matters most.
@@ -462,7 +475,7 @@ The split is whether there is anything to act on
 | Offer | Presentation | At full width for | Then |
 | :--- | :--- | ---: | :--- |
 | `stake` | transient | 5s (`TRANSIENT_HOLD_MS`) | gone |
-| `other_end`, `letter`, `reveal` | collapsing | 9s (`COLLAPSE_AFTER_MS`) | a chip on the inline-end edge |
+| `other_end`, `letter`, `choice`, `settle`, `reveal` | collapsing | 9s (`COLLAPSE_AFTER_MS`) | a chip on the inline-end edge |
 
 "Three words left in the chain" is a remark: read once, nothing to do with it,
 and a bar still standing over the board two minutes later turns a small kindness
