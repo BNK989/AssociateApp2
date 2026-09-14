@@ -7,7 +7,7 @@ import { MAX_STRIKES } from '@/lib/daily/dailyScoring';
 
 const LEVEL_LABELS: Record<number, string> = {
     1: 'First letter',
-    2: 'Scramble',
+    2: 'Loose letters',
     3: 'AI clue',
 };
 
@@ -23,7 +23,7 @@ type DemoWordRowProps = {
  * One word of the demo chain.
  *
  * Uses the same `CipherText` the game does, which is the point of the demo:
- * "scramble on every word" is a sentence, and this is what it actually looks
+ * "level 2 on every word" is a sentence, and this is what it actually looks
  * like on a board the game master has not reached the bottom of yet.
  */
 export function DemoWordRow({ message, isTarget, isWrong }: DemoWordRowProps) {

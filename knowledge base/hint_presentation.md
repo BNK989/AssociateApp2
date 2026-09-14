@@ -380,3 +380,20 @@ What this is *not*: a re-pricing. Tiers are still 10/10/40 and the scramble is
 still the middle rung. Those change the scoring maths and the shape of a run,
 and they need `20260823090000_add_settings_revision_to_daily_results.sql`
 applied first or old and new scores silently stop being comparable.
+
+## The admin panel stops saying "scramble" (2026-09-14)
+
+`/admin/game-settings` described rung 2 as *"Pins the first letter and reveals
+most of the rest, scrambled"* and named it **Scramble** in the timeline and in
+the demo's level chip. Neither has been true since `HINT_2_WITHHOLDS_POSITIONS`
+went back on: the word line keeps its glyphs and two thirds of the letters
+arrive in the pool, loose and orange, with no positions at all.
+
+The panel also contradicted itself — the *start level* select on the very same
+page already read `2 — loose letters`. It now reads **Loose letters**
+everywhere: the rung row, the timeline step, the demo chip.
+
+The internals keep the name. `ScrambleView`, `buildScrambleItems`,
+`scramblePool` and `generateShuffledView` all describe a pool whose order is
+genuinely scrambled, which is accurate; the false claim was only ever the admin
+copy's, that positions came with it.

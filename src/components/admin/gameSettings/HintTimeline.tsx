@@ -4,7 +4,7 @@ import { previewTimeline, type TimelineEntry } from '@/lib/daily/hintSchedule';
 
 const LEVEL_NAMES: Record<number, string> = {
     1: 'First letter',
-    2: 'Scramble',
+    2: 'Loose letters',
     3: 'AI clue',
 };
 
@@ -72,7 +72,7 @@ function Track({ caption, entries }: { caption: string; entries: TimelineEntry[]
  * this cannot drift from what players actually get.
  *
  * Under `first-word` the chain has two different timelines and showing only the
- * first is a lie: it promises a scramble on arrival that every word after the
+ * first is a lie: it promises letters on arrival that every word after the
  * first never gets. Both are drawn, from the same scheduler.
  */
 export function HintTimeline({ policy }: { policy: DailyHintPolicy }) {

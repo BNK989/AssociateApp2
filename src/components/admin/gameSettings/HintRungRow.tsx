@@ -4,7 +4,7 @@ import { MAX_RUNG_DELAY_SECONDS, type HintRung, type HintStagger } from '@/lib/d
 
 const RUNG_LABELS = [
     { title: 'Hint 1 — first letter', hint: 'Reveals the word\'s opening letter and its length.' },
-    { title: 'Hint 2 — scramble', hint: 'Pins the first letter and reveals most of the rest, scrambled.' },
+    { title: 'Hint 2 — loose letters', hint: 'Sends two thirds of the letters into the pool, loose and orange — no positions.' },
     { title: 'Hint 3 — AI clue', hint: 'Adds the written clue. This usually gives the answer away.' },
 ];
 

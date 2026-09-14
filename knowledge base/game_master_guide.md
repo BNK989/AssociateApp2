@@ -46,7 +46,7 @@ existed. **You cannot brick the daily game from this page.**
 (revision ≥ 1), a `dailygame-auto-hint-level` assignment is ignored and the
 daily game logs that it dropped one. Until 2026-08-24 the flag won, and a
 variant left running from before this page existed was quietly holding the
-start level at *first letter* while the panel promised *scramble* — the panel
+start level at *first letter* while the panel promised level 2 — the panel
 looked broken and was not. To run a start-level experiment now, the saved row
 has to go, or the experiment has to move into the policy itself.
 
@@ -122,7 +122,7 @@ encouragement and goes straight to help; the panel never stores it lower.
 | Value | The board on arrival |
 | :--- | :--- |
 | **First word only** | Only the word immediately before the freebie opens hinted. |
-| **Every word, up front** | The whole chain is hinted from the moment the game loads — scroll up and every word is already scrambled. |
+| **Every word, up front** | The whole chain is hinted from the moment the game loads — scroll up and every word is already open at that level. |
 | **Every word, as you reach it** | The same entitlement, applied one word at a time. A word is untouched until it becomes the one being played. |
 
 The two `every word` values **score identically**: every word gets the level for
@@ -157,7 +157,7 @@ misread most often.
 
 With delays of **15 / 30 / 60**:
 
-| Mode | Reading | First letter | Scramble | AI clue |
+| Mode | Reading | First letter | Loose letters | AI clue |
 | :--- | :--- | ---: | ---: | ---: |
 | **Gaps** (`per-rung`) | wait *between* hints | 15s | 45s | 105s |
 | **Offsets** (`cumulative`) | measured from the word opening | 15s | 30s | 60s |
@@ -190,8 +190,8 @@ whatever is in the editor right now — *including changes you have not saved*.
 
 It answers what the timeline cannot. The timeline says when a hint lands; the
 demo shows what the board looks like when it does. Raising the start level to
-scramble, or switching between the two `every word` reaches, is a change you
-have to see rather than read.
+loose letters, or switching between the two `every word` reaches, is a change
+you have to see rather than read.
 
 - **Fill the answer** types the current word in for you. You are testing hints,
   not solving a puzzle.
@@ -417,7 +417,7 @@ No migration is needed: the column is a single jsonb blob.
   left as-is rather than silently rewritten; the timeline preview shows it.
 - **Turning a rung's auto off stops everything past it.** The ladder halts there
   until the player asks for a hint. The timeline marks this "manual only".
-- **"Every word" scrambles words the player has not reached yet.** That is what
+- **"Every word" opens words the player has not reached yet.** That is what
   *up front* means, and it is a real change to the game: the whole board is open
   from the start. *Every word, as you reach it* gives the same help without the
   lookahead.

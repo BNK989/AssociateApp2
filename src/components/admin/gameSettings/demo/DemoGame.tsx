@@ -11,7 +11,7 @@ import { DemoBoard } from './DemoBoard';
  *
  * The timeline above it answers "when do the hints land"; this answers the
  * question the timeline cannot, which is what the board actually *looks* like —
- * whether every word is scrambled from the outset or only the one in front of
+ * whether every word opens hinted from the outset or only the one in front of
  * the player, what a start level of 3 gives away, what a solve is worth once
  * free hints stop being charged for.
  *

@@ -23,7 +23,7 @@ function policy(overrides: Partial<DailyHintPolicy>): DailyHintPolicy {
  * The timings themselves are `previewTimeline`'s and are tested there. What is
  * left is that the panel draws every timeline the policy produces — a chain
  * whose first word opens hinted and whose later words do not has two, and
- * showing only the first is how the preview came to promise players a scramble
+ * showing only the first is how the preview came to promise players letters
  * they never got.
  */
 describe('HintTimeline', () => {
@@ -32,7 +32,7 @@ describe('HintTimeline', () => {
 
         expect(screen.getByText('Every word')).toBeTruthy();
         expect(screen.queryByText('Every word after it')).toBeNull();
-        expect(screen.getByText('Scramble')).toBeTruthy();
+        expect(screen.getByText('Loose letters')).toBeTruthy();
         expect(screen.getByText('immediately')).toBeTruthy();
     });
 
@@ -42,8 +42,8 @@ describe('HintTimeline', () => {
         expect(screen.getByText('The first word they play')).toBeTruthy();
         expect(screen.getByText('Every word after it')).toBeTruthy();
 
-        // The later track climbs from nothing: first letter at 20s, scramble at
-        // 40s. Without it the panel would only ever show the immediate scramble.
+        // The later track climbs from nothing: first letter at 20s, loose letters
+        // at 40s. Without it the panel would only ever show the immediate handout.
         expect(screen.getByText('20s')).toBeTruthy();
         expect(screen.getByText('40s')).toBeTruthy();
     });

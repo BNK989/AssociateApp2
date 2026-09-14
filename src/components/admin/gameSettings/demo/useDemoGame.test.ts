@@ -65,7 +65,7 @@ describe('useDemoGame', () => {
         expect(result.current.targetMessage?.content).toBe(DEMO_WORDS[DEMO_WORDS.length - 2]);
     });
 
-    it('scrambles the whole board up front under every-word', () => {
+    it('opens the whole board at level 2 up front under every-word', () => {
         const { result } = renderHook(() => useDemoGame(startingAt(2, 'every-word')));
 
         expect(result.current.messages.map((m) => m.hint_level)).toEqual([2, 2, 2, 0]);
@@ -73,7 +73,7 @@ describe('useDemoGame', () => {
 
     // This is the difference the demo exists to show: same entitlement, but the
     // board is not handed over in advance.
-    it('scrambles only the current word under every-word-on-arrival', () => {
+    it('opens only the current word at level 2 under every-word-on-arrival', () => {
         const { result } = renderHook(() => useDemoGame(startingAt(2, 'every-word-on-arrival')));
 
         expect(result.current.messages.map((m) => m.hint_level)).toEqual([0, 0, 2, 0]);
