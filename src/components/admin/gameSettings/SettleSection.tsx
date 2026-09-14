@@ -84,7 +84,7 @@ export function SettleSection({ policy, revision }: SettleSectionProps) {
                         <SelectContent>
                             <SelectItem value="0">0 — any word</SelectItem>
                             <SelectItem value="1">1 — after the first letter</SelectItem>
-                            <SelectItem value="2">2 — after the scramble</SelectItem>
+                            <SelectItem value="2">2 — after the loose letters</SelectItem>
                             <SelectItem value={String(MAX_HINT_LEVEL)}>
                                 3 — only after the AI clue
                             </SelectItem>
@@ -260,15 +260,15 @@ export function SettleSection({ policy, revision }: SettleSectionProps) {
             />
 
             <SettleField
-                label="Show prices on the offer"
-                hint="Whether the level-2 choice quotes what each fork costs next to its button. Off, the player picks between the clue and placing letters without seeing a number; the scoreboard charges the same either way."
+                label="Show point costs on the stuck offer"
+                hint="Whether the stuck offer's two buttons carry a points tag (−1 pts, −1 pts each). Off, the player picks between the clue and placing letters without seeing a number; the scoreboard charges the same either way."
                 disabled={off}
                 control={(
                     <Switch
                         checked={p.showPrices}
                         onCheckedChange={(c) => form.setField('showPrices', c)}
                         disabled={off}
-                        aria-label="Show prices on the offer"
+                        aria-label="Show point costs on the stuck offer"
                     />
                 )}
             />

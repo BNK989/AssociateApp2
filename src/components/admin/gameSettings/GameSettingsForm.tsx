@@ -97,7 +97,7 @@ export function GameSettingsForm({ policy, scope, revision, usingFallback }: Gam
             <Section title="How words open">
                 <SettingField
                     label="Start level"
-                    hint="The hint level a word already carries when the player reaches it. 0 gives nothing away."
+                    hint="The hint level a word already carries when the player reaches it, before any clock runs. A word opens here even with Auto Hint off — so a level of 2 hands out loose letters the moment a word is reached, which looks like an auto hint and is not one. 0 gives nothing away."
                     control={(
                         <Select
                             value={String(p.startLevel)}
@@ -107,7 +107,7 @@ export function GameSettingsForm({ policy, scope, revision, usingFallback }: Gam
                             <SelectContent>
                                 <SelectItem value="0">0 — nothing</SelectItem>
                                 <SelectItem value="1">1 — first letter</SelectItem>
-                                <SelectItem value="2">2 — scramble</SelectItem>
+                                <SelectItem value="2">2 — loose letters</SelectItem>
                                 <SelectItem value="3">3 — AI clue</SelectItem>
                             </SelectContent>
                         </Select>

@@ -93,7 +93,7 @@ Two things about this key are worth knowing before you touch it:
 
 | Setting | Values | What it does |
 | :--- | :--- | :--- |
-| **Start level** | 0–3 | The hint level a word already carries when the player reaches it. `0` gives nothing away. |
+| **Start level** | 0–3 | The hint level a word already carries when the player reaches it, before any clock runs — and regardless of the player's Auto Hint switch, which only governs the clock. `0` gives nothing away. |
 | **Applies to** | first word / every word, up front / every word, as you reach it | Which words the start level reaches, and when it lands on them. See below. |
 | **Charge for the free hint** | on / off | Whether a hint the player never asked for still costs them points. |
 
@@ -105,7 +105,8 @@ settle drip and the tap place the loose letters; see
 
 The header button walks these in order. The stuck offer, at level 2 with the
 letters loose, asks instead: the clue or the letters placed, two buttons, each
-quoting its price when **Show prices on the offer** is on. The clue's price is
+quoting its price when **Show point costs on the stuck offer** is on (the last
+switch of the settle panel, above its preview). The clue's price is
 **The clue costs** in the settle section (5% of the word by default) and is
 charged however the player reaches level 3.
 

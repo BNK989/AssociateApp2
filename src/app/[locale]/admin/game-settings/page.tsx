@@ -37,6 +37,10 @@ export default async function GameSettingsPage() {
                     the answer box takes typing, and what a stuck player is offered before the
                     reveal. Changes take effect on the next page load — no deploy needed.
                 </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                    Looking for the points tags on the stuck offer? That switch is{' '}
+                    <strong>Show point costs on the stuck offer</strong>, in the last panel.
+                </p>
             </div>
 
             <GameSettingsForm
