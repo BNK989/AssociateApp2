@@ -15,26 +15,26 @@ import type { SettleOrder, SettlePolicy } from './settlePolicy';
  * decides what the player is allowed to see, and that must not be tangled up
  * with a timer. The hook above it owns *when*; everything about *what* is here.
  *
- * The rule the mechanic rested on, and what replaced it:
+ * The rule the mechanic rests on:
  *
  * > **The drip places letters the player already has. It never reveals a new
  * > one.** A settled letter comes out of the pool, where the player could
  * > already read it. What they are given is its position, which is the one
- * > thing hint level 2 took away.
+ * > thing hint level 2 withholds.
  *
- * That was exactly right while level 2 was an anagram: the pool was full, and
- * position was the thing the player was short of. With `SCRAMBLE_MASK` off the
- * pool holds only what the player's own wrong guesses proved, which on a word
- * they have not guessed at is nothing — so the rule self-gated its way into
- * never firing, and the ladder fell from the clue straight to the Reveal.
+ * That needs a full pool, and hint 2 fills it: two thirds of the word arrives
+ * as orange letters with no place. For one day (2026-09-13) hint 2 revealed in
+ * place instead, the pool held only what a wrong guess had proved, and on a
+ * word the player had not guessed at the rule self-gated into never firing —
+ * the ladder fell from the clue straight to the Reveal.
  *
- * So the rule now has a level attached to it. Below `revealFromHintLevel` it
- * stands unchanged: positions only, out of the pool, nothing new. At and above
- * it the drip may also open a letter the player has not seen, because there the
- * only thing left to offer instead is the Reveal, which ends in no solve at all.
- * Pool letters are still spent first — the cheapest information the drip has —
- * and both ceilings bind throughout, so it can hand over at most half a word
- * and never the last two letters.
+ * `revealFromHintLevel` was added then, and stays as a game-master control.
+ * Below it the rule stands unchanged: positions only, out of the pool, nothing
+ * new. At and above it the drip may also open a letter the player has not
+ * seen. It ships `null` again now that the orange rung is back, because with a
+ * full pool an opened letter is a fourth hint rather than a repair. Pool
+ * letters are always spent first, and both ceilings bind throughout, so the
+ * drip can hand over at most half a word and never the last two letters.
  */
 
 /**

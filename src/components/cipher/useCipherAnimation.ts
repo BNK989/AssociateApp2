@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { maskIsScrambled } from '@/lib/gameConfig';
+import { maskWithholdsPositions } from '@/lib/gameConfig';
 import { buildScrambleItems, computeGuessState, generateShuffledView, type ScrambleItem } from './cipherRules';
 
 /** Total time the scramble takes to settle. */
@@ -68,7 +68,7 @@ export function useCipherAnimation({
      * anagram, so its own order is the resting arrangement.
      */
     const [scrambleItems, setScrambleItems] = useState<ScrambleItem[] | null>(() => (
-        !visible && maskIsScrambled(hintLevel) && scrambling
+        !visible && maskWithholdsPositions(hintLevel) && scrambling
             ? buildScrambleItems({
                 textChars: [...text],
                 cipherChars: [...activeCipher],
@@ -120,7 +120,7 @@ export function useCipherAnimation({
 
             if (display === target && !scrambleItems && !isForced) return;
 
-            if (scrambling && !visible && (maskIsScrambled(hintLevel) || isForced)) {
+            if (scrambling && !visible && (maskWithholdsPositions(hintLevel) || isForced)) {
                 await runScramble({ textChars, target });
                 return;
             }
@@ -153,7 +153,7 @@ export function useCipherAnimation({
             if (cancelled) return;
 
             // From level 2 the scramble *is* the resting state; below it, resolve.
-            if (!visible && maskIsScrambled(hintLevel)) return;
+            if (!visible && maskWithholdsPositions(hintLevel)) return;
             setDisplay(target);
             setScrambleItems(null);
         };

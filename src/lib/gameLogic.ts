@@ -1,4 +1,4 @@
-import { CIPHER_SIGNS, GAME_CONFIG, HINT_COSTS, MATCH_THRESHOLD as GAME_CONFIG_MATCH_THRESHOLD, MAX_STRIKES, maskIsScrambled } from './gameConfig';
+import { CIPHER_SIGNS, GAME_CONFIG, HINT_COSTS, MATCH_THRESHOLD as GAME_CONFIG_MATCH_THRESHOLD, MAX_STRIKES, maskWithholdsPositions } from './gameConfig';
 
 // Re-exported so the ~20 existing import sites keep working; the definitions
 // now live in gameConfig.ts alongside the rest of the game's balance.
@@ -169,12 +169,12 @@ export const generateCipherString = (content: string, level: number, isDaily: bo
             revealedIndices.add(idx);
         }
 
-        // With the scramble off, the revealed set above is all level 2 means:
-        // those letters are drawn where they actually belong, and the positional
-        // path at the foot of this function does it. Level 2 then *adds* to the
-        // picture level 1 gave instead of taking it away — which is the whole
-        // reason the scramble went. See `SCRAMBLE_MASK`.
-        if (!maskIsScrambled(level)) {
+        // Only when level 2 gives positions away does the revealed set above
+        // become the whole hint: those letters are drawn where they belong by
+        // the positional path at the foot of this function. Shipped that way
+        // for one day and it handed over two thirds of the word. See
+        // `HINT_2_WITHHOLDS_POSITIONS`.
+        if (!maskWithholdsPositions(level)) {
             return positionalMask(content, revealedIndices, length, length);
         }
 

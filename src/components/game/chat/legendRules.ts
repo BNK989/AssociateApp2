@@ -1,4 +1,4 @@
-import { maskIsScrambled } from '@/lib/gameConfig';
+import { maskWithholdsPositions } from '@/lib/gameConfig';
 import {
     buildScrambleItems,
     computeGuessState,
@@ -87,7 +87,7 @@ type SampleTile = { char: string; state: TileState };
  * a letter can only appear here if it is already on screen.
  */
 export function pickLegendSamples(args: ColouredTilesArgs): LegendSamples {
-    const tiles = maskIsScrambled(args.hintLevel) ? scrambleTiles(args) : maskTiles(args);
+    const tiles = maskWithholdsPositions(args.hintLevel) ? scrambleTiles(args) : maskTiles(args);
     const picked: LegendSamples = { placed: [], present: [], unknown: [] };
 
     tiles.forEach(({ char, state }, i) => {

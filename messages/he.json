@@ -35,7 +35,7 @@
             "placeholder_turn_me": "התור שלך!",
             "placeholder_turn_other": "התור של {user}",
             "reveal_len": "חשיפת אורך",
-            "hint_2": "חשיפת אות ראשונה + 25%",
+            "hint_2": "חשיפת אותיות ללא מקום",
             "hint_clue": "רמז למילה",
             "cost_pts": "{cost} נק'",
             "still_worth": "עדיין שווה {points} נק' אם תפתור",

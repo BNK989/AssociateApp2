@@ -39,32 +39,42 @@ It also **self-gated** on that rule: with an empty pool there was nothing to
 place, so the drip could not fire before the player had been given something to
 work with.
 
-### What the scramble going did to that rule (2026-09-14)
+### The one day hint 2 gave positions away (2026-09-13 → 14)
 
-The self-gate stopped being a safety property and became the whole story. With
-`SCRAMBLE_MASK` off, the pool holds only what the player's own wrong guesses
-proved — so on a word they have not guessed at it is empty, and at the clue,
+The self-gate stopped being a safety property and became the whole story. For
+one day the level-2 switch shipped off (`SCRAMBLE_MASK = false`, now
+`HINT_2_WITHHOLDS_POSITIONS`), so hint 2 painted its letters green in place and
+put nothing in the pool. The pool then held only what the player's own wrong
+guesses proved — on a word they had not guessed at, nothing — and at the clue,
 where the drip is supposed to be the last rung before giving up, it had nothing
 to give. No candidates, therefore no offer, no button, and the ladder fell from
-the clue straight to the **Reveal**, which is the one move that ends in no solve
-at all. Reported from live play as *"why no floating letters at this stage?
-should be auto given but i don't even get a button"*.
+the clue straight to the **Reveal**. Reported from live play as *"why no
+floating letters at this stage? should be auto given but i don't even get a
+button"*.
 
-So the rule now has a level attached to it, `revealFromHintLevel`:
+The repair on the day was to attach a level to the rule, `revealFromHintLevel`:
 
 > **Below it, unchanged: positions only, out of the pool, nothing new. At and
 > above it the drip may also *open* a letter the player has not seen.**
 
-Three things keep that from becoming a fourth hint:
+**The switch went back on the next day** — see
+[open_defects.md](open_defects.md) §5 and
+[hint_presentation.md](hint_presentation.md) *The middle rung is orange again*.
+Hint 2 fills the pool with two thirds of the word as loose orange letters, the
+ladder runs length + first letter → loose letters → written clue → drip and
+tap → Reveal, and the founding rule above holds again without help: the drip
+has a full pool to place from and never needs to open anything.
 
-- **It is the clue level by default**, so the ladder is spent before it applies.
-  A drip that opens letters earlier is a shortcut past the hints.
+`revealFromHintLevel` therefore ships **`null`** and stays as a game-master
+control. Three things keep it from becoming a fourth hint if someone turns it
+on:
+
+- **Set it to the clue level**, so the ladder is spent before it applies. A drip
+  that opens letters earlier is a shortcut past the hints.
 - **The pool is spent first.** A loose letter costs the player only its
   position, so every one of them goes before anything new is opened.
 - **Both ceilings still bind** — at most half the word, never the last two
   letters, never the first one (hint 1 bought that).
-
-`null` restores the original pool-only rule for a game master who wants it.
 
 ---
 
@@ -326,7 +336,7 @@ production 2026-09-13** at revision 1 with an empty value. The panel saves.
 | :--- | :--- | :--- |
 | `mode` | `offered` | `offered` \| `auto` \| `off` |
 | `armFromHintLevel` | `2` | Below this the rung does not exist |
-| `revealFromHintLevel` | `3` | From here it may open unseen letters; `null` = pool only |
+| `revealFromHintLevel` | `null` | Pool only. Set to `3` and from the clue it may also open unseen letters |
 | `firstDelayMs` | `20000` | `auto` only |
 | `intervalMs` | `15000` | The pace the player actually feels |
 | `strikeCreditMs` | `12000` | `auto` only; mirrors `STRIKE_WORTH_MS` |

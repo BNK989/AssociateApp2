@@ -50,8 +50,14 @@ is next, from one icon family, with no words and no locale text:
 | Rung | Glyph (lucide) | What it gives |
 | :--- | :--- | :--- |
 | 1 | `Ruler` | the word's length |
-| 2 | `Shuffle` | first letter + 66%, **in place** since 2026-09-13 |
+| 2 | `Shuffle` | two thirds of the letters, **loose in the pool** — no positions |
 | 3 | `MessageSquareQuote` | a written clue |
+
+The rungs are, in order: the word's length and first letter, then the letters
+without their places, then the written clue. After the clue the settle drip and
+the tap turn orange to green one letter at a time, and the Reveal ends it.
+Level 2 gave its letters *in place* for one day, 2026-09-13 — see *The middle
+rung is orange again*, below.
 
 Under the `jump` progression there are no intermediate rungs to advertise, so no
 glyph is drawn at all — unchanged behaviour, `getHintTier` still decides it.
@@ -186,11 +192,17 @@ still leaves the cheap rungs unmarked. Marking every rung was considered and
 rejected: with points gone, the grid is the only currency left, and spending it
 on the smallest nudge would put the punishment straight back.
 
-**Hint 2 no longer scrambles.** `SCRAMBLE_MASK` is off, read everywhere through
-`maskIsScrambled`. Level 1 hands the player the first letter in its place and
-level 2 used to take every position away again and hand back an anagram — more
-information, less picture, and the exact moment players described the word
-getting away from them. It reveals in place now, so the ladder only ever adds.
+**Hint 2 no longer scrambles — and, it turned out, never had.** `SCRAMBLE_MASK`
+was turned off on the reading that level 2 took every position away again and
+handed back an anagram: more information, less picture, and the exact moment
+players described the word getting away from them. That was true until
+2026-09-11. Since the letter pool moved orange out of the word line
+([letter_feedback.md](letter_feedback.md)), the line has never drawn the
+anagram: the mask's letters are glyphed out of it and pooled as orange, so the
+player saw the first letter in place, glyphs, and a halo of loose letters.
+Nothing was ever displaced. What the switch actually decided was whether hint 2
+gives letters *without* positions or *with* them, and turning it off chose the
+second. **Reversed 2026-09-14** — see below.
 
 > **"Everywhere" was not everywhere, for one day.** The switch shipped with two
 > call sites still asking the old question as `hintLevel < 2` — `readMaskTile`'s
@@ -207,30 +219,58 @@ getting away from them. It reveals in place now, so the ladder only ever adds.
 > as designed — `settleCandidates` reads the pool, the pool was empty, so there
 > was nothing to offer and no button to offer it with.
 >
-> Fixed 2026-09-14; both sites now read `maskIsScrambled`. The lesson for the
-> next switch of this kind is in the suite that now guards it,
+> Fixed 2026-09-14; both sites now read the switch. The lesson for the next
+> switch of this kind is in the suite that now guards it,
 > `src/lib/letterPool/positionalReveal.test.ts`: it **reads** the constant
 > rather than mocking it, because the nine suites over this surface each force
-> `SCRAMBLE_MASK: true` at module level and so tested only the world the game
-> does not ship. All 1275 tests were green throughout.
+> it on at module level and so, for that one day, tested only the world the game
+> did not ship. All 1275 tests were green throughout.
 
-Two things follow that are easy to miss:
+One thing follows that is easy to miss:
 
 - **The reward grade changed its measure**, from points kept to help taken. With
   a free ladder the ratio is always 1, so every solve graded `clean` and the
   chime stopped saying anything. See `feedbackTiers`.
-- **The letter pool means something else now.** It used to hold what the anagram
-  had displaced; it holds letters the player's own wrong guesses proved are in
-  the word, with no place yet. The settle drip and the tap therefore become rare
-  rather than routine — the drip existed to undo the scramble, and the scramble
-  is gone.
+
+### The middle rung is orange again (2026-09-14)
+
+Ben, from live play: *"the missing orange letters that are part of the game hint
+hierarchy. currently when they should appear it seems that green (correctly
+placed letters) are appearing thus making the game super easy and not really a
+game."* Measured: two thirds of the line green in place after hint 2, halo
+empty, on every word. Two letters left of a six-letter word with their slots
+marked is not a puzzle. Full write-up in [open_defects.md](open_defects.md) §5.
+
+The switch is back on and renamed for what it does: `HINT_2_WITHHOLDS_POSITIONS`,
+read through `maskWithholdsPositions`. The ladder the player meets is:
+
+1. **Length and first letter**, green in its place.
+2. **Two thirds of the letters, loose** — `ceil(0.66 × letters)`, orange in the
+   halo, no positions. The line stays as hint 1 left it.
+3. **The written clue.** The last free step.
+4. Then the settle drip and the tap turn orange to green one letter at a time
+   ([settle_drip.md](settle_drip.md)), and the Reveal finishes it.
+
+It is monotonic throughout: nothing is taken away, which was the real goal
+behind "the scramble is gone", and it was already true. What the one-day
+version cost was the whole middle of the game — positions were given away at
+rung 2 instead of sold back by the drip and the tap, so §4 of open_defects'
+tap-to-place had nothing to tap and the drip was repurposed to *open* letters
+(`REVEAL_FROM_HINT_LEVEL`, now back to `null` by default).
+
+The hint button's rung-2 label had said *"Reveal 1st + 25%"* since before the
+pool existed; it never matched the count. It reads *"Reveal loose letters"* in
+all seven locales now. The tutorial's promise that orange letters are in the
+word somewhere, and its *"word length first, then letters, then a written
+clue"*, were right all along and stand.
 
 ## What is still open
 
-1. **The cliff between the clue and the Reveal.** After rung 3 there is nothing
-   but Reveal and a streak step. A player who takes the clue and still cannot see
-   the word gets no further rung. Cheaper than it was — the clue is free now —
-   but the shape of the cliff is unchanged.
+1. ~~**The cliff between the clue and the Reveal.**~~ **Bridged.** After the
+   written clue a player still holds hint 2's loose letters, and the settle drip
+   and the tap place them one at a time before the Reveal is the only move left.
+   Whether that pacing is right is a game-master question
+   ([settle_drip.md](settle_drip.md)), not an open cliff.
 3. ~~**The auto-hint default of 20s per rung.**~~ **Closed 2026-09-13.** The
    delay was never the problem; the clock was. `GAME_CONFIG.DEFAULT_AUTO_HINT_ENABLED`
    is now `false`, so the ladder is not handed out at all unless a game master

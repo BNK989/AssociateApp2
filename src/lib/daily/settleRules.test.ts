@@ -17,15 +17,15 @@ import { DEFAULT_SETTLE_POLICY, type SettlePolicy } from './settlePolicy';
 /**
  * With the anagram switched on.
  *
- * `SCRAMBLE_MASK` ships off — hint 2 reveals its letters in place now, so a
- * suite written against the shuffled mask would quietly stop exercising
- * anything rather than fail. The mechanic still exists behind the switch for a
- * game master to turn back on, so these cases state the premise instead of
- * inheriting it.
+ * `HINT_2_WITHHOLDS_POSITIONS` ships on — hint 2 gives letters without their
+ * places, orange in the pool. It shipped off for one day (2026-09-13), painting
+ * two thirds of the word green in place, and a suite inheriting the switch would
+ * have gone quietly vacuous rather than fail. So these cases state the premise.
+ * `positionalReveal.test.ts` reads the real value and covers both branches.
  */
 vi.mock('@/lib/gameConfig', async (importOriginal) => {
     const actual = await importOriginal<typeof import('@/lib/gameConfig')>();
-    return { ...actual, SCRAMBLE_MASK: true, maskIsScrambled: (level: number) => level >= 2 };
+    return { ...actual, HINT_2_WITHHOLDS_POSITIONS: true, maskWithholdsPositions: (level: number) => level >= 2 };
 });
 
 
@@ -207,15 +207,15 @@ describe('nextSettleIndex', () => {
 });
 
 describe('at the clue, the drip may open a letter as well as place one', () => {
-    // The rung had quietly stopped existing. With the scramble gone the pool
-    // holds only what a wrong guess proved, so a player who reached the clue
-    // without guessing had no pool, no candidates, no offer and no button — and
-    // the ladder fell from the clue straight to the Reveal.
+    // A game-master setting, off by default. Added on the one day hint 2 revealed
+    // in place: the pool held only what a wrong guess proved, so at the clue an
+    // unguessed word had no candidates, no offer, no button, and the ladder fell
+    // straight to the Reveal. Hint 2 fills the pool again; these turn it on.
     const atClue = {
         text: 'STARLING',
         guesses: [],
         settled: [],
-        policy: policy(),
+        policy: policy({ revealFromHintLevel: MAX_HINT_LEVEL }),
         hintLevel: MAX_HINT_LEVEL,
     };
 
@@ -259,15 +259,15 @@ describe('at the clue, the drip may open a letter as well as place one', () => {
         expect(nextSettleIndex(spent)).toBeNull();
     });
 
-    it('stays pool-only when a game master turns the reveal off', () => {
-        const poolOnly = policy({ revealFromHintLevel: null });
-        expect(canSettle({ ...atClue, policy: poolOnly })).toBe(false);
+    it('stays pool-only on the shipped policy, which leaves the reveal off', () => {
+        expect(DEFAULT_SETTLE_POLICY.revealFromHintLevel).toBeNull();
+        expect(canSettle({ ...atClue, policy: policy() })).toBe(false);
     });
 
     it('is the level, not the arming, that decides it', () => {
-        expect(revealsUnseen(2, policy())).toBe(false);
-        expect(revealsUnseen(MAX_HINT_LEVEL, policy())).toBe(true);
-        expect(revealsUnseen(MAX_HINT_LEVEL, policy({ revealFromHintLevel: null }))).toBe(false);
+        expect(revealsUnseen(2, policy({ revealFromHintLevel: MAX_HINT_LEVEL }))).toBe(false);
+        expect(revealsUnseen(MAX_HINT_LEVEL, policy({ revealFromHintLevel: MAX_HINT_LEVEL }))).toBe(true);
+        expect(revealsUnseen(MAX_HINT_LEVEL, policy())).toBe(false);
         expect(revealsUnseen(1, policy({ revealFromHintLevel: 1 }))).toBe(true);
     });
 });

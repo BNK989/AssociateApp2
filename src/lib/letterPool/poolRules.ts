@@ -1,4 +1,4 @@
-import { maskIsScrambled } from '@/lib/gameConfig';
+import { maskWithholdsPositions } from '@/lib/gameConfig';
 import { computeGuessState, isFillerChar } from '@/components/cipher/cipherRules';
 
 /**
@@ -148,11 +148,12 @@ export function knownUnplacedIndices(
     const placed = placedIndices(text, guesses, mask, settled);
     const chars = [...text];
 
-    // What the anagram mask exposes, as a budget to spend. Without this a hint
-    // bought at level 2 would reveal nothing at all: its letters no longer
-    // appear in the line, so the pool is the only place left for them to go.
+    // What the level-2 mask exposes, as a budget to spend. This is the orange
+    // rung of the ladder: the line glyphs these letters out, so the pool is the
+    // only place they reach the player, and without this budget hint 2 would
+    // reveal nothing at all.
     const fromMask: Record<string, number> = {};
-    if (mask && maskIsScrambled(mask.hintLevel)) {
+    if (mask && maskWithholdsPositions(mask.hintLevel)) {
         for (const char of [...mask.cipher]) {
             if (char === ' ' || isFillerChar(char)) continue;
             const lower = char.toLowerCase();
@@ -295,9 +296,9 @@ export function placedIndices(
 
     // The same question `readMaskTile` asks, and it has to get the same answer:
     // a positional mask's letters are at their own index, so the strip fills
-    // them in. Keyed on `maskIsScrambled` rather than on the level, or the two
-    // disagree the moment the scramble is switched off.
-    if (!maskIsScrambled(mask.hintLevel)) {
+    // them in. Keyed on `maskWithholdsPositions` rather than on the level, or
+    // the two disagree the moment the switch is flipped.
+    if (!maskWithholdsPositions(mask.hintLevel)) {
         const cipherChars = [...mask.cipher];
         chars.forEach((char, index) => {
             if (isGapChar(char)) return;

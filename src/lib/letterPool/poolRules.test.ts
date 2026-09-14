@@ -18,11 +18,11 @@ import {
     resolvePlacements,
     typeableIndices,
 } from './slotRules';
-/** With the anagram on: it ships off, and these cases are about the anagram. */
+/** With the anagram pinned on, as it ships: these cases are about the anagram. */
 vi.mock('@/lib/gameConfig', async (importOriginal) => ({
     ...await importOriginal<typeof import('@/lib/gameConfig')>(),
-    SCRAMBLE_MASK: true,
-    maskIsScrambled: (level: number) => level >= 2,
+    HINT_2_WITHHOLDS_POSITIONS: true,
+    maskWithholdsPositions: (level: number) => level >= 2,
 }));
 
 const slots = (text: string, guesses: string[], typed = '', mode: 'skip' | 'full' = 'skip') =>

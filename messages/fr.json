@@ -28,7 +28,7 @@
             "placeholder_turn_me": "C'est votre tour !",
             "placeholder_turn_other": "C'est le tour de {user}",
             "reveal_len": "Révéler la longueur",
-            "hint_2": "Révéler 1er + 25%",
+            "hint_2": "Révéler des lettres en vrac",
             "hint_clue": "Indice du mot",
             "cost_pts": "{cost} pts",
             "still_worth": "Vaut encore {points} pts si vous trouvez",

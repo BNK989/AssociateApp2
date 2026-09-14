@@ -8,15 +8,15 @@ import { MAX_HINT_LEVEL } from '@/lib/gameConfig';
 /**
  * With the anagram switched on.
  *
- * `SCRAMBLE_MASK` ships off — hint 2 reveals its letters in place now, so a
- * suite written against the shuffled mask would quietly stop exercising
- * anything rather than fail. The mechanic still exists behind the switch for a
- * game master to turn back on, so these cases state the premise instead of
- * inheriting it.
+ * `HINT_2_WITHHOLDS_POSITIONS` ships on — hint 2 gives letters without their
+ * places, orange in the pool. It shipped off for one day (2026-09-13), painting
+ * two thirds of the word green in place, and a suite inheriting the switch would
+ * have gone quietly vacuous rather than fail. So these cases state the premise.
+ * `positionalReveal.test.ts` reads the real value and covers both branches.
  */
 vi.mock('@/lib/gameConfig', async (importOriginal) => {
     const actual = await importOriginal<typeof import('@/lib/gameConfig')>();
-    return { ...actual, SCRAMBLE_MASK: true, maskIsScrambled: (level: number) => level >= 2 };
+    return { ...actual, HINT_2_WITHHOLDS_POSITIONS: true, maskWithholdsPositions: (level: number) => level >= 2 };
 });
 
 
@@ -117,22 +117,21 @@ describe('availability', () => {
         expect(view.result.current.available).toBe(false);
     });
 
-    it('is available at the clue with an empty pool, which is the common case', () => {
-        // The rung had gone missing in exactly this state: at the clue, on a
-        // word the player never guessed at, there was no pool and therefore no
-        // offer — and the ladder fell through to the reveal.
+    it('is available at the clue with an empty pool once a game master turns the opening on', () => {
+        // The state the setting was written for: at the clue with nothing in the
+        // pool there was no offer. Hint 2 fills the pool again, so this is opt-in.
         const { view } = setup({
             message: word({ hint_level: MAX_HINT_LEVEL, cipher_text: undefined }),
+            policy: policy({ revealFromHintLevel: MAX_HINT_LEVEL }),
         });
 
         expect(view.result.current.available).toBe(true);
         expect(view.result.current.lettersLeft).toBeGreaterThan(0);
     });
 
-    it('honours a game master who turns the opening off', () => {
+    it('leaves the opening off on the shipped policy', () => {
         const { view } = setup({
             message: word({ hint_level: MAX_HINT_LEVEL, cipher_text: undefined }),
-            policy: policy({ revealFromHintLevel: null }),
         });
 
         expect(view.result.current.available).toBe(false);
@@ -141,6 +140,7 @@ describe('availability', () => {
     it('places an opened letter when the player accepts it', () => {
         const { view, patchTarget, land } = setup({
             message: word({ hint_level: MAX_HINT_LEVEL, cipher_text: undefined }),
+            policy: policy({ revealFromHintLevel: MAX_HINT_LEVEL }),
         });
 
         act(() => view.result.current.accept());

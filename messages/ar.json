@@ -28,7 +28,7 @@
             "placeholder_turn_me": "دورك!",
             "placeholder_turn_other": "دور {user}",
             "reveal_len": "كشف الطول",
-            "hint_2": "كشف الأول + 25%",
+            "hint_2": "كشف حروف بلا مواضع",
             "hint_clue": "تلميح للكلمة",
             "cost_pts": "{cost} نقطة",
             "still_worth": "لا يزال يساوي {points} نقطة إذا حللتها",

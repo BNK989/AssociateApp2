@@ -50,6 +50,16 @@ and order stops carrying information. The legend says which applies
 (`ordered_note` / `shuffled_note`), and the drifting animation marks the tiles
 whose slots are meaningless.
 
+> **This was false for one day.** On 2026-09-13 the level-2 switch was turned
+> off on the belief that the anagram scrambled the word the player saw. It had
+> not since the pool took orange out of the line (below): the switch decided
+> only whether hint 2 gives letters *without* positions or *with* them. Off, it
+> painted two thirds of the word green in place and the pool stayed empty. Back
+> on 2026-09-14 and renamed `HINT_2_WITHHOLDS_POSITIONS`, read through
+> `maskWithholdsPositions`. The ladder is length + first letter, then loose
+> orange letters, then the written clue; see
+> [hint_presentation.md](hint_presentation.md).
+
 **Motion means one thing: this slot is not the letter's own.** Anything settled
 is drawn still, so stillness is what marks a position as trustworthy. Green
 therefore never moves.

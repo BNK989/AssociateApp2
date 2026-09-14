@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { maskIsScrambled } from '@/lib/gameConfig';
+import { maskWithholdsPositions } from '@/lib/gameConfig';
 import { generateCipherString } from '@/lib/gameLogic';
 import { computeGuessState } from '@/components/cipher/cipherRules';
 import { readMaskTile } from '@/components/cipher/maskTile';
@@ -9,19 +9,20 @@ import { knownUnplacedIndices, placedIndices } from './poolRules';
  * What hint 2 actually reaches the player with — **read without mocking the
  * switch**.
  *
- * Every other suite over this surface forces `SCRAMBLE_MASK: true` at module
- * level, so the whole mask/pool/settle path was only ever exercised in the
- * world the game does not ship. That is how a hint 2 that revealed nothing got
- * through green: `readMaskTile` and `placedIndices` both still asked
- * `hintLevel < 2` instead of `maskIsScrambled`, so with the scramble off the
- * mask's letters were glyphed out of the line, left out of the strip, and never
- * pooled either. Revealed in `cipher_text`, reaching nothing on screen.
+ * Every other suite over this surface forces `HINT_2_WITHHOLDS_POSITIONS: true`
+ * at module level. For the one day the switch shipped off (2026-09-13) that
+ * meant the whole mask/pool/settle path was only exercised in a world the game
+ * did not ship, and a hint 2 that revealed nothing got through green:
+ * `readMaskTile` and `placedIndices` both still asked `hintLevel < 2` instead
+ * of `maskWithholdsPositions`, so the mask's letters were glyphed out of the
+ * line, left out of the strip, and never pooled either. Revealed in
+ * `cipher_text`, reaching nothing on screen.
  *
  * So these cases **read** the switch rather than setting it. Every assertion
  * below holds under either setting; only the route the letters take changes —
- * into the line when the mask is honest, into the pool when it is an anagram.
- * Flip `SCRAMBLE_MASK` and this suite keeps testing the shipped game instead of
- * quietly going vacuous.
+ * into the pool when the mask is an anagram (as shipped), into the line when
+ * it is honest. Flip `HINT_2_WITHHOLDS_POSITIONS` either way and this suite
+ * keeps testing the shipped game instead of quietly going vacuous.
  */
 
 const WORD = 'clotheslines';
@@ -64,7 +65,7 @@ describe('hint 2 discloses letters, whatever shape the mask has', () => {
         const line = drawnInLine(mask.cipher, 2, NO_GUESSES);
         const pool = knownUnplacedIndices(WORD, NO_GUESSES, mask);
 
-        if (maskIsScrambled(2)) {
+        if (maskWithholdsPositions(2)) {
             // An anagram's slots mean nothing, so nothing but the bought first
             // letter may be drawn in place.
             expect(line).toEqual([0]);

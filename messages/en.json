@@ -35,7 +35,7 @@
             "placeholder_turn_me": "It's your turn!",
             "placeholder_turn_other": "It is {user}'s turn",
             "reveal_len": "Reveal Length",
-            "hint_2": "Reveal 1st + 25%",
+            "hint_2": "Reveal loose letters",
             "hint_clue": "Word clue",
             "cost_pts": "{cost} pts",
             "still_worth": "Still worth {points} pts if you solve it",

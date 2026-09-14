@@ -97,9 +97,11 @@ Two things about this key are worth knowing before you touch it:
 | **Applies to** | first word / every word, up front / every word, as you reach it | Which words the start level reaches, and when it lands on them. See below. |
 | **Charge for the free hint** | on / off | Whether a hint the player never asked for still costs them points. |
 
-Levels: **1** = first letter and length · **2** = scramble (first letter pinned,
-most of the rest shown but shuffled) · **3** = the AI clue, which usually gives
-the answer away.
+Levels: **1** = first letter and length · **2** = two thirds of the letters,
+loose in the pool with no positions (the line stays as level 1 left it) · **3**
+= the written AI clue, which usually gives the answer away. After the clue the
+settle drip and the tap place the loose letters; see
+[settle_drip.md](settle_drip.md).
 
 #### The three reaches
 

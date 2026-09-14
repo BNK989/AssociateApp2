@@ -28,7 +28,7 @@
             "placeholder_turn_me": "Este rândul tău!",
             "placeholder_turn_other": "Este rândul lui {user}",
             "reveal_len": "Dezvăluie Lungimea",
-            "hint_2": "Dezvăluie Primul + 25%",
+            "hint_2": "Dezvăluie litere libere",
             "hint_clue": "Indiciu pentru cuvânt",
             "cost_pts": "{cost} pct",
             "still_worth": "Încă valorează {points} pct dacă îl rezolvi",

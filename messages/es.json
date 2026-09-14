@@ -28,7 +28,7 @@
             "placeholder_turn_me": "¡Es tu turno!",
             "placeholder_turn_other": "Es el turno de {user}",
             "reveal_len": "Revelar Longitud",
-            "hint_2": "Revelar 1º + 25%",
+            "hint_2": "Revelar letras sueltas",
             "hint_clue": "Pista de la palabra",
             "cost_pts": "{cost} pts",
             "still_worth": "Sigue valiendo {points} pts si la resuelves",

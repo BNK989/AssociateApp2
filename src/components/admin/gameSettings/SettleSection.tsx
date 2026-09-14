@@ -94,7 +94,7 @@ export function SettleSection({ policy, revision }: SettleSectionProps) {
 
             <SettleField
                 label="May open new letters from"
-                hint="Up to this level the drip only places letters the player has already found, which on a word they have not guessed at means it has nothing to give and never appears at all. From this level it may also open a letter they have not seen — the last rung before the reveal. It never opens the first letter, which hint 1 already bought, and both ceilings below still bind."
+                hint="Up to this level the drip only places letters the player already has: the loose orange ones hint 2 gave them, or that their own wrong guesses found. From this level it may also open a letter they have not seen. Off by default, because with hint 2 filling the pool an opened letter is a fourth hint rather than a repair. It never opens the first letter, which hint 1 already bought, and both ceilings below still bind."
                 disabled={off}
                 control={(
                     <Select

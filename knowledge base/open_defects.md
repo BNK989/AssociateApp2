@@ -1,11 +1,13 @@
 # Open defects and open decisions
 
-> **Status: §1–§4 closed 2026-09-13; §5 open, raised 2026-09-14.** Ben answered
-> §1's two open questions with *yes to both* — hints in the daily game are free,
-> and the scramble is gone. See [hint_presentation.md](hint_presentation.md) for
-> what that changed. §5 is the bill for the second answer: with the scramble
-> gone, the orange rung of the ladder went with it, and hint 2 now hands over
-> two thirds of the word in place.
+> **Status: all closed. §1–§4 on 2026-09-13; §5 raised and closed 2026-09-14.**
+> Ben answered §1's two open questions with *yes to both* — hints in the daily
+> game are free, and the scramble is gone. §5 was the bill for the second
+> answer: the "scramble" had not scrambled anything the player saw since
+> 2026-09-11, so turning it off took the orange rung out of the ladder and hint 2
+> handed over two thirds of the word in place. Reversed the next day. The ladder
+> is: length + first letter → loose orange letters → written clue → drip/tap →
+> Reveal. See [hint_presentation.md](hint_presentation.md).
 
 Raised from live play on production, 2026-09-13, after the hint-pacing and
 tap-to-place changes shipped. Kept here rather than in a session's memory because
@@ -63,7 +65,8 @@ forced by §4 rather than chosen, so treat it as a start, not an answer.
    of the point.
 2. **The scramble is gone.** Hint 2 reveals its letters where they belong. The
    ladder now only ever adds to the picture, and the word never gets harder to
-   hold halfway through.
+   hold halfway through. *Reversed in §5, 2026-09-14: the ladder was already
+   monotonic, and "in place" gave the middle of the game away.*
 
 Two consequences worth knowing:
 
@@ -74,7 +77,8 @@ Two consequences worth knowing:
 - **The pool means something different.** It used to fill with letters the
   anagram had scrambled; now it fills with letters your own wrong guesses proved
   are in the word but not where. That is the honest meaning, and it is what makes
-  the drip and the tap rare rather than routine.
+  the drip and the tap rare rather than routine. *Also reversed in §5: hint 2
+  fills the pool again, and the drip and tap have their work back.*
 
 ---
 
@@ -161,7 +165,7 @@ principled, and "broken" is what it cost us.
 
 ---
 
-## 5. The orange letters are gone from the ladder — hint 2 paints green instead — OPEN
+## 5. The orange letters are gone from the ladder — hint 2 paints green instead — DONE
 
 **Ben, 2026-09-14:** *"the missing orange letters that are part of the game hint
 hierarchy. currently when they should appear it seems that green (correctly
@@ -270,3 +274,38 @@ since what it toggles is not a scramble of anything the player sees),
 [settle_drip.md](settle_drip.md), [letter_feedback.md](letter_feedback.md), the
 test-suite premise notes, and the `hint_2` / `step3_desc` / `step4_desc` copy in
 all seven locales.
+
+---
+
+**Done, 2026-09-14.** Ben: *"yes go ahead and flip it back, do the full
+reconciliation. the hint ladder should also include the textual hint which you
+didn't write in your recommended fix make sure it isn't missed."* The ladder,
+stated in full so the written clue is not lost again:
+
+| Rung | What the player gets | Colour on the board |
+| :--- | :--- | :--- |
+| 1 | the word's length, and the first letter in its place | one green |
+| 2 | `ceil(0.66 × letters)` letters, **no positions** | orange, loose in the halo |
+| 3 | the **written AI clue** | nothing new in the line |
+| then | settle drip / tap place the loose letters one at a time | orange → green |
+| last | Reveal | — |
+
+What changed:
+
+- `HINT_2_WITHHOLDS_POSITIONS = true` (renamed from `SCRAMBLE_MASK`; the
+  predicate is `maskWithholdsPositions`). Every reader of the switch already
+  did the right thing on this branch, and the nine suites that force it on are
+  its specification.
+- `SETTLE.REVEAL_FROM_HINT_LEVEL` back to `null`: positions only, never new
+  letters. The setting stays for a game master; the two drip suites that relied
+  on the clue-level default now turn it on explicitly and assert the shipped
+  default is off.
+- `hint_2` reads *"Reveal loose letters"* in all seven locales. `step3_desc`
+  and `step4_desc` were already right and stand.
+- Comments in `gameConfig.ts`, `gameLogic.ts`, `maskTile.ts`, `poolRules.ts`,
+  `settleRules.ts`, `settlePolicy.ts` and the ten test premise notes no longer
+  describe a scramble the player could see, or a switch that ships off.
+- [hint_presentation.md](hint_presentation.md), [settle_drip.md](settle_drip.md),
+  [letter_feedback.md](letter_feedback.md) and
+  [game_master_guide.md](game_master_guide.md) record the detour and state the
+  ladder with the clue as rung 3.

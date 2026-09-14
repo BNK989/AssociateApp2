@@ -9,15 +9,15 @@ import { buildSlots, typeableIndices } from './slotRules';
 /**
  * With the anagram switched on.
  *
- * `SCRAMBLE_MASK` ships off — hint 2 reveals its letters in place now, so a
- * suite written against the shuffled mask would quietly stop exercising
- * anything rather than fail. The mechanic still exists behind the switch for a
- * game master to turn back on, so these cases state the premise instead of
- * inheriting it.
+ * `HINT_2_WITHHOLDS_POSITIONS` ships on — hint 2 gives letters without their
+ * places, orange in the pool. It shipped off for one day (2026-09-13), painting
+ * two thirds of the word green in place, and a suite inheriting the switch would
+ * have gone quietly vacuous rather than fail. So these cases state the premise.
+ * `positionalReveal.test.ts` reads the real value and covers both branches.
  */
 vi.mock('@/lib/gameConfig', async (importOriginal) => {
     const actual = await importOriginal<typeof import('@/lib/gameConfig')>();
-    return { ...actual, SCRAMBLE_MASK: true, maskIsScrambled: (level: number) => level >= 2 };
+    return { ...actual, HINT_2_WITHHOLDS_POSITIONS: true, maskWithholdsPositions: (level: number) => level >= 2 };
 });
 
 

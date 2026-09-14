@@ -51,9 +51,9 @@ export type SettlePolicy = {
      * Lowest hint level at which the drip may open a letter the player has not
      * been shown, rather than only place one that is already loose.
      *
-     * `null` is the original rule: positions only, never new letters. It reads
-     * as generous and, with the scramble gone, means the rung almost never
-     * exists — see `SETTLE.REVEAL_FROM_HINT_LEVEL`.
+     * `null`, the default, is the founding rule: positions only, never new
+     * letters. It relies on hint 2 filling the pool with orange letters, which
+     * it does — see `SETTLE.REVEAL_FROM_HINT_LEVEL` for the one day it did not.
      */
     revealFromHintLevel: number | null;
     /** Dwell before the first letter. `auto` only; `offered` uses the stuck clock. */
@@ -113,6 +113,20 @@ function parseEnum<T extends string>(raw: unknown, allowed: readonly T[], fallba
 }
 
 /**
+ * The one field where `null` is a value rather than an absence: it stores the
+ * pool-only rule. It is also the compiled default, so an absent or malformed
+ * key lands there too; a number is a game master opening the drip from that
+ * level, clamped to the ladder.
+ */
+function parseRevealLevel(raw: unknown): number | null {
+    if (raw === null) return null;
+    if (typeof raw !== 'number' || !Number.isFinite(raw)) {
+        return DEFAULT_SETTLE_POLICY.revealFromHintLevel;
+    }
+    return Math.round(clampNumber(raw, 0, MAX_HINT_LEVEL, 0));
+}
+
+/**
  * Narrows a stored jsonb blob into a policy, per field.
  *
  * Total by construction: it never throws and never returns a partial object.
@@ -128,17 +142,7 @@ export function parseSettlePolicy(value: unknown): SettlePolicy {
         armFromHintLevel: Math.round(clampNumber(
             value.armFromHintLevel, 0, MAX_HINT_LEVEL, DEFAULT_SETTLE_POLICY.armFromHintLevel,
         )),
-        // The one field where `null` is a value rather than an absence: it
-        // stores the pool-only rule, which is not the compiled default, so it
-        // cannot be expressed by leaving the key out.
-        revealFromHintLevel: value.revealFromHintLevel === null
-            ? null
-            : Math.round(clampNumber(
-                value.revealFromHintLevel,
-                0,
-                MAX_HINT_LEVEL,
-                DEFAULT_SETTLE_POLICY.revealFromHintLevel ?? MAX_HINT_LEVEL,
-            )),
+        revealFromHintLevel: parseRevealLevel(value.revealFromHintLevel),
         firstDelayMs: Math.round(clampNumber(
             value.firstDelayMs, 0, MAX_SETTLE_DELAY_MS, DEFAULT_SETTLE_POLICY.firstDelayMs,
         )),
