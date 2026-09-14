@@ -21,7 +21,9 @@ vi.mock('sonner', () => ({
     },
 }));
 
-const copyToClipboard = vi.fn(async () => true);
+// Typed with its real signature rather than inferred from the body: the
+// wrapper below hands it the text, and the assertions read it back.
+const copyToClipboard = vi.fn<(text: string) => Promise<boolean>>(async () => true);
 vi.mock('@/lib/utils', () => ({
     getURL: (path: string) => `https://associ8.app${path}`,
     copyToClipboard: (text: string) => copyToClipboard(text),
