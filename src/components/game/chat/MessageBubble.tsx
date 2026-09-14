@@ -1,3 +1,4 @@
+import { motion, useReducedMotion } from 'framer-motion';
 import { LETTER_POOL } from '@/lib/gameConfig';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
@@ -7,7 +8,8 @@ import { getAvatarColor, getInitials } from '@/lib/avatarUtils';
 import { deriveMessageFlags, shouldShowStrikeLabel } from './messageFlags';
 import { DEFAULT_LEGEND_SAMPLES, hasColouredTiles, pickLegendSamples } from './legendRules';
 import { useLegendIntro } from './useLegendIntro';
-import { HintPanel } from './HintPanel';
+import { useMeasuredSize } from './useMeasuredSize';
+import { HintPanel, PANEL_EASE, PANEL_MS } from './HintPanel';
 import { InlineLegend } from './InlineLegend';
 import {
     ConnectionScoreBadge,
@@ -112,6 +114,14 @@ export function MessageBubble({
     const username = message.profiles?.username || 'User';
     const scramble = () => onForceScramble(message.id);
 
+    // The bubble is as wide as its content, and its content changes width:
+    // the clue panel joining it, letters landing in the word. Width, like
+    // height, cannot be animated from `auto`, so the content is measured and
+    // the bubble eases to the number -- on the clue panel's own curve, so the
+    // two growths read as one.
+    const reduced = useReducedMotion();
+    const { ref: contentRef, width: contentWidth } = useMeasuredSize<HTMLDivElement>();
+
     // Only a shuffleable bubble is actually clickable. The reserved strip at the
     // bottom is also there for the strike dots and the outcome mark, and those
     // do nothing when tapped — pointing a cursor at them promised an
@@ -137,7 +147,7 @@ export function MessageBubble({
                     // The breathing room a clue earns is eased in, not switched
                     // on: as a bare class it was 16px of layout appearing a
                     // frame before the panel it makes room for.
-                    className={`flex items-end md:items-start gap-2 transition-[margin] duration-300 ease-out ${flags.isMe ? 'flex-row-reverse' : 'flex-row'} ${isShaking ? 'animate-shake' : ''} ${flags.hintDisplay === 'open' ? 'my-2' : ''}`}
+                    className={`@container flex items-end md:items-start gap-2 transition-[margin] duration-300 ease-out ${flags.isMe ? 'flex-row-reverse' : 'flex-row'} ${isShaking ? 'animate-shake' : ''} ${flags.hintDisplay === 'open' ? 'my-2' : ''}`}
                 >
                     <Avatar className="w-8 h-8">
                         <AvatarImage src={message.profiles?.avatar_url} />
@@ -157,17 +167,48 @@ export function MessageBubble({
                         onMouseDown={(e) => e.preventDefault()}
                         className={`relative max-w-[70%] md:max-w-[85%] rounded-lg transition-all duration-300 ${flags.isMe ? 'tile-surface-own bg-indigo-600 text-white glow-me' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white glow-gray'} ${flags.isTarget ? 'target-message-glow' : ''} ${outcomeSpine} ${flags.isDimmed ? 'opacity-60 hover:opacity-100' : ''} ${isJustSolved ? solvedRingClass(feedback.tier) : ''} ${flags.needsExtraPadding ? 'p-3 pb-5' : 'p-3'} ${isClickable ? 'cursor-pointer hover:ring-2 hover:ring-indigo-400/50' : ''}`}
                     >
-                        <CipherText
-                            text={message.content}
-                            cipherText={message.cipher_text}
-                            visible={flags.isVisible || isRevealed}
-                            className={flags.isMe ? 'text-white' : 'text-gray-900 dark:text-white'}
-                            isSolving={flags.isTarget}
-                            hintLevel={message.hint_level}
-                            guesses={message.guesses || []}
-                            settled={message.settled_indices || undefined}
-                            forceScramble={scrambleTrigger}
-                        />
+                        {/*
+                          * The sizer eases to the content's measured width; the
+                          * content itself sits at its natural width, capped by
+                          * the row (the bubble's 70% / 85% less its padding) so
+                          * it wraps the same whatever the sizer is doing. Only
+                          * the inline axis is clipped: shadows and the badges
+                          * that hang off the bubble's edges are untouched.
+                          */}
+                        <motion.div
+                            initial={false}
+                            animate={{ width: contentWidth ?? 'auto' }}
+                            transition={reduced
+                                ? { duration: 0 }
+                                : { width: { duration: PANEL_MS, ease: PANEL_EASE } }}
+                            className="overflow-x-clip"
+                        >
+                            <div
+                                ref={contentRef}
+                                className="w-max max-w-[calc(70cqw_-_1.5rem)] md:max-w-[calc(85cqw_-_1.5rem)]"
+                            >
+                                <CipherText
+                                    text={message.content}
+                                    cipherText={message.cipher_text}
+                                    visible={flags.isVisible || isRevealed}
+                                    className={flags.isMe ? 'text-white' : 'text-gray-900 dark:text-white'}
+                                    isSolving={flags.isTarget}
+                                    hintLevel={message.hint_level}
+                                    guesses={message.guesses || []}
+                                    settled={message.settled_indices || undefined}
+                                    forceScramble={scrambleTrigger}
+                                />
+
+                                <InlineLegend
+                                    open={legendIntro.isOpen}
+                                    positionNote={LETTER_POOL.ENABLED ? 'pool' : (message.hint_level >= 2 ? 'shuffled' : 'ordered')}
+                                    samples={legendSamples}
+                                    onDismiss={legendIntro.dismiss}
+                                />
+
+                                <HintPanel display={flags.hintDisplay} hint={message.ai_hint} />
+                            </div>
+                        </motion.div>
 
                         {flags.isTarget && typeof message.connection_score === 'number' && (
                             <ConnectionScoreBadge
@@ -175,13 +216,6 @@ export function MessageBubble({
                                 compact={activeBubbleWidth > 0 && activeBubbleWidth < NARROW_BUBBLE_PX}
                             />
                         )}
-
-                        <InlineLegend
-                            open={legendIntro.isOpen}
-                            positionNote={LETTER_POOL.ENABLED ? 'pool' : (message.hint_level >= 2 ? 'shuffled' : 'ordered')}
-                            samples={legendSamples}
-                            onDismiss={legendIntro.dismiss}
-                        />
 
                         {flags.canShuffle && (
                             <ShuffleHintButton compact={flags.hintDisplay === 'open'} onShuffle={scramble} />
@@ -195,8 +229,6 @@ export function MessageBubble({
                                 showLabel={shouldShowStrikeLabel(message.content)}
                             />
                         )}
-
-                        <HintPanel display={flags.hintDisplay} hint={message.ai_hint} />
 
                         {justSolved && justSolved.points > 0 && (
                             <SolveBurst

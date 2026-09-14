@@ -7,8 +7,12 @@ import { ClueSkeleton, ClueText } from './ClueText';
 import { useMeasuredHeight } from './useMeasuredHeight';
 
 /** The panel's own opening, and every later change of its content's height. */
-const PANEL_EASE = [0.22, 0.61, 0.36, 1] as const;
-const PANEL_MS = 0.34;
+/**
+ * One ease for everything that grows around a clue: the panel's height and the
+ * bubble's width travel on the same curve, so the two reads as one motion.
+ */
+export const PANEL_EASE = [0.22, 0.61, 0.36, 1] as const;
+export const PANEL_MS = 0.34;
 
 const DISCLOSURE_REVEAL = {
     initial: { opacity: 0, height: 0 },

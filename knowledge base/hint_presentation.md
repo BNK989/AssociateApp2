@@ -145,6 +145,35 @@ on.
 The hint button's progress ring and the auto-hint countdown badge moved onto the
 same brand tokens at the same time; both were spelling purple out by hand.
 
+### The bubble widens on a measured width too (2026-09-14)
+
+The panel eased open, but the bubble around it did not: a chat bubble is as
+wide as its content, and when the clue joined that content the bubble jumped
+to its 70% cap in one frame, with the row's `my-2` and the panel's height the
+only things easing. Live play read it as rough.
+
+Same answer, other axis. `MessageBubble` wraps its in-flow content (the cipher,
+the inline colour key, the clue panel) in a sizer that animates `width` to the
+content's measured width, from `useMeasuredSize` — the hook `useMeasuredHeight`
+is now the height half of. The content itself sits at its natural width
+(`w-max`) inside the sizer, capped by the row through container-query units
+(`70cqw`/`85cqw` less the bubble's padding; the row is the `@container`), so
+its wrapping never depends on the sizer and nothing reflows mid-transition —
+the wider content is simply revealed, clipped on the inline axis only. Width
+and height travel on the same curve (`PANEL_MS`, `PANEL_EASE`, exported from
+`HintPanel`), so the panel's opening and the bubble's widening read as one
+motion. Reduced motion collapses it to an instant.
+
+The badges that hang off the bubble's edges — connection score, shuffle, the
+strike dots, the solve burst — stay direct children of the bubble, outside the
+sizer, so they are positioned and painted exactly as before. `useBubbleWidth`
+(the letter halo) observes the bubble's border box and now sees the width
+arrive over 340ms rather than at once, which it tolerates.
+
+Unmeasured is `auto`: on the server, in jsdom, or before the first layout the
+sizer has no width of its own and the bubble renders at full natural width, so
+a test sees the same markup it always did.
+
 ## The nudge, and why it is quiet now
 
 `useHintNudge` used to jump, rotate and scale the hint button on a loop,
