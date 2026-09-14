@@ -258,8 +258,13 @@ a file that has grown past it needs splitting, not pinning.
 
 **Other open items:**
 
-`npm run lint` reports **0 errors, 74 warnings** (measured 2026-09-12). Every
+`npm run lint` reports **0 errors, 74 warnings** (measured 2026-09-14). Every
 rule in this document is enforced and green.
+
+> It was not green on 2026-09-13: three test suites had drifted over the §2 line
+> cap (`poolRules.test.ts`, `useDailySettle.test.tsx`, `settleRules.test.ts`),
+> and `max-lines` is an error. All three were split along their `describe`
+> boundaries on 2026-09-14. A suite is a file like any other — the cap applies.
 
 | Count | Rule | Severity | Note |
 | ---: | :--- | :--- | :--- |
@@ -268,9 +273,10 @@ rule in this document is enforced and green.
 | 0 | `no-console` | error | cleared 2026-08-21 |
 | 0 | `prefer-const`, `ban-ts-comment`, `no-require-imports`, `react/no-unescaped-entities`, `react-hooks/immutability`, `react-hooks/purity` | error | cleared 2026-08-21 |
 | 23 | `react-hooks/set-state-in-effect` | **warn** | deliberate, see below |
-| 38 | `@typescript-eslint/no-unused-vars` | warn | |
+| 39 | `@typescript-eslint/no-unused-vars` | warn | |
 | 7 | `react-hooks/exhaustive-deps` | warn | |
 | 3 | `@next/next/no-img-element` | warn | |
+| 2 | unused `eslint-disable` directive | warn | `useDailySettle.ts`, `useLetterFlights.ts` |
 
 ### `react-hooks/set-state-in-effect` is warn, not error
 
