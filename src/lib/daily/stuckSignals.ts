@@ -55,17 +55,19 @@ export type StuckOffer =
     /** Take the next rung of the ladder, offered rather than requested. */
     | { kind: 'letter' }
     /**
-     * The fork at hint level 2: the written clue, or the loose letters walking
-     * into place. The player picks.
+     * The rung where the ladder asks instead of handing over: by default hint
+     * level 2, the written clue or the loose letters walking into place, with
+     * the player picking. `options` is what the game master composed.
      *
      * Order only. Both are still there afterwards, and both were reachable from
      * the composer without it. What the fork adds is the asking: a player handed
      * a decision between two kinds of help is being consulted, where the same
-     * two buttons in the header are waiting to be given in to. It exists at
-     * this one rung because it is the only rung where the two remaining kinds
-     * of help differ in kind — a sentence about the word, or its shape.
+     * two buttons in the header are waiting to be given in to. It sits one rung
+     * short of the clue by default because that is the only rung where the two
+     * remaining kinds of help differ in kind — a sentence about the word, or
+     * its shape — but the rung and the row are the game master's to set.
      */
-    | { kind: 'choice'; lettersLeft: number }
+    | { kind: 'choice'; lettersLeft: number; options: readonly ChoiceOption[] }
     /**
      * Let the found letters walk into place, one at a time.
      *
@@ -89,6 +91,51 @@ export type StuckOfferKind = StuckOffer['kind'];
  * rung, `place` starts the settle drip.
  */
 export type StuckAction = Exclude<StuckOfferKind, 'stake' | 'choice'> | 'clue' | 'place';
+
+/**
+ * What the fork may put in front of the player.
+ *
+ * Every one of them is a move the ladder makes anyway: `clue` is its next rung,
+ * `place` starts the drip, `other_end` is the way off the word and `reveal`
+ * ends it. The fork invents nothing — it only decides which of them arrive
+ * together, and in what order.
+ */
+export type ChoiceOption = Extract<StuckAction, 'clue' | 'place' | 'other_end' | 'reveal'>;
+
+export const CHOICE_OPTIONS: readonly ChoiceOption[] = [
+    'clue',
+    'place',
+    'other_end',
+    'reveal',
+] as const;
+
+/**
+ * Where the ladder forks, and into what.
+ *
+ * `atHintLevel` is the one rung the fork stands in for; `null` is a game master
+ * switching the fork off, and the ladder then runs straight through as it did
+ * before the fork existed. `options` is the row of buttons in the order the
+ * game master put them in.
+ *
+ * The compiled default is the fork as shipped: the clue or the drip, one rung
+ * short of the clue. It reaches the board through the settle policy, the way
+ * the clock above does.
+ */
+export type ChoiceFork = {
+    atHintLevel: number | null;
+    options: readonly ChoiceOption[];
+};
+
+export const DEFAULT_CHOICE_FORK: ChoiceFork = {
+    atHintLevel: MAX_HINT_LEVEL - 1,
+    options: ['clue', 'place'],
+};
+
+/**
+ * A choice of one is not a choice — it is the rung it replaced, wearing a
+ * question mark. Below this the fork stands aside and the ladder resumes.
+ */
+export const MIN_CHOICE_OPTIONS = 2;
 
 /**
  * The clock the offer runs on.
@@ -143,11 +190,31 @@ export type StuckInput = {
     dismissed: boolean;
     /** The game master's clock. Absent, the compiled defaults. */
     timing?: StuckTiming;
+    /** The game master's fork. Absent, the compiled default. */
+    choice?: ChoiceFork;
 };
 
 /** Dwell time plus credit for wrong guesses. */
 function pressure({ msOnWord, strikes }: StuckInput, timing: StuckTiming): number {
     return msOnWord + strikes * timing.strikeWorthMs;
+}
+
+/**
+ * The forks that have something behind them, in the game master's order.
+ *
+ * Same rule the ladder itself follows: an offer must never appear with nothing
+ * wired to it. A clue with no rung left, letters with nothing to place and a
+ * chain already open from both ends are all dropped here, before the player is
+ * asked to pick between them. The reveal is always available, which is exactly
+ * why it sits at the bottom of the ladder rather than anywhere near the top.
+ */
+function liveOptions(input: StuckInput, fork: ChoiceFork): ChoiceOption[] {
+    return fork.options.filter((option) => {
+        if (option === 'clue') return input.hintLevel < MAX_HINT_LEVEL;
+        if (option === 'place') return input.canSettle;
+        if (option === 'other_end') return input.canOpenOtherEnd;
+        return true;
+    });
 }
 
 /**
@@ -170,9 +237,13 @@ function pressure({ msOnWord, strikes }: StuckInput, timing: StuckTiming): numbe
  * still ends in a solve, so it must be exhausted before the reveal — which
  * ends in no solve at all — is ever put to the player.
  *
- * `choice` is the one place the ladder forks. One rung short of the clue, with
- * letters loose in the pool, the two kinds of help left are different in kind,
- * so the player is asked which they want rather than handed the next rung.
+ * `choice` is the one place the ladder forks, and the one place a game master
+ * composes rather than tunes: which rung forks, and which of the moves below it
+ * arrive side by side. The shipped default forks one rung short of the clue,
+ * where the two kinds of help left differ in kind — a sentence about the word,
+ * or its shape — so the player is asked which they want rather than handed the
+ * next rung. A fork with fewer than two live options stands aside; the ladder
+ * below it is unchanged and remains the fallback for everything the fork skips.
  */
 export function stuckOffer(input: StuckInput): StuckOffer | null {
     if (input.dismissed) return null;
@@ -189,8 +260,12 @@ export function stuckOffer(input: StuckInput): StuckOffer | null {
         };
     }
 
-    if (input.hintLevel === MAX_HINT_LEVEL - 1 && input.canSettle) {
-        return { kind: 'choice', lettersLeft: input.settleLettersLeft };
+    const fork = input.choice ?? DEFAULT_CHOICE_FORK;
+    if (fork.atHintLevel !== null && input.hintLevel === fork.atHintLevel) {
+        const options = liveOptions(input, fork);
+        if (options.length >= MIN_CHOICE_OPTIONS) {
+            return { kind: 'choice', lettersLeft: input.settleLettersLeft, options };
+        }
     }
     if (input.hintLevel < MAX_HINT_LEVEL) return { kind: 'letter' };
     if (input.canSettle) return { kind: 'settle', lettersLeft: input.settleLettersLeft };

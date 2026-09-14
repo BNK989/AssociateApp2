@@ -2,7 +2,6 @@
 
 import { RotateCcw, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import {
     Select,
     SelectContent,
@@ -262,20 +261,6 @@ export function SettleSection({ policy, revision }: SettleSectionProps) {
                             <SelectItem value="0.2">20%</SelectItem>
                         </SelectContent>
                     </Select>
-                )}
-            />
-
-            <SettleField
-                label="Show point costs on the stuck offer"
-                hint="Whether the stuck offer's two buttons carry a points tag (−1 pts, −1 pts each). Off, the player picks between the clue and placing letters without seeing a number; the scoreboard charges the same either way."
-                disabled={off}
-                control={(
-                    <Switch
-                        checked={p.showPrices}
-                        onCheckedChange={(c) => form.setField('showPrices', c)}
-                        disabled={off}
-                        aria-label="Show point costs on the stuck offer"
-                    />
                 )}
             />
 

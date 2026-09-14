@@ -5,7 +5,7 @@ import {
 import { useTranslations } from 'next-intl';
 import { STREAK_MULTIPLIER } from '@/lib/gameConfig';
 import type {
-    ChoicePrices, StuckAction, StuckOffer as Offer, StuckOfferKind,
+    ChoiceOption, ChoicePrices, StuckAction, StuckOffer as Offer, StuckOfferKind,
 } from '@/lib/daily/stuckSignals';
 
 /**
@@ -32,7 +32,8 @@ export const ACTION_ICONS: Partial<Record<StuckOfferKind, LucideIcon>> = {
     // to read as "hint" would say it is more of the same.
     settle: AlignHorizontalDistributeCenter,
     reveal: Eye,
-    // A fork in the road: the one offer with two ways to take it up.
+    // A fork in the road: the one offer with more than one way to take it up.
+    // Unused on the bar, which draws each fork's own icon, and read by the pill.
     choice: Signpost,
 };
 
@@ -110,28 +111,58 @@ function ActionButton({ icon: Icon, label, price, onClick }: {
 }
 
 /**
- * The fork at hint level 2: read the clue, or let the loose letters walk in.
- * Both stay available afterwards; this only decides which comes first.
+ * How each fork presents itself.
+ *
+ * `clue` and `place` have copy of their own — on the fork they are read side by
+ * side, where "Show one" and "Place them" would not tell the two apart. The
+ * other two borrow the copy and the icon their single-action offers already
+ * use, because on the fork they mean exactly what they mean there.
+ *
+ * Only the two that cost points quote a price; a free fork showing "0 pts"
+ * reads as a bug rather than as generosity.
  */
-function ChoiceActions({ prices, onAct }: Pick<StuckOfferBarProps, 'prices' | 'onAct'>) {
+const CHOICE_BUTTONS: Record<ChoiceOption, {
+    icon: LucideIcon;
+    label: string;
+    price?: { of: keyof ChoicePrices; key: 'price' | 'price_each' };
+}> = {
+    clue: { icon: Lightbulb, label: 'choice_clue', price: { of: 'clue', key: 'price' } },
+    place: {
+        icon: AlignHorizontalDistributeCenter,
+        label: 'choice_place',
+        price: { of: 'place', key: 'price_each' },
+    },
+    other_end: { icon: Split, label: 'other_end_action' },
+    reveal: { icon: Eye, label: 'reveal_action' },
+};
+
+/**
+ * The fork: the moves the game master put side by side, in their order.
+ *
+ * Whichever is taken, the rest stay available afterwards — the fork decides
+ * which comes first, never which the player may have.
+ */
+function ChoiceActions({ options, prices, onAct }: Pick<StuckOfferBarProps, 'prices' | 'onAct'> & {
+    options: readonly ChoiceOption[];
+}) {
     const t = useTranslations('GameRoom.Stuck');
-    const quote = (key: 'price' | 'price_each', points?: number) =>
-        points ? t(key, { points }) : undefined;
 
     return (
         <>
-            <ActionButton
-                icon={Lightbulb}
-                label={t('choice_clue')}
-                price={quote('price', prices?.clue)}
-                onClick={() => onAct('clue')}
-            />
-            <ActionButton
-                icon={AlignHorizontalDistributeCenter}
-                label={t('choice_place')}
-                price={quote('price_each', prices?.place)}
-                onClick={() => onAct('place')}
-            />
+            {options.map((option) => {
+                const button = CHOICE_BUTTONS[option];
+                const points = button.price ? prices?.[button.price.of] : undefined;
+
+                return (
+                    <ActionButton
+                        key={option}
+                        icon={button.icon}
+                        label={t(button.label)}
+                        price={button.price && points ? t(button.price.key, { points }) : undefined}
+                        onClick={() => onAct(option)}
+                    />
+                );
+            })}
         </>
     );
 }
@@ -156,7 +187,8 @@ export function StuckOfferBar({ offer, onAct, onDismiss, prices }: StuckOfferBar
             className="absolute bottom-full inset-x-0 z-20 mx-2 mb-1 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-background/95 px-3 py-1.5 text-sm shadow-md backdrop-blur-sm"
         >
             <span className="flex-1 text-muted-foreground">{t(message.key, message.values)}</span>
-            {offer.kind === 'choice' && <ChoiceActions prices={prices} onAct={onAct} />}
+            {offer.kind === 'choice'
+                && <ChoiceActions options={offer.options} prices={prices} onAct={onAct} />}
             {ActionIcon && (
                 <ActionButton
                     icon={ActionIcon}

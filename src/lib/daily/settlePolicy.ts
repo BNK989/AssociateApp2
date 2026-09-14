@@ -1,5 +1,8 @@
 import { SETTLE } from '@/lib/gameConfig';
 import { MAX_HINT_LEVEL } from '@/lib/gameConfig';
+import {
+    CHOICE_OPTIONS, DEFAULT_CHOICE_FORK, type ChoiceOption,
+} from './stuckSignals';
 
 /**
  * How the settle drip behaves, as a game master can tune it.
@@ -71,8 +74,20 @@ export type SettlePolicy = {
     costPerLetter: number;
     /** Fraction of base value the written clue costs, on top of `HINT_COSTS.TIER_3`. */
     clueCost: number;
-    /** Whether the fork at hint level 2 quotes each option's price. */
+    /** Whether the fork quotes each option's price. */
     showPrices: boolean;
+    /**
+     * The rung where the ladder forks and asks, instead of handing over the
+     * next rung. `null` switches the fork off and the ladder runs straight.
+     */
+    choiceAtHintLevel: number | null;
+    /**
+     * What the fork offers, in the order the buttons appear. Options with
+     * nothing behind them are dropped when the offer is decided, and a fork
+     * left with fewer than two stands aside -- so a short list is a way of
+     * saying "only fork when both of these are live", not a broken panel.
+     */
+    choiceOptions: readonly ChoiceOption[];
     /**
      * The stuck offer's clock: dwell before the bar first speaks, dwell before
      * it escalates from a reason to a route, and what a wrong guess is worth on
@@ -99,6 +114,8 @@ export const DEFAULT_SETTLE_POLICY: SettlePolicy = {
     costPerLetter: SETTLE.COST_PER_LETTER,
     clueCost: SETTLE.CLUE_COST,
     showPrices: SETTLE.SHOW_PRICES,
+    choiceAtHintLevel: DEFAULT_CHOICE_FORK.atHintLevel,
+    choiceOptions: DEFAULT_CHOICE_FORK.options,
     stuckFirstOfferMs: SETTLE.STUCK_FIRST_OFFER_MS,
     stuckSecondOfferMs: SETTLE.STUCK_SECOND_OFFER_MS,
     stuckStrikeWorthMs: SETTLE.STUCK_STRIKE_WORTH_MS,
@@ -146,6 +163,38 @@ function parseRevealLevel(raw: unknown): number | null {
 }
 
 /**
+ * The forking rung, which shares `revealFromHintLevel`'s shape: `null` is a
+ * value -- the fork switched off -- rather than an absence. An absent or
+ * malformed key falls back to the compiled rung, not to `null`, so a bad write
+ * cannot quietly remove the fork from the game.
+ */
+function parseChoiceLevel(raw: unknown): number | null {
+    if (raw === null) return null;
+    if (typeof raw !== 'number' || !Number.isFinite(raw)) {
+        return DEFAULT_SETTLE_POLICY.choiceAtHintLevel;
+    }
+    return Math.round(clampNumber(raw, 0, MAX_HINT_LEVEL, 0));
+}
+
+/**
+ * The row of buttons: known options only, in the stored order, each at most
+ * once. A stored array is taken at its word even when it is empty or holds one
+ * option -- both mean "do not fork here", which `stuckOffer` already reads that
+ * way. Only a non-array, which is a write that never made sense, falls back.
+ */
+function parseChoiceOptions(raw: unknown): readonly ChoiceOption[] {
+    if (!Array.isArray(raw)) return DEFAULT_SETTLE_POLICY.choiceOptions;
+
+    const seen = new Set<ChoiceOption>();
+    for (const entry of raw) {
+        if (typeof entry !== 'string') continue;
+        const option = CHOICE_OPTIONS.find((known) => known === entry);
+        if (option) seen.add(option);
+    }
+    return [...seen];
+}
+
+/**
  * Narrows a stored jsonb blob into a policy, per field.
  *
  * Total by construction: it never throws and never returns a partial object.
@@ -190,6 +239,8 @@ export function parseSettlePolicy(value: unknown): SettlePolicy {
         showPrices: typeof value.showPrices === 'boolean'
             ? value.showPrices
             : DEFAULT_SETTLE_POLICY.showPrices,
+        choiceAtHintLevel: parseChoiceLevel(value.choiceAtHintLevel),
+        choiceOptions: parseChoiceOptions(value.choiceOptions),
         stuckFirstOfferMs,
         // The route cannot come before the reason: a second offer stored below
         // the first is lifted to meet it, which skips the reason rather than

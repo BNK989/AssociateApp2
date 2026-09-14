@@ -33,7 +33,7 @@ no cron wait.
 | Game-master hint policy | `game_settings` table, key `daily_hint_policy` | **Yes** — the admin page |
 | Game-master reward feel | `game_settings` table, key `daily_feedback` | **Yes** — the admin page |
 | Game-master composer rule | `game_settings` table, key `letter_pool` | **Yes** — the admin page |
-| Game-master settle drip, clue price, level-2 choice prices, stuck-offer timing | `game_settings` table, key `settle` | **Yes** — the admin page |
+| Game-master settle drip, clue price, the fork's rung / row / prices, stuck-offer timing | `game_settings` table, key `settle` | **Yes** — the admin page |
 | Player preference | `profiles.settings` / localStorage | By the player, in the info screen |
 | Experiment start level | PostHog `dailygame-auto-hint-level` | Yes — the PostHog console, but see below |
 | Compiled default | [`src/lib/gameConfig.ts`](../src/lib/gameConfig.ts) | No — needs a deploy |
@@ -105,10 +105,23 @@ settle drip and the tap place the loose letters; see
 
 The header button walks these in order. The stuck offer, at level 2 with the
 letters loose, asks instead: the clue or the letters placed, two buttons, each
-quoting its price when **Show point costs on the stuck offer** is on (the last
-switch of the settle panel, above its preview). The clue's price is
-**The clue costs** in the settle section (5% of the word by default) and is
+quoting its price when **Show point costs on the fork** is on. The clue's price
+is **The clue costs** in the settle section (5% of the word by default) and is
 charged however the player reaches level 3.
+
+That fork is yours to compose, under **Where the game asks instead** in the
+settle panel. **Ask at hint level** picks the one rung that asks rather than
+hands over — or *Never*, and the ladder runs straight through. **What it
+offers** is the row of buttons and their order, from four moves the ladder
+already makes: the written clue, placing the loose letters, opening the other
+end of the chain, and revealing the word. Two rules are enforced for you: an
+option with nothing behind it on that word is dropped before the player sees
+it, and a fork left with fewer than two of them stands aside so the ladder
+hands the next rung over as it always did. The panel says so when it is off.
+
+Composing the fork changes no mechanics — every button on it was already
+reachable. What it changes is whether the player is *consulted* or *given in
+to*, which is the whole reason the rung exists.
 
 When the stuck offer speaks at all is the settle panel's first group, **When
 the game speaks up**: **First offer after** (10s of quiet by default), **Help

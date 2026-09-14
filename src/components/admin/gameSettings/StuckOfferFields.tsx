@@ -1,5 +1,6 @@
 import type { SettlePolicy } from '@/lib/daily/settlePolicy';
 import { SettleField, SecondsInput } from './SettleField';
+import { ChoiceForkFields } from './ChoiceForkFields';
 
 type StuckOfferFieldsProps = {
     policy: SettlePolicy;
@@ -24,7 +25,7 @@ export function StuckOfferFields({ policy, setField }: StuckOfferFieldsProps) {
             <p className="mb-1 text-xs text-muted-foreground">
                 The bar under the board that appears once a player has gone quiet on a word.
                 It opens with a reason to keep going, then escalates to a route: a letter, the
-                clue-or-letters fork, the drip, the other end, the reveal. These clocks run in
+                fork composed below, the drip, the other end, the reveal. These clocks run in
                 every mode, including <strong>Off</strong>.
             </p>
 
@@ -63,6 +64,8 @@ export function StuckOfferFields({ policy, setField }: StuckOfferFieldsProps) {
                     />
                 )}
             />
+
+            <ChoiceForkFields policy={policy} setField={setField} />
         </>
     );
 }

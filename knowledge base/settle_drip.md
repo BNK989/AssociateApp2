@@ -113,7 +113,9 @@ at all.
    they tap the button themselves. One rung earlier, at hint level 2 with the
    letters loose, the offer is a fork instead: *"Grab one"*, two buttons,
    *Show clue* and *Place letters*, each quoting its price when `showPrices`
-   is on. The title is two words on purpose — the buttons carry the sentence,
+   is on. Which rung forks and what stands on it are the game master's, set at
+   `choiceAtHintLevel` and `choiceOptions` below; the pair above is the shipped
+   default. The title is two words on purpose — the buttons carry the sentence,
    and a longer prompt (it used to spell out both forks) read as a paragraph
    to get past rather than a hand to take. It used to open *"Stuck?"*, and
    lost the word the same day: naming the state to a player who is in it is
@@ -363,10 +365,18 @@ production 2026-09-13** at revision 1 with an empty value. The panel saves.
 | `order` | `seeded` | |
 | `costPerLetter` | `0.05` | |
 | `clueCost` | `0.05` | Price of the written clue, by any route; not tied to `mode` |
-| `showPrices` | `true` | Whether the level-2 choice quotes each fork's price |
+| `showPrices` | `true` | Whether the fork's buttons quote a price. Only the clue and the letters have a rate, so a free option quotes nothing |
+| `choiceAtHintLevel` | `2` | The rung the fork stands in for. `null` and the ladder never asks |
+| `choiceOptions` | `['clue', 'place']` | What stands on the fork, in the order the player reads it. Any of `clue`, `place`, `other_end`, `reveal` |
 | `stuckFirstOfferMs` | `10000` | Quiet before the stuck offer says anything. Every mode, `off` included |
 | `stuckSecondOfferMs` | `20000` | Quiet before it escalates from a reason to a route. Never stored below the first; equal skips the reason |
 | `stuckStrikeWorthMs` | `8000` | What a wrong guess is worth on the offer's clock. Under the first offer so one miss does not summon the bar |
+
+The two `choice*` rows sit with the clocks under **When the game speaks up**,
+in a block of their own headed **Where the game asks instead** — together with
+`showPrices`, which moved there on 2026-09-14 from the bottom of the drip's
+fields, where it had been a switch about the fork parked among settings about
+the drip. See *The fork is the game master's* below.
 
 The three `stuck*` rows are the bar's clock, not the drip's, and sit at the top
 of the panel under **When the game speaks up**. They live on this row because
@@ -390,6 +400,52 @@ conditional on a migration nobody remembered to run.
 
 There is no scope. A player who wants no help declines the offer, which is the
 entire point of offering rather than imposing.
+
+### The fork is the game master's (2026-09-14)
+
+Until this change the fork was welded shut in `stuckOffer()`: hint level 2, and
+the clue against the letters, both spelled out in an `if`. Two things are now
+composed instead.
+
+**`choiceAtHintLevel`** is the one rung the fork stands in for, `0`–`3`, or
+`null` for a ladder that never asks. The shipped `2` is not arbitrary: it is the
+only rung where the two kinds of help left differ **in kind** — a sentence about
+the word, or its shape — which is what makes the question worth putting.
+
+**`choiceOptions`** is the row, in the order the player reads it, drawn from
+`clue`, `place`, `other_end` and `reveal`. The fork invents no moves; every one
+of those is something the ladder does anyway, and each already routes to wiring
+that existed. What the fork adds is the asking.
+
+Two rules keep a composed fork honest, both in `stuckSignals.ts` and both
+tested:
+
+1. **An option with nothing behind it is dropped before the player sees it.**
+   A spent clue, an empty pool, a chain already open from both ends. Same rule
+   the ladder itself follows: never show a dead button. `reveal` is the one
+   option that can never be dropped, which is exactly why it sits at the bottom
+   of the ladder rather than near the top.
+2. **Fewer than two live options and the fork stands aside** — `MIN_CHOICE_OPTIONS`.
+   A choice of one is the rung it replaced wearing a question mark, and worse,
+   it hides the ladder's own ordering behind a bar that reads as a decision. The
+   ladder below is untouched and remains the fallback, so an emptied row, a
+   `null` rung and a fork whose options have all been spent are the same thing
+   to the player: the game as it behaved before the fork existed.
+
+The default composes to exactly the old hardcoded behaviour — `atHintLevel: 2`,
+`['clue', 'place']` gives a fork iff `hintLevel === 2 && canSettle`, because the
+clue is live below `MAX_HINT_LEVEL` — so nothing moved for a game master who
+changes nothing.
+
+It rides on the `settle` row rather than a key of its own for the same reason
+the `stuck*` clocks do: the row already reaches the board, so there is **no
+migration, no getter and no save-route plumbing** in this change. The types
+(`ChoiceOption`, `ChoiceFork`, `DEFAULT_CHOICE_FORK`) live in `stuckSignals.ts`
+and `settlePolicy.ts` imports them, so the dependency runs policy → signals and
+never the reverse.
+
+No new i18n keys: the two added buttons reuse `other_end_action` and
+`reveal_action`, which the ladder already says elsewhere with the same meaning.
 
 ---
 
@@ -447,12 +503,15 @@ exists.
 | [`settleRules.ts`](../src/lib/daily/settleRules.ts) | Which letter, how many, when to stop. Pure |
 | [`settlePolicy.ts`](../src/lib/daily/settlePolicy.ts) | The stored policy and its total parser |
 | [`useDailySettle.ts`](../src/components/daily/useDailySettle.ts) | The clock, and nothing else |
-| [`stuckSignals.ts`](../src/lib/daily/stuckSignals.ts) | Where the rung sits in the ladder |
+| [`stuckSignals.ts`](../src/lib/daily/stuckSignals.ts) | Where the rung sits in the ladder, and where the ladder forks |
+| [`ChoiceForkFields.tsx`](../src/components/admin/gameSettings/ChoiceForkFields.tsx) | The fork's rung, its row, and the price switch |
+| [`choiceOptionEdits.ts`](../src/components/admin/gameSettings/choiceOptionEdits.ts) | Toggling and reordering that row. Pure |
 | [`poolRules.ts`](../src/lib/letterPool/poolRules.ts) | `placedIndices` / `knownUnplacedIndices` — settled counts as placed |
 | [`useSettlePlacement.ts`](../src/components/daily/useSettlePlacement.ts) | The two-phase write, so the letter can be seen to fly |
 | [`HintControls.tsx`](../src/components/game/input/HintControls.tsx) | Which control stands in the composer's help slot |
 | [`SettleButton.tsx`](../src/components/game/input/SettleButton.tsx) | The button and its ring; the count is in its `aria-label` |
 | [`SettleSection.tsx`](../src/components/admin/gameSettings/SettleSection.tsx) | The panel |
+| [`StuckOfferFields.tsx`](../src/components/admin/gameSettings/StuckOfferFields.tsx) | The bar's clocks, and the fork below them |
 | `gameConfig.ts` → `SETTLE` | The compiled floor |
 
 `knownUnplacedIndices` is the seam that matters: the pool and the drip read

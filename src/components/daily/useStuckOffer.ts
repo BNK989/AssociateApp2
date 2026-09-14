@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { stuckOffer, type StuckOffer, type StuckTiming } from '@/lib/daily/stuckSignals';
+import {
+    stuckOffer, type ChoiceFork, type StuckOffer, type StuckTiming,
+} from '@/lib/daily/stuckSignals';
 
 /**
  * Watches for a player who has gone quiet on a word, and decides what to offer.
@@ -35,6 +37,8 @@ type UseStuckOfferArgs = {
     paused: boolean;
     /** The game master's clock, from the settle policy. */
     timing: StuckTiming;
+    /** The game master's fork: which rung asks, and what it asks with. */
+    choice: ChoiceFork;
 };
 
 export function useStuckOffer({
@@ -48,6 +52,7 @@ export function useStuckOffer({
     wordsLeft,
     paused,
     timing,
+    choice,
 }: UseStuckOfferArgs) {
     const [msOnWord, setMsOnWord] = useState(0);
     const [dismissed, setDismissed] = useState(false);
@@ -89,11 +94,12 @@ export function useStuckOffer({
             wordsLeft,
             dismissed,
             timing,
+            choice,
         });
     }, [
         paused, targetId, msOnWord, strikes, hintLevel,
         canOpenOtherEnd, canSettle, settleLettersLeft,
-        consecutive, wordsLeft, dismissed, timing,
+        consecutive, wordsLeft, dismissed, timing, choice,
     ]);
 
     /**

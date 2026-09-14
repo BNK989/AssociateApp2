@@ -6,6 +6,7 @@ import {
     parseSettlePolicy,
 } from './settlePolicy';
 import { MAX_HINT_LEVEL, SETTLE } from '@/lib/gameConfig';
+import { DEFAULT_CHOICE_FORK } from './stuckSignals';
 
 describe('parseSettlePolicy', () => {
     it('falls back to the compiled defaults for anything that is not an object', () => {
@@ -120,8 +121,64 @@ describe('parseSettlePolicy', () => {
             costPerLetter: null,
             clueCost: [],
             showPrices: 1,
+            choiceAtHintLevel: 'two',
+            choiceOptions: 'clue',
         })).not.toThrow();
 
         expect(parseSettlePolicy({ intervalMs: NaN })).toEqual(DEFAULT_SETTLE_POLICY);
+    });
+});
+
+/**
+ * The fork rides on the settle row because that is where the stuck clocks
+ * already live, so it parses under the same rule as everything above it: a
+ * stored value that means something is honoured, anything else falls back to
+ * the compiled fork rather than taking the whole policy down with it.
+ */
+describe('parseSettlePolicy -- the choice fork', () => {
+    it('ships the fork as the compiled default', () => {
+        const parsed = parseSettlePolicy({});
+
+        expect(parsed.choiceAtHintLevel).toBe(DEFAULT_CHOICE_FORK.atHintLevel);
+        expect(parsed.choiceOptions).toEqual(DEFAULT_CHOICE_FORK.options);
+    });
+
+    it('takes a rung, and clamps one off the ladder', () => {
+        expect(parseSettlePolicy({ choiceAtHintLevel: 1 }).choiceAtHintLevel).toBe(1);
+        expect(parseSettlePolicy({ choiceAtHintLevel: 99 }).choiceAtHintLevel).toBe(MAX_HINT_LEVEL);
+        expect(parseSettlePolicy({ choiceAtHintLevel: -4 }).choiceAtHintLevel).toBe(0);
+        expect(parseSettlePolicy({ choiceAtHintLevel: 1.6 }).choiceAtHintLevel).toBe(2);
+    });
+
+    // null is a game master switching the fork off, not a missing value.
+    it('reads null as the ladder never asking', () => {
+        expect(parseSettlePolicy({ choiceAtHintLevel: null }).choiceAtHintLevel).toBeNull();
+    });
+
+    it('falls back on a rung that is not a number', () => {
+        for (const raw of ['2', {}, NaN, Infinity]) {
+            expect(parseSettlePolicy({ choiceAtHintLevel: raw }).choiceAtHintLevel)
+                .toBe(DEFAULT_CHOICE_FORK.atHintLevel);
+        }
+    });
+
+    it('keeps the order it was given and drops what it does not know', () => {
+        expect(parseSettlePolicy({ choiceOptions: ['reveal', 'clue'] }).choiceOptions)
+            .toEqual(['reveal', 'clue']);
+        expect(parseSettlePolicy({ choiceOptions: ['clue', 'lunch', 7, 'place'] }).choiceOptions)
+            .toEqual(['clue', 'place']);
+    });
+
+    it('keeps a row listed twice down to one button', () => {
+        expect(parseSettlePolicy({ choiceOptions: ['clue', 'clue', 'place'] }).choiceOptions)
+            .toEqual(['clue', 'place']);
+    });
+
+    // An empty array is a deliberate "do not fork here", so it is honoured; the
+    // ladder then runs straight through. Only a non-array is a broken value.
+    it('honours an emptied row but falls back on a value that is not a row', () => {
+        expect(parseSettlePolicy({ choiceOptions: [] }).choiceOptions).toEqual([]);
+        expect(parseSettlePolicy({ choiceOptions: 'clue' }).choiceOptions)
+            .toEqual(DEFAULT_CHOICE_FORK.options);
     });
 });

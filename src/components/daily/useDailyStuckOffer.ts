@@ -16,10 +16,12 @@ import { useStuckOffer } from './useStuckOffer';
  * behind it lives here and nowhere else, so an offer can never be shown with
  * nothing wired to it.
  *
- * The choice at hint level 2 is the one offer with two actions. `clue` is the
- * hint ladder's next rung under another name and `place` starts the drip, so
- * both are routed to the moves the `letter` and `settle` offers already use;
- * the datalayer sees them as `choice:clue` and `choice:place`, which is what
+ * The choice is the one offer carrying more than one action, and the game
+ * master composes it: any of `clue`, `place`, `other_end` and `reveal` may
+ * appear on it. Each is a move one of the single-action offers already makes
+ * under another name — `clue` is the hint ladder's next rung, `place` starts
+ * the drip — so every fork routes to a move that was already wired. The
+ * datalayer sees them as `choice:clue`, `choice:place` and so on, which is what
  * makes the A/B readable.
  */
 
@@ -79,6 +81,11 @@ export function useDailyStuckOffer({
         strikeWorthMs: settlePolicy.stuckStrikeWorthMs,
     }), [settlePolicy]);
 
+    const choice = useMemo(() => ({
+        atHintLevel: settlePolicy.choiceAtHintLevel,
+        options: settlePolicy.choiceOptions,
+    }), [settlePolicy]);
+
     const { offer, dismiss, accept } = useStuckOffer({
         targetId: targetMessage?.id ?? null,
         strikes: targetMessage?.strikes ?? 0,
@@ -90,6 +97,7 @@ export function useDailyStuckOffer({
         wordsLeft,
         paused: gameOver || !targetMessage,
         timing,
+        choice,
     });
 
     // Reached through a ref so that reporting an offer cannot re-run on every

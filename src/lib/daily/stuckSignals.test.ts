@@ -151,14 +151,14 @@ describe('the settle rung', () => {
     });
 });
 
-describe('the choice at hint level 2', () => {
+describe('the choice at hint level 2 -- the shipped default', () => {
     /** Past the stake, one rung short of the clue. */
     const fork = { msOnWord: SECOND_OFFER_MS, hintLevel: MAX_HINT_LEVEL - 1, canOpenOtherEnd: false };
 
     // The two kinds of help left differ in kind — a sentence about the word,
     // or its shape — so the player is consulted rather than handed the rung.
     it('asks the player to pick when both the clue and the drip are on the table', () => {
-        expect(at({ ...fork, canSettle: true })).toEqual({ kind: 'choice', lettersLeft: 3 });
+        expect(at({ ...fork, canSettle: true })).toEqual({ kind: 'choice', lettersLeft: 3, options: ['clue', 'place'] });
     });
 
     it('offers the rung alone when there is nothing to place', () => {
@@ -178,7 +178,7 @@ describe('the choice at hint level 2', () => {
         // letters loose, the second offer was "Other end", and closing it
         // silenced the word, so the fork was never seen.
         expect(at({ ...fork, canSettle: true, canOpenOtherEnd: true }))
-            .toEqual({ kind: 'choice', lettersLeft: 3 });
+            .toEqual({ kind: 'choice', lettersLeft: 3, options: ['clue', 'place'] });
     });
 });
 

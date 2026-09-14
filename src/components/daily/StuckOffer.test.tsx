@@ -210,7 +210,10 @@ describe('StuckOffer — staying out of the way', () => {
  * first, and the player makes it.
  */
 describe('StuckOffer — the choice at hint level 2', () => {
-    const choice = { kind: 'choice', lettersLeft: 3 } as const;
+    // The shipped fork. The row is the game master's to compose, and the bar
+    // renders what it is handed rather than deriving it, so the fixture carries
+    // its options the way the offer does.
+    const choice = { kind: 'choice', lettersLeft: 3, options: ['clue', 'place'] } as const;
 
     beforeEach(() => vi.useFakeTimers());
     afterEach(() => vi.useRealTimers());
@@ -261,5 +264,39 @@ describe('StuckOffer — the choice at hint level 2', () => {
         );
         expect(screen.queryByText(/^price:/)).toBeNull();
         expect(screen.getByText(/^price_each:/)).toBeTruthy();
+    });
+
+    // A game master who puts the reveal on the fork gets the reveal on the
+    // fork. The bar composes no row of its own.
+    it('renders the row it is handed, in the order it is handed', () => {
+        const onAct = vi.fn();
+        const composed = {
+            kind: 'choice',
+            lettersLeft: 3,
+            options: ['reveal', 'other_end', 'clue'],
+        } as const;
+        render(<StuckOffer offer={composed} onAct={onAct} onDismiss={noop} />);
+
+        const labels = screen.getAllByRole('button').map((b) => b.textContent ?? '');
+        expect(labels.slice(0, 3).map((l) => l.split(':')[0]))
+            .toEqual(['reveal_action', 'other_end_action', 'choice_clue']);
+
+        screen.getByText(/other_end_action/).closest('button')!.click();
+        expect(onAct.mock.calls).toEqual([['other_end']]);
+    });
+
+    // The two free moves have no rate behind them, so they quote nothing even
+    // when the game master is showing prices.
+    it('quotes nothing for the moves that cost nothing', () => {
+        const composed = { kind: 'choice', lettersLeft: 3, options: ['other_end', 'reveal'] } as const;
+        render(
+            <StuckOffer
+                offer={composed}
+                onAct={noop}
+                onDismiss={noop}
+                prices={{ clue: 2, place: 1 }}
+            />,
+        );
+        expect(screen.queryByText(/price/)).toBeNull();
     });
 });
