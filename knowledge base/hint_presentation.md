@@ -313,14 +313,13 @@ actually reach anybody:
    which cannot distinguish a deliberate opt-in from a manufactured one, so it
    resets everybody to the default.
 
-3. **`THIRD_OFFER_MS` in `stuckSignals.ts`.** Without this, turning the clock
-   off strands a stuck player: `other_end` held the escalation slot for as long
-   as the chain could still be entered from its far side, and with nothing
-   handing out the ladder any more, a player who declined to leave the word
-   would be shown the same lateral move forever and never offered a hint. It now
-   holds that slot for a 50s window, after which the ladder continues to the
-   rungs that address the word in front of them — and reappears below the
-   ladder, ahead of the reveal, so the route is never lost.
+3. **`other_end` moved below the ladder in `stuckSignals.ts`.** Without the
+   clock handing out the ladder, `other_end` holding the second offer stranded a
+   stuck player: a lateral move shown to someone who had not been offered a
+   hint, and one whose dismissal silenced the word. It first got a 50s window
+   (`THIRD_OFFER_MS`, since removed), then on 2026-09-14 lost the slot
+   altogether: the ladder's rungs come first, and the other end is offered once
+   they are spent, ahead of the reveal, so the route is never lost.
 
 ## Tap first, assist later (2026-09-13)
 

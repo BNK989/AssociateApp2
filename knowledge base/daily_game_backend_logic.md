@@ -436,11 +436,17 @@ further into being stuck than one who has merely been quiet):
 | :--- | :--- | :--- |
 | under 14s | — | silence |
 | 14–30s | `stake` | none — how close the streak bonus is, or how many words are left |
-| 30s+ | `other_end` | open the chain from its start |
-| 30s+, other end spent | `letter` | next rung of the ladder |
+| 30s+ | `letter` | next rung of the ladder |
 | 30s+, at hint level 2, letters loose | `choice` | two buttons: the written clue, or the drip placing the letters — the player picks |
 | 30s+, ladder spent, letters loose | `settle` | start the settle drip |
+| 30s+, every kind of help spent | `other_end` | open the chain from its start |
 | 30s+, nothing else left | `reveal` | show the word |
+
+`other_end` is a way off the word, not help with it, and it waits below the
+ladder on purpose. Until 2026-09-14 it held the second offer outright, as the
+one route that gives nothing about the word away — and at hint level 2 it read
+as "skip this" put to a player who had not been offered a single letter, while
+closing it silenced the word so the `choice` behind it was never reached.
 
 `choice` is the one offer with two actions instead of one, and it exists at the
 one rung where the two remaining kinds of help differ in kind: a sentence about
@@ -499,8 +505,8 @@ Two rules the chip depends on:
   have asked for it back it stays until they act, dismiss, or the word changes.
 
 An offer that escalates mid-word gets a fresh turn at full width: a faded
-`stake` is replaced by `other_end` seconds later, and that one has not had its
-say. Between words the phase is cleared with the offer, so the next word's
+`stake` is replaced by the first rung seconds later, and that one has not had
+its say. Between words the phase is cleared with the offer, so the next word's
 remark is never born already faded.
 
 This is also how the other-end mechanic gets discovered. It lives in the hint
