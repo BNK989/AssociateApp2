@@ -469,10 +469,15 @@ back down.
 8. **The demo game runs the real rules.** Same reason. `useDemoGame` is a thin
    state machine over the game's own modules; if it ever needs a rule of its
    own, that rule belongs in the pure module both sides call.
-9. **The demo writes nothing.** No storage, no rows, no analytics. It is a
+9. **The demo does not render on the server.** Its words are masked with
+   randomly drawn glyphs, so a server-rendered board and the one hydrating over
+   it disagree on almost every letter and React throws the tree away. `DemoGame`
+   holds the board back until the client rather than seeding the masking, which
+   would mean reaching into the shipped game's own module to serve a preview.
+10. **The demo writes nothing.** No storage, no rows, no analytics. It is a
    preview, and a preview that mutated the game master's own daily save would be
    worse than not having one.
-10. **The demo mounts the shipped components, not lookalikes of them.** The
+11. **The demo mounts the shipped components, not lookalikes of them.** The
    composer, the offer bar and the drip on that board are the ones players get.
    A sketch would be free to be wrong about the one thing being evaluated, and
    the scramble copy that promised a shuffle the game stopped performing is what

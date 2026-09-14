@@ -1,5 +1,6 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { render, cleanup, screen, fireEvent } from '@testing-library/react';
+import { renderToString } from 'react-dom/server';
 import { DEFAULT_HINT_POLICY } from '@/lib/daily/hintPolicy';
 import { DEFAULT_FEEDBACK_POLICY } from '@/lib/daily/feedbackPolicy';
 import { DEFAULT_LETTER_POOL_POLICY } from '@/lib/daily/letterPoolPolicy';
@@ -57,6 +58,17 @@ describe('DemoGame', () => {
 
         expect(screen.getByText('Score')).toBeTruthy();
         expect(screen.getByText('no automatic hint coming')).toBeTruthy();
+    });
+
+    // The masked words are drawn with random filler glyphs, so a board that
+    // rendered on the server would disagree with the one that hydrates over it
+    // on almost every letter, and React would discard the tree. Nothing here is
+    // content a first paint owes anyone, so the server renders no board at all.
+    it('renders no board on the server', () => {
+        const html = renderToString(<DemoGame policies={POLICIES} />);
+
+        expect(html).toContain('Try it');
+        expect(html).not.toContain('<li');
     });
 
     // The whole point of the skip control: the stuck ladder is on a twenty

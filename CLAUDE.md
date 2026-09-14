@@ -279,7 +279,7 @@ rule in this document is enforced and green.
 | 0 | `no-console` | error | cleared 2026-08-21 |
 | 0 | `prefer-const`, `ban-ts-comment`, `no-require-imports`, `react/no-unescaped-entities`, `react-hooks/immutability`, `react-hooks/purity` | error | cleared 2026-08-21 |
 | 0 | `react-hooks/refs` | error | 6 annotated per-site exceptions, see the note above |
-| 23 | `react-hooks/set-state-in-effect` | **warn** | deliberate, see below |
+| 24 | `react-hooks/set-state-in-effect` | **warn** | deliberate, see below |
 | 39 | `@typescript-eslint/no-unused-vars` | warn | |
 | 7 | `react-hooks/exhaustive-deps` | warn | |
 | 3 | `@next/next/no-img-element` | warn | |
@@ -291,6 +291,11 @@ The sixteen current sites are all legitimate external-system synchronisation, wh
 is what effects exist for:
 
 - `LandingPage`, `Lobby` — read `localStorage` on mount (unavailable during SSR).
+- `DemoGame` — holds the game-settings demo board back until the client. Its
+  words are masked with randomly drawn filler glyphs, so a server-rendered
+  board disagrees with the one hydrating over it on almost every letter and
+  React discards the tree. The real game never hits this: it builds its chain
+  from a callback after mount rather than in a state initializer.
 - `admin/posthog` — waits on the PostHog SDK to report readiness.
 - `NotificationCenter`, `InvitePlayer`, `useLobbyGames` — kick off a fetch /
   realtime subscription.
