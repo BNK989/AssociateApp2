@@ -55,6 +55,12 @@ export const config = {
     // is what drifted out of sync with `routing.locales` before.
     matcher: [
         '/',
-        "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp3|wav|ogg|json|js)$).*)",
+        // `sitemap.xml` and `robots.txt` are named explicitly because they are
+        // not localised and must never be rewritten to a locale path. They were
+        // not excluded before, so next-intl rewrote `/sitemap.xml` to
+        // `/en/sitemap.xml`, which is not a route: both files answered 404 in
+        // production for as long as they have existed, and no crawler has ever
+        // read either one.
+        "/((?!api|_next/static|_next/image|favicon.ico|sitemap\\.xml|robots\\.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp3|wav|ogg|json|js)$).*)",
     ],
 };
