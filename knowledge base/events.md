@@ -280,6 +280,31 @@ The shared link carries the same surface as a `?ref=` parameter, so arrivals in
 `$current_url` join back to the share that produced them. Nothing in the app
 reads `ref`; a link stripped of it still works.
 
+#### Link attribution (`?ref=`) is wider than this event
+
+`ShareSurface` in `src/lib/share/appShare.ts` has a fourth value, `daily_grid`,
+which never reaches `app_shared`. It tags the link inside a posted daily result
+-- the Wordle-style grid a player pastes into a chat because they were pleased
+with their score. That share goes out through `useShareResults`, which fires no
+event of its own, so the outbound half is invisible; only the arrival is
+counted.
+
+It is also the only tagged link that does not point at the site root. The
+recipient has just been shown a specific puzzle's grid, so it deep-links to
+`/daily` and `buildAppShareUrl` is handed that path rather than `/`.
+
+| `ref` value | Where the link came from | Lands on | Also fires `app_shared` |
+| :--- | :--- | :--- | :--- |
+| `landing_header` | Share button on the landing page | `/` | yes |
+| `lobby_header` | Share button in the lobby header | `/` | yes |
+| `lobby_card` | Share card in the lobby | `/` | yes |
+| `daily_grid` | A posted daily result grid | `/daily` | no |
+
+Until 2026-09-15 the grid's link was untagged, so every player a finished puzzle
+recruited arrived as direct traffic and the most-shared link in the app was the
+one nothing could measure. To read it in PostHog, filter pageviews on
+`$current_url` containing `ref=daily_grid`.
+
 ### 12. `app_share_dismissed`
 Fired when the native share sheet opens and the player closes it without
 choosing a target. Kept separate from `app_shared` so the funnel can tell

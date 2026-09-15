@@ -27,6 +27,11 @@ describe('buildAppShareUrl', () => {
             .toBe(`https://associ8.app/?utm_source=x&${SHARE_REF_PARAM}=lobby_header`);
     });
 
+    it('tags a deep link to the daily game without sending the reader to the root', () => {
+        expect(buildAppShareUrl('https://associ8.app/daily', 'daily_grid'))
+            .toBe(`https://associ8.app/daily?${SHARE_REF_PARAM}=daily_grid`);
+    });
+
     it('still produces a usable link when the base is not absolute', () => {
         expect(buildAppShareUrl('/daily', 'lobby_header'))
             .toBe(`/daily?${SHARE_REF_PARAM}=lobby_header`);

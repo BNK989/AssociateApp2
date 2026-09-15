@@ -19,14 +19,22 @@ export const SHARE_REF_PARAM = 'ref';
  *
  * Carried into the link and onto the analytics event, so the two can be joined:
  * which surface produced the share, and which produced an arrival.
+ *
+ * `daily_grid` is the odd one out and the most numerous: it is not a button a
+ * player pressed to recruit someone, it is the result they posted because they
+ * were pleased with it. Its link points at `/daily` rather than the root, and
+ * it was the only share in the app arriving untagged — every visitor a finished
+ * puzzle brought in was indistinguishable from direct traffic.
  */
-export type ShareSurface = 'landing_header' | 'lobby_header' | 'lobby_card';
+export type ShareSurface = 'landing_header' | 'lobby_header' | 'lobby_card' | 'daily_grid';
 
 /**
  * The link to hand out.
  *
- * Always the site root: a newcomer needs the front door, not a deep link into
- * a game they are not in. `?ref=` is additive and read by nothing in the app —
+ * Usually the site root: a newcomer needs the front door, not a deep link into
+ * a game they are not in. The exception is a shared daily result, which points
+ * at `/daily` — the recipient has just been shown a specific puzzle's grid and
+ * the front door would be a detour away from it. `?ref=` is additive and read by nothing in the app —
  * it rides along in `$current_url` for analytics only, so a link stripped of it
  * still works.
  */

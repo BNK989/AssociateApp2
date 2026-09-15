@@ -63,7 +63,7 @@ describe('useDailyShareText', () => {
             + '\u{1F7E9}\u{1F7E9}\u2B1C\n'
             + '2/3 · 92 pts\n'
             + '92 to beat. Your turn.\n'
-            + '\nhttps://associ8game.com/daily',
+            + '\nhttps://associ8game.com/daily?ref=daily_grid',
         );
     });
 
@@ -88,6 +88,12 @@ describe('useDailyShareText', () => {
         expect(blank).toContain('The chain won today. Think you can crack it?');
         // Nothing to beat, so the closing line does not ask for a number.
         expect(blank).not.toContain('Beat 0');
+    });
+
+    it('tags the link so an arrival from a posted grid can be attributed', () => {
+        // The most-shared link in the app, and the only one that used to arrive
+        // untagged -- every player it recruited counted as direct traffic.
+        expect(shareText().endsWith('https://associ8game.com/daily?ref=daily_grid')).toBe(true);
     });
 
     it('never carries a word off the board', () => {

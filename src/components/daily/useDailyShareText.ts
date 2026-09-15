@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Message } from '@/hooks/useGameLogic';
 import { getURL } from '@/lib/utils';
+import { buildAppShareUrl } from '@/lib/share/appShare';
 import {
     MIN_SHAREABLE_STREAK,
     buildShareText,
@@ -57,7 +58,10 @@ export function useDailyShareText({ date, score, messages, streak, theme }: UseD
             squares,
             statsLine,
             ctaLine: t(`cta_${outcome.tier}`, { score }),
-            url: getURL('/daily'),
+            // Tagged so an arrival from a posted grid is attributable. `getURL`
+            // resolves against `window.location.origin` on the client, so this is
+            // the real production host even though the local env names localhost.
+            url: buildAppShareUrl(getURL('/daily'), 'daily_grid'),
         });
     }, [date, score, messages, streak, theme, t]);
 }
