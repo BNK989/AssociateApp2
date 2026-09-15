@@ -1,30 +1,11 @@
 import { MetadataRoute } from 'next'
+import { buildSitemapEntries } from '@/lib/seo/siteUrls'
 
+/**
+ * The rules live in `src/lib/seo/siteUrls.ts` so they can be tested; this file
+ * only supplies the timestamp. See that module for why every locale is listed
+ * and why the default one is never prefixed.
+ */
 export default function sitemap(): MetadataRoute.Sitemap {
-    return [
-        {
-            url: 'https://associ8game.com',
-            lastModified: new Date(),
-            changeFrequency: 'daily',
-            priority: 1,
-        },
-        {
-            url: 'https://associ8game.com/login',
-            lastModified: new Date(),
-            changeFrequency: 'monthly',
-            priority: 0.8,
-        },
-        {
-            url: 'https://associ8game.com/privacy',
-            lastModified: new Date(),
-            changeFrequency: 'yearly',
-            priority: 0.5,
-        },
-        {
-            url: 'https://associ8game.com/terms',
-            lastModified: new Date(),
-            changeFrequency: 'yearly',
-            priority: 0.5,
-        },
-    ]
+    return buildSitemapEntries(new Date())
 }

@@ -11,10 +11,33 @@ import {
 } from '@/lib/gameSettings/server';
 import { defaultLocale, isSupportedLocale } from '@/i18n/locales';
 import type { TranslatedGameData } from '@/lib/dailyTranslation';
+import type { Metadata } from 'next';
+import { ogLocales, pageAlternates } from '@/lib/seo/siteUrls';
+import { dailyPuzzleNumber } from '@/lib/daily/dailyShare';
 
 const log = createLogger('daily/page');
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * The page every shared grid links to, so it is the one whose preview and
+ * canonical have to be right. The title names the puzzle number -- derived from
+ * the date alone, no database read -- which is the same number the share text
+ * and the OG card use; all three would contradict each other if any derived it
+ * differently.
+ */
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+    const { locale: raw } = await params;
+    const locale = isSupportedLocale(raw) ? raw : defaultLocale;
+    const today = new Date().toISOString().split('T')[0];
+
+    return {
+        title: `Daily Puzzle #${dailyPuzzleNumber(today)}`,
+        description: 'A new word chain every day. Eight words, each linked to the last -- how far can you get?',
+        alternates: pageAlternates(locale, '/daily'),
+        openGraph: { locale: ogLocales[locale] },
+    };
+}
 
 export default async function DailyGamePage({
     params

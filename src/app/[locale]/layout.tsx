@@ -57,20 +57,15 @@ export const metadata: Metadata = {
     siteName: "Associ8",
     locale: "en_US",
     type: "website",
-    images: [
-      {
-        url: "/icon-512x512.png",
-        width: 512,
-        height: 512,
-        alt: "Associ8 Game Logo",
-      }
-    ],
+    // No `images` here on purpose. Naming one would beat the file-convention
+    // `opengraph-image.tsx` cards, and the icon that used to sit here was a
+    // 512 square in a 1.91:1 slot -- letterboxed into a blob by every client.
   },
   twitter: {
     card: "summary_large_image",
     title: "Associ8 - The Multiplayer Word Association Game",
     description: "Challenge your friends in Associ8, the addictive real-time word association game.",
-    images: ["/icon-512x512.png"],
+    // Same reason: the generated card fills the wide slot this card type asks for.
   },
   other: {
     google: "notranslate",
